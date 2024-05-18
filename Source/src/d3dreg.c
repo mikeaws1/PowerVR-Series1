@@ -3709,7 +3709,7 @@ static INLINE sgl_uint32 *OutputFlushingPlanes ( sgl_uint32 *curAddr, sgl_uint32
  *					
  **************************************************************************/
 
-static INLINE CountTotalTranslucentPlanes ( REGION_HEADER	*pRegion,
+static INLINE void CountTotalTranslucentPlanes ( REGION_HEADER	*pRegion,
 											sgl_uint32		RegionPlanes,
 											sgl_uint32		*tPlanes,
 #if DAG_TRANS_SORTING

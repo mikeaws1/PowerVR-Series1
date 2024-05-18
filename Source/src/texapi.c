@@ -219,6 +219,17 @@ typedef struct
 #define ALIGNMENT_PADDING_U8s  (340)
 #define ALIGNMENT_OFFSET_U16s  (170)
 
+typedef struct texheapstruct
+{
+    TEXTUREHEAP	TexHeap;
+    MNODE MemoryRoot;
+    int RefCounter;
+    TEXAPI_IF TexIF;
+//	MNODE_BLOCK MemBlock[8];
+    MNODE_BLOCK MemBlock[10];
+} TexHeapStruct;
+
+TexHeapStruct* FindTexHeap(HDEVICE hDeviceID);
 /*
 // Define the Offsets for for the various levels in a MIP map. Note that
 // there are currently two different sets: One for Texas 1, and the other

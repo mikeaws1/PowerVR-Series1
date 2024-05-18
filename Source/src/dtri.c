@@ -650,6 +650,9 @@ static int TSPDoubleBuffer = 0; /* disable TSP double buffing till PVROS sorted 
  */
 extern float 	fAddToXY;
 
+int PackExtra(PITRI pTri, PIMATERIAL pMat, sgl_uint32 nPolys, sgl_uint32 TSPInc, sgl_uint32 *pTSP);
+int PackISPPolygonExtra (PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolygons, sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement);
+
 /* typedef for the pack TSP parameter functions.
  */
 typedef	int (*PACKTSPFUNCTION) (PIMATERIAL, int, int, sgl_uint32, sgl_uint32 *, int);

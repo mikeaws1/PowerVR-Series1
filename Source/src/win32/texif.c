@@ -101,29 +101,20 @@
 
 #include <windows.h>
 #define API_TYPESONLY
-#include "sgl.h"
+#include <sgl.h>
 #undef API_TYPESONLY
-#include "pvrosapi.h"
-#include "sgl_defs.h"
-#include "texapi.h"
-#include "tmalloc.h"
-#include "texapip.h"
-#include "error.h"
-#include "hwtexas.h" /* For TEX_PARAM_SIZE */
+#include <pvrosapi.h>
+#include <sgl_defs.h>
+#include <texapi.h>
+#include <tmalloc.h>
+#include <texapip.h>
+#include <error.h>
+#include <hwtexas.h> /* For TEX_PARAM_SIZE */
 
 #define NO_OF_TEX_HEAPS 4 /* Pick a number ... (VxD uses 4) */
 
 #pragma data_seg(".onetime")
 
-typedef struct texheapstruct
-{
-	TEXTUREHEAP	TexHeap;
-	MNODE MemoryRoot;
-	int RefCounter;
-	TEXAPI_IF TexIF;
-//	MNODE_BLOCK MemBlock[8];
-	MNODE_BLOCK MemBlock[10];
-} TexHeapStruct;
 
 static TexHeapStruct TexHeaps[NO_OF_TEX_HEAPS] = {0}; 
 

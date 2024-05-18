@@ -52,7 +52,6 @@ int PackISPTri (PITRI pTri, int nTriangles, sgl_uint32 TSPAddr, sgl_uint32 TSPIn
 
 int PackISPTriExtra (PITRI pTri, PIMATERIAL pMat, int nTriangles, 
 					 sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement);
-
 int PackISPPolygon (PITRI pTri, PIMATERIAL pMat, PIEDGE pEdge, int nTriangles,
 					sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement);
 

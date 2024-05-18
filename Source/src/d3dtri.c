@@ -173,7 +173,9 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 
 #endif
 
-static int TSPDoubleBuffer = 0; /* disable TSP double buffing till PVROS sorted */ 
+int PackExtra(PITRI pTri, PIMATERIAL pMat, sgl_uint32 nPolys, sgl_uint32 TSPInc, sgl_uint32 *pTSP);
+int PackISPPolygonExtra (PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolygons, sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement);
+static int TSPDoubleBuffer = 0; /* disable TSP double buffing till PVROS sorted */
 #pragma message ("Another extern to sort out")
 #pragma message ("TSP Double buffer hard coded to OFF")
 
