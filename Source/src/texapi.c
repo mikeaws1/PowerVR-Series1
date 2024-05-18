@@ -799,19 +799,19 @@ static void Write8x8PixelsFor256(sgl_uint16  *pPixels,
 	
 #else
 	/* assembler functions   */
-	extern Write8x8PixelsFor256(void *pSrc, void *pDst, sgl_uint32 MaskRGB);
-	extern Write8x8PixelsFor128(void *pSrc, void *pDst, sgl_uint32 MaskRGB);
-	extern Write8x8PixelsFor64(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
-	extern Write8x8PixelsFor32(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
-	extern Write8x8PixelsFor16(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
-	extern Write8x8Pixels(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
+	extern void Write8x8PixelsFor256(void *pSrc, void *pDst, sgl_uint32 MaskRGB);
+	extern void Write8x8PixelsFor128(void *pSrc, void *pDst, sgl_uint32 MaskRGB);
+	extern void Write8x8PixelsFor64(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
+	extern void Write8x8PixelsFor32(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
+	extern void Write8x8PixelsFor16(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
+	extern void Write8x8Pixels(void *pSrc, int Pitch, void *pDst, sgl_uint32 MaskRGB);
 
-	extern Write8x8For256ReversedAlpha(void *pSrc, void *pDst, sgl_uint32 AlphaMasks);
-	extern Write8x8For128ReversedAlpha(void *pSrc, void *pDst, sgl_uint32 AlphaMasks);
-	extern Write8x8For64ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
-	extern Write8x8For32ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
-	extern Write8x8For16ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
-	extern Write8x8ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
+	extern void Write8x8For256ReversedAlpha(void *pSrc, void *pDst, sgl_uint32 AlphaMasks);
+	extern void Write8x8For128ReversedAlpha(void *pSrc, void *pDst, sgl_uint32 AlphaMasks);
+	extern void Write8x8For64ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
+	extern void Write8x8For32ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
+	extern void Write8x8For16ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
+	extern void Write8x8ReversedAlpha(void *pSrc, int Pitch, void *pDst, sgl_uint32 AlphaMasks);
 #endif
 
 /******************************************************************************
@@ -1408,14 +1408,14 @@ static void WriteTextureToMem(	sgl_uint32		TextureAddress,
 }  /* end of WriteTextureToMem */	
 
 /* assembler functions   */
-extern Pack888To555 (void *pSrc, void *pDst, int n);
-extern Pack8888To4444 (void *pSrc, void *pDst, int n);
-extern Pack888BGRTo555 (void *pSrc, void *pDst, int n);
-extern Pack8888BGRTo4444 (void *pSrc, void *pDst, int n);
-extern Pack565To555 (void *pSrc, void *pDst, int n);
-extern Pack1555To4444 (void *pSrc, void *pDst, int n);
-extern Pack565To4444WithColourKey (void *pSrc, void *pDst, int n, int Key);
-extern Pack555To4444WithColourKey (void *pSrc, void *pDst, int n, int Key);
+extern void Pack888To555 (void *pSrc, void *pDst, int n);
+extern void Pack8888To4444 (void *pSrc, void *pDst, int n);
+extern void Pack888BGRTo555 (void *pSrc, void *pDst, int n);
+extern void Pack8888BGRTo4444 (void *pSrc, void *pDst, int n);
+extern void Pack565To555 (void *pSrc, void *pDst, int n);
+extern void Pack1555To4444 (void *pSrc, void *pDst, int n);
+extern void Pack565To4444WithColourKey (void *pSrc, void *pDst, int n, int Key);
+extern void Pack555To4444WithColourKey (void *pSrc, void *pDst, int n, int Key);
 
 /******************************************************************************
  * Function Name: Convert555WithColourKey   INTERNAL ONLY

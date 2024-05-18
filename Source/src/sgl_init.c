@@ -309,33 +309,33 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "pvrosapi.h"
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <pvrosapi.h>
 
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "sgl_init.h"
-#include "rnglobal.h"
-#include "rnstate.h"
-#include "rnmesh.h"
-#include "dlothers.h"
-#include "dvdevice.h"
-#include "rncamera.h"
-#include "txmops.h"
-#include "pmsabre.h"
-#include "dregion.h"
-#include "sgl_math.h"
-#include "pktsp.h"
-#include "texapi.h"
-#include "parmbuff.h"
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <sgl_init.h>
+#include <rnglobal.h>
+#include <rnstate.h>
+#include <rnmesh.h>
+#include <dlothers.h>
+#include <dvdevice.h>
+#include <rncamera.h>
+#include <txmops.h>
+#include <pmsabre.h>
+#include <dregion.h>
+#include <sgl_math.h>
+#include <pktsp.h>
+#include <texapi.h>
+#include <parmbuff.h>
 
 
 #if WIN32 || DOS32
-    #include "version.h"
-	#include "hwregs.h" /* For get_texture_memory_size */
-	#include "brdcfg.h"
+    #include <version.h>
+	#include <hwregs.h> /* For get_texture_memory_size */
+	#include <brdcfg.h>
 #endif
 
 #if ISPTSP

@@ -319,31 +319,31 @@
 
 #define MODULE_ID MODID_SGLLITE
 
-#include "sgl_defs.h" /* Already includes 'sgl.h' and 'debug.h' */
-#include "sgl_init.h"
-#include "pvrosapi.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "getnamtb.h"
-#include "dlglobal.h"
-#include "pmsabre.h"
-#include "dregion.h"
-#include "rnglobal.h"
-#include "pktsp.h"
-#include "pkisp.h"
-#include "texapi.h"
-#include "parmbuff.h"
-#include "metrics.h"
-#include "txmops.h" 	/* JWF Added to fix missing prototypes */
-#include "sgl_math.h"	/* JWF */
-#include "dvdevice.h"
+#include <sgl_defs.h> /* Already includes 'sgl.h' and 'debug.h' */
+#include <sgl_init.h>
+#include <pvrosapi.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <getnamtb.h>
+#include <dlglobal.h>
+#include <pmsabre.h>
+#include <dregion.h>
+#include <rnglobal.h>
+#include <pktsp.h>
+#include <pkisp.h>
+#include <texapi.h>
+#include <parmbuff.h>
+#include <metrics.h>
+#include <txmops.h> 	/* JWF Added to fix missing prototypes */
+#include <sgl_math.h>	/* JWF */
+#include <dvdevice.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
 #if WIN32 || DOS32
-    #include "version.h" /* auto-generated version number file */
-	#include "hwregs.h" /* For get_texture_memory_size */
-	#include "brdcfg.h"
+    #include <version.h> /* auto-generated version number file */
+	#include <hwregs.h> /* For get_texture_memory_size */
+	#include <brdcfg.h>
 	#define DO_FPU_PRECISION TRUE
 
 	void SetupFPU (void);

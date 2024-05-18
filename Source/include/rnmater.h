@@ -47,7 +47,3 @@ void RnCTPreprocessMaterialNode(const MATERIAL_NODE_STRUCT  * matNode,
 
 
 #endif __RNMATER_H__
-
-/*
-// End of file
-*/

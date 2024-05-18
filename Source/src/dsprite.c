@@ -84,24 +84,24 @@
 
 #define MODULE_ID MODID_DSPRITE
 
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "sgl_init.h"
-#include "hwinterf.h"
-#include "parmbuff.h"
-#include "sgl_math.h"
-#include "pvrlims.h"
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <sgl_init.h>
+#include <hwinterf.h>
+#include <parmbuff.h>
+#include <sgl_math.h>
+#include <pvrlims.h>
 
-#include "nm_intf.h"
-#include "getnamtb.h"
-#include "dlntypes.h"
+#include <nm_intf.h>
+#include <getnamtb.h>
+#include <dlntypes.h>
 
-#include "pmsabre.h"
-#include "dregion.h"
-#include "texapi.h"
-#include "pvrosio.h"
-#include "vfogtab.h"
-#include "metrics.h"
+#include <pmsabre.h>
+#include <dregion.h>
+#include <texapi.h>
+#include <pvrosio.h>
+#include <vfogtab.h>
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
@@ -313,6 +313,7 @@ static INLINE void ConvertD3DColtoFractions (sgl_uint32 Colour,
 											 float f24, float f16, 
 											 sgl_uint32 *p24, sgl_uint32 *p16);
 
+static int PackSpriteExtra(PISPRITE pSprite, PIMATERIAL pMat, sgl_uint32 nSprites, sgl_uint32 TSPInc, sgl_uint32 *pTSP);
 static void ProcessHigh(PISPRITE pSprite);
 static void ProcessHighTex(PISPRITE pSprite);
 static void ProcessFlatShadOrLiVol(PISPRITE pSprite);
@@ -379,6 +380,7 @@ static void ProcessFlatTexGTransVFog(PISPRITE pSprite);
 static void ProcessHighGTransVFog(PISPRITE pSprite);
 static void ProcessHighTexGTransVFog(PISPRITE pSprite);
 
+static int PackISPSpriteExtra (PISPRITE rpSprite, PIMATERIAL rpMat, int nSprites, sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement);
 
 /**********************************************************************/
 

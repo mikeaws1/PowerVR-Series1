@@ -199,16 +199,16 @@
  *
  *****************************************************************************/
 
-#include "sgl_defs.h"
-#include "debug.h"
-#include "metrics.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <debug.h>
+#include <metrics.h>
+#include <sgl_math.h>
 
-#include "dtri.h"
-#include "dtex.h"
+#include <dtri.h>
+#include <dtex.h>
 
-#include "pvrosapi.h"
-#include "vfogtab.h"
+#include <pvrosapi.h>
+#include <vfogtab.h>
 
 /* this is the single pixel texture for NTT 
 ** this is usually got from rnglobal.h

@@ -101,7 +101,9 @@
 */
 
 #include <math.h>
-#include "singmath.h"
+#include <singmath.h>
+#include <dlothers.h>
+#include <transfor.h>
 
 #if !INLINING
 extern	float	InvSqrt (float x);

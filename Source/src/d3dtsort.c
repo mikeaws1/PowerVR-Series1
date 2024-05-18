@@ -108,16 +108,16 @@
 	My local functions
 ************************************************************************/
 
-PTRIANGLE_REFERENCE NewTriangleReference( void );
+static PTRIANGLE_REFERENCE NewTriangleReference( void );
 
-void Intersect( PTRANSTRI_STRUCT *ppsTriNodes, PTRANSTRI_STRUCT *ppsLeftStack, PTRANSTRI_STRUCT *ppsRightStack, unsigned bIsAscending, unsigned uNumTris, unsigned uLevel );
+static void Intersect( PTRANSTRI_STRUCT *ppsTriNodes, PTRANSTRI_STRUCT *ppsLeftStack, PTRANSTRI_STRUCT *ppsRightStack, unsigned bIsAscending, unsigned uNumTris, unsigned uLevel );
 
 #if FOUL_OR_NEWFOUL_ALLINTERSECTS
 	void FoulAllIntersects( PTRANSTRI_STRUCT *ppsTriNodes, sgl_uint32 uNumItris ); 
 	void NewFoulAllIntersects( PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumItris );
 #endif /*FOUL_OR_NEWFOUL_ALLINTERSECTS*/
 
-void NewerFoulAllIntersects( PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumItris );
+static void NewerFoulAllIntersects( PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumItris );
 /* Other prototypes in D3Dreg.h */
 
 /************************************************************************

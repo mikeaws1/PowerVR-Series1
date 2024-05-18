@@ -747,34 +747,34 @@
 
 #define MODULE_ID MODID_RNRENDER
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "dlnodes.h"
-#include "rnglobal.h"
-#include "parmbuff.h"
-#include "dvdevice.h"
-#include "sgl_init.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "rncamera.h"
-#include "pmsabre.h"
-#include "rntrav.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <dlnodes.h>
+#include <rnglobal.h>
+#include <parmbuff.h>
+#include <dvdevice.h>
+#include <sgl_init.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <rncamera.h>
+#include <pmsabre.h>
+#include <rntrav.h>
 
-#include "rnconvst.h" /* ARRHGGGRRRRRRRRRR */
-#include "rnstate.h"
-#include "rnfshade.h"
-#include "rnmesh.h"
-#include "pktsp.h"
-#include "pkisp.h"
+#include <rnconvst.h> /* ARRHGGGRRRRRRRRRR */
+#include <rnstate.h>
+#include <rnfshade.h>
+#include <rnmesh.h>
+#include <pktsp.h>
+#include <pkisp.h>
 
-#include "dregion.h"
-#include "texas.h"
-#include "hwregs.h"
+#include <dregion.h>
+#include <texas.h>
+#include <hwregs.h>
 
-#include "metrics.h"
+#include <metrics.h>
 
-#include "pvrosapi.h"
-#include "parmbuff.h"
+#include <pvrosapi.h>
+#include <parmbuff.h>
 
 #if defined(MIDAS_ARCADE)
 #include <time.h>
@@ -806,7 +806,7 @@ int fDoActualRender = TRUE;
 
 #if WIN32 || DOS32 || MAC
 
-	#include "brdcfg.h"
+	#include <brdcfg.h>
 
 #endif
 

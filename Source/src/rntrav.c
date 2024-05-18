@@ -285,18 +285,18 @@
 // Include the Render processing header files...
 */
 
-#include "rntransf.h"
-#include "rnconvex.h"
-#include "rnmater.h"
-#include "rnlights.h"
-#include "rnlod.h"
-#include "rnpoint.h"
-#include "rnqualit.h"
+#include <rntransf.h>
+#include <rnconvex.h>
+#include <rnmater.h>
+#include <rnlights.h>
+#include <rnlod.h>
+#include <rnpoint.h>
+#include <rnqualit.h>
 
-#include "txmops.h"
+#include <txmops.h>
 
-#include "list.h"
-#include "metrics.h"
+#include <list.h>
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code !!! */ 
 

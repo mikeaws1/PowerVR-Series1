@@ -216,35 +216,35 @@
 
 #define MODULE_ID MODID_RNGLOBAL
 
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "sgl_init.h"
-#include "dvdevice.h"
-#include "rncamera.h"
-#include "pmsabre.h"
-#include "rnstate.h"
-#include "rnconvst.h"
-#include "rnfshade.h"
-#include "rnglobal.h"
-#include "pktsp.h"
-#include "dregion.h"
-#include "pvrlims.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <sgl_init.h>
+#include <dvdevice.h>
+#include <rncamera.h>
+#include <pmsabre.h>
+#include <rnstate.h>
+#include <rnconvst.h>
+#include <rnfshade.h>
+#include <rnglobal.h>
+#include <pktsp.h>
+#include <dregion.h>
+#include <pvrlims.h>
 
-#include "debug.h"
-#include "metrics.h"
+#include <debug.h>
+#include <metrics.h>
 
-#include "pkisp.h"	
-#include "pvrosapi.h"
-#include "parmbuff.h"
-#include "texapi.h"
+#include <pkisp.h>
+#include <pvrosapi.h>
+#include <parmbuff.h>
+#include <texapi.h>
 
-#include "sgl_api.h"
+#include <sgl_api.h>
 
 #if WIN32 || DOS32 || MAC
 
-	#include "brdcfg.h"
+	#include <brdcfg.h>
 
 #endif
 

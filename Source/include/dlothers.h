@@ -45,6 +45,10 @@
 #ifndef __DLOTHERS_H__
 #define __DLOTHERS_H__
 
+#include <dlntypes.h>
+#include <dllists.h>
+#include <transfor.h>
+
 /*///////////////////////////////////////////////////
 // define the transform node type
 /////////////////////////////////////////////////////
@@ -62,7 +66,6 @@ typedef struct
 	TRANSFORM_STRUCT transform;
 
 } TRANSFORM_NODE_STRUCT;
-
 
 
 

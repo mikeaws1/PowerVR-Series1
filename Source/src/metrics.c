@@ -40,20 +40,20 @@ sgl_uint32  SglTimeNow(void)
 {
 	static sgl_uint32 Time;
 
-	__asm
-		{
-			push	eax
-			push	edx
-
-			_emit 0Fh
-			_emit 31h	
-
-			shrd	eax, edx, 4
-
-			mov		Time, eax
-			pop		edx
-			pop		eax
-		}
+//	__asm
+//		{
+//			push	eax
+//			push	edx
+//
+//			_emit 0Fh
+//			_emit 31h
+//
+//			shrd	eax, edx, 4
+//
+//			mov		Time, eax
+//			pop		edx
+//			pop		eax
+//		}
 
 	return Time;
 }

@@ -159,25 +159,25 @@
 
 #define MODULE_ID MODID_DREGION
 
-#include "sgl_defs.h"
-#include "metrics.h"
+#include <sgl_defs.h>
+#include <metrics.h>
 #include <limits.h>
-#include "hwinterf.h"
-#include "pmsabre.h" 
-#include "pvrlims.h"
-#include "syscon.h"
-#include "dregion.h"
+#include <hwinterf.h>
+#include <pmsabre.h>
+#include <pvrlims.h>
+#include <syscon.h>
+#include <dregion.h>
 #include <stdlib.h>		/* JWF added for missing prototypes */
 #include <stdio.h>		/* JWF added for missing prototypes */
 #include <string.h>		/* JWF added for missing prototypes */
-#include "pvrosapi.h"
-#include "parmbuff.h"
-#include "sglmem.h"
+#include <pvrosapi.h>
+#include <parmbuff.h>
+#include <sglmem.h>
 
 #if DAG_TRANS_SORTING
-	#include "dtri.h" /* for ITRI structure */
-	#include "sgl_math.h" /* for sfabs */
-	#include "d3dtsort.h"
+	#include <dtri.h> /* for ITRI structure */
+	#include <sgl_math.h> /* for sfabs */
+	#include <d3dtsort.h>
 #endif /*DAG_TRANS_SORTING*/
 
 SGL_EXTERN_TIME_REF /* if we are timing code */

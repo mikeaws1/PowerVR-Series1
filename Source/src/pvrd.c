@@ -337,26 +337,27 @@
 
 #define MODULE_ID MODID_PVRD
 
-#include "sgl.h"
-#include "sgl_init.h"
-#include "pvrosapi.h"
-#include "texapi.h"
-#include "pvrd.h"
-#include "debug.h"
-#include "config.h"
-#include "parmbuff.h"
-#include "hwinterf.h"
-#include "pmsabre.h"
-#include "dregion.h"
-#include "windows.h"
-#include "version.h"
-#include "hwregs.h"		/* needed for the virtual buffer addresses.	*/
-#include "syscon.h"
-#include "pvrlims.h"
-#include "sglmacro.h"
+#include <sgl.h>
+#include <sgl_init.h>
+#include <pvrosapi.h>
+#include <texapi.h>
+#include <pvrd.h>
+#include <debug.h>
+#include <config.h>
+#include <parmbuff.h>
+#include <hwinterf.h>
+#include <pmsabre.h>
+#include <dregion.h>
+#include <windows.h>
+#include <version.h>
+#include <hwregs.h>		/* needed for the virtual buffer addresses.	*/
+#include <syscon.h>
+#include <pvrlims.h>
+#include <sglmacro.h>
+#include <sgl_math.h>
 
 #define SGL_APP 1
-#include "metrics.h"
+#include <metrics.h>
 
 #ifdef DLL_METRIC
 
@@ -441,6 +442,9 @@ sgl_uint32	nMaxPassCount		= 0x0FFFFFFF;
 /* Variable to decide whether to use full masking plane or not.
  * Defined in pktsp.c. Default is FALSE. Read from the registry.
  */
+sgl_bool PVROSFilteringOveride( void );
+sgl_bool PVROSBilinearEnabled( void );
+PVROSERR CALL_CONV PVROSSetPCIPixelFormat(sgl_uint16 wBitsPerPixel, sgl_bool bDither);
 extern		sgl_bool	bFullMaskingPlane;
 sgl_bool	bFilteringOverRide	= FALSE;
 sgl_bool	bBilinearEnabled	= FALSE;
@@ -474,7 +478,7 @@ sgl_uint32 VertexFogControlWord;
  *
  * Set it to indicate that the system is uninitialised.
  */
-static	int	sglSystemInitialised = 0;
+int	sglSystemInitialised = 0;
 
 /* Size of the device.
  */
@@ -535,11 +539,11 @@ void DumpSabreAndTexas(void);
 #endif
 
 #define	API_FNBLOCK
-#include "pvrd.h"
+#include <pvrd.h>
 #undef	API_FNBLOCK
 
 #define	API_INSTANTIATE
-#include "pvrd.h"
+#include <pvrd.h>
 #undef	API_INSTANTIATE
 
 

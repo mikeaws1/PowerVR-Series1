@@ -315,16 +315,16 @@
 
 /* memory configuration now set in sglhw.ini */
 
-#include "sgl_defs.h"
-#include "hwinterf.h"
-#include "fogtable.h"
-#include "rectable.h"
-#include "profile.h"
-#include "pvrosapi.h"
-#include "hwregs.h"
-#include "brdcfg.h"
-#include "pci.h"
-#include "brdsetup.h"
+#include <sgl_defs.h>
+#include <hwinterf.h>
+#include <fogtable.h>
+#include <rectable.h>
+#include <profile.h>
+#include <pvrosapi.h>
+#include <hwregs.h>
+#include <brdcfg.h>
+#include <pci.h>
+#include <brdsetup.h>
 #include <time.h>
 
 /* JWF added following headers */
@@ -336,9 +336,9 @@
 #include <windows.h> /* For MEM_COMMIT and PAGE_READWRITE */
 #endif
 
-#include "pvrlims.h"
+#include <pvrlims.h>
 
-#include "metrics.h"
+#include <metrics.h>
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
 sgl_uint32 DetermineTexMemConfig( sgl_uint32 uSettings );
@@ -758,8 +758,8 @@ char *GetSGLHWIni ()
  */
 
 static sgl_uint32	uBilinearReg		= 0x0;
-static sgl_bool		bFilteringOverRide	= FALSE;
-static sgl_bool		bBilinearEnabled	= FALSE;
+//static sgl_bool		bFilteringOverRide	= FALSE;
+//static sgl_bool		bBilinearEnabled	= FALSE;
 
 /******************************************************************************
  * Function Name: HWSetupBunchOfISPRegs

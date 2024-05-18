@@ -40,6 +40,8 @@
 // a transformation matrix, so that we can optimise certain
 // cases.
 */
+#ifndef _TRANSFOR_H_
+#define _TRANSFOR_H_
 typedef enum
 {
 	no_scale,
@@ -91,3 +93,4 @@ typedef struct
 
 /*---------------------------- End of File -------------------------------*/
 
+#endif

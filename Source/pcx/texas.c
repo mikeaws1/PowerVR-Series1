@@ -82,14 +82,14 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "rnglobal.h"
-#include "ldbmp.h"
-#include "txmops.h"
-#include "pvrosapi.h"
-#include "brdcfg.h"
-#include "hwregs.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <rnglobal.h>
+#include <ldbmp.h>
+#include <txmops.h>
+#include <pvrosapi.h>
+#include <brdcfg.h>
+#include <hwregs.h>
 
 extern HLDEVICE gHLogicalDev;
 

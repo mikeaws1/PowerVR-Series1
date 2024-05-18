@@ -54,6 +54,8 @@
 //			variables before entering the list, and then
 //			restore them afterwards.
 */
+#ifndef _DLLLISTS_H_
+#define _DLLLISTS_H_
 typedef enum
 {
 	lf_process_list   = (1<<0),
@@ -163,6 +165,6 @@ extern void		DlDeleteLightSwitchNodeRefs(DL_NODE_STRUCT	 * pNode);
 extern void		DlDeleteLightNodeRefs(DL_NODE_STRUCT	* pNode);
 
 
-
+#endif
 
 /*---------------------------- End of File -------------------------------*/

@@ -73,10 +73,10 @@
  *****************************************************************************/
 #define MODULE_ID MODID_CALLBACK
 
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "debug.h"
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <debug.h>
 
 typedef struct PVRCALLBACK
 {

@@ -38,16 +38,16 @@
 #define __DLNODES_H
 
 
-#include "dlntypes.h"
-#include "dlmater.h"
-#include "dllists.h"
-#include "dlconvex.h"
-#include "dllights.h"
-#include "dllod.h"
-#include "dlpoint.h"
-#include "dlmesh.h"
-#include "dlothers.h"
-#include "dlqualit.h"
+#include <dlntypes.h>
+#include <dlmater.h>
+#include <dllists.h>
+#include <dlconvex.h>
+#include <dllights.h>
+#include <dllod.h>
+#include <dlpoint.h>
+#include <dlmesh.h>
+#include <dlothers.h>
+#include <dlqualit.h>
 
 
 #endif
