@@ -80,7 +80,6 @@
 #include <math.h>
 
 #include "../sgl_defs.h"
-#include "../dvregion.h"
 #include "../hwinterf.h"
 #include "syscon.h"
 #include "../sglmacro.h"

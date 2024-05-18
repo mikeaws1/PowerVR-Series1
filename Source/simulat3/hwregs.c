@@ -87,7 +87,6 @@
 #include "../sgl_defs.h"
 #include "sabre.h"
 #include "hwsabsim.h"
-#include "../dvregion.h"
 #include "../hwinterf.h"
 
 
@@ -98,7 +97,7 @@
 #define TEXAS_MEM_SIZE	((1L << 18) << 1) /*18 bits of address - each address 
 										  2 words */
 #define OBJ_PCOUNT_SHIFT (19)
-#define SABRE_MEM_SIZE	(1L<<OBJ_PCOUNT_SHIFT) 
+#define SABRE_MEM_SIZE	(1L<<OBJ_PCOUNT_SHIFT)
 
 UINT32 TexParamSize;
 static	UINT32	* pTexasStore;

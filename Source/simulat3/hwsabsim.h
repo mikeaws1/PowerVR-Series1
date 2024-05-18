@@ -36,6 +36,8 @@
  *
  *****************************************************************************/
 
+#include <basetsd.h>
+
 /* global registers	*/
 
 extern	UINT32	FogRegister;
