@@ -31,15 +31,15 @@
  *
  *****************************************************************************/
 
-#include "sgl_defs.h"
-#include "debug.h"
-#include "metrics.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <debug.h>
+#include <metrics.h>
+#include <sgl_math.h>
 
-#include "dtri.h"
-#include "dtex.h"
+#include <dtri.h>
+#include <dtex.h>
 
-#include "pvrosapi.h"
+#include <pvrosapi.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

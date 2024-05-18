@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(PowerVR_Series1 C)
+project(PowerVR C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS -m32)
@@ -14,7 +14,7 @@ include_directories(Source/platform)
 #include_directories(Source/simulat3)
 include_directories(Source/simulat3/win32)
 
-add_executable(PowerVR_Series1
+add_library(PowerVR SHARED
         Source/pcx/brdsetup.h
         Source/pcx/hwregs.c
         Source/pcx/hwregs.h

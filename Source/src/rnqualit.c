@@ -39,10 +39,10 @@
 
 #define MODULE_ID MODID_RN
 
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "rnstate.h"
-#include "rnglobal.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <rnstate.h>
+#include <rnglobal.h>
 
 
 #define SET_OR_CLEAR_FLAGS(VAL, SET, FLAGS) \

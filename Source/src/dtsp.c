@@ -72,14 +72,14 @@
  *
  *****************************************************************************/
 
-#include "sgl_defs.h"
-#include "debug.h"
-#include "metrics.h"
+#include <sgl_defs.h>
+#include <debug.h>
+#include <metrics.h>
 
-#include "dtri.h"
-#include "dtsp.h"
+#include <dtri.h>
+#include <dtsp.h>
 
-#include "pvrosapi.h"
+#include <pvrosapi.h>
 
 /* this is the single pixel texture for NTT 
 ** this is usually got from rnglobal.h

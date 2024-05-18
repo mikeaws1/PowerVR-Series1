@@ -255,19 +255,19 @@
 
 #define MODULE_ID MODID_DISP
 
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "metrics.h"
-#include "pvrlims.h"
-#include "hwinterf.h"
-#include "parmbuff.h"
-#include "sgl_math.h"
-#include "dregion.h"	/* JWF added for missing prototypes */
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <metrics.h>
+#include <pvrlims.h>
+#include <hwinterf.h>
+#include <parmbuff.h>
+#include <sgl_math.h>
+#include <dregion.h>	/* JWF added for missing prototypes */
 
-#include "pmsabre.h"
+#include <pmsabre.h>
 
-#include "dtri.h"
-#include "disp.h"
+#include <dtri.h>
+#include <disp.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

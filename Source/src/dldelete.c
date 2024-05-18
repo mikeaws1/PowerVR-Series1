@@ -70,14 +70,14 @@
 */
 #define MODULE_ID	MODID_DL
 
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "sgl_init.h"
-#include "dldelete.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <sgl_init.h>
+#include <dldelete.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 
 /**************************************************************************

@@ -233,18 +233,18 @@
 #define MODULE_ID   MODID_RNSHADE
 
 #include <math.h>
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "dlnodes.h"
-#include "rnstate.h"
-#include "rnglobal.h"
-#include "sgl_math.h"
-#include "rnconvst.h"
-#include "rnmesh.h"
-#include "rnfshade.h"
-#include "rnshade.h"
-#include "rnlights.h"
-#include "txmops.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <dlnodes.h>
+#include <rnstate.h>
+#include <rnglobal.h>
+#include <sgl_math.h>
+#include <rnconvst.h>
+#include <rnmesh.h>
+#include <rnfshade.h>
+#include <rnshade.h>
+#include <rnlights.h>
+#include <txmops.h>
 
 #include "metrics.h"
 

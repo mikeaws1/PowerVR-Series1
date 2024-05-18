@@ -53,11 +53,11 @@
 
 #define MODULE_ID MODID_LIST
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "array.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <array.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 #define ARRAY_STATS
 #ifdef ARRAY_STATS

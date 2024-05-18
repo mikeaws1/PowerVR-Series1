@@ -301,21 +301,21 @@
 
 #define MODULE_ID MODID_PKTSP
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "dlnodes.h"
-#include "rnglobal.h"
-#include "rnconvst.h"
-#include "rnstate.h"
-#include "rnfshade.h"
-#include "pktsp.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <dlnodes.h>
+#include <rnglobal.h>
+#include <rnconvst.h>
+#include <rnstate.h>
+#include <rnfshade.h>
+#include <pktsp.h>
 
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "metrics.h"
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <metrics.h>
 
-#include "pvrosapi.h"
-#include "parmbuff.h"
+#include <pvrosapi.h>
+#include <parmbuff.h>
 
 #if ISPTSP
 #define PAGE_BREAK_BUG TRUE  /* TRUE if page break bug in hardware */

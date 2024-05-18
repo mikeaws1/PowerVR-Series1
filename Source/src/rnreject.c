@@ -167,16 +167,16 @@
 #include <math.h>
 #include <string.h>  /* for memset() */
 
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "rnstate.h"
-#include "rnglobal.h"
-#include "rnconvst.h"
-#include "pmsabre.h"
-#include "rnreject.h"
-#include "singmath.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <rnstate.h>
+#include <rnglobal.h>
+#include <rnconvst.h>
+#include <pmsabre.h>
+#include <rnreject.h>
+#include <singmath.h>
 
-#include "metrics.h"
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

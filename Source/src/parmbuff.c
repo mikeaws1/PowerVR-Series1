@@ -31,10 +31,10 @@
  *****************************************************************************/
 #include "config.h"
 #define API_TYPESONLY
-#include "sgl.h"
-#include "pvrosapi.h"
+#include <sgl.h>
+#include <pvrosapi.h>
 #undef API_TYPESONLY
-#include "parmbuff.h"
+#include <parmbuff.h>
 
 
 PVR_PARAM_BUFF* GetISPParamBuff( void )

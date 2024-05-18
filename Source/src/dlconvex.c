@@ -227,18 +227,18 @@
 #define MODULE_ID MODID_DLCONVEX
 
 #include <math.h>  /* fabs() */
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "dldelete.h"
-#include "adjacenc.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <dldelete.h>
+#include <adjacenc.h>
+#include <sgl_math.h>
 
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "dlshade.h"	/* SmoothPlaneDataPrecalc() */
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <dlshade.h>	/* SmoothPlaneDataPrecalc() */
 
 /*
 // --------------

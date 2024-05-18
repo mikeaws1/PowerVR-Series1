@@ -112,10 +112,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "sgl_defs.h"
-#include "list.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <list.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 #define DOS_SEP  '\\'
 #define UNIX_SEP '/'

@@ -34,13 +34,13 @@
  *
  *****************************************************************************/
 
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 void CALL_CONV sgl_new_translucent()
 {

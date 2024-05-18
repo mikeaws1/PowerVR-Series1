@@ -24,9 +24,9 @@
 
 #define __SGLMEM_C__
 
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 #if LogRelease || DEBUG
 

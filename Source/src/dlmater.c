@@ -160,15 +160,15 @@
 
 #define MODULE_ID MODID_DLMATER
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "sgl_init.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "texapi.h"
-#include "dlnodes.h"	/* material structure definition */
-#include "nm_intf.h"
-#include "dlglobal.h"	/* current material ptr, etc */
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <sgl_init.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <texapi.h>
+#include <dlnodes.h>	/* material structure definition */
+#include <nm_intf.h>
+#include <dlglobal.h>	/* current material ptr, etc */
 /*
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

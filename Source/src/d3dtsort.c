@@ -94,14 +94,14 @@
  * 
  *************************************************************************/
 
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "sgl_math.h"
-#include "sglmem.h"
-#include "pvrlims.h"
-#include "dtri.h"
-#include "dregion.h"
-#include "d3dtsort.h"
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <sgl_math.h>
+#include <sglmem.h>
+#include <pvrlims.h>
+#include <dtri.h>
+#include <dregion.h>
+#include <d3dtsort.h>
 
 #if DAG_TRANS_SORTING
 /************************************************************************

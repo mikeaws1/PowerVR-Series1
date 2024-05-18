@@ -150,12 +150,12 @@
 
 #define  MODULE_ID      MODID_DLOBJECT
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "sgl_math.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "dlobject.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <sgl_math.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <dlobject.h>
 
 #define PI				3.141592f
 #define TWOPI			(2.0f * PI)

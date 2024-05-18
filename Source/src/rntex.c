@@ -229,15 +229,15 @@
  *
  *****************************************************************************/
 
-#include "sgl.h"
+#include <sgl.h>
 
-#include "sgl_defs.h"
-#include "metrics.h"
-#include "dlnodes.h"
-#include "rnconvst.h"
-#include "rnstate.h"
-#include "rnglobal.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <metrics.h>
+#include <dlnodes.h>
+#include <rnconvst.h>
+#include <rnstate.h>
+#include <rnglobal.h>
+#include <sgl_math.h>
 
 #include "metrics.h"
 

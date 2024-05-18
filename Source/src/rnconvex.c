@@ -167,29 +167,29 @@
 #define MODULE_ID	MODID_RN
 
 
-#include "sgl_defs.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl_math.h>
 
-#include "nm_intf.h"
-#include "dlnodes.h" 
+#include <nm_intf.h>
+#include <dlnodes.h>
 
-#include "rnglobal.h"
-#include "rnstate.h"
+#include <rnglobal.h>
+#include <rnstate.h>
 
-#include "rnconvst.h"
-#include "rnconvex.h"
+#include <rnconvst.h>
+#include <rnconvex.h>
 
-#include "rnreject.h"
-#include "rnconvpr.h"
+#include <rnreject.h>
+#include <rnconvpr.h>
 
-#include "rnpoint.h"
-#include "pmsabre.h"
-#include "dregion.h"
+#include <rnpoint.h>
+#include <pmsabre.h>
+#include <dregion.h>
 
-#include "rnmater.h"
-#include "txmops.h"
+#include <rnmater.h>
+#include <txmops.h>
 
-#include "metrics.h"
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

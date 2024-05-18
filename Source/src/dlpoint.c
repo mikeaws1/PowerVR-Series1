@@ -92,14 +92,14 @@
 
 #define MODULE_ID MODID_DLPOINT
 
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "sgl_math.h"
-#include "dlglobal.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <sgl_math.h>
+#include <dlglobal.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 /*
 // ============================================================================

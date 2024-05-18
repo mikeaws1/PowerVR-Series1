@@ -461,28 +461,28 @@
 
 #define MODULE_ID MODID_PKISP
 
-#include "sgl_defs.h"
-#include "pvrlims.h"
-#include "sgl_math.h"
-#include "nm_intf.h"
-#include "dlnodes.h" 
-#include "dvdevice.h"
-#include "dregion.h"
-#include "rnglobal.h"
-#include "rnstate.h"
-#include "rnconvst.h"
-#include "hwinterf.h"
-#include "pkisp.h"
-#include "pktsp.h"	/* for PackTexasTransparent */
-#include "rnmesh.h"
+#include <sgl_defs.h>
+#include <pvrlims.h>
+#include <sgl_math.h>
+#include <nm_intf.h>
+#include <dlnodes.h>
+#include <dvdevice.h>
+#include <dregion.h>
+#include <rnglobal.h>
+#include <rnstate.h>
+#include <rnconvst.h>
+#include <hwinterf.h>
+#include <pkisp.h>
+#include <pktsp.h>	/* for PackTexasTransparent */
+#include <rnmesh.h>
 
-#include "debug.h"
-#include "metrics.h"
+#include <debug.h>
+#include <metrics.h>
 
-#include "pmsabre.h"
+#include <pmsabre.h>
 
-#include "pvrosapi.h"
-#include "parmbuff.h"
+#include <pvrosapi.h>
+#include <parmbuff.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

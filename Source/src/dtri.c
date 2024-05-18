@@ -568,27 +568,27 @@
 
 #define MODULE_ID MODID_DTRI
 
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "pvrosapi.h"
-#include "metrics.h"
-#include "hwinterf.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <pvrosapi.h>
+#include <metrics.h>
+#include <hwinterf.h>
+#include <sgl_math.h>
 
-#include "nm_intf.h"
-#include "getnamtb.h"
-#include "dlntypes.h"
+#include <nm_intf.h>
+#include <getnamtb.h>
+#include <dlntypes.h>
 
-#include "dtri.h"
-#include "dshade.h"
-#include "dtex.h"
-#include "disp.h"
-#include "dtsp.h"
-#include "pmsabre.h"
-#include "dregion.h"
-#include "parmbuff.h"
-#include "pvrlims.h"
-#include "texapi.h"
+#include <dtri.h>
+#include <dshade.h>
+#include <dtex.h>
+#include <disp.h>
+#include <dtsp.h>
+#include <pmsabre.h>
+#include <dregion.h>
+#include <parmbuff.h>
+#include <pvrlims.h>
+#include <texapi.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

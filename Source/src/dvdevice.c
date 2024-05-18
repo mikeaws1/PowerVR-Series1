@@ -206,24 +206,24 @@
 
 #include <stdio.h>
 
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "rnglobal.h"
-#include "sgl_init.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "pmsabre.h"
-#include "dvdevice.h"
-#include "hwinterf.h"
-#include "dregion.h"	/* JWF added to fix missing prototypes */
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <rnglobal.h>
+#include <sgl_init.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <pmsabre.h>
+#include <dvdevice.h>
+#include <hwinterf.h>
+#include <dregion.h>	/* JWF added to fix missing prototypes */
 
 
 #ifdef DLL_METRIC
 #define SGL_APP 1
-#include "metrics.h"
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

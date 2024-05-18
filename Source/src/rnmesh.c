@@ -762,37 +762,37 @@
 
 #define MODULE_ID	MODID_RNMESH
 
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "sgl_math.h"
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <sgl_math.h>
 
-#include "dlnodes.h" 
+#include <dlnodes.h>
 
-#include "rnglobal.h"
-#include "rnstate.h"
-#include "list.h"
-#include "pmsabre.h"
-#include "rnconvst.h"
-#include "rnfshade.h"
-#include "rnmater.h"
-#include "rntex.h"
-#include "pktsp.h"
-#include "pkisp.h"
-#include "dvdevice.h"
-#include "rncamera.h"
-#include "rnmesh.h"
-#include "rnshade.h"
-#include "rnreject.h"
-#include "profile.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "txmops.h"
-#include "rnmater.h"
-#include "metrics.h"
-#include "parmbuff.h"
+#include <rnglobal.h>
+#include <rnstate.h>
+#include <list.h>
+#include <pmsabre.h>
+#include <rnconvst.h>
+#include <rnfshade.h>
+#include <rnmater.h>
+#include <rntex.h>
+#include <pktsp.h>
+#include <pkisp.h>
+#include <dvdevice.h>
+#include <rncamera.h>
+#include <rnmesh.h>
+#include <rnshade.h>
+#include <rnreject.h>
+#include <profile.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <txmops.h>
+#include <rnmater.h>
+#include <metrics.h>
+#include <parmbuff.h>
 
 /* Needed for optimised object packing routines in dregion.c. */
-#include "dregion.h"
+#include <dregion.h>
 
 #define PRE_CULL	0
 

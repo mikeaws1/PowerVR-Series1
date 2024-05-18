@@ -100,13 +100,13 @@
 #include <math.h>
 #include <limits.h>
 
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 #define INV_LOG_OF_2 (1.442695041f)
 

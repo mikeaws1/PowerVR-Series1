@@ -37,10 +37,10 @@
 
 #define MODULE_ID MODID_RN
 
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "rnglobal.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <rnglobal.h>
+#include <sgl_math.h>
 
 
 /*

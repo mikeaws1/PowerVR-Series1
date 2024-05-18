@@ -142,17 +142,17 @@
  **************************************************************************/
 
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <sgl_math.h>
 
-#include "nm_intf.h"
-#include "dlnodes.h" 
+#include <nm_intf.h>
+#include <dlnodes.h>
 
-#include "rnstate.h"
-#include "rntrav.h"
-#include "rnglobal.h"
-#include "rnlights.h"
+#include <rnstate.h>
+#include <rntrav.h>
+#include <rnglobal.h>
+#include <rnlights.h>
 
 
 

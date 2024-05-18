@@ -40,15 +40,15 @@
  *
  **************************************************************************/
 
-#include "sgl_defs.h"
+#include <sgl_defs.h>
 
-#include "dlnodes.h" 
+#include <dlnodes.h>
 
-#include "rnglobal.h"
-#include "rntransf.h"
-#include "rnstate.h"
-#include "rntrav.h"
-#include "sgl_math.h"
+#include <rnglobal.h>
+#include <rntransf.h>
+#include <rnstate.h>
+#include <rntrav.h>
+#include <sgl_math.h>
 
 
 /**************************************************************************

@@ -71,12 +71,12 @@
 
 #define MODULE_ID MODID_RN
 
-#include "sgl_defs.h"
-#include "debug.h"
-#include "sgl_math.h"
-#include "dlnodes.h"
-#include "rnconvst.h"
-#include "metrics.h"
+#include <sgl_defs.h>
+#include <debug.h>
+#include <sgl_math.h>
+#include <dlnodes.h>
+#include <rnconvst.h>
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

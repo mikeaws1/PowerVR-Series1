@@ -36,22 +36,22 @@
 
 #define MODULE_ID MODID_DLINES
 
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "sgl_init.h"
-#include "hwinterf.h"
-#include "parmbuff.h"
-#include "sgl_math.h"
-#include "pvrlims.h"
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <sgl_init.h>
+#include <hwinterf.h>
+#include <parmbuff.h>
+#include <sgl_math.h>
+#include <pvrlims.h>
 
-#include "nm_intf.h"
-#include "getnamtb.h"
-#include "dlntypes.h"
+#include <nm_intf.h>
+#include <getnamtb.h>
+#include <dlntypes.h>
 
-#include "pmsabre.h"
-#include "dregion.h"
-#include "texapi.h"
-#include "pvrosio.h"
+#include <pmsabre.h>
+#include <dregion.h>
+#include <texapi.h>
+#include <pvrosio.h>
 
 /* Select between using Z and 1/w.
  */

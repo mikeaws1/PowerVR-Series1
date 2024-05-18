@@ -194,16 +194,16 @@
 
 #define MODULE_ID MODID_TEXAPI
 
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "txmops.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <txmops.h>
 
-#include "pvrosapi.h"
-#include "tmalloc.h"
-#include "texapi.h"
-#include "texapip.h"
+#include <pvrosapi.h>
+#include <tmalloc.h>
+#include <texapi.h>
+#include <texapip.h>
 
-#include "memory.h"
+#include <memory.h>
 
 typedef struct
 {

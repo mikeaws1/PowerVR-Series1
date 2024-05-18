@@ -153,14 +153,14 @@
  *
  *****************************************************************************/
 
-#include "sgl_defs.h"
-#include "metrics.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <metrics.h>
+#include <sgl_math.h>
 
-#include "dtri.h"
-#include "dshade.h"
+#include <dtri.h>
+#include <dshade.h>
 
-#include "pvrosapi.h"
+#include <pvrosapi.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

@@ -55,14 +55,14 @@
 #define MODULE_ID MODID_RN
 
 #include <float.h>
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "rnstate.h"
-#include "rnconvst.h"
-#include "sgl_math.h"
-#include "dlglobal.h"
-#include "rnglobal.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <rnstate.h>
+#include <rnconvst.h>
+#include <sgl_math.h>
+#include <dlglobal.h>
+#include <rnglobal.h>
 
 
 /******************************************************************************

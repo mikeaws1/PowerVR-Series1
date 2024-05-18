@@ -97,14 +97,14 @@
 #define MODULE_ID MODID_TMALLOC
 
 #include <stdio.h>
-#include "sgl_defs.h"
-#include "sgl_init.h"
+#include <sgl_defs.h>
+#include <sgl_init.h>
 
 #define USE_HEAPMAN
 
-#include "pvrosapi.h"
-#include "texapi.h"
-#include "tmalloc.h"
+#include <pvrosapi.h>
+#include <texapi.h>
+#include <tmalloc.h>
 
 #define BEST_FIT  TRUE /* Set FALSE for previous 'first fit' operation. */
 

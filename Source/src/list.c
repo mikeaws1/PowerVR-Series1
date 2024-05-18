@@ -159,11 +159,11 @@ RCS info:
 #define __LIST_C__
 #define MODULE_ID MODID_LIST
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "list.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <list.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 /*
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

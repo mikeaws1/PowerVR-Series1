@@ -131,20 +131,20 @@
  *
  **************************************************************************/
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "sgl_math.h"
-#include "nm_intf.h"
-#include "dlnodes.h" 
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <sgl_math.h>
+#include <nm_intf.h>
+#include <dlnodes.h>
 
-#include "rnstate.h"
-#include "rntrav.h"
-#include "rnconvst.h"
-#include "rnfshade.h"
+#include <rnstate.h>
+#include <rntrav.h>
+#include <rnconvst.h>
+#include <rnfshade.h>
 
-#include "rnglobal.h"
+#include <rnglobal.h>
 
-#include "metrics.h"
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

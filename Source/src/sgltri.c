@@ -403,28 +403,28 @@
 
 #include <stdio.h>
 
-#include "nm_intf.h"
+#include <nm_intf.h>
 
-#include "sgl_init.h"
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "sgl_math.h"
+#include <sgl_init.h>
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <sgl_math.h>
 
-#include "dlntypes.h"
-#include "dlmater.h"
-#include "dlconvex.h"
-#include "dlmesh.h"
-#include "dllists.h"
-#include "dlpoint.h"
-#include "dlothers.h"
-#include "dlglobal.h"
+#include <dlntypes.h>
+#include <dlmater.h>
+#include <dlconvex.h>
+#include <dlmesh.h>
+#include <dllists.h>
+#include <dlpoint.h>
+#include <dlothers.h>
+#include <dlglobal.h>
 
-#include "rnglobal.h"
-#include "pkisp.h"
+#include <rnglobal.h>
+#include <pkisp.h>
 
-#include "dregion.h"
-#include "pvrosapi.h"
-#include "parmbuff.h"
+#include <dregion.h>
+#include <pvrosapi.h>
+#include <parmbuff.h>
 
 #if WIN32 || DOS32
 

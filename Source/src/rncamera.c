@@ -167,13 +167,13 @@
 #define MODULE_ID MODID_RNCAMERA
 
 #include <math.h>
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "rnglobal.h"
-#include "hwinterf.h"
-#include "dvdevice.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <rnglobal.h>
+#include <hwinterf.h>
+#include <dvdevice.h>
 #include <float.h>
-#include "sgl_math.h"
+#include <sgl_math.h>
 
 
 /**************************************************************************

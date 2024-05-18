@@ -101,15 +101,15 @@
 /* For fabs().  Should eventually be replaced with our float version: */
 #include <math.h>
 
-#include "sgl_defs.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl_math.h>
 	/* Required by dlconvex.h: */
-	#include "dlntypes.h"
-	#include "dlmater.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "dlconvex.h"
-#include "rnconvst.h"
+	#include <dlntypes.h>
+	#include <dlmater.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <dlconvex.h>
+#include <rnconvst.h>
 
 /*
 // Declare the Maximum number of edges we can have. This is

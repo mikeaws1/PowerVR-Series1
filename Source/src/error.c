@@ -68,8 +68,8 @@
  *****************************************************************************/
 
 
-#include "sgl_defs.h"
-#include "sgl.h"
+#include <sgl_defs.h>
+#include <sgl.h>
 
 
 /*

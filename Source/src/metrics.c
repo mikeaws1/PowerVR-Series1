@@ -1,5 +1,5 @@
 
-#include "metrics.h"
+#include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
@@ -20,7 +20,7 @@ sgl_uint32 nTotalPolygonsInFrame, nTransPolygonsInFrame, nOpaquePolygonsInFrame;
 /************************************************/
 
 #pragma warning ( disable : 117 )
-#include "windows.h"
+#include <windows.h>
 #pragma warning ( default : 117 )
 
 /*===========================================

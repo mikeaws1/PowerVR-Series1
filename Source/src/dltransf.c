@@ -127,14 +127,14 @@
 #define MODULE_ID MODID_DLTRANSF
 #define DECLARING_AXES			/* we need this to make sgl.h work properly */
 
-#include "sgl_defs.h"
-#include "dlnodes.h"
-#include "sgl_math.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "sgl_init.h"
+#include <sgl_defs.h>
+#include <dlnodes.h>
+#include <sgl_math.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <sgl_init.h>
 
 /* 
 // globally define the x, y and z axis

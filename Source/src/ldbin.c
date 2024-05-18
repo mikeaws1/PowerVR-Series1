@@ -22,11 +22,11 @@
   #include "e:/sabre/sgl/sgl.h"
   #include "e:/sabre/sgl/sgl_defs.h"
 #else
-  #include "sgl.h"
-  #include "sgl_defs.h"
+  #include <sgl.h>
+  #include <sgl_defs.h>
 #endif
 
-#include "ldbin.h"
+#include <ldbin.h>
 
 /* Functions to read each command */
 int read_VersionNumber(FILE *flIn);

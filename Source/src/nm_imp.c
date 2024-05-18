@@ -108,13 +108,13 @@
 #define MODULE_ID MODID_NM
 
 #include <limits.h>
-#include "sgl_defs.h"
-#include "nm_intf.h"
-#include "dlntypes.h"
-#include "pvrosapi.h"
-#include "texapi.h"
-#include "sglmem.h"
-#include "getnamtb.h"
+#include <sgl_defs.h>
+#include <nm_intf.h>
+#include <dlntypes.h>
+#include <pvrosapi.h>
+#include <texapi.h>
+#include <sglmem.h>
+#include <getnamtb.h>
 
 /*
 // For the initial version, stick with a fixed sized name table.

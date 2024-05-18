@@ -232,12 +232,12 @@ RCS info:
 #define getcwd _getcwd
 #endif
 
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "debug.h"
-#include "modauto.h"	/* auto-generated Module data definition */
-#include "profile.h"
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <debug.h>
+#include <modauto.h>	/* auto-generated Module data definition */
+#include <profile.h>
 
 static sgl_int32	snModuleDebugLevels[NUM_ITEMS_IN_MODULES_ARRAY];
 static char		*pszLevelStrings[] = {"Fatal: ", "Error: ", "Warning: ", "Message: ", ""};

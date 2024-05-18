@@ -463,41 +463,41 @@
 */
 #define MODULE_ID	MODID_RNCONVPR
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <sgl_math.h>
 
-#include "nm_intf.h"
-#include "dlnodes.h" 
+#include <nm_intf.h>
+#include <dlnodes.h>
 
-#include "rnglobal.h"
-#include "rnstate.h"
+#include <rnglobal.h>
+#include <rnstate.h>
 
-#include "rnconvst.h"
-#include "rnconvex.h"
-#include "dvdevice.h"
-#include "rncamera.h"
+#include <rnconvst.h>
+#include <rnconvex.h>
+#include <dvdevice.h>
+#include <rncamera.h>
 
-#include "rnconvpr.h"
-#include "rnshadrj.h"
-#include "rnshadow.h"
-#include "rnreject.h"
+#include <rnconvpr.h>
+#include <rnshadrj.h>
+#include <rnshadow.h>
+#include <rnreject.h>
 
-#include "rnmater.h"
+#include <rnmater.h>
 
-#include "rnfshade.h"
-#include "rnshade.h"
-#include "rntex.h"
-#include "pktsp.h"
-#include "pkisp.h"
+#include <rnfshade.h>
+#include <rnshade.h>
+#include <rntex.h>
+#include <pktsp.h>
+#include <pkisp.h>
 
-#include "pmsabre.h"
-#include "profile.h"
-#include "metrics.h"
-#include "parmbuff.h"
+#include <pmsabre.h>
+#include <profile.h>
+#include <metrics.h>
+#include <parmbuff.h>
 
 /* Needed for to use dregion.c optimisation routines. */
-#include "dregion.h"
+#include <dregion.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 

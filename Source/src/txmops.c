@@ -349,20 +349,20 @@
 #define MODULE_ID MODID_TXMOPS
 
 #include <math.h>
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "sgl_init.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
-#include "txmops.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "hwinterf.h"
-#include "texapi.h"
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <sgl_init.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
+#include <txmops.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <hwinterf.h>
+#include <texapi.h>
 
 #if DOS32
-#include "hwtexas.h"
+#include <hwtexas.h>
 #endif
 
 extern HLDEVICE 	gHLogicalDev;

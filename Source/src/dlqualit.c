@@ -66,18 +66,18 @@
  *
  *****************************************************************************/
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "dlnodes.h"
-#include "sgl_init.h"
-#include "nm_intf.h"
-#include "dlglobal.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <dlnodes.h>
+#include <sgl_init.h>
+#include <nm_intf.h>
+#include <dlglobal.h>
 
-#include "profile.h"
-#include "rnstate.h"
+#include <profile.h>
+#include <rnstate.h>
 
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 static int gfDefQualFlags = 0xFFFFFFFF;
 

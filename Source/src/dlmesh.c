@@ -345,21 +345,21 @@
 
 #define  MODULE_ID      MODID_DLMESH
 
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "dlnodes.h"
-#include "nm_intf.h"
-#include "dlglobal.h"   /* current mesh ptr, etc */
-#include "dlconvex.h"   /* MapExternalToInternal() */
-#include "sgl_math.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <dlnodes.h>
+#include <nm_intf.h>
+#include <dlglobal.h>   /* current mesh ptr, etc */
+#include <dlconvex.h>   /* MapExternalToInternal() */
+#include <sgl_math.h>
 
-#include "list.h"
-#include "error.h"
+#include <list.h>
+#include <error.h>
 
-#include "dlshade.h"
-#include "profile.h"
-#include "pvrosapi.h"
-#include "sglmem.h"
+#include <dlshade.h>
+#include <profile.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
 
 #ifndef NULL
 #define NULL    0

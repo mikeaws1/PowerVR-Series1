@@ -114,11 +114,11 @@ RCS info:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sgl.h"
-#include "sgl_defs.h"
-#include "profile.h"
+#include <sgl.h>
+#include <sgl_defs.h>
+#include <profile.h>
 
-#include "pvrosapi.h"
+#include <pvrosapi.h>
 
 #if WIN32
 #pragma message ("Using windows ReadPrivateProfileString")

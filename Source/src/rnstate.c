@@ -66,12 +66,12 @@
  **************************************************************************/
 
 #include <string.h>
-#include "sgl_defs.h"
-#include "sgl.h"
-#include "dlnodes.h" 
-#include "pvrosapi.h"
-#include "sglmem.h"
-#include "rnstate.h"
+#include <sgl_defs.h>
+#include <sgl.h>
+#include <dlnodes.h>
+#include <pvrosapi.h>
+#include <sglmem.h>
+#include <rnstate.h>
 
 /*
 // Declare types for the arrays of state values that will form a stack
