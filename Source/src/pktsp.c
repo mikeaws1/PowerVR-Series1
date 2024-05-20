@@ -440,7 +440,7 @@ float TexasGetInvTextureDimension(const TEXAS_PRECOMP_STRUCT *pTexasPreComp) {
             return (1.0f / 256.0f);
         }
 
-    }/*end switch*/
+    }
 }
 
 

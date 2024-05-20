@@ -365,6 +365,7 @@ int CALL_CONV LoadBMPTexture(char *pszFilename, sgl_bool bTranslucent,
                     } else {
                         DPF ((DBG_ERROR, "Imap is weird size"));
                         nTexture = sgl_err_no_mem;
+                        map_size = 0;
                     }
 
                     nTexture = sgl_create_texture(map_type, map_size, generate_mipmap, dither, &Imap, NULL);

@@ -426,7 +426,7 @@ int nTimeOutTenths = 5;
 static sgl_uint32 bUseFullSort = 0x0;
 static sgl_uint32 uDithering = 0x2;
 
-/* No sort method, 1 fro no sort, 2 for reversed no sort, 3 for min z sort */
+/* No sort method, 1 for no sort, 2 for reversed no sort, 3 for min z sort */
 int gNoSortTransFaces = MINZ_SORT;
 
 #if DAG_TRANS_SORTING
@@ -552,13 +552,11 @@ void DumpSabreAndTexas(void);
 
 #define    API_FNBLOCK
 
-#include <pvrd.h>
 
 #undef    API_FNBLOCK
 
 #define    API_INSTANTIATE
 
-#include <pvrd.h>
 
 #undef    API_INSTANTIATE
 
@@ -692,7 +690,7 @@ int RnGlobalGetFixedClipDist ()
 
 int CALL_CONV SglInitialise(void) {
     /*
-    // If we havent initialised the system, do so
+    // If we haven't initialised the system, do so
     */
     if (sglSystemInitialised == 0) {
         /* Print out the version information.
@@ -915,7 +913,7 @@ PVROSERR CALL_CONV PVRDCreateRenderContext(PPVR_RENDERCONTEXT pRenderContext) {
             /* What sorting algorithm is to be used,
              * The default is full sorting ON. Read default section first
              * and if not set in default section check for application hint.
-             * Done now, incase memory allocation in InitRegionDataL fails
+             * Done now, increase memory allocation in InitRegionDataL fails,
              * and we can default to the old way of sorting.
              */
             bFullSort = HWRdValFileInt("FullSort", TRUE);
@@ -1271,7 +1269,6 @@ PVROSERR CALL_CONV PVRDTriangles(PPVR_RENDERCONTEXT pRenderContext,
                                  sgl_uint32 dwNumFaces,
                                  int pFaces[][3],
                                  PSGLVERTEX pVertices) {
-    PVROSERR Error = PVROS_GROOVY;
 
     /* Debug message.
      */
@@ -1282,7 +1279,7 @@ PVROSERR CALL_CONV PVRDTriangles(PPVR_RENDERCONTEXT pRenderContext,
     DirectD3DPolygons(pRenderContext->hTextureHeap, &pRenderContext->SGLContext,
                       dwNumFaces, pFaces, pVertices, bUseFullSort);
 
-    return (Error);
+    return PVROS_GROOVY;
 }
 
 /**************************************************************************
@@ -1305,16 +1302,13 @@ PVROSERR CALL_CONV PVRDTrianglesPrimitive(PPVR_RENDERCONTEXT pRenderContext,
                                           sgl_uint16 *pFaces,
                                           PSGLVERTEX pVertices,
                                           PRIMITIVETYPE PrimitiveType) {
-    PVROSERR Error = PVROS_GROOVY;
 
-    /* Debug message.
-     */
     DPF((DBG_MESSAGE, "PVRDTrianglesPrimitive() call.\n"));
 
     DirectTriPrimitive(pRenderContext->hTextureHeap, &pRenderContext->SGLContext,
                        dwNumFaces, pFaces, pVertices, bUseFullSort, PrimitiveType);
 
-    return (Error);
+    return PVROS_GROOVY;
 }
 
 /**************************************************************************
@@ -1390,7 +1384,7 @@ PVROSERR CALL_CONV PVRDLines(PPVR_RENDERCONTEXT pRenderContext,
      */
     DirectLines(&pRenderContext->SGLContext, dwNumLines, pLines, pVertices, nNextLineInc);
 
-    return (Error);
+    return PVROS_GROOVY;
 }
 
 /**************************************************************************
@@ -1409,7 +1403,6 @@ PVROSERR CALL_CONV PVRDPoints(PPVR_RENDERCONTEXT pRenderContext,
                               sgl_uint32 dwNumPoints,
                               sgl_uint16 *pPoints,
                               PSGLVERTEX pVertices) {
-    PVROSERR Error = PVROS_GROOVY;
 
     /* Debug message.
      */
@@ -1420,7 +1413,8 @@ PVROSERR CALL_CONV PVRDPoints(PPVR_RENDERCONTEXT pRenderContext,
      */
     DirectPoints(&pRenderContext->SGLContext, dwNumPoints, pPoints, pVertices);
 
-    return (Error);
+
+    return PVROS_GROOVY;
 }
 
 /**************************************************************************
@@ -1442,7 +1436,6 @@ PVROSERR CALL_CONV PVRDShadows(PPVR_RENDERCONTEXT pRenderContext,
                                int pFaces[][3],
                                PSGLVERTEX pVertices,
                                float fBoundingBox[2][2]) {
-    PVROSERR Error = PVROS_GROOVY;
 
     /* Debug message.
      */
@@ -1454,7 +1447,7 @@ PVROSERR CALL_CONV PVRDShadows(PPVR_RENDERCONTEXT pRenderContext,
                   pVertices,
                   fBoundingBox);
 
-    return (Error);
+    return PVROS_GROOVY;
 }
 
 /**************************************************************************
@@ -1468,7 +1461,6 @@ PVROSERR CALL_CONV PVRDShadows(PPVR_RENDERCONTEXT pRenderContext,
  **************************************************************************/
 
 PVROSERR CALL_CONV PVRDPreRender(PPVR_RENDERCONTEXT pRenderContext) {
-    PVROSERR Error = PVROS_GROOVY;
     SGLCONTEXT *pContext = &pRenderContext->SGLContext;
     REGIONS_RECT_STRUCT RegionRect;
     sgl_bool bRenderAllRegions;
@@ -1590,7 +1582,7 @@ PVROSERR CALL_CONV PVRDPreRender(PPVR_RENDERCONTEXT pRenderContext) {
      */
     gHLogicalDev->Registers[PCX_LSTRIDE] = pRenderContext->lStride;
 
-    return (Error);
+    return PVROS_GROOVY;
 }
 
 /**************************************************************************
@@ -1604,14 +1596,13 @@ PVROSERR CALL_CONV PVRDPreRender(PPVR_RENDERCONTEXT pRenderContext) {
  **************************************************************************/
 
 PVROSERR CALL_CONV PVRDRender(PPVR_RENDERCONTEXT pRenderContext) {
-    PVROSERR Error = PVROS_GROOVY;
 
 #if DUMP_SABRE_AND_TEXAS
     DumpSabreAndTexas();
 #endif
     /* Start render.
      */
-    Error = PVROSScheduleRender(gHLogicalDev);
+    PVROSERR Error = PVROSScheduleRender(gHLogicalDev);
 
     DPF((DBG_MESSAGE, "Done HWStartRender !!!!"));
 
@@ -1632,7 +1623,7 @@ PVROSERR CALL_CONV PVRDRender(PPVR_RENDERCONTEXT pRenderContext) {
 PVROSERR CALL_CONV PVRDRenderStrip(PPVR_RENDERCONTEXT pRenderContext,
                                    int nStrip,
                                    int nXExtent[2]) {
-    PVROSERR Error = PVROS_GROOVY;
+    PVROSERR Error;
     SGLCONTEXT *pContext = &pRenderContext->SGLContext;
     REGIONS_RECT_STRUCT RegionRect;
     sgl_bool bRenderAllRegions;

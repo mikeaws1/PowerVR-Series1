@@ -635,9 +635,9 @@ void *GetNamedItemAndType(P_NAMTAB_STRUCT pExternNamtab,
 
 void *GetTextureHandle(int nTextureName) {
     void *hTexture = NULL;
-    P_NAMTAB_STRUCT pNamtab;
+    P_NAMTAB_STRUCT pNamtab = (P_NAMTAB_STRUCT) GetNameTable();
 
-    if (pNamtab = (P_NAMTAB_STRUCT) GetNameTable()) {
+    if (pNamtab != NULL) {
         if (GetNamedItemType(pNamtab, nTextureName) == nt_texture) {
             hTexture = GetNamedItem(pNamtab, nTextureName);
         }
@@ -657,12 +657,11 @@ void *GetTextureHandle(int nTextureName) {
  **************************************************************************/
 
 void CALL_CONV sgl_delete_all_textures(void) {
-    void *hTexture = NULL;
-    P_NAMTAB_STRUCT pNamtab;
+    P_NAMTAB_STRUCT pNamtab = (P_NAMTAB_STRUCT) GetNameTable();
     TAB_ENT_STRUCT *pEnt;            /*  Pointer to an individual entry */
     int i;
 
-    if (pNamtab = (P_NAMTAB_STRUCT) GetNameTable()) {
+    if (pNamtab != NULL) {
         /* Step through the name table */
         NAMTAB_STRUCT *p_namtab = (NAMTAB_STRUCT *) pNamtab;
 
