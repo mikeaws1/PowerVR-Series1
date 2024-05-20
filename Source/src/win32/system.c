@@ -326,19 +326,19 @@
 
 #define MODULE_ID MODID_SYSTEM
 
-#include "windows.h"
+#include <windows.h>
 
 #define API_FNBLOCK
-#include "sgl.h"
+#include <sgl.h>
 #undef API_FNBLOCK
-#include "sgl_defs.h"
-#include "pvrosapi.h"
-#include "vsgl.h"
-#include "pci.h"
-#include "hwregs.h"
-#include "debug.h"
+#include <sgl_defs.h>
+#include <pvrosapi.h>
+#include <vsgl.h>
+#include <pci.h>
+#include <hwregs.h>
+#include <debug.h>
 
-#include "heap.h"
+#include <heap.h>
 
 #define USE_VIRTUAL_BUFFERS 0
 #if USE_VIRTUAL_BUFFERS
@@ -923,7 +923,7 @@ static int FreeSharedBlock (HANDLE hVxD, SHAREDBLOCK *blk)
 static int MapLinearToPhysical(HANDLE hVxD, sgl_uint32 dwLinear, sgl_uint32* pPhysical)
 {
 	sgl_uint32 dwIoBuffer;
-	sgl_uint32 dwBytesReturned;
+	sgl_uint64 dwBytesReturned;
 	sgl_uint16 wRet;
 
 	dwIoBuffer = dwLinear;
@@ -1439,7 +1439,7 @@ PVROSERR CALL_CONV PVROSWritePCIConfigSpace(HDEVICE hDevice, sgl_uint32 dwRegNo,
  * set to give Memory Type 0x01 AND MTRR enable bit = 1 in MTRRdefType register.
  *
  *****************************************************************************/
-PVROSERR CALL_CONV PVROSSetCacheMode (DMABUFFER *blk, DWORD mode)
+PVROSERR CALL_CONV PVROSSetCacheMode (DMABUFFER *blk, sgl_uint32 mode)
 {
 	HANDLE hVxD = OpenVxd();
 
@@ -1764,7 +1764,7 @@ PVROSERR CALL_CONV PVROSClosePCIDevice (HDEVICE hDevice)
 /**********************************************************************/
 
 /* this function sets up all board specific interrupt handlers */
-PVROSERR CALL_CONV PVROSSetupPowerVRDevice (HDEVICE hDevice, DEVICE_TYPE BoardType)
+__attribute__((unused)) PVROSERR CALL_CONV PVROSSetupPowerVRDevice (HDEVICE hDevice, DEVICE_TYPE_POWERVR BoardType)
 {
 	DWORD 	*pPhysBoardID = hDevice;
 	HANDLE hVxD = OpenVxd();
@@ -2118,6 +2118,8 @@ void CALL_CONV PVROSAssert(char *szAssertText, char *szFileName, sgl_int32 nLine
 sgl_uint32 CALL_CONV PVROSQueryPerformanceCounter(sgl_largeint* Val)
 {
 	/* Read the Time Stamp Counter and adjust it's value down a bit */
+    int result;
+#ifndef __GNUC__
 	_asm
 	{
 		_emit 0x0F
@@ -2128,12 +2130,25 @@ sgl_uint32 CALL_CONV PVROSQueryPerformanceCounter(sgl_largeint* Val)
 		mov		[ecx], eax
 		mov		[ecx+4], edx	
 	}
+#else
+    __asm__ __volatile__(
+            ".byte 0x0f\n"
+            ".byte 0x31\n"
+            "movl (%0), %%ecx\n"
+            "shrd $7, %%edx, %%eax\n"
+            "shr $7, %%edx\n"
+            "movl %%eax, (%%ecx)\n"
+            "movl %%edx, 4(%%ecx)\n"
+            ::"m"(*Val)
+            );
+#endif
 	
 	return(TRUE);
 }
 sgl_uint32 CALL_CONV PVROSQueryPerformanceFrequency(sgl_largeint* Val)
 {
 	/* Reset the Time Stamp Counter by loading 0's into it */
+#ifndef __GNUC__
 	_asm
 	{
 		mov		ecx, 010h
@@ -2142,6 +2157,16 @@ sgl_uint32 CALL_CONV PVROSQueryPerformanceFrequency(sgl_largeint* Val)
 		_emit	0x0F
 		_emit	0x30
 	}
+#else
+    __asm__ __volatile__(
+                         "mov $0x10, %ecx \n"
+                         "mov $0x0, %edx \n"
+                         "mov $0x0, %eax \n"
+                         ".byte 0x0f\n"
+                         ".byte 0x03\n"
+            );
+
+#endif
 
 	PVROSDelay(PVR_DELAY_MS,1000); /* 1 second pause */
 	PVROSQueryPerformanceCounter(Val);

@@ -110,14 +110,15 @@
 
 #define INITGUID			/* make sure global guids are defined (see ddraw.h) */
 
-#include "windows.h"
-#include "ddraw.h"
+#include <windows.h>
+#include <winuser.h>
+#include <ddraw.h>
 
-#include "sgl.h"
-#include "sglwin32.h"
-#include "sgl_defs.h"
-#include "debug.h"
-#include "pvrosapi.h"
+#include <sgl.h>
+#include <sglwin32.h>
+#include <sgl_defs.h>
+#include <debug.h>
+#include <pvrosapi.h>
 
 #if DEBUG
 static unsigned char Black[3] = { 0xFF, 0, 0xFF };
@@ -187,8 +188,8 @@ PVROSERR CALL_CONV PVROSEndOfRenderCallbackAuto (void *pData, HDISPLAY hDisplay)
 #define ISDDOK(x)	((x)==DD_OK)
 #define DDOK(x)		(x)
 
-#define DumpDisplayModeTable /##/
-#define DumpDisplayModeDataBlock /##/
+#define DumpDisplayModeTable
+#define DumpDisplayModeDataBlock
 
 #else
 
@@ -378,7 +379,7 @@ static void DumpDisplayModeDataBlock (DisplayModeDataBlock *pDMDB)
 /**/
 /**/
 /**********************************************************************/
-static void FillSurface (LPDIRECTDRAWSURFACE pSurf, unsigned char FillCol[3], int x, int y, int bpp)
+static void FillSurface (LPDIRECTDRAWSURFACE pSurf, const unsigned char FillCol[3], int x, int y, int bpp)
 {
 	if (pSurf)
 	{
@@ -437,7 +438,7 @@ static void FillSurface (LPDIRECTDRAWSURFACE pSurf, unsigned char FillCol[3], in
 			}
 		}
 
-		DDBF.dwFillColor = Col.dw;
+		DDBF.u5.dwFillColor = Col.dw;
 
 		while (DDOK (IDirectDrawSurface2_Blt (pSurf,
 											   &rc, 
@@ -811,12 +812,12 @@ static void GetDisplayModeTable (DisplayModeTable *pDMT, LPDDSURFACEDESC lpDDSur
 {
 	pDMT->hMode = MAKE_HMODE (lpDDSurfaceDesc->dwWidth,
 							  lpDDSurfaceDesc->dwHeight,
-							  lpDDSurfaceDesc->ddpfPixelFormat.dwRGBBitCount,
+							  lpDDSurfaceDesc->ddpfPixelFormat.u1.dwRGBBitCount,
 							  0);
 
 	pDMT->XResolution =	lpDDSurfaceDesc->dwWidth;
 	pDMT->YResolution =	lpDDSurfaceDesc->dwHeight;
-	pDMT->BitDepth =	lpDDSurfaceDesc->ddpfPixelFormat.dwRGBBitCount;
+	pDMT->BitDepth =	lpDDSurfaceDesc->ddpfPixelFormat.u1.dwRGBBitCount;
 
 	#if 0
 	DumpDisplayModeTable (pDMT);
@@ -852,14 +853,14 @@ static void GetDisplayModeDataBlock (DisplayModeDataBlock *pDMDB, PRIVATE_DISPLA
 		pDMDB->RefreshRate = 0;
 	}
 	
-	pDMDB->RedMask =	DDSD.ddpfPixelFormat.dwRBitMask;
-	pDMDB->GreenMask =	DDSD.ddpfPixelFormat.dwGBitMask;
-	pDMDB->BlueMask =	DDSD.ddpfPixelFormat.dwBBitMask;
+	pDMDB->RedMask =	DDSD.ddpfPixelFormat.u2.dwRBitMask;
+	pDMDB->GreenMask =	DDSD.ddpfPixelFormat.u3.dwGBitMask;
+	pDMDB->BlueMask =	DDSD.ddpfPixelFormat.u4.dwBBitMask;
 	
 	/* Check if we are in 15 bit mode.
 	 */
-	if (DDSD.ddpfPixelFormat.dwGBitMask == 0x3E0)
-	   DDSD.ddpfPixelFormat.dwRGBBitCount = 15;
+	if (DDSD.ddpfPixelFormat.u3.dwGBitMask == 0x3E0)
+	   DDSD.ddpfPixelFormat.u1.dwRGBBitCount = 15;
 
 	if (DDSD.dwFlags & DDSD_BACKBUFFERCOUNT)
 	{
@@ -1530,14 +1531,14 @@ PVROSERR CALL_CONV PVROSPreRenderCallbackAuto (void *pData, HDISPLAY hDisplay)
 					0)))
 	{
 		pPRCS->PhysRenderBufferAddress		= PVROSMapLinearToPhysical ((sgl_uint32)DDSD.lpSurface);
-		pPRCS->PhysRenderBufferBitsPerPixel = DDSD.ddpfPixelFormat.dwRGBBitCount;
+		pPRCS->PhysRenderBufferBitsPerPixel = DDSD.ddpfPixelFormat.u1.dwRGBBitCount;
 
 		/* Check if we are in 15 bit mode.
 		 */
-		if (DDSD.ddpfPixelFormat.dwGBitMask == 0x3E0)
+		if (DDSD.ddpfPixelFormat.u3.dwGBitMask == 0x3E0)
 			pPRCS->PhysRenderBufferBitsPerPixel = 15;
 
-		pPRCS->PhysRenderBufferStride		= DDSD.lPitch;
+		pPRCS->PhysRenderBufferStride		= DDSD.u1.lPitch;
 		
 		if (!pPDB->fStrictLocks)
 		{
@@ -1652,8 +1653,8 @@ PVROSERR CALL_CONV GetDDraw2dCallbackInfo( HDISPLAY hDisplay, void *pData )
 			pCSP->pDDObject = 			pPDB->pDDraw;
 			pCSP->p3DSurfaceObject = 	pPDB->pBackBuffer;
 			pCSP->p3DSurfaceMemory = 	DDSD.lpSurface;
-			pCSP->wBitsPerPixel = 		(sgl_uint16)DDSD.ddpfPixelFormat.dwRGBBitCount;
-			pCSP->dwStride = 			DDSD.lPitch;
+			pCSP->wBitsPerPixel = 		(sgl_uint16)DDSD.ddpfPixelFormat.u1.dwRGBBitCount;
+			pCSP->dwStride = 			DDSD.u1.lPitch;
 			pCSP->wWidth = 				(sgl_uint16)pPDB->DMDB.DMT.XResolution;
 			pCSP->wHeight = 			(sgl_uint16)pPDB->DMDB.DMT.YResolution;
 

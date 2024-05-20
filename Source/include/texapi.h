@@ -158,7 +158,7 @@ typedef struct
   unsigned int 	TranslucentControlWord;
   unsigned int 	VertexFogControlWord;
   HDEVICE 		hDeviceID;
-  DEVICE_TYPE	DeviceType;
+  DEVICE_TYPE_POWERVR	DeviceType;
   unsigned int  uTexCount;
 	
 } TEXTUREHEAP, *HTEXHEAP; /* handle to texture heap */

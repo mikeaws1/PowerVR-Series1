@@ -3822,7 +3822,7 @@ extern void CALL_CONV sgl_set_texture ( int texture_name,
 
     Translucent=(hTex->TSPTextureControlWord & MASK_4444_555) != 0;
 
-	if(hTex->TSPTextureControlWord & MASK_8_16_MAPS==0)
+	if((hTex->TSPTextureControlWord & MASK_8_16_MAPS)==0)
 		map_type = sgl_map_8bit;
 	else
 	{

@@ -799,7 +799,7 @@ sgl_uint32 PVROSHookIRQ (sgl_uint32 fEnable, DEVICE_TYPE DeviceType, HDEVICE hDe
  * Description  : find board and decode BIOS allocated memory and get aliases
  *****************************************************************************/
 
-PVROSERR CALL_CONV PVROSInitPCIAddresses (HDEVICE hDeviceID, DEVICE_TYPE DeviceType)
+PVROSERR CALL_CONV PVROSInitPCIAddresses (HDEVICE hDeviceID, DEVICE_TYPE_POWERVR DeviceType)
 {
 	/* Setup PCI latency.
 	 */
@@ -942,7 +942,7 @@ static DEVICE_TYPE GetDeviceType(HDEVICE hDeviceID)
 BUFFER_LIST *PVROSGetSecretBuffer(HDEVICE hDeviceID)
 {
 	DEVICEID DeviceID;
-	DEVICE_TYPE DeviceType;
+	DEVICE_TYPE_POWERVR DeviceType;
 	int i;
 
 	DeviceID = GetDeviceID(hDeviceID);
@@ -998,7 +998,7 @@ void CALL_CONV PVROSDestroyPhysicalDevice(HDEVICE hDeviceID)
 	HANDLE		hBufferMutex = CreateMutex(NULL,FALSE,"VirtualBufferMutex");
 
 	DEVICEID DeviceID;
-	DEVICE_TYPE DeviceType;
+	DEVICE_TYPE_POWERVR DeviceType;
 	int i;
 	int nBoardID=-1;
 

@@ -175,6 +175,7 @@ sgl_bool GetApplicationHintString (char *pszHint, char *pszBuffer, int pszBuffer
 	sgl_bool fRet = FALSE;
 	char szCaller[256];
 	char szKey[512];
+    unsigned long bufferSize = pszBufferSize;
 
 	/* Get the registry area depending on the hardware present ie Maxtrox m3D or PowerVR.
 	 */
@@ -202,7 +203,7 @@ sgl_bool GetApplicationHintString (char *pszHint, char *pszBuffer, int pszBuffer
 			{
 				DWORD dwType;
 
-				if (RegQueryValueEx (hKey, pszHint, 0, &dwType, pszBuffer, &pszBufferSize) == ERROR_SUCCESS)
+				if (RegQueryValueEx (hKey, pszHint, 0, &dwType, pszBuffer, &bufferSize) == ERROR_SUCCESS)
 				{
 					if (dwType == REG_SZ)
 					{

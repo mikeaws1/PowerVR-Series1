@@ -548,7 +548,7 @@ void GetParameterSpace(PVR_PARAM_BUFF pBuff[3])
 
 typedef PVRHANDLE HINSTANCE;
 
-DEVICE_TYPE		gDeviceType;
+DEVICE_TYPE_POWERVR		gDeviceType;
 DEVICEID		gDeviceID;
 HINSTANCE		gDllHandle;
 HLDEVICE        gHLogicalDev;
@@ -584,7 +584,7 @@ void CALL_CONV SglSetGlobal (SGL_Globals eGlobal, void* pValue)
 		}
 		case SGL_DeviceType:
 		{
-			gDeviceType = (DEVICE_TYPE) pValue;
+			gDeviceType = (DEVICE_TYPE_POWERVR) pValue;
 			break;
 		}
 		case SGL_LogicalDev:

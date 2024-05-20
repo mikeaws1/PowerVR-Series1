@@ -232,7 +232,7 @@ INLINE_P20 sgl_int32 PackTo20Bit(const float	Value)
 				}/*end if exponent too large*/
 			}/*end if mantissa overflow*/
 
-		#endif USE_ROUNDING
+		#endif //USE_ROUNDING
 		/* ////////////// */
 
 		/*
@@ -380,10 +380,4 @@ static INLINE sgl_int32 NegatePacked20Bit(sgl_int32 val)
 		return (0); 			
 	#endif
 }
-
-
-
-/*
-// End of file
-*/
 

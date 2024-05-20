@@ -4,7 +4,7 @@ project(PowerVR C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_FLAGS -m32)
 
-add_definitions(-DWIN32 -DPCX2 -D_BUILDING_SGL_)
+add_definitions(-DWIN32 -DPCX2 -D_BUILDING_SGL_ -D_MSC_VER)
 include_directories(Source/include)
 include_directories(Source/pcx)
 include_directories(Source/pcmake)
@@ -15,7 +15,7 @@ include_directories(Source/platform)
 include_directories(Source/src/win32)
 
 
-add_library(${PROJECT_NAME}_driver SHARED
+set(PVRD_SRC
         Source/src/d3dlines.c
         Source/src/d3dpoint.c
         Source/src/dtex.c
@@ -38,20 +38,7 @@ add_library(${PROJECT_NAME}_driver SHARED
         Source/src/singmath.c
 )
 
-add_library(${PROJECT_NAME}_sgllite SHARED
-        Source/src/dsprite.c
-        Source/src/dlines.c
-        Source/src/dpoint.c
-        Source/src/dtex.c
-        Source/src/dtexnp.c
-        Source/src/disp.c
-        Source/src/dtsp.c
-        Source/src/dshade.c
-        Source/src/dtri.c
-        Source/src/sgltri.c
-        Source/src/sgllite.c
-)
-add_library(${PROJECT_NAME}_sgl_common SHARED
+set(SGL_COMMON
         Source/src/error.c
         Source/src/rnglobal.c
         Source/src/txmops.c
@@ -68,11 +55,22 @@ add_library(${PROJECT_NAME}_sgl_common SHARED
         Source/src/pktsp.c
         Source/src/debug.c
 )
+set(SGL_LITE
+        Source/src/dsprite.c
+        Source/src/dlines.c
+        Source/src/dpoint.c
+        Source/src/dtex.c
+        Source/src/dtexnp.c
+        Source/src/disp.c
+        Source/src/dtsp.c
+        Source/src/dshade.c
+        Source/src/dtri.c
+        Source/src/sgltri.c
+        Source/src/sgllite.c
+)
 
+set(SGL
 
-
-
-add_library(${PROJECT_NAME}_sgl SHARED
         Source/src/d3dlines.c
         Source/src/d3dpoint.c
         Source/src/dtex.c
@@ -95,7 +93,13 @@ add_library(${PROJECT_NAME}_sgl SHARED
         Source/src/singmath.c
 )
 
-add_library(${PROJECT_NAME}_pvros SHARED
+
+
+add_library(${PROJECT_NAME}_sgl SHARED
+      ${SGL} )
+
+
+set(PVROS_SRC
         Source/src/texapi.c
         Source/src/tmalloc.c
         Source/src/profile.c
@@ -103,7 +107,7 @@ add_library(${PROJECT_NAME}_pvros SHARED
         Source/src/debug.c
 )
 
-add_library(${PROJECT_NAME}_win32os SHARED
+set(PVRD_WIN32_SRC
         Source/src/win32/system.c
         Source/src/win32/display.c
         Source/src/win32/pvros.rc
@@ -113,4 +117,9 @@ add_library(${PROJECT_NAME}_win32os SHARED
         Source/src/win32/brdcfg.c
         Source/src/win32/brdsetup.c
         Source/src/win32/texif.c
-        Source/src/win32/heap.c)
+        Source/src/win32/heap.c
+        Source/include/texheap.h)
+
+add_library(${PROJECT_NAME}_os SHARED
+        ${PVRD_WIN32_SRC} ${PVRD_SRC}
+)

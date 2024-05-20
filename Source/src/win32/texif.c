@@ -110,6 +110,7 @@
 #include <texapip.h>
 #include <error.h>
 #include <hwtexas.h> /* For TEX_PARAM_SIZE */
+#include <texheap.h>
 
 #define NO_OF_TEX_HEAPS 4 /* Pick a number ... (VxD uses 4) */
 

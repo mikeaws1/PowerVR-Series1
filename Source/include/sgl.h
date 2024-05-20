@@ -205,6 +205,8 @@ typedef unsigned short	sgl_uint16;
 typedef signed int      sgl_int32;
 typedef unsigned int    sgl_uint32;
 typedef	unsigned int	sgl_uint;
+typedef unsigned long sgl_uint64;
+typedef	long sgl_uintg64;
 
 typedef enum
 {

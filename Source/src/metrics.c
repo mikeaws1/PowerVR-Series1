@@ -39,21 +39,34 @@ sgl_uint32 nTotalPolygonsInFrame, nTransPolygonsInFrame, nOpaquePolygonsInFrame;
 sgl_uint32  SglTimeNow(void)
 {
 	static sgl_uint32 Time;
+#ifndef __GNUC__
+	__asm
+		{
+			push	eax
+			push	edx
 
-//	__asm
-//		{
-//			push	eax
-//			push	edx
-//
-//			_emit 0Fh
-//			_emit 31h
-//
-//			shrd	eax, edx, 4
-//
-//			mov		Time, eax
-//			pop		edx
-//			pop		eax
-//		}
+			_emit 0Fh
+			_emit 31h
+
+			shrd	eax, edx, 4
+
+			mov		Time, eax
+			pop		edx
+			pop		eax
+		}
+#else
+    __asm__ __volatile__(
+            "push %%eax\n"
+            "push %%edx\n"
+            ".byte 0x0f\n"
+            ".byte 0x31\n"
+            "shrd $4, %%edx, %%eax\n"
+            "mov %%eax, %0\n"
+            "pop %%edx\n"
+            "pop %%eax\n":"=m"(Time)
+            );
+
+#endif
 
 	return Time;
 }
@@ -87,8 +100,8 @@ float  SglCPUFreq(void)
    QueryPerformanceFrequency( &AccFreq );
 
    Time1 = (Time2 - Time1);
-   AccTime = ( AccClock2.LowPart - AccClock1.LowPart);
-   TPS = (float)Time1 / ((float)AccTime/(float)(AccFreq.LowPart));
+   AccTime = ( AccClock2.s.LowPart - AccClock1.s.LowPart);
+   TPS = (float)Time1 / ((float)AccTime/(float)(AccFreq.s.LowPart));
 
    if ( Time1 != 0 ) 
       return TPS;

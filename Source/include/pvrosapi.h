@@ -123,7 +123,7 @@
  * added shedule prototype and structs for virtual buffs
  *
  * Revision 1.48  1997/05/13  11:14:55  gdc
- * added a DEVICE_TYPE to the logical device
+ * added a DEVICE_TYPE_POWERVR to the logical device
  *
  * Revision 1.47  1997/05/13  11:05:53  gdc
  * added new structures to virtualise buffers
@@ -282,7 +282,7 @@ typedef enum
 	MIDAS4,
 	MIDAS5,
 	MIDAS5_003
-} DEVICE_TYPE;
+} DEVICE_TYPE_POWERVR;
 
 #define WHICH_CARD_REGISTRY_STRING	"SOFTWARE\\PowerVR\\PCX1&2\\StartUp"
 #define VL_REGISTRY_STRING			"SOFTWARE\\PowerVR\\PCX1&2\\"
@@ -300,7 +300,7 @@ typedef struct PciDeviceTable
 	DEVICEID   DeviceID;             /* (Bus Number << 8) + (Device Number << 3) + Function Number */
 	sgl_uint32 PCIVendorID;
 	sgl_uint32 PCIDeviceID;
-	DEVICE_TYPE DeviceType;
+	DEVICE_TYPE_POWERVR DeviceType;
 } PciDeviceTable;
 
 typedef enum
@@ -311,7 +311,7 @@ typedef enum
 
 typedef struct BoardDataBlock
 {
-	DEVICE_TYPE	DeviceType;
+	DEVICE_TYPE_POWERVR	DeviceType;
 	sgl_uint32 	PCIVendorID;
 	sgl_uint32 	PCIDeviceID;
 	sgl_uint32 	PCIBus;
@@ -349,7 +349,7 @@ typedef struct DisplayDeviceTable
 typedef struct DisplayModeDataBlock
 {
 	DisplayModeTable	DMT;
-	sgl_uint32			RefreshRate;
+	sgl_uint64			RefreshRate;
 	sgl_uint32			RedMask;
 	sgl_uint32			GreenMask;
 	sgl_uint32			BlueMask;
@@ -497,7 +497,7 @@ typedef struct tagPCXBUFFER
  
 typedef struct tagBUFFER_LIST {
 	volatile sgl_bool 		bInUse;
-	DEVICE_TYPE 			DeviceType;
+	DEVICE_TYPE_POWERVR 			DeviceType;
 	PCXBUFFER 				PCXBuffer;
 	DMASCATTERBUFFER 		*pDMASB;
 	DMABUFFER 				*pDMAB;
@@ -518,7 +518,7 @@ typedef struct LogicalDevice
 	sgl_uint32 			RenderTimeout;
 	sgl_uint32 			Registers[32];
 	HDEVICE 			hDeviceID;
-	DEVICE_TYPE 		DeviceType;
+	DEVICE_TYPE_POWERVR 		DeviceType;
 	BUFFER_LIST 		*VirtualBuffer;
 	volatile sgl_uint32 RendersPending;
 	sgl_uint32			dwPID;
@@ -668,9 +668,9 @@ API_END (PVROSAPI)
 	PVROSERR PVROSSetCacheMode (DMABUFFER *blk,sgl_uint32 mode);
 	HDEVICE	PVROSOpenPCIDevice (DEVICEID DeviceID);
 	PVROSERR PVROSClosePCIDevice (HDEVICE hDevice);
-	PVROSERR PVROSSetupPowerVRDevice (HDEVICE hDevice,DEVICE_TYPE BoardType);
+	PVROSERR PVROSSetupPowerVRDevice (HDEVICE hDevice, DEVICE_TYPE_POWERVR BoardType);
 	PVROSERR PVROSGetPCIDeviceInfo (HDEVICE hDevice, BoardDataBlock *BDB);
-	PVROSERR PVROSInitPCIAddresses (HDEVICE hDeviceID,DEVICE_TYPE DeviceType);
+	PVROSERR PVROSInitPCIAddresses (HDEVICE hDeviceID, DEVICE_TYPE_POWERVR DeviceType);
 	PVROSERR PVROSReadPCIConfigSpace (HDEVICE hDevice,sgl_uint32 dwRegNo,sgl_uint32 *dwRegValue);
 	PVROSERR PVROSWritePCIConfigSpace (HDEVICE hDevice,sgl_uint32 dwRegNo,sgl_uint32 dwRegValue);
 	PVROSERR PVROSCopyBufferToHardware (void *Src,void *Dst,sgl_uint32 Bytes,sgl_uint32 CheckCopy);
