@@ -308,8 +308,9 @@
 #include "hwtexas.h"
 
 extern HANDLE OpenVxd(void);
+
 extern void CloseVxd(HANDLE);
- 
+
 #define USE_VIRTUAL_BUFFERS 0
 #if USE_VIRTUAL_BUFFERS
 #pragma message ("Use of virtual buffers ENABLED!")
@@ -324,19 +325,19 @@ extern void CloseVxd(HANDLE);
 #define PCX2_TSP_BASE_POS 6
 
 /* TEX_PARAM_SIZE defined in hwtexas.h */
-#define ISP_PARAM_SIZE  512*1024
-#define OBJECT_PARAM_SIZE  512*1024
+#define ISP_PARAM_SIZE  (512*1024)
+#define OBJECT_PARAM_SIZE  (512*1024)
 
-#define SCBUS_BURST_PAGES			0x400
-#define SCBUS_IO_PAGES				0x10
+#define SCBUS_BURST_PAGES            0x400
+#define SCBUS_IO_PAGES                0x10
 
 /*
  * 0x08 = write through
  * 0x10 = cache disable
- */								 
+ */
 
-#define DISABLE_CACHE				0x10
-#define WRITE_COMBINING				0x00 /* Only valid for P6, P5 does nothing */
+#define DISABLE_CACHE                0x10
+#define WRITE_COMBINING                0x00 /* Only valid for P6, P5 does nothing */
 
 /* Globals containing PCI address space locations */
 
@@ -344,9 +345,9 @@ extern void CloseVxd(HANDLE);
 
 
 typedef struct tagLIST {
-	struct tagLIST *Next;
-	struct tagLIST *Prev;
-	HLDEVICE hLogicalDev;
+    struct tagLIST *Next;
+    struct tagLIST *Prev;
+    HLDEVICE hLogicalDev;
 } LIST, *PLIST;
 
 static int RealBufferCount = 0;
@@ -358,25 +359,24 @@ static char Safety[1024];
 
 #define MAX_BOARDS 16
 
-typedef struct 
-{
-	int nRefCount;
-	DEVICEID DeviceID;
-	HDEVICE ghDeviceID;
+typedef struct {
+    int nRefCount;
+    DEVICEID DeviceID;
+    HDEVICE ghDeviceID;
 #if USE_VIRTUAL_BUFFERS
-	BUFFER_LIST *SecretBuffer;
+    BUFFER_LIST *SecretBuffer;
 #endif
-	int			nLogicalDevices;
-	LIST        *LDeviceList;
+    int nLogicalDevices;
+    LIST *LDeviceList;
 } BOARDREF;
 
 /* this assumes we have a max of 16 boards 
 ** - Must assume all data initialised to 0 
 */
-static	BOARDREF gBoardRef[MAX_BOARDS]; 
+static BOARDREF gBoardRef[MAX_BOARDS];
 
-volatile sgl_uint32 * volatile pSCBusBurstSpace = NULL;
-volatile sgl_uint32 * volatile pSCBusIOSpace 	= NULL;
+volatile sgl_uint32 *volatile pSCBusBurstSpace = NULL;
+volatile sgl_uint32 *volatile pSCBusIOSpace = NULL;
 
 /*static DMABUFFER SCBusIOSpace = {0};*/
 
@@ -385,14 +385,14 @@ sgl_uint32 physISPObjectData = {0};
 sgl_uint32 TSPDoubleBuffer = 1;  /* Needed for dtri.c */
 
 /* Hardware globals */
-static sgl_uint16	wPCIVendorID = 0;
+static sgl_uint16 wPCIVendorID = 0;
 
 #if !DOS32
-static sgl_uint32	pciHeader0C = 0;
+static sgl_uint32 pciHeader0C = 0;
 #endif
 
 /* Required in HW Setup */
-sgl_uint16	wPCIDeviceID = 0;
+sgl_uint16 wPCIDeviceID = 0;
 
 /* Hook IRQ stuff */
 static sgl_uint32 fHooked = FALSE;
@@ -400,282 +400,259 @@ static sgl_uint32 fHooked = FALSE;
 #pragma data_seg()
 
 void ReleaseVirtualBufferMutex(HANDLE hMutex);
-sgl_bool GetVirtualBufferMutex(HANDLE hMutex);
-PVROSERR PVROSSetupPCILatency(HDEVICE  hDeviceID);
 
-BUFFER_LIST *AddNewBuffer(HLDEVICE hLogicalDev,sgl_bool AttachToList);
+sgl_bool GetVirtualBufferMutex(HANDLE hMutex);
+
+PVROSERR PVROSSetupPCILatency(HDEVICE hDeviceID);
+
+BUFFER_LIST *AddNewBuffer(HLDEVICE hLogicalDev, sgl_bool AttachToList);
 
 BUFFER_LIST *AddNewBufferPCX1(HANDLE hVxD,
-							  DEVICE_TYPE DeviceType,
-							  sgl_uint32 PlaneMemBytes, 
-							  sgl_uint32 ObjectMemBytes,
-							  sgl_uint32 TexasMemBytes);
+                              DEVICE_TYPE DeviceType,
+                              sgl_uint32 PlaneMemBytes,
+                              sgl_uint32 ObjectMemBytes,
+                              sgl_uint32 TexasMemBytes);
 
-BUFFER_LIST *AddNewBufferPCX2(HANDLE 		hVxD,
-							  DEVICE_TYPE	DeviceType,
-							  sgl_uint32 	PlaneMemBytes, 
-							  sgl_uint32 	ObjectMemBytes,
-							  sgl_uint32 	TexasMemBytes);
+BUFFER_LIST *AddNewBufferPCX2(HANDLE hVxD,
+                              DEVICE_TYPE DeviceType,
+                              sgl_uint32 PlaneMemBytes,
+                              sgl_uint32 ObjectMemBytes,
+                              sgl_uint32 TexasMemBytes);
 
-void PVROSDestroyAVirtualBuffer(DEVICE_TYPE DeviceType,HANDLE hVxD,HANDLE hBufferMutex);
-BUFFER_LIST *FindUnusedBuffer(DEVICE_TYPE DeviceType,HANDLE hBufferMutex);
+void PVROSDestroyAVirtualBuffer(DEVICE_TYPE DeviceType, HANDLE hVxD, HANDLE hBufferMutex);
+
+BUFFER_LIST *FindUnusedBuffer(DEVICE_TYPE DeviceType, HANDLE hBufferMutex);
+
 static void CALL_CONV GetParamSettings(HLDEVICE Device);
 
 /* Select which TSP parameter allocation method to use.
  * 0 allocates memory via the VxD (ie PageReserve, PageCommit etc.) and ensures that
  * it is fixed.
  */
-#define	SHARED_HEAP	0
+#define    SHARED_HEAP    0
 
 extern void *CALL_CONV PVROSTSPAlloc(HANDLE hVxD, sgl_uint32 dwSize);
-extern void *CALL_CONV PVROSTSPRealloc(HANDLE hVxD, void *Address, sgl_uint32 dwSize);
-extern void CALL_CONV PVROSTSPFree (HANDLE hVxD, void *Address);
 
+extern void *CALL_CONV PVROSTSPRealloc(HANDLE hVxD, void *Address, sgl_uint32 dwSize);
+
+extern void CALL_CONV PVROSTSPFree(HANDLE hVxD, void *Address);
 
 
 /**********************************************************************/
 
-sgl_uint32 PVROSExtendTSPBuffer(HLDEVICE gHLogicalDev)
-{
-	sgl_int32 nCurrent, nExtended, nResult;
-	PVR_PARAM_BUFF *pBuff = &gHLogicalDev->Buffers[PVR_PARAM_TYPE_TSP];
-	
-	nCurrent = pBuff->uBufferLimit << 2;
-	nExtended = nCurrent + 1024*64;
-	
-	nResult = PVROSSetTSPHighWaterMark (gHLogicalDev->TexHeap, nExtended, FALSE);
-		
-	if (nResult == nExtended)
-	{
-		void *pNew;
+sgl_uint32 PVROSExtendTSPBuffer(HLDEVICE gHLogicalDev) {
+    sgl_int32 nCurrent, nExtended, nResult;
+    PVR_PARAM_BUFF *pBuff = &gHLogicalDev->Buffers[PVR_PARAM_TYPE_TSP];
+
+    nCurrent = pBuff->uBufferLimit << 2;
+    nExtended = nCurrent + 1024 * 64;
+
+    nResult = PVROSSetTSPHighWaterMark(gHLogicalDev->TexHeap, nExtended, FALSE);
+
+    if (nResult == nExtended) {
+        void *pNew;
 
 #if SHARED_HEAP
-		pNew = PVROSRealloc (pBuff->pBuffer, nExtended);
+        pNew = PVROSRealloc (pBuff->pBuffer, nExtended);
 #else
-		pNew = PVROSTSPRealloc(gHLogicalDev->hVxD, pBuff->pBuffer, nExtended);
+        pNew = PVROSTSPRealloc(gHLogicalDev->hVxD, pBuff->pBuffer, nExtended);
 #endif
 
-		if (!pNew)
-		{
-			PVROSPrintf ("Error reallocating TSP host buffer\n");
-		}
-		else
-		{
-			if (pNew != pBuff->pBuffer)
-			{
-				#if DEBUG
-				PVROSPrintf ("Realloc gave new ptr: 0x%08lx->0x%08lx\n", pBuff->pBuffer, pNew);
-				#endif
-			}
-			
-			pBuff->pBuffer = pNew;
-			pBuff->uBufferLimit = nResult >> 2;
-			
-			gHLogicalDev->VirtualBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP] = *pBuff;
-		}
-	}
-	
-	return (pBuff->uBufferLimit - pBuff->uBufferPos);
+        if (!pNew) {
+            PVROSPrintf("Error reallocating TSP host buffer\n");
+        } else {
+            if (pNew != pBuff->pBuffer) {
+#if DEBUG
+                PVROSPrintf ("Realloc gave new ptr: 0x%08lx->0x%08lx\n", pBuff->pBuffer, pNew);
+#endif
+            }
+
+            pBuff->pBuffer = pNew;
+            pBuff->uBufferLimit = nResult >> 2;
+
+            gHLogicalDev->VirtualBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP] = *pBuff;
+        }
+    }
+
+    return (pBuff->uBufferLimit - pBuff->uBufferPos);
 }
 
 /**********************************************************************/
 
-PVROSERR PVROSSetupPCIMemWrite(HDEVICE hDeviceID, sgl_uint32 nMemWrite)
-{
-	sgl_uint32	pciHeader0C;
+PVROSERR PVROSSetupPCIMemWrite(HDEVICE hDeviceID, sgl_uint32 nMemWrite) {
+    sgl_uint32 pciHeader0C;
 
-	/* Read Bridge header offset 0C into pciHeader0C
-	 */
-	PVROSReadPCIConfigSpace(hDeviceID, 0x04, &pciHeader0C);
-	
-	/* If a new cache line size has been specified, programme the bridge
-	 */
-	pciHeader0C &= 0xFFFFFFEFL;
-	pciHeader0C |= (sgl_uint32) (nMemWrite << 4);
-	PVROSWritePCIConfigSpace(hDeviceID, 0x04, pciHeader0C);
-	
-	return PVROS_GROOVY;
+    /* Read Bridge header offset 0C into pciHeader0C
+     */
+    PVROSReadPCIConfigSpace(hDeviceID, 0x04, &pciHeader0C);
+
+    /* If a new cache line size has been specified, programme the bridge
+     */
+    pciHeader0C &= 0xFFFFFFEFL;
+    pciHeader0C |= (sgl_uint32) (nMemWrite << 4);
+    PVROSWritePCIConfigSpace(hDeviceID, 0x04, pciHeader0C);
+
+    return PVROS_GROOVY;
 }
 
 /**********************************************************************/
 
-PVROSERR PVROSSetupPCICacheLine(HDEVICE hDeviceID)
-{
-	sgl_uint32	pciHeader0C;
-	sgl_uint32	nCacheLineSize = 0;
+PVROSERR PVROSSetupPCICacheLine(HDEVICE hDeviceID) {
+    sgl_uint32 pciHeader0CLocal;
+    sgl_uint32 nCacheLineSize = 0;
 
-	/* SETUP CACHE LINE SIZE IF USER SELECTION DIFFERENT FROM BIOS SETTING.
-	 */
-	/* Read Bridge header offset 0C into pciHeader0C
-	 */
-	PVROSReadPCIConfigSpace(hDeviceID, 0x0C, &pciHeader0C);
-	
-	/* Cache line size fix : Allow user override
-	 */
-	nCacheLineSize =  HWRdValFileUInt ("PCX2CacheLineSize", 0);
+    /* SETUP CACHE LINE SIZE IF USER SELECTION DIFFERENT FROM BIOS SETTING.
+     */
+    /* Read Bridge header offset 0C into pciHeader0CLocal
+     */
+    PVROSReadPCIConfigSpace(hDeviceID, 0x0C, &pciHeader0CLocal);
 
-	/* Need to disable memory write and invalidate if cache line
-	 * size set to zero.
-	 */
-	if (nCacheLineSize == 0)
-	{
-		/* Disable.
-		 */
-		PVROSSetupPCIMemWrite(hDeviceID, 0);
-	}
-	else
-	{
-		/* Enable.
-		 */
-		PVROSSetupPCIMemWrite(hDeviceID, 1);
-	}
+    /* Cache line size fix : Allow user override
+     */
+    nCacheLineSize = HWRdValFileUInt("PCX2CacheLineSize", 0);
 
-	/* If a new cache line size has been specified, programme the bridge
-	 */
-	pciHeader0C &= 0xFFFFFF00L;
-	pciHeader0C |= (sgl_uint32)nCacheLineSize;
-	PVROSWritePCIConfigSpace(hDeviceID, 0x0C, pciHeader0C);
-	
-	/* END CACHE LINE LINE SIZE SET.
-	 */
-	return PVROS_GROOVY;
+    /* Need to disable memory write and invalidate if cache line
+     * size set to zero.
+     */
+    if (nCacheLineSize == 0) {
+        /* Disable.
+         */
+        PVROSSetupPCIMemWrite(hDeviceID, 0);
+    } else {
+        /* Enable.
+         */
+        PVROSSetupPCIMemWrite(hDeviceID, 1);
+    }
+
+    /* If a new cache line size has been specified, programme the bridge
+     */
+    pciHeader0CLocal &= 0xFFFFFF00L;
+    pciHeader0CLocal |= (sgl_uint32) nCacheLineSize;
+    PVROSWritePCIConfigSpace(hDeviceID, 0x0C, pciHeader0CLocal);
+
+    /* END CACHE LINE LINE SIZE SET.
+     */
+    return PVROS_GROOVY;
 }
 
 /**********************************************************************/
 
-PVROSERR PVROSSetupPCILatency(HDEVICE hDeviceID)
-{					
-	sgl_uint32 pciHeader0C;
-	sgl_uint8  nUserLatency = 0, nSysLatency = 0;
+PVROSERR PVROSSetupPCILatency(HDEVICE hDeviceID) {
+    sgl_uint32 pciHeader0CLocal;
+    sgl_uint8 nUserLatency = 0, nSysLatency = 0;
 
-	/* SETUP LATENCY IF USER SELECTION DIFFERENT FROM BIOS SETTING.
-	 */
-	/* Read Bridge header offset 0C into pciHeader0C
-	 */
-	PVROSReadPCIConfigSpace(hDeviceID, 0x0C, &pciHeader0C);
-	
-	/* Debug : see what the latency was set to by the PCI bios
-	 */
-	nSysLatency = (sgl_uint8) (pciHeader0C >> 8);
-	
-	/* Latency fix : Allow user override
-	 */
-	nUserLatency = (sgl_uint8) HWRdValFileUInt ("Latency", 0);
-	
-	/* If system and no user setting set to default.
-	 */
-	if ((nUserLatency == 0) && (nSysLatency == 0))
-		nUserLatency = 0x40;
-	
-	if (nUserLatency)
-	{
-		/* Read Bridge header offset 0C */
-		PVROSReadPCIConfigSpace(hDeviceID, 0x0C, &pciHeader0C);	
-		/* If a new latency has been specified, programme the bridge */
-		pciHeader0C &= 0xFFFF00FFL;
-		pciHeader0C |= (((sgl_uint32)nUserLatency)<<8);
-		PVROSWritePCIConfigSpace(hDeviceID, 0x0C, pciHeader0C);
-	}
+    /* SETUP LATENCY IF USER SELECTION DIFFERENT FROM BIOS SETTING.
+     */
+    /* Read Bridge header offset 0C into pciHeader0CLocal
+     */
+    PVROSReadPCIConfigSpace(hDeviceID, 0x0C, &pciHeader0CLocal);
 
-	return PVROS_GROOVY;
+    /* Debug : see what the latency was set to by the PCI bios
+     */
+    nSysLatency = (sgl_uint8) (pciHeader0CLocal >> 8);
+
+    /* Latency fix : Allow user override
+     */
+    nUserLatency = (sgl_uint8) HWRdValFileUInt("Latency", 0);
+
+    /* If system and no user setting set to default.
+     */
+    if ((nUserLatency == 0) && (nSysLatency == 0))
+        nUserLatency = 0x40;
+
+    if (nUserLatency) {
+        /* Read Bridge header offset 0C */
+        PVROSReadPCIConfigSpace(hDeviceID, 0x0C, &pciHeader0CLocal);
+        /* If a new latency has been specified, programme the bridge */
+        pciHeader0CLocal &= 0xFFFF00FFL;
+        pciHeader0CLocal |= (((sgl_uint32) nUserLatency) << 8);
+        PVROSWritePCIConfigSpace(hDeviceID, 0x0C, pciHeader0CLocal);
+    }
+
+    return PVROS_GROOVY;
 }
 
 /*****************************************************************************/
 
 PVROSERR DMASBToPCXTLB(DMASCATTERBUFFER *pDMASB,
-					   PCXBUFFER *pPCXBuffer,
-					   sgl_uint32 dwBytesInBuffer)
-{
-	PVROSERR fRet = PVROS_DODGY;
+                       PCXBUFFER *pPCXBuffer,
+                       sgl_uint32 dwBytesInBuffer) {
+    PVROSERR fRet = PVROS_DODGY;
 
-	if (pDMASB->PagesAllocated < (dwBytesInBuffer >> 12))
-	{
-		DPF((DBG_ERROR,"Not enough memory for ISP buffer"));
-	}
-	else if (pDMASB->BlockSize < 2)
-	{
-		DPF((DBG_ERROR,"Not enough contiguous memory for ISP buffer"));
-	}
-	else
-	{
-		int i;
-		sgl_uint32	Limit;
-		
-		sgl_uint32 *SrcPhysAddress, *DestPhysAddress, *SrcPhysPages, *DestLimit;
-		sgl_uint32 Blocks, BasePhysAddress;
+    if (pDMASB->PagesAllocated < (dwBytesInBuffer >> 12)) {
+        DPF((DBG_ERROR, "Not enough memory for ISP buffer"));
+    } else if (pDMASB->BlockSize < 2) {
+        DPF((DBG_ERROR, "Not enough contiguous memory for ISP buffer"));
+    } else {
+        int i;
+        sgl_uint32 Limit;
 
-		fRet = PVROS_GROOVY;
-		
-		DPF((DBG_MESSAGE,"%dk ISP buffer allocated", pDMASB->PagesAllocated * 4));
-		
-		if (pDMASB->BlockSize >= 4)
-		{
-			/* configure for 16k pages */
-			
-			pPCXBuffer->PageSize = 2;
-			/*BlockSize = 4;*/
-		}
-		else if (pDMASB->BlockSize == 2)
-		{
-			/* configure for 8k pages */
-			
-			pPCXBuffer->PageSize = 1;
-			/*BlockSize = 2;*/
-		}
-		else
-		{
-			/* configure for 4k pages */
-			
-			pPCXBuffer->PageSize = 0;
-			/*BlockSize = 1;*/
-		}
-		
-		pPCXBuffer->LinearAddress = pDMASB->LinearAddress;
-		
-		DestPhysAddress = pPCXBuffer->PhysAddresses;
-		DestLimit = pPCXBuffer->Limit;
-		SrcPhysAddress = pDMASB->PhysAddress;
-		SrcPhysPages = pDMASB->PhysPages;
-		
-		pPCXBuffer->SlotsUsed = pDMASB->PagesAllocated >> pPCXBuffer->PageSize;
-		
-		i = pPCXBuffer->SlotsUsed;
-			
+        sgl_uint32 *SrcPhysAddress, *DestPhysAddress, *SrcPhysPages, *DestLimit;
+        sgl_uint32 Blocks, BasePhysAddress;
+
+        fRet = PVROS_GROOVY;
+
+        DPF((DBG_MESSAGE, "%dk ISP buffer allocated", pDMASB->PagesAllocated * 4));
+
+        if (pDMASB->BlockSize >= 4) {
+            /* configure for 16k pages */
+
+            pPCXBuffer->PageSize = 2;
+            /*BlockSize = 4;*/
+        } else if (pDMASB->BlockSize == 2) {
+            /* configure for 8k pages */
+
+            pPCXBuffer->PageSize = 1;
+            /*BlockSize = 2;*/
+        } else {
+            /* configure for 4k pages */
+
+            pPCXBuffer->PageSize = 0;
+            /*BlockSize = 1;*/
+        }
+
+        pPCXBuffer->LinearAddress = pDMASB->LinearAddress;
+
+        DestPhysAddress = pPCXBuffer->PhysAddresses;
+        DestLimit = pPCXBuffer->Limit;
+        SrcPhysAddress = pDMASB->PhysAddress;
+        SrcPhysPages = pDMASB->PhysPages;
+
+        pPCXBuffer->SlotsUsed = pDMASB->PagesAllocated >> pPCXBuffer->PageSize;
+
+        i = pPCXBuffer->SlotsUsed;
+
 #define OPTIMISE_LIMITS 1
-		
-		Limit = 0;
-		
-		do
-		{
-#if OPTIMISE_LIMITS
-			Limit += 0x400 * *SrcPhysPages;
-#endif
-			Blocks = *SrcPhysPages >> pPCXBuffer->PageSize;
-			BasePhysAddress = *SrcPhysAddress;
-			
-			SrcPhysPages ++;				
-			SrcPhysAddress ++;				
-			
-			do
-			{
-#if !OPTIMISE_LIMITS
-				Limit += 0x400 << pPCXBuffer->PageSize;
-#endif
-				*DestLimit = Limit;
-				*DestPhysAddress = BasePhysAddress;
-				
-				DestPhysAddress++;
-				DestLimit++;					
-				BasePhysAddress += 0x1000 << pPCXBuffer->PageSize;
-				i--;
-				Blocks--;
-			}
-			while (i && Blocks);
-		}
-		while (i);
-	}
 
-	return (fRet);
+        Limit = 0;
+
+        do {
+#if OPTIMISE_LIMITS
+            Limit += 0x400 * *SrcPhysPages;
+#endif
+            Blocks = *SrcPhysPages >> pPCXBuffer->PageSize;
+            BasePhysAddress = *SrcPhysAddress;
+
+            SrcPhysPages++;
+            SrcPhysAddress++;
+
+            do {
+#if !OPTIMISE_LIMITS
+                Limit += 0x400 << pPCXBuffer->PageSize;
+#endif
+                *DestLimit = Limit;
+                *DestPhysAddress = BasePhysAddress;
+
+                DestPhysAddress++;
+                DestLimit++;
+                BasePhysAddress += 0x1000 << pPCXBuffer->PageSize;
+                i--;
+                Blocks--;
+            } while (i && Blocks);
+        } while (i);
+    }
+
+    return (fRet);
 }
 
 /**********************************************************************
@@ -692,56 +669,49 @@ PVROSERR DMASBToPCXTLB(DMASCATTERBUFFER *pDMASB,
 **                space used for object pointers 
 ***********************************************************************/
 
-static int GetBuffer1Size()
-{
-	int PCXRegionDataPages = PCX_REGION_DATA_PAGES;
+static int GetBuffer1Size() {
+    int PCXRegionDataPages = PCX_REGION_DATA_PAGES;
 
-	char sWinDir[256] = "\0";
+    char sWinDir[256] = "\0";
 
-	GetEnvironmentVariable ("WINDIR", sWinDir, sizeof (sWinDir)-1);
+    GetEnvironmentVariable("WINDIR", sWinDir, sizeof(sWinDir) - 1);
 
-	if(sWinDir[0] != 0)
-	{
-		int len;
-		char *SystemIni = NULL;
-		
-		len = strlen(sWinDir);
-		len += (strlen("\\system.ini") + 2);
-		SystemIni = PVROSMalloc(len);
-		if(SystemIni)
-		{
-			strcpy(SystemIni, sWinDir);
-			strcat(SystemIni, "\\system.ini");
-			PCXRegionDataPages = 
-				SglReadPrivateProfileInt("VSGL", "Buffer1Size", 
-										 PCX_REGION_DATA_PAGES, 
-										 SystemIni);
-			PVROSFree(SystemIni);
-		}
-		else
-		{
-			/* the PVROSMalloc failed, try to read in most common place
-			** or set to the default value 
-			*/
-			PCXRegionDataPages = 
-				SglReadPrivateProfileInt("VSGL", "Buffer1Size", 
-										 PCX_REGION_DATA_PAGES, 
-										 "c:\\windows\\system.ini");
+    if (sWinDir[0] != 0) {
+        size_t len;
+        char *SystemIni = NULL;
 
-		}
-	}
-	else
-	{
-		/* Getenv Failed - this must be a very strange windows
-		** behave as above 
-		*/
-		PCXRegionDataPages = 
-			SglReadPrivateProfileInt("VSGL", "Buffer1Size", 
-									 PCX_REGION_DATA_PAGES, 
-									 "c:\\windows\\system.ini");
-	}
+        len = strlen(sWinDir);
+        len += (strlen("\\system.ini") + 2);
+        SystemIni = PVROSMalloc(len);
+        if (SystemIni) {
+            strcpy(SystemIni, sWinDir);
+            strcat(SystemIni, "\\system.ini");
+            PCXRegionDataPages =
+                    SglReadPrivateProfileInt("VSGL", "Buffer1Size",
+                                             PCX_REGION_DATA_PAGES,
+                                             SystemIni);
+            PVROSFree(SystemIni);
+        } else {
+            /* the PVROSMalloc failed, try to read in most common place
+            ** or set to the default value
+            */
+            PCXRegionDataPages =
+                    SglReadPrivateProfileInt("VSGL", "Buffer1Size",
+                                             PCX_REGION_DATA_PAGES,
+                                             "c:\\windows\\system.ini");
 
-	return PCXRegionDataPages;
+        }
+    } else {
+        /* Getenv Failed - this must be a very strange windows
+        ** behave as above
+        */
+        PCXRegionDataPages =
+                SglReadPrivateProfileInt("VSGL", "Buffer1Size",
+                                         PCX_REGION_DATA_PAGES,
+                                         "c:\\windows\\system.ini");
+    }
+
+    return PCXRegionDataPages;
 
 }
 
@@ -750,42 +720,29 @@ static int GetBuffer1Size()
  *
  *****************************************************************************/
 
-sgl_uint32 PVROSHookIRQ (sgl_uint32 fEnable, DEVICE_TYPE DeviceType, HDEVICE hDeviceID)
-{
-	sgl_uint32 fRet = TRUE;
-	
-	if (fEnable)
-	{
-		if (!fHooked)
-		{
-			if (PVROSSetupPowerVRDevice (hDeviceID, DeviceType) != PVROS_GROOVY)
-			{
-				DPF((DBG_ERROR,"Error enabling physical board"));
-			}
-			else
-			{
-				fHooked = TRUE;
-			}
-		}
-	}
-	else
-	{
-		if (fHooked)
-		{
-			if (PVROSSetupPowerVRDevice (hDeviceID, DISABLE_BOARD) != PVROS_GROOVY)
-			{
-				DPF((DBG_ERROR,"Error disabling physical board"));
-			}
-			else
-			{
-				fHooked = FALSE;
-			}
-		}
-	}
+sgl_uint32 PVROSHookIRQ(sgl_uint32 fEnable, DEVICE_TYPE DeviceType, HDEVICE hDeviceID) {
+    sgl_uint32 fRet = TRUE;
 
-	return (fRet);
+    if (fEnable) {
+        if (!fHooked) {
+            if (PVROSSetupPowerVRDevice(hDeviceID, DeviceType) != PVROS_GROOVY) {
+                DPF((DBG_ERROR, "Error enabling physical board"));
+            } else {
+                fHooked = TRUE;
+            }
+        }
+    } else {
+        if (fHooked) {
+            if (PVROSSetupPowerVRDevice(hDeviceID, DISABLE_BOARD) != PVROS_GROOVY) {
+                DPF((DBG_ERROR, "Error disabling physical board"));
+            } else {
+                fHooked = FALSE;
+            }
+        }
+    }
+
+    return (fRet);
 }
-																		
 
 
 /******************************************************************************
@@ -799,32 +756,30 @@ sgl_uint32 PVROSHookIRQ (sgl_uint32 fEnable, DEVICE_TYPE DeviceType, HDEVICE hDe
  * Description  : find board and decode BIOS allocated memory and get aliases
  *****************************************************************************/
 
-PVROSERR CALL_CONV PVROSInitPCIAddresses (HDEVICE hDeviceID, DEVICE_TYPE_POWERVR DeviceType)
-{
-	/* Setup PCI latency.
-	 */
-	PVROSSetupPCILatency(hDeviceID);
+PVROSERR CALL_CONV PVROSInitPCIAddresses(HDEVICE hDeviceID, DEVICE_TYPE_POWERVR DeviceType) {
+    /* Setup PCI latency.
+     */
+    PVROSSetupPCILatency(hDeviceID);
 
-	/* create a set of virtual buffers just in case */
-	switch(DeviceType)
-	{
-		case(PCX1_DEVICE_ID):
-		break;
+    /* create a set of virtual buffers just in case */
+    switch (DeviceType) {
+        case (PCX1_DEVICE_ID):
+            break;
 
-		case(PCX2_DEVICE_ID):
+        case (PCX2_DEVICE_ID):
 
-			/* Setup PCI Cache line size.
-			 */
-			PVROSSetupPCICacheLine(hDeviceID);
+            /* Setup PCI Cache line size.
+             */
+            PVROSSetupPCICacheLine(hDeviceID);
 
-		break;
+            break;
 
-		default:
-		break;
-	}
-	
-	return (PVROS_GROOVY);						
-					
+        default:
+            break;
+    }
+
+    return (PVROS_GROOVY);
+
 } /*InitAddresses*/
 
 /******************************************************************************
@@ -834,105 +789,96 @@ PVROSERR CALL_CONV PVROSInitPCIAddresses (HDEVICE hDeviceID, DEVICE_TYPE_POWERVR
  *
  *****************************************************************************/
 
-sgl_uint32 PVROSDetermineTexMemConfig( sgl_uint32 dummy)
-{   
-	sgl_uint32 TextureMemorySize;
-	
-	/* hard code to 4Mb */
-	
-	TextureMemorySize = (4 << 20);
-	return TextureMemorySize;
+sgl_uint32 PVROSDetermineTexMemConfig(sgl_uint32 dummy) {
+    sgl_uint32 TextureMemorySize;
+
+    /* hard code to 4Mb */
+
+    TextureMemorySize = (4 << 20);
+    return TextureMemorySize;
 
 }
 
 /**********************************************************************/
 
-sgl_uint32 *CALL_CONV PVROSGetEndOfRenderPtr (HLDEVICE hLogDev)
-{
-	DPF((DBG_WARNING, "PVROSGetEndOfRenderPtr called"));
-	return (sgl_uint32 *) hLogDev->BoardData.pStatus;
+sgl_uint32 *CALL_CONV PVROSGetEndOfRenderPtr(HLDEVICE hLogDev) {
+    DPF((DBG_WARNING, "PVROSGetEndOfRenderPtr called"));
+    return (sgl_uint32 *) hLogDev->BoardData.pStatus;
 }
 
 /**********************************************************************/
 
-sgl_uint32 *CALL_CONV PVROSGetVirtualBurstSpace()
-{
-	/* this function used to return a pointer to the on card memory
-	** but this whole thing is now set in the vxd and not available here
-	** so return zero and hope it is noticed -- pSCBusBurstSpace is 
-	** zero any way
-	*/
+sgl_uint32 *CALL_CONV PVROSGetVirtualBurstSpace() {
+    /* this function used to return a pointer to the on card memory
+    ** but this whole thing is now set in the vxd and not available here
+    ** so return zero and hope it is noticed -- pSCBusBurstSpace is
+    ** zero any way
+    */
 #if DEBUG
-	DPF((DBG_WARNING, "Non-functional PVROSGetVirtualBurstSpace called"));
+    DPF((DBG_WARNING, "Non-functional PVROSGetVirtualBurstSpace called"));
 #else
-	PVROSPrintf("Non-functional PVROSGetVirtualBurstSpace called\n");
+    PVROSPrintf("Non-functional PVROSGetVirtualBurstSpace called\n");
 #endif
-	/*
-	**return (sgl_uint32 *)pSCBusBurstSpace;
-	*/
+    /*
+    **return (sgl_uint32 *)pSCBusBurstSpace;
+    */
 
-	return NULL;
+    return NULL;
 }
 
 /**********************************************************************/
 
-int CALL_CONV PVROSGetUsagePhysicalDevice(PciDeviceTable *pBoard)
-{
-	int i;
-	int nBoardID=-1;
+int CALL_CONV PVROSGetUsagePhysicalDevice(PciDeviceTable *pBoard) {
+    int i;
+    int nBoardID = -1;
 
-	/* see if this board has been used (although its reference count may be zero) */
-	for(i=0; i<MAX_BOARDS; i++)
-	{
-		if(gBoardRef[i].DeviceID==pBoard->DeviceID)
-		{
-			return gBoardRef[i].nRefCount;
-			break;
-		}
-	}
+    /* see if this board has been used (although its reference count may be zero) */
+    for (i = 0; i < MAX_BOARDS; i++) {
+        if (gBoardRef[i].DeviceID == pBoard->DeviceID) {
+            return gBoardRef[i].nRefCount;
+            break;
+        }
+    }
 
-	/* board wasnt found - so it hasnt been used at all in this session */
-	return 0;
+    /* board wasnt found - so it hasnt been used at all in this session */
+    return 0;
 
 }
 
 /**********************************************************************/
 
-static DEVICEID GetDeviceID(HDEVICE hDeviceID)
-{
-	DEVICEID DeviceID;
-	BoardDataBlock BoardData;
+static DEVICEID GetDeviceID(HDEVICE hDeviceID) {
+    DEVICEID DeviceID;
+    BoardDataBlock BoardData;
 
-	PVROSGetPCIDeviceInfo (hDeviceID, &BoardData);
-	
-	/* I'm fudging together a DeviceID as there is no other easy access */
-	DeviceID = (void *) ((BoardData.PCIBus << 8) | 
-						 (BoardData.PCIDev << 3) | 
-						 BoardData.PCIFunc);
+    PVROSGetPCIDeviceInfo(hDeviceID, &BoardData);
 
-	return DeviceID;
+    /* I'm fudging together a DeviceID as there is no other easy access */
+    DeviceID = (void *) ((BoardData.PCIBus << 8) |
+                         (BoardData.PCIDev << 3) |
+                         BoardData.PCIFunc);
+
+    return DeviceID;
 }
 
 /**********************************************************************/
 
 extern sgl_bool gBogusPCX1;
 
-static DEVICE_TYPE GetDeviceType(HDEVICE hDeviceID)
-{
-	BoardDataBlock BoardData;
+static DEVICE_TYPE GetDeviceType(HDEVICE hDeviceID) {
+    BoardDataBlock BoardData;
 
-	PVROSGetPCIDeviceInfo (hDeviceID, &BoardData);
+    PVROSGetPCIDeviceInfo(hDeviceID, &BoardData);
 
-	if(gBogusPCX1 && BoardData.DeviceType!=MIDAS4)
-	{
-		/* set the IEEE hardware reg to FPU OFF */
+    if (gBogusPCX1 && BoardData.DeviceType != MIDAS4) {
+        /* set the IEEE hardware reg to FPU OFF */
 
-		DPF((DBG_WARNING,"Forcing PCX2 to run in emulation mode"));
+        DPF((DBG_WARNING, "Forcing PCX2 to run in emulation mode"));
 
-		((sgl_uint32 *) (BoardData.LinearMemWindows[0]))[0x18] = 0;
-		BoardData.DeviceType = MIDAS4;
-	}
-	return BoardData.DeviceType;
+        ((sgl_uint32 *) (BoardData.LinearMemWindows[0]))[0x18] = 0;
+        BoardData.DeviceType = MIDAS4;
+    }
+    return BoardData.DeviceType;
 }
 
 /**********************************************************************/
@@ -941,26 +887,26 @@ static DEVICE_TYPE GetDeviceType(HDEVICE hDeviceID)
 
 BUFFER_LIST *PVROSGetSecretBuffer(HDEVICE hDeviceID)
 {
-	DEVICEID DeviceID;
-	DEVICE_TYPE_POWERVR DeviceType;
-	int i;
+    DEVICEID DeviceID;
+    DEVICE_TYPE_POWERVR DeviceType;
+    int i;
 
-	DeviceID = GetDeviceID(hDeviceID);
+    DeviceID = GetDeviceID(hDeviceID);
 
-	/* see if this board has been used - 
-	** if it hasnt this is an error 
-	*/
-	for(i=0; i<MAX_BOARDS; i++)
-	{
-		if(gBoardRef[i].DeviceID == DeviceID)
-		{
-			return(gBoardRef[i].SecretBuffer);
-			break;
-		}
-	}
+    /* see if this board has been used -
+    ** if it hasnt this is an error
+    */
+    for(i=0; i<MAX_BOARDS; i++)
+    {
+        if(gBoardRef[i].DeviceID == DeviceID)
+        {
+            return(gBoardRef[i].SecretBuffer);
+            break;
+        }
+    }
 
-	PVROSPrintf("Tried to get a secret buffer on a card without one!!!\n");
-	return NULL;
+    PVROSPrintf("Tried to get a secret buffer on a card without one!!!\n");
+    return NULL;
 
 }
 
@@ -968,1378 +914,1223 @@ BUFFER_LIST *PVROSGetSecretBuffer(HDEVICE hDeviceID)
 
 /**********************************************************************/
 
-BOARDREF *GetBoardRef(HDEVICE hDeviceID)
-{
-	DEVICEID DeviceID;
-	int i;
+BOARDREF *GetBoardRef(HDEVICE hDeviceID) {
+    DEVICEID DeviceID;
+    int i;
 
-	DeviceID = GetDeviceID(hDeviceID);
+    DeviceID = GetDeviceID(hDeviceID);
 
-	/* see if this board has been used - 
-	** if it hasnt this is an error 
-	*/
-	for(i=0; i<MAX_BOARDS; i++)
-	{
-		if(gBoardRef[i].DeviceID == DeviceID)
-		{
-			return(gBoardRef + i);
-		}
-	}
+    /* see if this board has been used -
+    ** if it hasnt this is an error
+    */
+    for (i = 0; i < MAX_BOARDS; i++) {
+        if (gBoardRef[i].DeviceID == DeviceID) {
+            return (gBoardRef + i);
+        }
+    }
 
-	return NULL;
+    return NULL;
 
 }
 
 /**********************************************************************/
 
-void CALL_CONV PVROSDestroyPhysicalDevice(HDEVICE hDeviceID)
-{
-	HANDLE		hVxD = OpenVxd();
-	HANDLE		hBufferMutex = CreateMutex(NULL,FALSE,"VirtualBufferMutex");
+void CALL_CONV PVROSDestroyPhysicalDevice(HDEVICE hDeviceID) {
+    HANDLE hVxD = OpenVxd();
+    HANDLE hBufferMutex = CreateMutex(NULL, FALSE, "VirtualBufferMutex");
 
-	DEVICEID DeviceID;
-	DEVICE_TYPE_POWERVR DeviceType;
-	int i;
-	int nBoardID=-1;
+    DEVICEID DeviceID;
+    DEVICE_TYPE_POWERVR DeviceType;
+    int i;
+    int nBoardID = -1;
 
-	DeviceID = GetDeviceID(hDeviceID);
-	DeviceType = GetDeviceType(hDeviceID);
+    DeviceID = GetDeviceID(hDeviceID);
+    DeviceType = GetDeviceType(hDeviceID);
 
-	/* see if this board has been used - 
-	** if it hasnt this is an error 
-	*/
-	for(i=0; i<MAX_BOARDS; i++)
-	{
-		if(gBoardRef[i].DeviceID == DeviceID)
-		{
-			nBoardID=i;
-			break;
-		}
-	}
+    /* see if this board has been used -
+    ** if it hasnt this is an error
+    */
+    for (i = 0; i < MAX_BOARDS; i++) {
+        if (gBoardRef[i].DeviceID == DeviceID) {
+            nBoardID = i;
+            break;
+        }
+    }
 
-	/* found a board, decrement its reference count and close it
-	** if the refcount reaches zero
-	*/
-	if(nBoardID >= 0)
-	{
-		ASSERT(gBoardRef[nBoardID].nRefCount);
-		ASSERT(gBoardRef[nBoardID].ghDeviceID == hDeviceID);
+    /* found a board, decrement its reference count and close it
+    ** if the refcount reaches zero
+    */
+    if (nBoardID >= 0) {
+        ASSERT(gBoardRef[nBoardID].nRefCount);
+        ASSERT(gBoardRef[nBoardID].ghDeviceID == hDeviceID);
 
-		gBoardRef[nBoardID].nRefCount--;
+        gBoardRef[nBoardID].nRefCount--;
 
-		if (gBoardRef[nBoardID].nRefCount <= 0)
-		{
-			PVROSPrintf ("Closing a physical board\n");
-			PVROSHookIRQ (FALSE, DISABLE_BOARD, hDeviceID);
-			PVROSDestroyAVirtualBuffer (DeviceType,hVxD,hBufferMutex);
-			PVROSClosePCIDevice (hDeviceID);
-			gBoardRef[nBoardID].ghDeviceID = NULL;
+        if (gBoardRef[nBoardID].nRefCount <= 0) {
+            PVROSPrintf("Closing a physical board\n");
+            PVROSHookIRQ(FALSE, DISABLE_BOARD, hDeviceID);
+            PVROSDestroyAVirtualBuffer(DeviceType, hVxD, hBufferMutex);
+            PVROSClosePCIDevice(hDeviceID);
+            gBoardRef[nBoardID].ghDeviceID = NULL;
 
-		#if USE_VIRTUAL_BUFFERS
+#if USE_VIRTUAL_BUFFERS
 
-			if(	gBoardRef[nBoardID].SecretBuffer != NULL)
-			{
-				if(DeviceType==MIDAS4)
-				{
-					PVROSDestroyDMABuffer (hVxD,gBoardRef[nBoardID].SecretBuffer->pDMAB);
-				}
+            if(	gBoardRef[nBoardID].SecretBuffer != NULL)
+            {
+                if(DeviceType==MIDAS4)
+                {
+                    PVROSDestroyDMABuffer (hVxD,gBoardRef[nBoardID].SecretBuffer->pDMAB);
+                }
 
-				PVROSDestroyDMAScatterBuffer (hVxD,gBoardRef[nBoardID].SecretBuffer->pDMASB);
-				
-				/* destroy the texas memory as its always software */
+                PVROSDestroyDMAScatterBuffer (hVxD,gBoardRef[nBoardID].SecretBuffer->pDMASB);
+
+                /* destroy the texas memory as its always software */
 #if SHARED_HEAP
-				PVROSFree(gBoardRef[nBoardID].SecretBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+                PVROSFree(gBoardRef[nBoardID].SecretBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-				PVROSTSPFree(hVxD, gBoardRef[nBoardID].SecretBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+                PVROSTSPFree(hVxD, gBoardRef[nBoardID].SecretBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-				PVROSFree(gBoardRef[nBoardID].SecretBuffer);
-				gBoardRef[nBoardID].SecretBuffer = NULL;
-			}
-		#endif
+                PVROSFree(gBoardRef[nBoardID].SecretBuffer);
+                gBoardRef[nBoardID].SecretBuffer = NULL;
+            }
+#endif
 
-		}
-	}
-	else
-	{
-		PVROSPrintf ("Trying to close an un-opened physical board\n");
-		ASSERT(nBoardID>0);
-	}
+        }
+    } else {
+        PVROSPrintf("Trying to close an un-opened physical board\n");
+        ASSERT(nBoardID > 0);
+    }
 
-	CloseHandle(hBufferMutex);
-	CloseVxd(hVxD);
+    CloseHandle(hBufferMutex);
+    CloseVxd(hVxD);
 }
 
 /**********************************************************************/
 
-HDEVICE CALL_CONV PVROSCreatePhysicalDevice(PciDeviceTable *pBoard)
-{
-	int i;
-	int nBoardID=-1;
+HDEVICE CALL_CONV PVROSCreatePhysicalDevice(PciDeviceTable *pBoard) {
+    int i;
+    int nBoardID = -1;
 
-	/* see if this board has been used (although its reference count may be zero) */
-	for(i=0; i<MAX_BOARDS; i++)
-	{
-		if(gBoardRef[i].DeviceID==pBoard->DeviceID)
-		{
-			nBoardID=i;
-			break;
-		}
-	}
+    /* see if this board has been used (although its reference count may be zero) */
+    for (i = 0; i < MAX_BOARDS; i++) {
+        if (gBoardRef[i].DeviceID == pBoard->DeviceID) {
+            nBoardID = i;
+            break;
+        }
+    }
 
-	/* if this board hasnt been mentioned before, find a free slot */
-	if(nBoardID==-1)
-	{
-		for(i=0; i<MAX_BOARDS; i++)
-		{
-			if(gBoardRef[i].DeviceID==0)
-			{
-				gBoardRef[i].DeviceID=pBoard->DeviceID;
-				nBoardID=i;
-				break;
-			}
-		}
-	}
+    /* if this board hasnt been mentioned before, find a free slot */
+    if (nBoardID == -1) {
+        for (i = 0; i < MAX_BOARDS; i++) {
+            if (gBoardRef[i].DeviceID == 0) {
+                gBoardRef[i].DeviceID = pBoard->DeviceID;
+                nBoardID = i;
+                break;
+            }
+        }
+    }
 
-	if (gBoardRef[nBoardID].nRefCount == 0)
-	{
-		BUFFER_LIST		*pBuffer  = NULL;
-		BoardDataBlock	pb;
-		
-		gBoardRef[nBoardID].ghDeviceID = PVROSOpenPCIDevice(pBoard->DeviceID);
+    if (gBoardRef[nBoardID].nRefCount == 0) {
+        BUFFER_LIST *pBuffer = NULL;
+        BoardDataBlock pb;
 
-		/* Need to get the PCI device info to see what device we are using.
-		 */
-		PVROSGetPCIDeviceInfo (gBoardRef[nBoardID].ghDeviceID, &pb);
+        gBoardRef[nBoardID].ghDeviceID = PVROSOpenPCIDevice(pBoard->DeviceID);
 
-		/* Initialise PCI stuff such as latency and cache line size.
-		 */
-		PVROSInitPCIAddresses (gBoardRef[nBoardID].ghDeviceID, pb.PCIDeviceID);
+        /* Need to get the PCI device info to see what device we are using.
+         */
+        PVROSGetPCIDeviceInfo(gBoardRef[nBoardID].ghDeviceID, &pb);
 
-		gBoardRef[nBoardID].nLogicalDevices = 0;
-		gBoardRef[nBoardID].LDeviceList = NULL;
-	}
+        /* Initialise PCI stuff such as latency and cache line size.
+         */
+        PVROSInitPCIAddresses(gBoardRef[nBoardID].ghDeviceID, pb.PCIDeviceID);
 
-	gBoardRef[nBoardID].nRefCount++;
+        gBoardRef[nBoardID].nLogicalDevices = 0;
+        gBoardRef[nBoardID].LDeviceList = NULL;
+    }
 
-	return gBoardRef[nBoardID].ghDeviceID;
+    gBoardRef[nBoardID].nRefCount++;
+
+    return gBoardRef[nBoardID].ghDeviceID;
 }
 
 /************************************************************************/
 
-void PVROSDestroyAVirtualBuffer(DEVICE_TYPE DeviceType,HANDLE hVxD,HANDLE hBufferMutex)
-{
-	/* Always destroy the top unused buffer as this was the last created
-	** so is probably the crapiest
-	*/
-	BUFFER_LIST *pBuffer, *pKillBuffer;
+void PVROSDestroyAVirtualBuffer(DEVICE_TYPE DeviceType, HANDLE hVxD, HANDLE hBufferMutex) {
+    /* Always destroy the top unused buffer as this was the last created
+    ** so is probably the crapiest
+    */
+    BUFFER_LIST *pBuffer, *pKillBuffer;
 
-	DPF((DBG_MESSAGE,"Finding a virtual buffer to destroy ..."));
+    DPF((DBG_MESSAGE, "Finding a virtual buffer to destroy ..."));
 
-	pKillBuffer = FindUnusedBuffer(DeviceType,hBufferMutex);
+    pKillBuffer = FindUnusedBuffer(DeviceType, hBufferMutex);
 
-	if(pKillBuffer)
-	{
-		if (DeviceType == MIDAS4)
-		{
-			PVROSDestroyDMABuffer (hVxD,pKillBuffer->pDMAB);
-		}
+    if (pKillBuffer) {
+        if (DeviceType == MIDAS4) {
+            PVROSDestroyDMABuffer(hVxD, pKillBuffer->pDMAB);
+        }
 
-		PVROSDestroyDMAScatterBuffer (hVxD,pKillBuffer->pDMASB);
+        PVROSDestroyDMAScatterBuffer(hVxD, pKillBuffer->pDMASB);
 
-		/* destroy the texas memory as its always software */
+        /* destroy the texas memory as its always software */
 #if SHARED_HEAP
-		PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hVxD,pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hVxD, pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
 
-		pBuffer = RealVirtualBuffer;
+        pBuffer = RealVirtualBuffer;
 
-		if (pKillBuffer == pBuffer)
-		{
-			RealVirtualBuffer = pKillBuffer->Next;
-			if(RealVirtualBuffer == NULL)
-			{
-				DPF((DBG_WARNING,"All virtual buffers destroyed"));
-			}
-		}
-		else
-		{
-			do
-			{
-				/* walk the buffer list to stitch it together */
-				if(pBuffer->Next == pKillBuffer)
-				{
-					pBuffer->Next = pKillBuffer->Next;
-					break;
-				}
+        if (pKillBuffer == pBuffer) {
+            RealVirtualBuffer = pKillBuffer->Next;
+            if (RealVirtualBuffer == NULL) {
+                DPF((DBG_WARNING, "All virtual buffers destroyed"));
+            }
+        } else {
+            do {
+                /* walk the buffer list to stitch it together */
+                if (pBuffer->Next == pKillBuffer) {
+                    pBuffer->Next = pKillBuffer->Next;
+                    break;
+                }
 
-			}while(pBuffer = pBuffer->Next);
-		}
-				
-		ASSERT(pBuffer);
-		PVROSFree(pKillBuffer);
-		pKillBuffer = NULL;
-		RealBufferCount--;
+            } while (pBuffer = pBuffer->Next);
+        }
 
-	}
-	else
-	{
-		DPF((DBG_WARNING,"Went to destroy a virtual buffer ... but none are free"));
-	}
+        ASSERT(pBuffer);
+        PVROSFree(pKillBuffer);
+        pKillBuffer = NULL;
+        RealBufferCount--;
+
+    } else {
+        DPF((DBG_WARNING, "Went to destroy a virtual buffer ... but none are free"));
+    }
 }
 
 /**********************************************************************/
 
-void PVROSDestroyAllVirtualBuffers()
-{
-	HANDLE	hVxD = OpenVxd();
+void PVROSDestroyAllVirtualBuffers() {
+    HANDLE hVxD = OpenVxd();
 
-	/* this function forcibly destroys all virtual buffers */
+    /* this function forcibly destroys all virtual buffers */
 
-	/* Always destroy the top unused buffer as this was the last created
-	** so is probably the crapiest
-	*/
-	BUFFER_LIST *pKillBuffer;
+    /* Always destroy the top unused buffer as this was the last created
+    ** so is probably the crapiest
+    */
+    BUFFER_LIST *pKillBuffer;
 
-	DPF((DBG_MESSAGE,"Destroying all virtual buffers ..."));
+    DPF((DBG_MESSAGE, "Destroying all virtual buffers ..."));
 
-	while(pKillBuffer = RealVirtualBuffer)
-	{
-		if(pKillBuffer->DeviceType==MIDAS4)
-		{
-			PVROSDestroyDMABuffer (hVxD,pKillBuffer->pDMAB);
-		}
+    while (pKillBuffer = RealVirtualBuffer) {
+        if (pKillBuffer->DeviceType == MIDAS4) {
+            PVROSDestroyDMABuffer(hVxD, pKillBuffer->pDMAB);
+        }
 
-		PVROSDestroyDMAScatterBuffer (hVxD,pKillBuffer->pDMASB);
+        PVROSDestroyDMAScatterBuffer(hVxD, pKillBuffer->pDMASB);
 
-		/* destroy the texas memory as its always software */
+        /* destroy the texas memory as its always software */
 #if SHARED_HEAP
-		PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hVxD,pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hVxD, pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
 
-		RealVirtualBuffer = pKillBuffer->Next;
-		PVROSFree(pKillBuffer);
+        RealVirtualBuffer = pKillBuffer->Next;
+        PVROSFree(pKillBuffer);
 
-		RealBufferCount--;
-		DPF((DBG_MESSAGE,"Destroyed a real virtual buffer, %d left", RealBufferCount));
+        RealBufferCount--;
+        DPF((DBG_MESSAGE, "Destroyed a real virtual buffer, %d left", RealBufferCount));
 
-	}
+    }
 
-	while(pKillBuffer = VirtualVirtualBuffer)
-	{
+    while (pKillBuffer = VirtualVirtualBuffer) {
 
-		/* destroy the texas memory as its always software */
-		PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer);
+        /* destroy the texas memory as its always software */
+        PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer);
 #if SHARED_HEAP
-		PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hVxD,pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hVxD, pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-		PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer);
+        PVROSFree(pKillBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer);
 
-		VirtualVirtualBuffer = pKillBuffer->Next;
-		PVROSFree(pKillBuffer);
+        VirtualVirtualBuffer = pKillBuffer->Next;
+        PVROSFree(pKillBuffer);
 
-		VirtualBufferCount--;
-		PVROSPrintf("Destroyed a virtual virtual buffer, %d left\n", VirtualBufferCount);
+        VirtualBufferCount--;
+        PVROSPrintf("Destroyed a virtual virtual buffer, %d left\n", VirtualBufferCount);
 
-	}
+    }
 
-	CloseVxd(hVxD);
+    CloseVxd(hVxD);
 }
 
 /**********************************************************************/
 
-PVROSERR CreateNewPCXBuffer(HANDLE		hVxD,
-							DEVICE_TYPE	DeviceType,
-							BUFFER_LIST *pBuffer, 
-							sgl_uint32 	PlaneMemBytes,
-							sgl_uint32 	ObjectMemBytes)
-{
-	/* fill out the PCX buffer if we can */
-	/* find where windows booted from, and so where the
-	** system.ini file is located
-	*/
-	sgl_uint32 dwBytesInBuffer;/* 1024 * 1024 * 1; 1Meg for planes */
+PVROSERR CreateNewPCXBuffer(HANDLE hVxD,
+                            DEVICE_TYPE DeviceType,
+                            BUFFER_LIST *pBuffer,
+                            sgl_uint32 PlaneMemBytes,
+                            sgl_uint32 ObjectMemBytes) {
+    /* fill out the PCX buffer if we can */
+    /* find where windows booted from, and so where the
+    ** system.ini file is located
+    */
+    sgl_uint32 dwBytesInBuffer;/* 1024 * 1024 * 1; 1Meg for planes */
 
-	DPF((DBG_MESSAGE,"Creating new PCXBuffer and DMA Scatter Buffer"));
+    DPF((DBG_MESSAGE, "Creating new PCXBuffer and DMA Scatter Buffer"));
 
-	dwBytesInBuffer = PlaneMemBytes; 
-									 
-	if ((DeviceType == MIDAS5) || (DeviceType == MIDAS5_003))
-	{
-		dwBytesInBuffer += ObjectMemBytes;
-	}
+    dwBytesInBuffer = PlaneMemBytes;
 
-	pBuffer->pDMASB = PVROSCreateDMAScatterBuffer (hVxD,dwBytesInBuffer);
+    if ((DeviceType == MIDAS5) || (DeviceType == MIDAS5_003)) {
+        dwBytesInBuffer += ObjectMemBytes;
+    }
 
-	if(!pBuffer->pDMASB)
-	{
-		DPF((DBG_ERROR,"Couldn't create DMA Scatter Buffer"));
-		return PVROS_DODGY;
-	}
+    pBuffer->pDMASB = PVROSCreateDMAScatterBuffer(hVxD, dwBytesInBuffer);
 
-	if (PVROS_DODGY == DMASBToPCXTLB (pBuffer->pDMASB, &(pBuffer->PCXBuffer), 
-									  dwBytesInBuffer))
-	{
-		DPF((DBG_ERROR,"Couldn't get get isp parameter space"));
-		PVROSDestroyDMAScatterBuffer (hVxD,pBuffer->pDMASB);
-		return PVROS_DODGY;
-	}
+    if (!pBuffer->pDMASB) {
+        DPF((DBG_ERROR, "Couldn't create DMA Scatter Buffer"));
+        return PVROS_DODGY;
+    }
 
+    if (PVROS_DODGY == DMASBToPCXTLB(pBuffer->pDMASB, &(pBuffer->PCXBuffer),
+                                     dwBytesInBuffer)) {
+        DPF((DBG_ERROR, "Couldn't get get isp parameter space"));
+        PVROSDestroyDMAScatterBuffer(hVxD, pBuffer->pDMASB);
+        return PVROS_DODGY;
+    }
+
+    return PVROS_GROOVY;
 }
 
-static int CountBuffers (DEVICE_TYPE DeviceType)
-{
-	BUFFER_LIST *pBuffer = RealVirtualBuffer;
-	int count=0;
+static int CountBuffers(DEVICE_TYPE DeviceType) {
+    BUFFER_LIST *pBuffer = RealVirtualBuffer;
+    int count = 0;
 
-	while(pBuffer)
-	{
-		if (count >= RealBufferCount)
-		{
-			DPF((DBG_ERROR, "More buffers in list than expected: %d vs %d", count, RealBufferCount));
-		}
-		
-		if(pBuffer->DeviceType == DeviceType)
-		{
-			count++;
-		}
+    while (pBuffer) {
+        if (count >= RealBufferCount) {
+            DPF((DBG_ERROR, "More buffers in list than expected: %d vs %d", count, RealBufferCount));
+        }
 
-		pBuffer = pBuffer->Next;
-	}
+        if (pBuffer->DeviceType == DeviceType) {
+            count++;
+        }
 
-	return (count);
+        pBuffer = pBuffer->Next;
+    }
+
+    return (count);
 }
 
 /**********************************************************************/
 
-static void MakeAllBuffersUnused (DEVICE_TYPE DeviceType)
-{
-	BUFFER_LIST *pBuffer = RealVirtualBuffer;
-	HANDLE		hBufferMutex = CreateMutex(NULL,FALSE,"VirtualBufferMutex");
+static void MakeAllBuffersUnused(DEVICE_TYPE DeviceType) {
+    BUFFER_LIST *pBuffer = RealVirtualBuffer;
+    HANDLE hBufferMutex = CreateMutex(NULL, FALSE, "VirtualBufferMutex");
 
 
-	while(pBuffer)
-	{
-		if(pBuffer->bInUse)
-		{
-			DPF((DBG_WARNING, "Releasing buffer, which should be free!!"));
-			if(GetVirtualBufferMutex(hBufferMutex))
-			{
-				/* mark it as unused */
-				pBuffer->bInUse = FALSE;
-				pBuffer->hLogicalDev = NULL;
-				ReleaseVirtualBufferMutex(hBufferMutex);
-			}
-			else
-			{
-				DPF((DBG_ERROR,"Couldn't get virtual buffer mutex"));
-			}
+    while (pBuffer) {
+        if (pBuffer->bInUse) {
+            DPF((DBG_WARNING, "Releasing buffer, which should be free!!"));
+            if (GetVirtualBufferMutex(hBufferMutex)) {
+                /* mark it as unused */
+                pBuffer->bInUse = FALSE;
+                pBuffer->hLogicalDev = NULL;
+                ReleaseVirtualBufferMutex(hBufferMutex);
+            } else {
+                DPF((DBG_ERROR, "Couldn't get virtual buffer mutex"));
+            }
 
-		}
+        }
 
-		pBuffer = pBuffer->Next;
-	}
+        pBuffer = pBuffer->Next;
+    }
 
-	CloseHandle(hBufferMutex);
+    CloseHandle(hBufferMutex);
 }
 
 /**********************************************************************/
 
-static void UnUseLDeviceBuffers (HLDEVICE hLogicalDev)
-{
-	BUFFER_LIST *pBuffer = RealVirtualBuffer;
+static void UnUseLDeviceBuffers(HLDEVICE hLogicalDev) {
+    BUFFER_LIST *pBuffer = RealVirtualBuffer;
 
-	while(pBuffer)
-	{
-		if(pBuffer->bInUse && (pBuffer->hLogicalDev == hLogicalDev))
-		{
-			DPF((DBG_WARNING, "Releasing logical device's buffer!\n"));
+    while (pBuffer) {
+        if (pBuffer->bInUse && (pBuffer->hLogicalDev == hLogicalDev)) {
+            DPF((DBG_WARNING, "Releasing logical device's buffer!\n"));
 
-			if(GetVirtualBufferMutex(hLogicalDev->hBufferMutex))
-			{
-				/* mark it as unused */
-				pBuffer->bInUse = FALSE;
-				pBuffer->hLogicalDev = NULL;
-				ReleaseVirtualBufferMutex(hLogicalDev->hBufferMutex);
-			}
-			else
-			{
-				DPF((DBG_ERROR,"Couldn't get virtual buffer mutex"));
-			}
+            if (GetVirtualBufferMutex(hLogicalDev->hBufferMutex)) {
+                /* mark it as unused */
+                pBuffer->bInUse = FALSE;
+                pBuffer->hLogicalDev = NULL;
+                ReleaseVirtualBufferMutex(hLogicalDev->hBufferMutex);
+            } else {
+                DPF((DBG_ERROR, "Couldn't get virtual buffer mutex"));
+            }
 
-		}
+        }
 
-		pBuffer = pBuffer->Next;
-	}
+        pBuffer = pBuffer->Next;
+    }
 }
 
 
 /**********************************************************************/
 
-void CALL_CONV PVROSFreeVirtualBuffers(HLDEVICE hLogicalDev)
-{
-	UnUseLDeviceBuffers (hLogicalDev);
+void CALL_CONV PVROSFreeVirtualBuffers(HLDEVICE hLogicalDev) {
+    UnUseLDeviceBuffers(hLogicalDev);
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *FindUnusedBuffer(DEVICE_TYPE DeviceType,HANDLE hBufferMutex)
-{
-	BUFFER_LIST *pBuffer = RealVirtualBuffer;
-	int count=0;
+BUFFER_LIST *FindUnusedBuffer(DEVICE_TYPE DeviceType, HANDLE hBufferMutex) {
+    BUFFER_LIST *pBuffer = RealVirtualBuffer;
+    int count = 0;
 
-	if(!pBuffer)
-	{
-		DPF((DBG_MESSAGE,"Buffer List unitialised"));
-		/* probably not yet initialised - return and it'll be done */
-		return pBuffer;
-	}
+    if (!pBuffer) {
+        DPF((DBG_MESSAGE, "Buffer List unitialised"));
+        /* probably not yet initialised - return and it'll be done */
+        return pBuffer;
+    }
 
-	if (GetVirtualBufferMutex(hBufferMutex))
-	{
-		while(pBuffer)
-		{
-			if(count>=RealBufferCount)
-			{
-				DPF((DBG_ERROR, "More buffers in list than expected: %d vs %d\n", 
-					 count, RealBufferCount));
-			}
-			
+    if (GetVirtualBufferMutex(hBufferMutex)) {
+        while (pBuffer) {
+            if (count >= RealBufferCount) {
+                DPF((DBG_ERROR, "More buffers in list than expected: %d vs %d\n",
+                        count, RealBufferCount));
+            }
 
-			if(!(pBuffer->bInUse) && pBuffer->DeviceType == DeviceType)
-			{
-				/* found a free buffer */
-			
-				/* Mark it used immediately 
-				** - hope we don't get race conditions here 
-				*/
-				pBuffer->bInUse = TRUE;
-				ReleaseVirtualBufferMutex(hBufferMutex);
 
-				/* the buffer initial pointers should not have moved ... */
-				
-				/* ... and I'm not sure I even have to do this */
-				pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
-				if (DeviceType == MIDAS4)
-				{
-					pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX1_TSP_BASE_POS;
-				}
-				else
-				{
-					pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS;
-				}
-				pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
+            if (!(pBuffer->bInUse) && pBuffer->DeviceType == DeviceType) {
+                /* found a free buffer */
 
-				DPF((DBG_MESSAGE, "Got Buffer %d\n", count));
+                /* Mark it used immediately
+                ** - hope we don't get race conditions here
+                */
+                pBuffer->bInUse = TRUE;
+                ReleaseVirtualBufferMutex(hBufferMutex);
 
-				return pBuffer;
-			}
-			pBuffer = pBuffer->Next;
-			count++;
-		}
+                /* the buffer initial pointers should not have moved ... */
 
-		ReleaseVirtualBufferMutex(hBufferMutex);
-	}
-	else
-	{
-		DPF((DBG_ERROR,"Couldnt get Mutex"));
-	}
+                /* ... and I'm not sure I even have to do this */
+                pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
+                if (DeviceType == MIDAS4) {
+                    pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX1_TSP_BASE_POS;
+                } else {
+                    pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS;
+                }
+                pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
 
-	/* fall thru - return the null buffer pointer */
-	DPF((DBG_MESSAGE,"Couldn't find an unused buffer - current total %d",RealBufferCount));
+                DPF((DBG_MESSAGE, "Got Buffer %d\n", count));
 
-	return pBuffer;
+                return pBuffer;
+            }
+            pBuffer = pBuffer->Next;
+            count++;
+        }
+
+        ReleaseVirtualBufferMutex(hBufferMutex);
+    } else {
+        DPF((DBG_ERROR, "Couldnt get Mutex"));
+    }
+
+    /* fall thru - return the null buffer pointer */
+    DPF((DBG_MESSAGE, "Couldn't find an unused buffer - current total %d", RealBufferCount));
+
+    return pBuffer;
 
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *FindUnusedVirtualBuffer(DEVICE_TYPE DeviceType,HANDLE hBufferMutex)
-{
-	BUFFER_LIST *pBuffer = VirtualVirtualBuffer;
-	int count=0;
+BUFFER_LIST *FindUnusedVirtualBuffer(DEVICE_TYPE DeviceType, HANDLE hBufferMutex) {
+    BUFFER_LIST *pBuffer = VirtualVirtualBuffer;
+    int count = 0;
 
-	if(!pBuffer)
-	{
-		PVROSPrintf("Virtual Buffer List unitialised\n");
-		/* probably not yet initialised - return and it'll be done */
-		return pBuffer;
-	}
+    if (!pBuffer) {
+        PVROSPrintf("Virtual Buffer List unitialised\n");
+        /* probably not yet initialised - return and it'll be done */
+        return pBuffer;
+    }
 
-	if(GetVirtualBufferMutex(hBufferMutex))
-	{
+    if (GetVirtualBufferMutex(hBufferMutex)) {
 
-		while(pBuffer)
-		{
-			ASSERT(count<VirtualBufferCount);
-			PVROSPrintf("Trying Buffer %d\n", count);
-			if(!(pBuffer->bInUse) && pBuffer->DeviceType == DeviceType)
-			{
-				/* found a free buffer */
-				
-				/* Mark it used immediately 
-				** - hope we don't get race conditions here 
-				*/
-				pBuffer->bInUse = TRUE;
-				ReleaseVirtualBufferMutex(hBufferMutex);
+        while (pBuffer) {
+            ASSERT(count < VirtualBufferCount);
+            PVROSPrintf("Trying Buffer %d\n", count);
+            if (!(pBuffer->bInUse) && pBuffer->DeviceType == DeviceType) {
+                /* found a free buffer */
 
-				/* the buffer initial pointers should not have moved ... */
-				
-				/* ... and I'm not sure I even have to do this */
-				pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
-				if (DeviceType == MIDAS4)
-				{
-					pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX1_TSP_BASE_POS;
-				}
-				else
-				{
-					pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS;
-				}
-				pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
-				
-				PVROSPrintf("Got Buffer %d\n", count);
-				return pBuffer;
-			}
-			pBuffer = pBuffer->Next;
-			count++;
-			
-		}
-		PVROSPrintf("No free buffers - need a new one\n");
-		ReleaseVirtualBufferMutex(hBufferMutex);
+                /* Mark it used immediately
+                ** - hope we don't get race conditions here
+                */
+                pBuffer->bInUse = TRUE;
+                ReleaseVirtualBufferMutex(hBufferMutex);
 
-	}
-	else
-	{
-		PVROSPrintf("Couldnt get Mutex\n");
-	}
+                /* the buffer initial pointers should not have moved ... */
+
+                /* ... and I'm not sure I even have to do this */
+                pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
+                if (DeviceType == MIDAS4) {
+                    pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX1_TSP_BASE_POS;
+                } else {
+                    pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS;
+                }
+                pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
+
+                PVROSPrintf("Got Buffer %d\n", count);
+                return pBuffer;
+            }
+            pBuffer = pBuffer->Next;
+            count++;
+
+        }
+        PVROSPrintf("No free buffers - need a new one\n");
+        ReleaseVirtualBufferMutex(hBufferMutex);
+
+    } else {
+        PVROSPrintf("Couldnt get Mutex\n");
+    }
 
 
-	/* fall thru - return the null buffer pointer */
-	return pBuffer;
+    /* fall through - return the null buffer pointer */
+    return pBuffer;
 
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *AddNewBufferPCX1(HANDLE		hVxD,
-							  DEVICE_TYPE	DeviceType,
-							  sgl_uint32 	PlaneMemBytes, 
-							  sgl_uint32 	ObjectMemBytes,
-							  sgl_uint32 	TexasMemBytes)
-{
-	/* add a new one to the head of the list */
-	PVROSERR err;
-	sgl_uint32 TLBSize;
-	BUFFER_LIST *pNewBuffer = NULL;
-	sgl_uint32 *pISPObjectData = 0;
+BUFFER_LIST *AddNewBufferPCX1(HANDLE hVxD,
+                              DEVICE_TYPE DeviceType,
+                              sgl_uint32 PlaneMemBytes,
+                              sgl_uint32 ObjectMemBytes,
+                              sgl_uint32 TexasMemBytes) {
+    /* add a new one to the head of the list */
+    PVROSERR err;
+    sgl_uint32 TLBSize;
+    BUFFER_LIST *pNewBuffer = NULL;
+    sgl_uint32 *pISPObjectData;
 
-	void *pNew;
+    void *pNew;
 
-	pNewBuffer = PVROSMalloc(sizeof(BUFFER_LIST));
-	if(!pNewBuffer)
-	{
-		return NULL;
-	}
-	/* mark it as used immediatly - no need to mutex as it isnt on the list */
-	pNewBuffer->bInUse = TRUE;
-	pNewBuffer->DeviceType = MIDAS4;
-	pNewBuffer->BufferType = REAL_BUFFER;
+    pNewBuffer = PVROSMalloc(sizeof(BUFFER_LIST));
+    if (!pNewBuffer) {
+        return NULL;
+    }
+    /* mark it as used immediatly - no need to mutex as it isnt on the list */
+    pNewBuffer->bInUse = TRUE;
+    pNewBuffer->DeviceType = MIDAS4;
+    pNewBuffer->BufferType = REAL_BUFFER;
 
-	/* Allocate the guts of the buffer i.e. the memory */
+    /* Allocate the guts of the buffer i.e. the memory */
 
-	/* TSP Param memory */
+    /* TSP Param memory */
 #if SHARED_HEAP
-	pNew = PVROSMalloc (TexasMemBytes);
+    pNew = PVROSMalloc (TexasMemBytes);
 #else
-	pNew = PVROSTSPAlloc (hVxD,TexasMemBytes);
+    pNew = PVROSTSPAlloc(hVxD, TexasMemBytes);
 #endif
 
-	if(!pNew)
-	{
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+    if (!pNew) {
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-   	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer			= pNew;
-	
-	/* Used when problem with mask plane in hardware. Index greater since
-	 * full textured plane required to slow down FIFO in hardware.
-	 *
-	 * Increment StartIndex from 12 to 14. Eventhough this wastes a TSP tag it
-	 * prevents the flat shaded highlight problem.
-	 */
-   	
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos		= PCX1_TSP_BASE_POS; /* in PCX2 Tag ID 1 & 2 reserved */
-   	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit	= TexasMemBytes>>2;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer = pNew;
+
+    /* Used when problem with mask plane in hardware. Index greater since
+     * full textured plane required to slow down FIFO in hardware.
+     *
+     * Increment StartIndex from 12 to 14. Eventhough this wastes a TSP tag it
+     * prevents the flat shaded highlight problem.
+     */
+
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX1_TSP_BASE_POS; /* in PCX2 Tag ID 1 & 2 reserved */
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit = TexasMemBytes >> 2;
 
 
-	/* this create the DMA TLB stuff for planes and object pointers */
-	err = CreateNewPCXBuffer(hVxD,DeviceType,pNewBuffer,PlaneMemBytes, 0);
+    /* this create the DMA TLB stuff for planes and object pointers */
+    err = CreateNewPCXBuffer(hVxD, DeviceType, pNewBuffer, PlaneMemBytes, 0);
 
-	if(err==PVROS_DODGY)
-	{
-		/* Few TSP memory since it is in software.
-		 */
+    if (err == PVROS_DODGY) {
+        /* Few TSP memory since it is in software.
+         */
 #if SHARED_HEAP
-		PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hVxD,pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-	TLBSize = pNewBuffer->PCXBuffer.SlotsUsed * 
-		(1024 << pNewBuffer->PCXBuffer.PageSize)<<2;
-
-
-	if(TLBSize < PlaneMemBytes)
-	{
-		DPF((DBG_WARNING,"Got a smaller than requested TLB buffer"));
-	}
+    TLBSize = pNewBuffer->PCXBuffer.SlotsUsed *
+              (1024 << pNewBuffer->PCXBuffer.PageSize) << 2;
 
 
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer		= 
-		(unsigned long *) pNewBuffer->PCXBuffer.LinearAddress;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos	= 0;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferLimit= TLBSize >> 2;
+    if (TLBSize < PlaneMemBytes) {
+        DPF((DBG_WARNING, "Got a smaller than requested TLB buffer"));
+    }
 
 
-	/* Now have to get the object pointer buffers - this is either
-	** contiguous memory (Buffer1 from the VXD) or virtual and
-	** requiring copied 
-	*/
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer =
+            (unsigned long *) pNewBuffer->PCXBuffer.LinearAddress;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferLimit = TLBSize >> 2;
 
-	pNewBuffer->pDMAB = PVROSCreateDMABuffer(hVxD,ObjectMemBytes);
 
-	if (!pNewBuffer->pDMAB)
-	{
-		/*
-		** Try reducing allocation size until we manage the allocation.
-		*/
-		while (!pNewBuffer->pDMAB && (ObjectMemBytes > (1024*128)))
-		{
-			ObjectMemBytes -= 16*1024;
-			pNewBuffer->pDMAB = PVROSCreateDMABuffer(hVxD,ObjectMemBytes);
-		}
+    /* Now have to get the object pointer buffers - this is either
+    ** contiguous memory (Buffer1 from the VXD) or virtual and
+    ** requiring copied
+    */
 
-		if (!pNewBuffer->pDMAB)
-		{
-			/*
-			**	Couldn't allocate a buffer, so free all other mem
-			**	and exit.
-			*/
-			DPF((DBG_ERROR,"Couldn't get allocate shared block for ISPObjectPtrs"));
+    pNewBuffer->pDMAB = PVROSCreateDMABuffer(hVxD, ObjectMemBytes);
+
+    if (!pNewBuffer->pDMAB) {
+        /*
+        ** Try reducing allocation size until we manage the allocation.
+        */
+        while (!pNewBuffer->pDMAB && (ObjectMemBytes > (1024 * 128))) {
+            ObjectMemBytes -= 16 * 1024;
+            pNewBuffer->pDMAB = PVROSCreateDMABuffer(hVxD, ObjectMemBytes);
+        }
+
+        if (!pNewBuffer->pDMAB) {
+            /*
+            **	Couldn't allocate a buffer, so free all other mem
+            **	and exit.
+            */
+            DPF((DBG_ERROR, "Couldn't get allocate shared block for ISPObjectPtrs"));
 
 #if SHARED_HEAP
-			PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+            PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-			PVROSTSPFree(hVxD,pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+            PVROSTSPFree(hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-			PVROSDestroyDMAScatterBuffer(hVxD,pNewBuffer->pDMASB);
-			PVROSFree(pNewBuffer);
+            PVROSDestroyDMAScatterBuffer(hVxD, pNewBuffer->pDMASB);
+            PVROSFree(pNewBuffer);
 
-			return NULL;
-		}
+            return NULL;
+        }
 
-		DPF((DBG_WARNING,"Allocated reduced block for ISPObjectPtrs, size = %d bytes",ObjectMemBytes));
-	}
+        DPF((DBG_WARNING, "Allocated reduced block for ISPObjectPtrs, size = %d bytes", ObjectMemBytes));
+    }
 
-	physISPObjectData = pNewBuffer->pDMAB->PhysicalAddress;
-	pISPObjectData = (sgl_uint32 *) pNewBuffer->pDMAB->GlobalAlias;
+    physISPObjectData = pNewBuffer->pDMAB->PhysicalAddress;
+    pISPObjectData = (sgl_uint32 *) pNewBuffer->pDMAB->GlobalAlias;
 
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer 		= pISPObjectData;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos	= 0;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferLimit = ObjectMemBytes>>2;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer = pISPObjectData;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferLimit = ObjectMemBytes >> 2;
 
-	return pNewBuffer;
+    return pNewBuffer;
 
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *AddNewBufferPCX2(HANDLE		hVxD,
-							  DEVICE_TYPE	DeviceType,
-							  sgl_uint32 	PlaneMemBytes, 
-							  sgl_uint32 	ObjectMemBytes,
-							  sgl_uint32 	TexasMemBytes)
-{
-	/* add a new one to the head of the list */
-	BUFFER_LIST *pNewBuffer = NULL;
-	void *pNew;
-	PVROSERR err;
-	sgl_uint32	TLBSize, TLBSplit, *pTLB;
+BUFFER_LIST *AddNewBufferPCX2(HANDLE hVxD,
+                              DEVICE_TYPE DeviceType,
+                              sgl_uint32 PlaneMemBytes,
+                              sgl_uint32 ObjectMemBytes,
+                              sgl_uint32 TexasMemBytes) {
+    /* add a new one to the head of the list */
+    BUFFER_LIST *pNewBuffer = NULL;
+    void *pNew;
+    PVROSERR err;
+    sgl_uint32 TLBSize, TLBSplit, *pTLB;
 
 
-	pNewBuffer = PVROSMalloc(sizeof(BUFFER_LIST));
-	if(!pNewBuffer)
-	{
-		return NULL;
-	}
-	/* mark it as used immediatly ... ditto above re. mutex*/
-	pNewBuffer->bInUse = TRUE;
-	pNewBuffer->DeviceType = DeviceType;
-	pNewBuffer->BufferType = REAL_BUFFER;
+    pNewBuffer = PVROSMalloc(sizeof(BUFFER_LIST));
+    if (!pNewBuffer) {
+        return NULL;
+    }
+    /* mark it as used immediatly ... ditto above re. mutex*/
+    pNewBuffer->bInUse = TRUE;
+    pNewBuffer->DeviceType = DeviceType;
+    pNewBuffer->BufferType = REAL_BUFFER;
 
-	/* Allocate the guts of the buffer i.e. the memory */
+    /* Allocate the guts of the buffer i.e. the memory */
 
-	/* TSP Param memory */
+    /* TSP Param memory */
 #if SHARED_HEAP
-	pNew = PVROSMalloc (TexasMemBytes);
+    pNew = PVROSMalloc (TexasMemBytes);
 #else
-	pNew = PVROSTSPAlloc (hVxD,TexasMemBytes);
+    pNew = PVROSTSPAlloc(hVxD, TexasMemBytes);
 #endif
-	if(!pNew)
-	{
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+    if (!pNew) {
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-   	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer			= pNew;
-	
-	/* Used when problem with mask plane in hardware. Index greater since
-	 * full textured plane required to slow down FIFO in hardware.
-	 *
-	 * Increment StartIndex from 12 to 14. Eventhough this wastes a TSP tag it
-	 * prevents the flat shaded highlight problem.
-	 */
-   	
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos		= PCX2_TSP_BASE_POS; /* in PCX2 Tag ID 1 & 2 reserved */
-   	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit	= TexasMemBytes>>2;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer = pNew;
+
+    /* Used when problem with mask plane in hardware. Index greater since
+     * full textured plane required to slow down FIFO in hardware.
+     *
+     * Increment StartIndex from 12 to 14. Eventhough this wastes a TSP tag it
+     * prevents the flat shaded highlight problem.
+     */
+
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS; /* in PCX2 Tag ID 1 & 2 reserved */
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit = TexasMemBytes >> 2;
 
 
-	/* this create the DMA TLB stuff for planes and object pointers */
-	err = CreateNewPCXBuffer(hVxD,DeviceType,pNewBuffer,PlaneMemBytes,ObjectMemBytes);
+    /* this create the DMA TLB stuff for planes and object pointers */
+    err = CreateNewPCXBuffer(hVxD, DeviceType, pNewBuffer, PlaneMemBytes, ObjectMemBytes);
 
-	if(err==PVROS_DODGY)
-	{
+    if (err == PVROS_DODGY) {
 #if SHARED_HEAP
-		PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-	TLBSize = pNewBuffer->PCXBuffer.SlotsUsed * 
-		(1024 << pNewBuffer->PCXBuffer.PageSize)<<2;
+    TLBSize = pNewBuffer->PCXBuffer.SlotsUsed *
+              (1024 << pNewBuffer->PCXBuffer.PageSize) << 2;
 
-	if(TLBSize < (PlaneMemBytes+ObjectMemBytes))
-	{
-		DPF((DBG_WARNING,"Got a smaller than requested TLB buffer: TLBSize=%d, Request=%d",
-					TLBSize, (PlaneMemBytes+ObjectMemBytes)));
-		/* keep more back for the objects -- sacrifice planes
-		** this is a arbitrary decision by me!!
-		*/
-		TLBSplit = (TLBSize - ObjectMemBytes)>>2;
-	}
-	else
-	{
-		TLBSplit = PlaneMemBytes>>2;
-	}
+    if (TLBSize < (PlaneMemBytes + ObjectMemBytes)) {
+        DPF((DBG_WARNING, "Got a smaller than requested TLB buffer: TLBSize=%d, Request=%d",
+                TLBSize, (PlaneMemBytes + ObjectMemBytes)));
+        /* keep more back for the objects -- sacrifice planes
+        ** this is a arbitrary decision by me!!
+        */
+        TLBSplit = (TLBSize - ObjectMemBytes) >> 2;
+    } else {
+        TLBSplit = PlaneMemBytes >> 2;
+    }
 
-	pTLB = (unsigned long *) pNewBuffer->PCXBuffer.LinearAddress;
+    pTLB = (unsigned long *) pNewBuffer->PCXBuffer.LinearAddress;
 
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer		 	= pTLB;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos	 	= 0;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferLimit 	= TLBSplit - 1;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer = pTLB;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferLimit = TLBSplit - 1;
 
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer 	 	= pTLB + TLBSplit;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos	= 0;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferLimit = ObjectMemBytes>>2;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer = pTLB + TLBSplit;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferLimit = ObjectMemBytes >> 2;
 
-	return pNewBuffer;
+    return pNewBuffer;
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *CreateVirtualBuffer(	HLDEVICE hLogicalDev,
-									sgl_uint32 PlaneMemBytes, 
-									sgl_uint32 ObjectMemBytes,
-									sgl_uint32 TexasMemBytes)
-{
-	/* add a new one to the head of the list */
-	BUFFER_LIST *pNewBuffer = NULL;
-	void *pNew;
+BUFFER_LIST *CreateVirtualBuffer(HLDEVICE hLogicalDev,
+                                 sgl_uint32 PlaneMemBytes,
+                                 sgl_uint32 ObjectMemBytes,
+                                 sgl_uint32 TexasMemBytes) {
+    /* add a new one to the head of the list */
+    BUFFER_LIST *pNewBuffer = NULL;
+    void *pNew;
 
-	pNewBuffer = PVROSMalloc(sizeof(BUFFER_LIST));
-	if(!pNewBuffer)
-	{
-		return NULL;
-	}
-	/* mark it as used immediatly */
-	pNewBuffer->bInUse = TRUE;
+    pNewBuffer = PVROSMalloc(sizeof(BUFFER_LIST));
+    if (!pNewBuffer) {
+        return NULL;
+    }
+    /* mark it as used immediatly */
+    pNewBuffer->bInUse = TRUE;
 
-	/* Allocate the guts of the buffer i.e. the memory */
+    /* Allocate the guts of the buffer i.e. the memory */
 
-	/* TSP Param memory */
+    /* TSP Param memory */
 #if SHARED_HEAP
-	pNew = PVROSMalloc (TexasMemBytes);
+    pNew = PVROSMalloc (TexasMemBytes);
 #else
-	pNew = PVROSTSPAlloc (hLogicalDev->hVxD,TexasMemBytes);
+    pNew = PVROSTSPAlloc(hLogicalDev->hVxD, TexasMemBytes);
 #endif
-	if(!pNew)
-	{
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+    if (!pNew) {
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-	/* Initialise the TSP buffer - PCX2 default values */
-   	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer			= pNew;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos 		= PCX2_TSP_BASE_POS;
-   	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit	= TexasMemBytes>>2;
+    /* Initialise the TSP buffer - PCX2 default values */
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer = pNew;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit = TexasMemBytes >> 2;
 
-	/* this create the DMA TLB stuff for planes and object pointers */
+    /* this create the DMA TLB stuff for planes and object pointers */
 
-	pNew = PVROSMalloc (PlaneMemBytes);
-	if(!pNew)
-	{
+    pNew = PVROSMalloc(PlaneMemBytes);
+    if (!pNew) {
 #if SHARED_HEAP
-		PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hLogicalDev->hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hLogicalDev->hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer		 	= pNew;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos	 	= 0;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferLimit 	= PlaneMemBytes>>2;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer = pNew;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferLimit = PlaneMemBytes >> 2;
 
 
-	pNew = PVROSMalloc (ObjectMemBytes);
-	if(!pNew)
-	{
+    pNew = PVROSMalloc(ObjectMemBytes);
+    if (!pNew) {
 #if SHARED_HEAP
-		PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #else
-		PVROSTSPFree(hLogicalDev->hVxD,pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
+        PVROSTSPFree(hLogicalDev->hVxD, pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer);
 #endif
-		PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer);
-		PVROSFree(pNewBuffer);
-		return NULL;
-	}
+        PVROSFree(pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer);
+        PVROSFree(pNewBuffer);
+        return NULL;
+    }
 
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer 	 	= pNew;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos	= 0;
-	pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferLimit = ObjectMemBytes>>2;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer = pNew;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
+    pNewBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferLimit = ObjectMemBytes >> 2;
 
-	/* Lastly if we've sucessfully done everything else fix up the list pointers */ 
-	return pNewBuffer;
+    /* Lastly if we've sucessfully done everything else fix up the list pointers */
+    return pNewBuffer;
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *AddNewBuffer(HLDEVICE hLogicalDev,sgl_bool AttachToList)
-{
-	BUFFER_LIST *pBuffer = NULL;
+BUFFER_LIST *AddNewBuffer(HLDEVICE hLogicalDev, sgl_bool AttachToList) {
+    BUFFER_LIST *pBuffer = NULL;
 
-	switch(hLogicalDev->DeviceType)
-	{
-		case(MIDAS4):
-		{
-			pBuffer = AddNewBufferPCX1(hLogicalDev->hVxD,
-									   hLogicalDev->DeviceType,
-									   hLogicalDev->PlaneMemBytes, 
-									   hLogicalDev->ObjectMemBytes,
-									   hLogicalDev->TexasMemBytes);
+    switch (hLogicalDev->DeviceType) {
+        case (MIDAS4): {
+            pBuffer = AddNewBufferPCX1(hLogicalDev->hVxD,
+                                       hLogicalDev->DeviceType,
+                                       hLogicalDev->PlaneMemBytes,
+                                       hLogicalDev->ObjectMemBytes,
+                                       hLogicalDev->TexasMemBytes);
 #define USE_PCX2_AS_PCX1 0
 #if USE_PCX2_AS_PCX1
-			if(!pBuffer)
-			{
-				pBuffer = FindUnusedBuffer(hLogicalDev->DeviceType, hLogicalDev->hBufferMutex);
-				if(pBuffer)
-				{
-					pBuffer->BufferType = PCX2_AS_PCX1_BUFFER;
-				}
-				else
-				{
-					pBuffer = AddNewBufferPCX2(hLogicalDev->hVxD,
-									   		   hLogicalDev->DeviceType,
-									   		   hLogicalDev->PlaneMemBytes, 
-											   hLogicalDev->ObjectMemBytes,
-											   hLogicalDev->TexasMemBytes);
-					if(pBuffer)
-					{
-						pBuffer->BufferType = PCX2_AS_PCX1_BUFFER;
-					}
-				}
-			}
+            if(!pBuffer)
+            {
+                pBuffer = FindUnusedBuffer(hLogicalDev->DeviceType, hLogicalDev->hBufferMutex);
+                if(pBuffer)
+                {
+                    pBuffer->BufferType = PCX2_AS_PCX1_BUFFER;
+                }
+                else
+                {
+                    pBuffer = AddNewBufferPCX2(hLogicalDev->hVxD,
+                                                  hLogicalDev->DeviceType,
+                                                  hLogicalDev->PlaneMemBytes,
+                                               hLogicalDev->ObjectMemBytes,
+                                               hLogicalDev->TexasMemBytes);
+                    if(pBuffer)
+                    {
+                        pBuffer->BufferType = PCX2_AS_PCX1_BUFFER;
+                    }
+                }
+            }
 #endif
-			break;
-		}
-		case(MIDAS5):
-		case(MIDAS5_003):
-		{
-			pBuffer = AddNewBufferPCX2(hLogicalDev->hVxD,
-									   hLogicalDev->DeviceType,
-									   hLogicalDev->PlaneMemBytes, 
-									   hLogicalDev->ObjectMemBytes,
-									   hLogicalDev->TexasMemBytes);
-			break;
-		}
-		default:
-		{
-			PVROSPrintf("Cannot assign a buffer for an unknown device\n");
-		}
-	}
+            break;
+        }
+        case (MIDAS5):
+        case (MIDAS5_003): {
+            pBuffer = AddNewBufferPCX2(hLogicalDev->hVxD,
+                                       hLogicalDev->DeviceType,
+                                       hLogicalDev->PlaneMemBytes,
+                                       hLogicalDev->ObjectMemBytes,
+                                       hLogicalDev->TexasMemBytes);
+            break;
+        }
+        default: {
+            PVROSPrintf("Cannot assign a buffer for an unknown device\n");
+        }
+    }
 
-	/* Lastly if we've sucessfully done everything else fix up the list pointers */ 
-	if(pBuffer && AttachToList)
-	{
-		pBuffer->Next = RealVirtualBuffer;
-		RealVirtualBuffer = pBuffer;
-		RealBufferCount++;
-	}
+    /* Lastly if we've sucessfully done everything else fix up the list pointers */
+    if (pBuffer && AttachToList) {
+        pBuffer->Next = RealVirtualBuffer;
+        RealVirtualBuffer = pBuffer;
+        RealBufferCount++;
+    }
 
-	return pBuffer;
+    return pBuffer;
 }
 
 /**********************************************************************/
 
-BUFFER_LIST *AddNewVirtualBuffer(HLDEVICE Device)
-{
-	BUFFER_LIST *pBuffer = NULL;
+BUFFER_LIST *AddNewVirtualBuffer(HLDEVICE Device) {
+    BUFFER_LIST *pBuffer = NULL;
 
-	pBuffer = CreateVirtualBuffer(	Device,
-									Device->PlaneMemBytes, 
-								  	Device->ObjectMemBytes,
-								  	Device->TexasMemBytes);
-	if(pBuffer)
-	{
-		pBuffer->BufferType = VIRTUAL_BUFFER;
-		pBuffer->DeviceType = Device->DeviceType;
-		pBuffer->Next = VirtualVirtualBuffer;
-		VirtualVirtualBuffer = pBuffer;
-		VirtualBufferCount++;
-	}
+    pBuffer = CreateVirtualBuffer(Device,
+                                  Device->PlaneMemBytes,
+                                  Device->ObjectMemBytes,
+                                  Device->TexasMemBytes);
+    if (pBuffer) {
+        pBuffer->BufferType = VIRTUAL_BUFFER;
+        pBuffer->DeviceType = Device->DeviceType;
+        pBuffer->Next = VirtualVirtualBuffer;
+        VirtualVirtualBuffer = pBuffer;
+        VirtualBufferCount++;
+    }
 
-	return pBuffer;
+    return pBuffer;
 }
 
 /**********************************************************************/
 
-sgl_uint32 RendersPendingOnBoard(HLDEVICE hLogicalDev)
-{
-	/* walk the Log Device list for the board and count how many have 
-	** pending renders
-	*/
-	sgl_uint32 Pending = 0;
-	BOARDREF   *pBoardRef;
-	LIST       *pLDevList;
+sgl_uint32 RendersPendingOnBoard(HLDEVICE hLogicalDev) {
+    /* walk the Log Device list for the board and count how many have
+    ** pending renders
+    */
+    sgl_uint32 Pending = 0;
+    BOARDREF *pBoardRef;
+    LIST *pLDevList;
 
-	pBoardRef = GetBoardRef(hLogicalDev->hDeviceID);
+    pBoardRef = GetBoardRef(hLogicalDev->hDeviceID);
 
-	pLDevList = pBoardRef->LDeviceList;
-	ASSERT(pLDevList);
+    pLDevList = pBoardRef->LDeviceList;
+    ASSERT(pLDevList);
 
-	while(pLDevList)
-	{
-		if(pLDevList->hLogicalDev->RenderStatus != PVR_STATUS_EOR)
-		{
-			Pending++;
-		}
-		pLDevList = pLDevList->Next;
-	}
+    while (pLDevList) {
+        if (pLDevList->hLogicalDev->RenderStatus != PVR_STATUS_EOR) {
+            Pending++;
+        }
+        pLDevList = pLDevList->Next;
+    }
 
 
-	return Pending;
+    return Pending;
 
 }
 
 /**********************************************************************/
 
-PVROSERR PVROSAssignVirtualBuffers(PVR_PARAM_BUFF *pPVRParamBuf, 
-								   HLDEVICE hLogicalDev)
-{
-	BUFFER_LIST *pBuffer;
-	sgl_uint32 Pending;
-	sgl_int32 TSPHighWaterMark;
+PVROSERR PVROSAssignVirtualBuffers(PVR_PARAM_BUFF *pPVRParamBuf,
+                                   HLDEVICE hLogicalDev) {
+    BUFFER_LIST *pBuffer;
+    sgl_uint32 Pending;
+    sgl_int32 TSPHighWaterMark;
 
-	hLogicalDev->VirtualBuffer = NULL;
+    hLogicalDev->VirtualBuffer = NULL;
 
-	pBuffer = FindUnusedBuffer(hLogicalDev->DeviceType,hLogicalDev->hBufferMutex);
+    pBuffer = FindUnusedBuffer(hLogicalDev->DeviceType, hLogicalDev->hBufferMutex);
 
-	if(pBuffer == NULL)
-	{
-		Pending = RendersPendingOnBoard(hLogicalDev);
-		if(Pending==0)
-		{
-			DPF((DBG_WARNING,"PVROSAssignVirtualBuffers: No renders pending, No buffers Avail"));
-		}
-	}
+    if (pBuffer == NULL) {
+        Pending = RendersPendingOnBoard(hLogicalDev);
+        if (Pending == 0) {
+            DPF((DBG_WARNING, "PVROSAssignVirtualBuffers: No renders pending, No buffers Avail"));
+        }
+    }
 
-	while (pBuffer == NULL)
-	{
-		Pending = RendersPendingOnBoard(hLogicalDev);
-		if(Pending==0)
-		{
-			DPF((DBG_WARNING,"PVROSAssignVirtualBuffers: No renders pending, No buffers Avail"));
-			break;
-		}
-		DPF((DBG_MESSAGE,"PVROSAssignVirtualBuffers: going to sleep"));
-		Sleep (1);
-	
-		pBuffer = FindUnusedBuffer(hLogicalDev->DeviceType,hLogicalDev->hBufferMutex);
-	}
+    while (pBuffer == NULL) {
+        Pending = RendersPendingOnBoard(hLogicalDev);
+        if (Pending == 0) {
+            DPF((DBG_WARNING, "PVROSAssignVirtualBuffers: No renders pending, No buffers Avail"));
+            break;
+        }
+        DPF((DBG_MESSAGE, "PVROSAssignVirtualBuffers: going to sleep"));
+        Sleep(1);
 
-	if(pBuffer == NULL)
-	{
-		DPF((DBG_WARNING,"No free buffers - attempting to create a new physical one"));
+        pBuffer = FindUnusedBuffer(hLogicalDev->DeviceType, hLogicalDev->hBufferMutex);
+    }
 
-		pBuffer = AddNewBuffer(hLogicalDev, TRUE);
-  	}
+    if (pBuffer == NULL) {
+        DPF((DBG_WARNING, "No free buffers - attempting to create a new physical one"));
+
+        pBuffer = AddNewBuffer(hLogicalDev, TRUE);
+    }
 
 
 #if USE_VIRTUAL_BUFFERS
 
-	if(pBuffer == NULL)
-	{
-		/* couldn't get any sort of physical buffer - try a virtual one */
-		pBuffer = FindUnusedVirtualBuffer(hLogicalDev->DeviceType,hLogicalDev->hBufferMutex);
+    if(pBuffer == NULL)
+    {
+        /* couldn't get any sort of physical buffer - try a virtual one */
+        pBuffer = FindUnusedVirtualBuffer(hLogicalDev->DeviceType,hLogicalDev->hBufferMutex);
 
-		if(pBuffer == NULL)
-		{							   /* Dodgy parameters? */
-			pBuffer = AddNewVirtualBuffer(hLogicalDev->DeviceType,hLogicalDev->hBufferMutex);
-		}
+        if(pBuffer == NULL)
+        {							   /* Dodgy parameters? */
+            pBuffer = AddNewVirtualBuffer(hLogicalDev->DeviceType,hLogicalDev->hBufferMutex);
+        }
 
-		/* failure at this point means there isn't any virtual memory */
-		PVROSPrintf("Failed to assign a buffer\n");
-		ASSERT(pBuffer);
-		return PVROS_DODGY;
-	}
+        /* failure at this point means there isn't any virtual memory */
+        PVROSPrintf("Failed to assign a buffer\n");
+        ASSERT(pBuffer);
+        return PVROS_DODGY;
+    }
 
 #endif
-	if(pBuffer==NULL)
-	{
-		return PVROS_DODGY;
-	}
+    if (pBuffer == NULL) {
+        return PVROS_DODGY;
+    }
 
-	pBuffer->hLogicalDev = hLogicalDev;
+    pBuffer->hLogicalDev = hLogicalDev;
 
-	pBuffer->DestAddr[PVR_PARAM_TYPE_ISP] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer;
-	pBuffer->DestAddr[PVR_PARAM_TYPE_TSP] = (sgl_uint32 *)hLogicalDev->BoardData.LinearMemWindows[1];
-	pBuffer->DestAddr[PVR_PARAM_TYPE_REGION] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer;
+    pBuffer->DestAddr[PVR_PARAM_TYPE_ISP] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer;
+    pBuffer->DestAddr[PVR_PARAM_TYPE_TSP] = (sgl_uint32 *) hLogicalDev->BoardData.LinearMemWindows[1];
+    pBuffer->DestAddr[PVR_PARAM_TYPE_REGION] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer;
 
-	/* if we got here we've got a valid set of buffers */
-	/* fill out the pointers for return */
-	hLogicalDev->VirtualBuffer = pBuffer;
+    /* if we got here we've got a valid set of buffers */
+    /* fill out the pointers for return */
+    hLogicalDev->VirtualBuffer = pBuffer;
 
-	/* get the current setting for TSP params in texture memory */
+    /* get the current setting for TSP params in texture memory */
 
-	TSPHighWaterMark = PVROSGetTSPHighWaterMark (hLogicalDev->TexHeap);
+    TSPHighWaterMark = PVROSGetTSPHighWaterMark(hLogicalDev->TexHeap);
 
-	if ((TSPHighWaterMark >> 2) != (sgl_int32) pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit)
-	{
-		void *pNew;
+    if ((TSPHighWaterMark >> 2) != (sgl_int32) pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit) {
+        void *pNew;
 #if SHARED_HEAP
-		pNew = PVROSRealloc (pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer, TSPHighWaterMark);
+        pNew = PVROSRealloc (pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer, TSPHighWaterMark);
 #else
-		pNew = PVROSTSPRealloc (hLogicalDev->hVxD, pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer, TSPHighWaterMark);
+        pNew = PVROSTSPRealloc(hLogicalDev->hVxD, pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer, TSPHighWaterMark);
 #endif
 
-		if (!pNew)
-		{
-			DPF((DBG_ERROR,"TSP buffer realloc failed!"));
-		}
-		else
-		{
-			pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer = pNew;
-			pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit = TSPHighWaterMark>>2;
-		}
-	}
+        if (!pNew) {
+            DPF((DBG_ERROR, "TSP buffer realloc failed!"));
+        } else {
+            pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].pBuffer = pNew;
+            pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferLimit = TSPHighWaterMark >> 2;
+        }
+    }
 
-	pPVRParamBuf[PVR_PARAM_TYPE_ISP]  = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP];
-	pPVRParamBuf[PVR_PARAM_TYPE_TSP]  = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP];
+    pPVRParamBuf[PVR_PARAM_TYPE_ISP] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP];
+    pPVRParamBuf[PVR_PARAM_TYPE_TSP] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_TSP];
 
-	pPVRParamBuf[PVR_PARAM_TYPE_REGION]  = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION];
+    pPVRParamBuf[PVR_PARAM_TYPE_REGION] = pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION];
 
-	pPVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos  	= 0;
-	pPVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos  = 0;
+    pPVRParamBuf[PVR_PARAM_TYPE_ISP].uBufferPos = 0;
+    pPVRParamBuf[PVR_PARAM_TYPE_REGION].uBufferPos = 0;
 
-	if(hLogicalDev->DeviceType==MIDAS4)
-	{
-		pPVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos  	= PCX1_TSP_BASE_POS;
-		hLogicalDev->Registers[PCX_OBJECT_OFFSET] = pBuffer->pDMAB->PhysicalAddress;
-	}
-	else
-	{
-		pPVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos  	= PCX2_TSP_BASE_POS;
-		hLogicalDev->Registers[PCX_OBJECT_OFFSET] = 
-			(int)pPVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer - (int)pPVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer
-			| 0x00000001UL;
-	}
+    if (hLogicalDev->DeviceType == MIDAS4) {
+        pPVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX1_TSP_BASE_POS;
+        hLogicalDev->Registers[PCX_OBJECT_OFFSET] = pBuffer->pDMAB->PhysicalAddress;
+    } else {
+        pPVRParamBuf[PVR_PARAM_TYPE_TSP].uBufferPos = PCX2_TSP_BASE_POS;
+        hLogicalDev->Registers[PCX_OBJECT_OFFSET] =
+                (int) pPVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer - (int) pPVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer
+                | 0x00000001UL;
+    }
 
-	return PVROS_GROOVY;
+    return PVROS_GROOVY;
 
 }
 
 /**********************************************************************/
 
-HLDEVICE CALL_CONV PVROSCreateLogicalDevice(HDEVICE hDeviceID, void *TexHeap)
-{
-	HLDEVICE Device = NULL;
-	int i;
-	LIST        *pLDevList;
-	BUFFER_LIST *pBuffer;
-	BOARDREF	*pBoardRef;
-	HANDLE		hVxD = OpenVxd();
+HLDEVICE CALL_CONV PVROSCreateLogicalDevice(HDEVICE hDeviceID, void *TexHeap) {
+    HLDEVICE Device = NULL;
+    int i;
+    LIST *pLDevList;
+    BUFFER_LIST *pBuffer;
+    BOARDREF *pBoardRef;
+    HANDLE hVxD = OpenVxd();
 
-	pBoardRef = GetBoardRef (hDeviceID);
+    pBoardRef = GetBoardRef(hDeviceID);
 
-	if (pBoardRef == NULL)
-	{
-		DPF((DBG_FATAL,"PVROSCreateLogicalDevice: bad physical device"));
-	}
-	else
-	{
-		pLDevList = PVROSMalloc(sizeof(LIST));
-		if(pLDevList==NULL)
-		{
-				DPF((DBG_FATAL,"PVROSCreateLogicalDevice: out of memory for logical device list"));
-		}
-		else
-		{
-			pLDevList->Prev = NULL;
-			pLDevList->Next = NULL;
+    if (pBoardRef == NULL) {
+        DPF((DBG_FATAL, "PVROSCreateLogicalDevice: bad physical device"));
+    } else {
+        pLDevList = PVROSMalloc(sizeof(LIST));
+        if (pLDevList == NULL) {
+            DPF((DBG_FATAL, "PVROSCreateLogicalDevice: out of memory for logical device list"));
+        } else {
+            pLDevList->Prev = NULL;
+            pLDevList->Next = NULL;
 
-			Device = PVROSMalloc(sizeof(LDEVICE));
-			pLDevList->hLogicalDev = Device;
+            Device = PVROSMalloc(sizeof(LDEVICE));
+            pLDevList->hLogicalDev = Device;
 
-			if (Device == NULL)
-			{
-				PVROSPrintf("PVROSCreateLogicalDevice: out of memory for logical device\n");
-			}
-			else
-			{
-				Device->DeviceType = GetDeviceType(hDeviceID);
+            if (Device == NULL) {
+                PVROSPrintf("PVROSCreateLogicalDevice: out of memory for logical device\n");
+            } else {
+                Device->DeviceType = GetDeviceType(hDeviceID);
 
-				/* initalise the device */
-				Device->TexHeap = TexHeap;
-				Device->RenderStatus = PVR_STATUS_EOR;
-				/* vxd needs milli secs */
-				Device->RenderTimeout = HWRdValFileUInt( "RenderTimeout", 5)*100; 
-				Device->RendersPending = 0;
-				Device->Buffers[0].pBuffer = NULL;
-				Device->Buffers[1].pBuffer = NULL;
-				Device->Buffers[2].pBuffer = NULL;
-				Device->Buffers[0].uBufferPos = 0;
-				Device->Buffers[1].uBufferPos = 0;
-				Device->Buffers[2].uBufferPos = 0;
-				Device->Buffers[0].uBufferLimit = 0;
-				Device->Buffers[1].uBufferLimit = 0;
-				Device->Buffers[2].uBufferLimit = 0;
-				Device->hDeviceID = hDeviceID;
-				Device->hVxD = hVxD;
-				Device->dwPID = GetCurrentProcessId();
+                /* initalise the device */
+                Device->TexHeap = TexHeap;
+                Device->RenderStatus = PVR_STATUS_EOR;
+                /* vxd needs milli secs */
+                Device->RenderTimeout = HWRdValFileUInt("RenderTimeout", 5) * 100;
+                Device->RendersPending = 0;
+                Device->Buffers[0].pBuffer = NULL;
+                Device->Buffers[1].pBuffer = NULL;
+                Device->Buffers[2].pBuffer = NULL;
+                Device->Buffers[0].uBufferPos = 0;
+                Device->Buffers[1].uBufferPos = 0;
+                Device->Buffers[2].uBufferPos = 0;
+                Device->Buffers[0].uBufferLimit = 0;
+                Device->Buffers[1].uBufferLimit = 0;
+                Device->Buffers[2].uBufferLimit = 0;
+                Device->hDeviceID = hDeviceID;
+                Device->hVxD = hVxD;
+                Device->dwPID = GetCurrentProcessId();
 
-				Device->hBufferMutex = CreateMutex(NULL,     /* no security attributes*/
-												   FALSE,    /* initially not owned*/
-												   "VirtualBufferMutex");  /* name of mutex*/
-				
-				PVROSGetPCIDeviceInfo (hDeviceID, &Device->BoardData);
+                Device->hBufferMutex = CreateMutex(NULL,     /* no security attributes*/
+                                                   FALSE,    /* initially not owned*/
+                                                   "VirtualBufferMutex");  /* name of mutex*/
 
-				for(i=0; i<32; i++)
-				{
-					Device->Registers[i] = 0;
-				}
-				
-				/* create a set of buffers if we don't have enough */
-				
-				if (CountBuffers (Device->DeviceType) >= (pBoardRef->nLogicalDevices + 2))
-				{
-					DPF((DBG_MESSAGE,"PVROSCreateLogicalDevice: we have enough buffers (%d, %d)\n", 
-								CountBuffers (Device->DeviceType), 
-								pBoardRef->nLogicalDevices + 2));
-				}
-				else
-				{
-					DPF((DBG_MESSAGE,"PVROSCreateLogicalDevice: need new buffer (%d, %d)\n", 
-								CountBuffers (Device->DeviceType), 
-								pBoardRef->nLogicalDevices + 2));
+                PVROSGetPCIDeviceInfo(hDeviceID, &Device->BoardData);
 
-					/* Read ISP,Object & TSP ParamSize from the registry */
-					GetParamSettings(Device);
+                for (i = 0; i < 32; i++) {
+                    Device->Registers[i] = 0;
+                }
 
-					switch(Device->DeviceType)
-					{
-						case(MIDAS4):
-						case(MIDAS5):
-						case(MIDAS5_003):
-						{
-							pBuffer = AddNewBuffer(Device,TRUE);
+                /* create a set of buffers if we don't have enough */
 
-							break;
-						}
-						default:
-						{
-							PVROSPrintf("PVROSCreateLogicalDevice: bad device type\n");
-							PVROSFree(Device);
+                if (CountBuffers(Device->DeviceType) >= (pBoardRef->nLogicalDevices + 2)) {
+                    DPF((DBG_MESSAGE, "PVROSCreateLogicalDevice: we have enough buffers (%d, %d)\n",
+                            CountBuffers(Device->DeviceType),
+                            pBoardRef->nLogicalDevices + 2));
+                } else {
+                    DPF((DBG_MESSAGE, "PVROSCreateLogicalDevice: need new buffer (%d, %d)\n",
+                            CountBuffers(Device->DeviceType),
+                            pBoardRef->nLogicalDevices + 2));
 
-							CloseVxd(hVxD);
-							return (NULL);
-						}
-					}
-					
+                    /* Read ISP,Object & TSP ParamSize from the registry */
+                    GetParamSettings(Device);
+
+                    switch (Device->DeviceType) {
+                        case (MIDAS4):
+                        case (MIDAS5):
+                        case (MIDAS5_003): {
+                            pBuffer = AddNewBuffer(Device, TRUE);
+
+                            break;
+                        }
+                        default: {
+                            PVROSPrintf("PVROSCreateLogicalDevice: bad device type\n");
+                            PVROSFree(Device);
+
+                            CloseVxd(hVxD);
+                            return (NULL);
+                        }
+                    }
+
 #define TRY_VIRTUAL 0
 #if TRY_VIRTUAL
-					
-					if(pBuffer == NULL)
-					{
-						switch(Device->DeviceType)
-						{
-							case(MIDAS4):
-							case(MIDAS5):
-							case(MIDAS5_003):
-							{
-								pBuffer = AddNewVirtualBuffer(Device);
-								break;
-							}
-							default:
-							{
-								PVROSPrintf("Cannot assign a buffer for an unknown device\n");
-							}
-						}
-					}
-					
+
+                    if(pBuffer == NULL)
+                    {
+                        switch(Device->DeviceType)
+                        {
+                            case(MIDAS4):
+                            case(MIDAS5):
+                            case(MIDAS5_003):
+                            {
+                                pBuffer = AddNewVirtualBuffer(Device);
+                                break;
+                            }
+                            default:
+                            {
+                                PVROSPrintf("Cannot assign a buffer for an unknown device\n");
+                            }
+                        }
+                    }
+
 #endif
 
-					if(pBuffer == NULL)
-					{
-						/* failed buffer creation destroy the logical device and return NULL */
-						PVROSFree(pLDevList);
-						PVROSFree(Device);
-						Device = NULL;
-					}
-					else
-					{
-						if(GetVirtualBufferMutex(Device->hBufferMutex))
-						{
-							/* mark it as unused */
-							pBuffer->bInUse = FALSE;
-							ReleaseVirtualBufferMutex(Device->hBufferMutex);
-						}
-						else
-						{
-							PVROSPrintf("Couln't get virtual buffer mutex\n");
-						}
-					}
-				}
-			}
-		}
-	}
+                    if (pBuffer == NULL) {
+                        /* failed buffer creation destroy the logical device and return NULL */
+                        PVROSFree(pLDevList);
+                        PVROSFree(Device);
+                        Device = NULL;
+                    } else {
+                        if (GetVirtualBufferMutex(Device->hBufferMutex)) {
+                            /* mark it as unused */
+                            pBuffer->bInUse = FALSE;
+                            ReleaseVirtualBufferMutex(Device->hBufferMutex);
+                        } else {
+                            PVROSPrintf("Couln't get virtual buffer mutex\n");
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	if(Device && pLDevList)
-	{
-		pBoardRef->nLogicalDevices ++;
+    if (Device && pLDevList) {
+        pBoardRef->nLogicalDevices++;
 
-		pLDevList->Next = pBoardRef->LDeviceList;
-		pBoardRef->LDeviceList = pLDevList;
-		DPF((DBG_MESSAGE,"PVROSCreateLogicalDevice: %d Logical Devices Now Exist",
-					pBoardRef->nLogicalDevices));
-	}
-	else
-	{
-		CloseVxd(hVxD);
-	}
+        pLDevList->Next = pBoardRef->LDeviceList;
+        pBoardRef->LDeviceList = pLDevList;
+        DPF((DBG_MESSAGE, "PVROSCreateLogicalDevice: %d Logical Devices Now Exist",
+                pBoardRef->nLogicalDevices));
+    } else {
+        CloseVxd(hVxD);
+    }
 
-	return Device;
+    return Device;
 
 }
 
 /**********************************************************************/
 
-extern void ResetCallbacks(void* pLogDevice);
+extern void ResetCallbacks(void *pLogDevice);
 
 
-void CALL_CONV PVROSDestroyLogicalDevice(HLDEVICE hLogicalDev)
-{
-	BOARDREF	*pBoardRef;
-	LIST *pLDevList, *pPrev;
+void CALL_CONV PVROSDestroyLogicalDevice(HLDEVICE hLogicalDev) {
+    BOARDREF *pBoardRef;
+    LIST *pLDevList, *pPrev;
 
-	pBoardRef = GetBoardRef (hLogicalDev->hDeviceID);
+    pBoardRef = GetBoardRef(hLogicalDev->hDeviceID);
 
-	/* must be a valid board! */
+    /* must be a valid board! */
 
-	ASSERT (pBoardRef != NULL);
+    ASSERT (pBoardRef != NULL);
 
-	if (pBoardRef)
-	{
-				
-		/* free buffers that are currently marked used by this ldevice */
+    if (pBoardRef) {
 
-		UnUseLDeviceBuffers (hLogicalDev);
+        /* free buffers that are currently marked used by this ldevice */
 
-		/*
-			JWH - Err, seemed like compare against pBoardRef->nLogicalDevices + 1 was incorrect, 
-			removing +1 seems to fix virtual buffer leak...
-		*/
-		if (CountBuffers (GetDeviceType (hLogicalDev->hDeviceID)) <= pBoardRef->nLogicalDevices)
-		{
-			DPF((DBG_MESSAGE,"PVROSDestroyLogicalDevice: not destroying a buffer"));
-		}
-		else
-		{
-			/* wh#at about the virtual buffers ?! */
-			DPF((DBG_MESSAGE,"PVROSDestroyLogicalDevice: Destroying a virtual buffer"));
+        UnUseLDeviceBuffers(hLogicalDev);
 
-			PVROSDestroyAVirtualBuffer (hLogicalDev->DeviceType,
-										hLogicalDev->hVxD,
-										hLogicalDev->hBufferMutex);
-		}
+        /*
+            JWH - Err, seemed like compare against pBoardRef->nLogicalDevices + 1 was incorrect,
+            removing +1 seems to fix virtual buffer leak...
+        */
+        if (CountBuffers(GetDeviceType(hLogicalDev->hDeviceID)) <= pBoardRef->nLogicalDevices) {
+            DPF((DBG_MESSAGE, "PVROSDestroyLogicalDevice: not destroying a buffer"));
+        } else {
+            /* wh#at about the virtual buffers ?! */
+            DPF((DBG_MESSAGE, "PVROSDestroyLogicalDevice: Destroying a virtual buffer"));
 
-		/* Examine all the callbacks incase anything has been left behind */
-		ResetCallbacks(hLogicalDev);
+            PVROSDestroyAVirtualBuffer(hLogicalDev->DeviceType,
+                                       hLogicalDev->hVxD,
+                                       hLogicalDev->hBufferMutex);
+        }
 
-		pLDevList = pBoardRef->LDeviceList;
-		ASSERT(pLDevList);
+        /* Examine all the callbacks incase anything has been left behind */
+        ResetCallbacks(hLogicalDev);
 
-		pPrev = NULL;
-		while(pLDevList->hLogicalDev != hLogicalDev)
-		{
-			pPrev = pLDevList; 
-			pLDevList = pLDevList->Next;
-			if(pLDevList == NULL)
-			{
-				DPF((DBG_WARNING,"PVROSDestroyLogicalDevice: Couldn't find logical device on board list"));
-				break;
-			}
-		}
+        pLDevList = pBoardRef->LDeviceList;
+        ASSERT(pLDevList);
 
-		if(pLDevList)
-		{
-			if(pPrev)
-			{
-				pPrev->Next = pLDevList->Next;
-			}
-			else /* it was the first on the list */
-			{
-				pBoardRef->LDeviceList = pLDevList->Next;
-			}
-			PVROSFree(pLDevList);
-		}
+        pPrev = NULL;
+        while (pLDevList->hLogicalDev != hLogicalDev) {
+            pPrev = pLDevList;
+            pLDevList = pLDevList->Next;
+            if (pLDevList == NULL) {
+                DPF((DBG_WARNING, "PVROSDestroyLogicalDevice: Couldn't find logical device on board list"));
+                break;
+            }
+        }
 
-		pBoardRef->nLogicalDevices--;
-		DPF((DBG_MESSAGE,"PVROSDestroyLogicalDevice: %d Logical Devices Left",
-					pBoardRef->nLogicalDevices));
+        if (pLDevList) {
+            if (pPrev) {
+                pPrev->Next = pLDevList->Next;
+            } else /* it was the first on the list */
+            {
+                pBoardRef->LDeviceList = pLDevList->Next;
+            }
+            PVROSFree(pLDevList);
+        }
 
-		if(pBoardRef->nLogicalDevices == 0)
-		{
-			MakeAllBuffersUnused(hLogicalDev->DeviceType);
-		}
+        pBoardRef->nLogicalDevices--;
+        DPF((DBG_MESSAGE, "PVROSDestroyLogicalDevice: %d Logical Devices Left",
+                pBoardRef->nLogicalDevices));
 
-		CloseHandle(hLogicalDev->hBufferMutex);
-		CloseVxd(hLogicalDev->hVxD);
+        if (pBoardRef->nLogicalDevices == 0) {
+            MakeAllBuffersUnused(hLogicalDev->DeviceType);
+        }
 
-		PVROSFree(hLogicalDev);
-	}
+        CloseHandle(hLogicalDev->hBufferMutex);
+        CloseVxd(hLogicalDev->hVxD);
+
+        PVROSFree(hLogicalDev);
+    }
 }
 
 
@@ -2355,36 +2146,34 @@ void CALL_CONV PVROSDestroyLogicalDevice(HLDEVICE hLogicalDev)
 **                They're scaled down if their sum is > 2 Megs
 ***********************************************************************/
 
-static void CALL_CONV GetParamSettings(HLDEVICE Device)
-{
-	float adjust;
+static void CALL_CONV GetParamSettings(HLDEVICE Device) {
+    float adjust;
 
-	Device->PlaneMemBytes = 1024*HWRdValFileUInt( "ISPParamSize", (ISP_PARAM_SIZE/1024));
- 	Device->TexasMemBytes = 1024*HWRdValFileUInt( "TSPParamSize", (TEX_PARAM_SIZE/1024)); 
+    Device->PlaneMemBytes = 1024 * HWRdValFileUInt("ISPParamSize", (ISP_PARAM_SIZE / 1024));
+    Device->TexasMemBytes = 1024 * HWRdValFileUInt("TSPParamSize", (TEX_PARAM_SIZE / 1024));
 
-	switch (Device->DeviceType)
-	{
-		case(MIDAS4):
-		{
-			Device->ObjectMemBytes = 4096*GetBuffer1Size();
-		}
-		case(MIDAS5):
-		case(MIDAS5_003):
-		{
-			Device->ObjectMemBytes = 1024*HWRdValFileUInt( "ObjectParamSize", (OBJECT_PARAM_SIZE/1024));
-		}
-	}
+    switch (Device->DeviceType) {
+        case (MIDAS4): {
+            Device->ObjectMemBytes = 4096 * GetBuffer1Size();
+        }
+        case (MIDAS5):
+        case (MIDAS5_003): {
+            Device->ObjectMemBytes = 1024 * HWRdValFileUInt("ObjectParamSize", (OBJECT_PARAM_SIZE / 1024));
+        }
+        case DISABLE_BOARD:
+        case MIDAS3:
+            break;
+    }
 
-	/* If ISPParamSize + ObjectParamSize > 2 Megs, scale them down */
-	if((Device->PlaneMemBytes + Device->ObjectMemBytes) > 2*1024*1024)
-	{
-		adjust = (float)(2*1024*1024) / (float)(Device->PlaneMemBytes + Device->ObjectMemBytes);
-		Device->PlaneMemBytes = (sgl_uint32) ((float)Device->PlaneMemBytes * adjust);
-		Device->ObjectMemBytes = (sgl_uint32) ((float)Device->ObjectMemBytes * adjust);
+    /* If ISPParamSize + ObjectParamSize > 2 Megs, scale them down */
+    if ((Device->PlaneMemBytes + Device->ObjectMemBytes) > 2 * 1024 * 1024) {
+        adjust = (float) (2 * 1024 * 1024) / (float) (Device->PlaneMemBytes + Device->ObjectMemBytes);
+        Device->PlaneMemBytes = (sgl_uint32) ((float) Device->PlaneMemBytes * adjust);
+        Device->ObjectMemBytes = (sgl_uint32) ((float) Device->ObjectMemBytes * adjust);
 
-		DPF((DBG_WARNING,"Combined ISP & Object Paramsize is > 2 Megs"));
-		DPF((DBG_WARNING,"Resized to : %d bytes(ISP), %d bytes(Object).",Device->PlaneMemBytes,Device->ObjectMemBytes));
-	}
+        DPF((DBG_WARNING, "Combined ISP & Object Paramsize is > 2 Megs"));
+        DPF((DBG_WARNING, "Resized to : %d bytes(ISP), %d bytes(Object).", Device->PlaneMemBytes, Device->ObjectMemBytes));
+    }
 
 }
 /* end of $RCSfile: brdsetup.c,v $ */

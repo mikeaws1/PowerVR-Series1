@@ -350,13 +350,14 @@
 #include <dregion.h>
 #include <windows.h>
 #include <version.h>
-#include <hwregs.h>		/* needed for the virtual buffer addresses.	*/
+#include <hwregs.h>        /* needed for the virtual buffer addresses.	*/
 #include <syscon.h>
 #include <pvrlims.h>
 #include <sglmacro.h>
 #include <sgl_math.h>
 
 #define SGL_APP 1
+
 #include <metrics.h>
 
 #ifdef DLL_METRIC
@@ -371,41 +372,41 @@ static char szBuffer[128];
 
 void InResetRegionData( void )
 {
-	SGL_TIME_STOP(SGLTRI_STARTOFFRAME1_TIME)
-	if ( ++nRendersRecorded == 0 )
-	{
-		/* Set it to zero after the first few frames */
-		memset( &Times, 0, NUM_TIMERS*sizeof(Temporal_Data) );
-		
-		/* Start recorded time */
-		SGL_TIME_START(TOTAL_APP_TIME)
-	}
-	else
-	{
-		/* Monitor each frame period as the top level call */
-		SGL_TIME_STOP(TOTAL_APP_TIME)
-		SGL_TIME_START(TOTAL_APP_TIME)
-	}
-	SGL_TIME_START(SGLTRI_STARTOFFRAME2_TIME)
+    SGL_TIME_STOP(SGLTRI_STARTOFFRAME1_TIME)
+    if ( ++nRendersRecorded == 0 )
+    {
+        /* Set it to zero after the first few frames */
+        memset( &Times, 0, NUM_TIMERS*sizeof(Temporal_Data) );
+
+        /* Start recorded time */
+        SGL_TIME_START(TOTAL_APP_TIME)
+    }
+    else
+    {
+        /* Monitor each frame period as the top level call */
+        SGL_TIME_STOP(TOTAL_APP_TIME)
+        SGL_TIME_START(TOTAL_APP_TIME)
+    }
+    SGL_TIME_START(SGLTRI_STARTOFFRAME2_TIME)
 }
 
 #endif
 
 /* Default region sizes.
  */
-#define	X_REGION_SIZE	32
-#define	Y_REGION_SIZE	32	
+#define    X_REGION_SIZE    32
+#define    Y_REGION_SIZE    32
 
 /* Dynamic Regions defaults
  */
-#define MERGE_HEIGHT	8
-#define MIN_Y_SIZE		2
+#define MERGE_HEIGHT    8
+#define MIN_Y_SIZE        2
 
 /* Used to select between the two sorting algorithms. Adaptivily varies
  * between frames based on the last frame translucent triangle count.
  */
 
-#define	FULL_SORT_FINAL_CUTOFF	4000
+#define    FULL_SORT_FINAL_CUTOFF    4000
 
 /* Variable to fix the pixel offset problem. The value is added to
  * all vertices in D3D and SGL-Lite.
@@ -415,51 +416,56 @@ void InResetRegionData( void )
  * parameters.
  * The differences in precision is 2^(-16).
  */
-float		fAddToXY			= -0.505f; /* must be the same as in sgllite.c */
-float		fMinInvZ   			= INVZ_DEFAULT_SCALE_VALUE;
-float		gfBogusInvZ			= 1.0f;
-float		gfInvertZ			= 1.0f;
-sgl_bool	FogUsed;
-int			nTimeOutTenths		= 5;
+float fAddToXY = -0.505f; /* must be the same as in sgllite.c */
+float fMinInvZ = INVZ_DEFAULT_SCALE_VALUE;
+float gfBogusInvZ = 1.0f;
+float gfInvertZ = 1.0f;
+sgl_bool FogUsed;
+int nTimeOutTenths = 5;
 
-static	sgl_uint32	bUseFullSort 	= 0x0;
-static	sgl_uint32	uDithering		= 0x2;
+static sgl_uint32 bUseFullSort = 0x0;
+static sgl_uint32 uDithering = 0x2;
 
 /* No sort method, 1 fro no sort, 2 for reversed no sort, 3 for min z sort */
 int gNoSortTransFaces = MINZ_SORT;
 
 #if DAG_TRANS_SORTING
-sgl_uint32	bFullSort = 0x0FFFFFFF;	/* Use full sorting as preference.	*/
-extern void CloseRegionDataL( void );
+sgl_uint32 bFullSort = 0x0FFFFFFF;    /* Use full sorting as preference.	*/
+extern void CloseRegionDataL(void);
+
 #endif
 
 /* This is maximum allowable translucent passes per tile.
  * Initialise to a crazy large value.
  */
-sgl_uint32	nMaxPassCount		= 0x0FFFFFFF;
+sgl_uint32 nMaxPassCount = 0x0FFFFFFF;
 
 #if PCX2 || PCX2_003
+
 /* Variable to decide whether to use full masking plane or not.
  * Defined in pktsp.c. Default is FALSE. Read from the registry.
  */
-sgl_bool PVROSFilteringOveride( void );
-sgl_bool PVROSBilinearEnabled( void );
+sgl_bool PVROSFilteringOveride(void);
+
+sgl_bool PVROSBilinearEnabled(void);
+
 PVROSERR CALL_CONV PVROSSetPCIPixelFormat(sgl_uint16 wBitsPerPixel, sgl_bool bDither);
-extern		sgl_bool	bFullMaskingPlane;
-sgl_bool	bFilteringOverRide	= FALSE;
-sgl_bool	bBilinearEnabled	= FALSE;
-extern		sgl_bool	bSetMaskingBGColour;
+
+extern sgl_bool bFullMaskingPlane;
+sgl_bool bFilteringOverRide = FALSE;
+sgl_bool bBilinearEnabled = FALSE;
+extern sgl_bool bSetMaskingBGColour;
 
 extern sgl_uint16 guTransTriCounter; /* For swapping sorting */
 #endif
 
 /* Global device handles, texture handles etc...
  */
-DEVICE_TYPE	gDeviceType;
-DEVICEID	gDeviceID;
-HINSTANCE	gDllHandle;
-HLDEVICE	gHLogicalDev;
-PTEXAPI_IF	gpTextureIF;
+DEVICE_TYPE gDeviceType;
+DEVICEID gDeviceID;
+HINSTANCE gDllHandle;
+HLDEVICE gHLogicalDev;
+PTEXAPI_IF gpTextureIF;
 
 /* The translucent control word is the TEXAS control word that
  * 'points' to a single white pixel.This is used for non-textured
@@ -478,58 +484,64 @@ sgl_uint32 VertexFogControlWord;
  *
  * Set it to indicate that the system is uninitialised.
  */
-int	sglSystemInitialised = 0;
+int sglSystemInitialised = 0;
 
 /* Size of the device.
  */
-static	int	nDeviceX;
-static	int	nDeviceY;
+static int nDeviceX;
+static int nDeviceY;
 
 /* Region informatin structure.
  */
-static DEVICE_REGION_INFO_STRUCT	RegionInfo;
+static DEVICE_REGION_INFO_STRUCT RegionInfo;
 
 /* External prototype definitions. These are currently the SGLDirect routines.
  */
-extern void DirectD3DPolygons ( PVRHANDLE TexHeap,
-					 			PSGLCONTEXT  pContext,
-								int  nNumFaces,
-							    int  pFaces[][3],
-								PSGLVERTEX  pVertices,
-								sgl_bool	bUseFullSort);
+extern void DirectD3DPolygons(PVRHANDLE TexHeap,
+                              PSGLCONTEXT pContext,
+                              int nNumFaces,
+                              int pFaces[][3],
+                              PSGLVERTEX pVertices,
+                              sgl_bool bUseFullSort);
 
-extern void DirectPoints   (PSGLCONTEXT pContext, int nPoints, sgl_uint16 *pPoints, PSGLVERTEX pVertices);
+extern void DirectPoints(PSGLCONTEXT pContext, int nPoints, sgl_uint16 *pPoints, PSGLVERTEX pVertices);
 
-extern void DirectLines	   (PSGLCONTEXT pContext, int nLines, 
-							sgl_uint16 pLines[][2], PSGLVERTEX pVertices, sgl_uint32 nNextLineInc);
+extern void DirectLines(PSGLCONTEXT pContext, int nLines,
+                        sgl_uint16 pLines[][2], PSGLVERTEX pVertices, sgl_uint32 nNextLineInc);
 
-extern void DirectShadows	(PSGLCONTEXT pContext, int nNumFaces, int pFaces[][3],
-			 	   			PSGLVERTEX pVertices, float fBoundingBox[2][2]);
+extern void DirectShadows(PSGLCONTEXT pContext, int nNumFaces, int pFaces[][3],
+                          PSGLVERTEX pVertices, float fBoundingBox[2][2]);
 
 
 extern void DirectTriPrimitive(PVRHANDLE TexHeap,
-							PSGLCONTEXT  pContext,
-							int  nNumFaces,
-					    	sgl_uint16  *pFaces,
-							PSGLVERTEX  pVertices,
-							sgl_bool	bUseFullSort,
-							PRIMITIVETYPE PrimitiveType);
+                               PSGLCONTEXT pContext,
+                               int nNumFaces,
+                               sgl_uint16 *pFaces,
+                               PSGLVERTEX pVertices,
+                               sgl_bool bUseFullSort,
+                               PRIMITIVETYPE PrimitiveType);
 
 /* External prototypes so that include files pkisp.h and pktsp.h
  * are not required.
  */
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-extern void PackBackgroundPlane ( const sgl_uint32 u32TexasTag,
-							 const float  BackgroundDistance);
+
+extern void PackBackgroundPlane(const sgl_uint32 u32TexasTag,
+                                const float BackgroundDistance);
+
 extern sgl_uint32 PackTexasMask(sgl_vector rgbColour, sgl_bool FogOn, sgl_bool ShadowsOn);
+
 #else
 extern void PackBackgroundPlane ( const sgl_uint32 u32TexasTag,
-							 const sgl_int32  BackgroundDistance);
+                             const sgl_int32  BackgroundDistance);
 #endif
 
 extern void AddDummyPlanesL(sgl_bool fShadowsOn);
+
 extern sgl_uint32 PackTexasTransparent(sgl_bool ShadowsOn);
+
 extern sgl_uint32 PackTexasFlat(sgl_vector rgbColour, sgl_bool FogOn, sgl_bool ShadowsOn);
+
 extern void PackTexasFlatAtAddr(sgl_vector rgbColour, sgl_bool FogOn, sgl_bool ShadowsOn, sgl_uint32 Addr);
 
 #define DUMP_SABRE_AND_TEXAS 0
@@ -538,13 +550,17 @@ void DumpSabreAndTexas(void);
 #pragma message (">>> Build set to dump Sabre and Texas parameters")
 #endif
 
-#define	API_FNBLOCK
-#include <pvrd.h>
-#undef	API_FNBLOCK
+#define    API_FNBLOCK
 
-#define	API_INSTANTIATE
 #include <pvrd.h>
-#undef	API_INSTANTIATE
+
+#undef    API_FNBLOCK
+
+#define    API_INSTANTIATE
+
+#include <pvrd.h>
+
+#undef    API_INSTANTIATE
 
 
 /******************************************************************************
@@ -557,11 +573,10 @@ void DumpSabreAndTexas(void);
  *
  * Description  : Stub function that should do nothing.
  *****************************************************************************/
-int CALL_CONV SglError ( int nError )
-{
-	ASSERT(NULL);
+int CALL_CONV SglError(int nError) {
+    ASSERT(NULL);
 
-	return nError;
+    return nError;
 
 }
 
@@ -576,47 +591,47 @@ int CALL_CONV SglError ( int nError )
 
 void DrawPVRDRegionGrid(PPVR_RENDERCONTEXT pRenderContext)
 {
-	PVR_RENDERCONTEXT GridContext = *pRenderContext;
-	SGLVERTEX line[2];
-	sgl_uint16 pLine[][2] = {0,1};
-	int i;
+    PVR_RENDERCONTEXT GridContext = *pRenderContext;
+    SGLVERTEX line[2];
+    sgl_uint16 pLine[][2] = {0,1};
+    int i;
 
-	/* make the context safe for flat shaded */
-	GridContext.SGLContext.u32Flags &= ~SGLTT_TEXTURE;
-	GridContext.SGLContext.u32Flags &= ~SGLTT_GOURAUD;
-	GridContext.SGLContext.u32Flags &= ~SGLTT_HIGHLIGHT;
-	GridContext.SGLContext.u32Flags &= ~SGLTT_VERTEXTRANS;
-	GridContext.SGLContext.u32Flags &= ~SGLTT_GLOBALTRANS;
-	GridContext.SGLContext.u32Flags &= ~SGLTT_DISABLEZBUFFER;
-	GridContext.SGLContext.uLineWidth = 1;
+    /* make the context safe for flat shaded */
+    GridContext.SGLContext.u32Flags &= ~SGLTT_TEXTURE;
+    GridContext.SGLContext.u32Flags &= ~SGLTT_GOURAUD;
+    GridContext.SGLContext.u32Flags &= ~SGLTT_HIGHLIGHT;
+    GridContext.SGLContext.u32Flags &= ~SGLTT_VERTEXTRANS;
+    GridContext.SGLContext.u32Flags &= ~SGLTT_GLOBALTRANS;
+    GridContext.SGLContext.u32Flags &= ~SGLTT_DISABLEZBUFFER;
+    GridContext.SGLContext.uLineWidth = 1;
 
-	line[0].u32Colour = 0x00ff00ff;
-	line[1].u32Colour = 0x00ff00ff;
+    line[0].u32Colour = 0x00ff00ff;
+    line[1].u32Colour = 0x00ff00ff;
 
-	line[0].fInvW = 1.0;
-	line[1].fInvW = 1.0;
-	line[0].fY = 0.0f; 
-	line[1].fY = (float)(nDeviceY - 1);
+    line[0].fInvW = 1.0;
+    line[1].fInvW = 1.0;
+    line[0].fY = 0.0f;
+    line[1].fY = (float)(nDeviceY - 1);
 
-	/* draw Y lines */
-	for(i=RegionInfo.XSize-1; i<nDeviceX-1; i+=RegionInfo.XSize)
-	{
-		line[0].fX = (float)i;
-		line[1].fX = (float)i;
-		
-		PVRDLines(&GridContext, 1, pLine, line, (PRIMITIVETYPE)0);
-	}
+    /* draw Y lines */
+    for(i=RegionInfo.XSize-1; i<nDeviceX-1; i+=RegionInfo.XSize)
+    {
+        line[0].fX = (float)i;
+        line[1].fX = (float)i;
 
-	line[0].fX = 0.0f; 
-	line[1].fX = (float)(nDeviceX - 1);
-	/* draw X lines */
-	for(i=RegionInfo.YSize-1; i<nDeviceY-1; i+=RegionInfo.YSize)
-	{
-		line[0].fY = (float)i;
-		line[1].fY = (float)i;
-		
-		PVRDLines(&GridContext, 1, pLine, line, (PRIMITIVETYPE)0);
-	}
+        PVRDLines(&GridContext, 1, pLine, line, (PRIMITIVETYPE)0);
+    }
+
+    line[0].fX = 0.0f;
+    line[1].fX = (float)(nDeviceX - 1);
+    /* draw X lines */
+    for(i=RegionInfo.YSize-1; i<nDeviceY-1; i+=RegionInfo.YSize)
+    {
+        line[0].fY = (float)i;
+        line[1].fY = (float)i;
+
+        PVRDLines(&GridContext, 1, pLine, line, (PRIMITIVETYPE)0);
+    }
 }
 #endif
 
@@ -632,9 +647,8 @@ void DrawPVRDRegionGrid(PPVR_RENDERCONTEXT pRenderContext)
  *
  **************************************************************************/
 
-void * GetTextureHandle (int nTextureName)
-{
-	return(NULL);
+void *GetTextureHandle(int nTextureName) {
+    return (NULL);
 }
 
 /**************************************************************************
@@ -652,14 +666,15 @@ void * GetTextureHandle (int nTextureName)
  **************************************************************************/
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-float RnGlobalGetFixedClipDist ()
-{
-	return (1.0f);
+
+float RnGlobalGetFixedClipDist() {
+    return (1.0f);
 }
+
 #else
 int RnGlobalGetFixedClipDist ()
 {
-	return (0x7FFFFFFF);
+    return (0x7FFFFFFF);
 }
 #endif
 
@@ -675,36 +690,34 @@ int RnGlobalGetFixedClipDist ()
  *
  **************************************************************************/
 
-int CALL_CONV SglInitialise(void)
-{
-	/*
-	// If we havent initialised the system, do so
-	*/
-	if(sglSystemInitialised == 0)
-	{
-		/* Print out the version information.
-		 */
-		PVROSPrintf("Initialising SGL Ver:%s\n", VER_LIB_TXT);
+int CALL_CONV SglInitialise(void) {
+    /*
+    // If we havent initialised the system, do so
+    */
+    if (sglSystemInitialised == 0) {
+        /* Print out the version information.
+         */
+        PVROSPrintf("Initialising SGL Ver:%s\n", VER_LIB_TXT);
 
-		#if DEBUG
+#if DEBUG
 
-			DebugInit (DBGPRIV_WARNING);
+        DebugInit (DBGPRIV_WARNING);
 
-		#endif
-		
-		#if DEBUGDEV
+#endif
 
-			DebugInit (DBGPRIV_MESSAGE);
+#if DEBUGDEV
 
-		#endif
-		
-		/* init fast inverse sqrt lookup table
-		 */
-		MakeInvSqrtLookupTable ();
+        DebugInit (DBGPRIV_MESSAGE);
 
-		sglSystemInitialised = 1;
-	}
-	return(0);
+#endif
+
+        /* init fast inverse sqrt lookup table
+         */
+        MakeInvSqrtLookupTable();
+
+        sglSystemInitialised = 1;
+    }
+    return (0);
 }
 
 /**************************************************************************
@@ -717,51 +730,43 @@ int CALL_CONV SglInitialise(void)
  *	
  **************************************************************************/
 
-static void CALL_CONV PVRDSetGlobal (SGL_Globals eGlobal, void* pValue)
-{
-	switch (eGlobal)
-	{
-		case SGL_DeviceID:
-		{
-			gDeviceID = (DEVICEID) pValue;		
-			break;
-		}
-		case SGL_DllHandle:
-		{
-			gDllHandle = (HINSTANCE) pValue;
-			break;
-		}
-		case SGL_DeviceType:
-		{
-			gDeviceType = (DEVICE_TYPE) pValue;
-			break;
-		}
-		case SGL_LogicalDev:
-		{
-			gHLogicalDev = (HLDEVICE) pValue;
+static void CALL_CONV PVRDSetGlobal(SGL_Globals eGlobal, void *pValue) {
+    switch (eGlobal) {
+        case SGL_DeviceID: {
+            gDeviceID = (DEVICEID) pValue;
+            break;
+        }
+        case SGL_DllHandle: {
+            gDllHandle = (HINSTANCE) pValue;
+            break;
+        }
+        case SGL_DeviceType: {
+            gDeviceType = (DEVICE_TYPE) pValue;
+            break;
+        }
+        case SGL_LogicalDev: {
+            gHLogicalDev = (HLDEVICE) pValue;
 
-			/* The translucent pixel HAS to be set up after the
-			 * texture memory
-			 */
-			TranslucentControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->TranslucentControlWord;
-			VertexFogControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->VertexFogControlWord;
+            /* The translucent pixel HAS to be set up after the
+             * texture memory
+             */
+            TranslucentControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->TranslucentControlWord;
+            VertexFogControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->VertexFogControlWord;
 
-			/* Setup a bunch of hardware registers.
-			 */
-			HWSetupBunchOfISPRegs();
-			break;
-		}
-		case SGL_TextureIF:
-		{
-			gpTextureIF = (PTEXAPI_IF) pValue;
-			break;
-		}
-		default:
-		{
-			DPF ((DBG_ERROR, "Invalid Global specified"));	
-			break;
-		}
-	}
+            /* Setup a bunch of hardware registers.
+             */
+            HWSetupBunchOfISPRegs();
+            break;
+        }
+        case SGL_TextureIF: {
+            gpTextureIF = (PTEXAPI_IF) pValue;
+            break;
+        }
+        default: {
+            DPF ((DBG_ERROR, "Invalid Global specified"));
+            break;
+        }
+    }
 }
 
 /**************************************************************************
@@ -777,77 +782,72 @@ static void CALL_CONV PVRDSetGlobal (SGL_Globals eGlobal, void* pValue)
  *				   
  **************************************************************************/
 
-static void SetRegionInfo(int *x_dimension, int *y_dimension)
-{
-	nDeviceX = *x_dimension;
-	nDeviceY = *y_dimension;
+static void SetRegionInfo(int *x_dimension, int *y_dimension) {
+    nDeviceX = *x_dimension;
+    nDeviceY = *y_dimension;
 
-	/*
-	// Get the region size... and then if not a legal size, choose one that
-	// is!
-	//
-	// NOTE (for Midas3) the X sizes MUST be a multiple of the number of
-	// sabre cells, and (for all boards) Y MUST be a multiple of the number
-	// of sabres.  Note we are assuming 1 sabre!
-	*/
-	RegionInfo.XSize = HWRdValFileUInt ("SW_XRegionSize", X_REGION_SIZE);
-	RegionInfo.YSize = HWRdValFileUInt ("SW_YRegionSize", Y_REGION_SIZE);
+    /*
+    // Get the region size... and then if not a legal size, choose one that
+    // is!
+    //
+    // NOTE (for Midas3) the X sizes MUST be a multiple of the number of
+    // sabre cells, and (for all boards) Y MUST be a multiple of the number
+    // of sabres.  Note we are assuming 1 sabre!
+    */
+    RegionInfo.XSize = HWRdValFileUInt("SW_XRegionSize", X_REGION_SIZE);
+    RegionInfo.YSize = HWRdValFileUInt("SW_YRegionSize", Y_REGION_SIZE);
 
-	/* Dynamic Region settings */
-	RegionInfo.MergeHeight = HWRdValFileUInt ("SW_MergeHeight", MERGE_HEIGHT);
-	RegionInfo.MinYSize	= HWRdValFileUInt ("SW_MinYSize", MIN_Y_SIZE);
-	
-	switch(RegionInfo.XSize) 
-	{			/* See 'HWGetRegionSize' below for an explanation */
-		case 0: 
-			RegionInfo.XSize = NUM_SABRE_CELLS;
-			break;
-		case 32: 				/* Don't merge tiles sideways */
-			RegionInfo.MergeHeight = 512;  /* Or any other big number would do */
-			break;
-		case 64:
-			RegionInfo.XSize = 32;   /* Do merge tiles sideways */
-			break;
-		default:
-			RegionInfo.XSize = (RegionInfo.XSize+ NUM_SABRE_CELLS -1)/ NUM_SABRE_CELLS;
-			RegionInfo.XSize *= NUM_SABRE_CELLS;
-		break;
-	}		
-		
-	
-	if(RegionInfo.YSize == 0)
-	{
-		RegionInfo.YSize = 1;
-	}
-	
-	if(RegionInfo.MinYSize == 0)
-	{
-		RegionInfo.MinYSize = RegionInfo.YSize;
-	}
-	
-	if(RegionInfo.MergeHeight == 0)
-	{
-		RegionInfo.MergeHeight = 2;
-	}
+    /* Dynamic Region settings */
+    RegionInfo.MergeHeight = HWRdValFileUInt("SW_MergeHeight", MERGE_HEIGHT);
+    RegionInfo.MinYSize = HWRdValFileUInt("SW_MinYSize", MIN_Y_SIZE);
 
-	/*
-	// Calculate how many regions there are
-	*/
+    switch (RegionInfo.XSize) {            /* See 'HWGetRegionSize' below for an explanation */
+        case 0:
+            RegionInfo.XSize = NUM_SABRE_CELLS;
+            break;
+        case 32:                /* Don't merge tiles sideways */
+            RegionInfo.MergeHeight = 512;  /* Or any other big number would do */
+            break;
+        case 64:
+            RegionInfo.XSize = 32;   /* Do merge tiles sideways */
+            break;
+        default:
+            RegionInfo.XSize = (RegionInfo.XSize + NUM_SABRE_CELLS - 1) / NUM_SABRE_CELLS;
+            RegionInfo.XSize *= NUM_SABRE_CELLS;
+            break;
+    }
+
+
+    if (RegionInfo.YSize == 0) {
+        RegionInfo.YSize = 1;
+    }
+
+    if (RegionInfo.MinYSize == 0) {
+        RegionInfo.MinYSize = RegionInfo.YSize;
+    }
+
+    if (RegionInfo.MergeHeight == 0) {
+        RegionInfo.MergeHeight = 2;
+    }
+
+    /*
+    // Calculate how many regions there are
+    */
     RegionInfo.NumXRegions = (nDeviceX + RegionInfo.XSize - 1) / RegionInfo.XSize;
     RegionInfo.NumYRegions = (nDeviceY + RegionInfo.YSize - 1) / RegionInfo.YSize;
 
-	/*
-	// Check that we don't exceed the max number of regions we
-	// can handle
-	*/
-	RegionInfo.NumXRegions = MIN(RegionInfo.NumXRegions, MAX_X_REGIONS);
-	RegionInfo.NumYRegions = MIN(RegionInfo.NumYRegions, MAX_Y_REGIONS);
+    /*
+    // Check that we don't exceed the max number of regions we
+    // can handle
+    */
+    RegionInfo.NumXRegions = MIN(RegionInfo.NumXRegions, MAX_X_REGIONS);
+    RegionInfo.NumYRegions = MIN(RegionInfo.NumYRegions, MAX_Y_REGIONS);
 
-	/*
-	// See if there is a small portion left over for y.
-	*/
-	RegionInfo.LeftOverY =	nDeviceY - ((RegionInfo.NumYRegions-1)*RegionInfo.YSize);
-	RegionInfo.HasLeftOver = (RegionInfo.LeftOverY!=0);
+    /*
+    // See if there is a small portion left over for y.
+    */
+    RegionInfo.LeftOverY = nDeviceY - ((RegionInfo.NumYRegions - 1) * RegionInfo.YSize);
+    RegionInfo.HasLeftOver = (RegionInfo.LeftOverY != 0);
 }
 
 /**************************************************************************
@@ -861,17 +861,17 @@ static void SetRegionInfo(int *x_dimension, int *y_dimension)
  *				   
  **************************************************************************/
 
-int HWGetRegionInfo( int hDisplay,DEVICE_REGION_INFO_STRUCT * pRegionInfo )
-{
-	*pRegionInfo = RegionInfo; 
+int HWGetRegionInfo(int hDisplay, DEVICE_REGION_INFO_STRUCT *pRegionInfo) {
+    *pRegionInfo = RegionInfo;
 
-	/* To satisfy dregion.c
-	 */
-	return(0);
+    /* To satisfy dregion.c
+     */
+    return (0);
 }
 
 #define FULL_SORT 4
 int nNoSortAppHint;
+
 /**************************************************************************
  * Function Name  : PVRDCreateRenderContext
  * Inputs         : PPVR_RENDERCONTEXT	pRenderContext
@@ -885,126 +885,113 @@ int nNoSortAppHint;
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDCreateRenderContext(PPVR_RENDERCONTEXT pRenderContext)
+PVROSERR CALL_CONV PVRDCreateRenderContext(PPVR_RENDERCONTEXT pRenderContext) {
+    PVROSERR Error = PVROS_GROOVY;
 
-{
-	PVROSERR	Error = PVROS_GROOVY;
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDCreateRenderContext() call.\n"));
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDCreateRenderContext() call.\n"));
+    /* Create a logical device.
+     *
+    pRenderContext->hLogicalDevice = PVROSCreateLogicalDevice(	pRenderContext->hDevice,
+                                                                 pRenderContext->hTextureHeap);
+    */
 
-	/* Create a logical device.
-	 *
-	pRenderContext->hLogicalDevice = PVROSCreateLogicalDevice(	pRenderContext->hDevice,
-								 								pRenderContext->hTextureHeap);
-	*/
+    /* Check that a logical device was created.
+     */
+    if (pRenderContext->hLogicalDevice != NULL) {
+        if (pRenderContext->hDevice != NULL) {
+            /* set the logical device in sglmid
+             */
+            PVRDSetGlobal(SGL_LogicalDev, pRenderContext->hLogicalDevice);
 
-	/* Check that a logical device was created.
-	 */
-	if (pRenderContext->hLogicalDevice != NULL)
-	{
-		if (pRenderContext->hDevice != NULL)
-		{
-			/* set the logical device in sglmid
-			 */
-			PVRDSetGlobal(SGL_LogicalDev, pRenderContext->hLogicalDevice);
-
-			/* Call create device. Double buffer and device mode are invalid with a passive
-			 * device. Hence pass dummy values tmp0 and tmp1.
-			 */
-			SetRegionInfo((int *)&pRenderContext->dwWidth, (int *)&pRenderContext->dwHeight);
-
-	#if DAG_TRANS_SORTING
-			/* What sorting algorithm is to be used, 
-			 * The default is full sorting ON. Read default section first
-			 * and if not set in default section check for application hint.
-			 * Done now, incase memory allocation in InitRegionDataL fails
-			 * and we can default to the old way of sorting.
-			 */
-			bFullSort = HWRdValFileInt("FullSort", TRUE);
-			
-			/* Read the no sort setting if present.	*/
-			nNoSortAppHint = HWRdValFileUInt ("SGLTRANSSORT", 0); 
-			if(nNoSortAppHint)
-			{
-				if(nNoSortAppHint == FULL_SORT)
-				{
-					/* force full sort on */
-					bFullSort = TRUE;
-				}
-				else
-				{
-					/* force full sort off for NO_SORT, REVERSED_NO_SORT and MINZ_SORT */
-					bFullSort = FALSE;
-				}
-			}
-	#endif
-  
-			/* Initialise region stuff.
-			 */
-			InitRegionDataL();
-
-			/* Read the near Z application hint.
-			 */
-			fMinInvZ = HWRdValFileFloat("Near Z Clip", fMinInvZ);
-
-			/* Get custom offset value
-			*/
-			fAddToXY = HWRdValFileFloat ("AddToXY", fAddToXY);
-
-			/* Read the maximum allowable translucent passes per tile. Read default section first
-			 * and then read the app hint section.
-			 */
-			nMaxPassCount = HWRdValFileUInt ("MaxNumPasses", 0x0FFFFFFF);
-
-			/* Read the dithering setting if present.
-			 */
-			uDithering = HWRdValFileUInt ("Dithering", uDithering);
+            /* Call create device. Double buffer and device mode are invalid with a passive
+             * device. Hence pass dummy values tmp0 and tmp1.
+             */
+            SetRegionInfo((int *) &pRenderContext->dwWidth, (int *) &pRenderContext->dwHeight);
 
 #if DAG_TRANS_SORTING
-			/* Set the global used for deciding which sort */
-			bUseFullSort = bFullSort;
-			if (bUseFullSort == FALSE)
-			{
-				/* Free the memory that we won't be using */
-				CloseRegionDataL();
-			}
+            /* What sorting algorithm is to be used,
+             * The default is full sorting ON. Read default section first
+             * and if not set in default section check for application hint.
+             * Done now, incase memory allocation in InitRegionDataL fails
+             * and we can default to the old way of sorting.
+             */
+            bFullSort = HWRdValFileInt("FullSort", TRUE);
+
+            /* Read the no sort setting if present.	*/
+            nNoSortAppHint = HWRdValFileUInt("SGLTRANSSORT", 0);
+            if (nNoSortAppHint) {
+                if (nNoSortAppHint == FULL_SORT) {
+                    /* force full sort on */
+                    bFullSort = TRUE;
+                } else {
+                    /* force full sort off for NO_SORT, REVERSED_NO_SORT and MINZ_SORT */
+                    bFullSort = FALSE;
+                }
+            }
+#endif
+
+            /* Initialise region stuff.
+             */
+            InitRegionDataL();
+
+            /* Read the near Z application hint.
+             */
+            fMinInvZ = HWRdValFileFloat("Near Z Clip", fMinInvZ);
+
+            /* Get custom offset value
+            */
+            fAddToXY = HWRdValFileFloat("AddToXY", fAddToXY);
+
+            /* Read the maximum allowable translucent passes per tile. Read default section first
+             * and then read the app hint section.
+             */
+            nMaxPassCount = HWRdValFileUInt("MaxNumPasses", 0x0FFFFFFF);
+
+            /* Read the dithering setting if present.
+             */
+            uDithering = HWRdValFileUInt("Dithering", uDithering);
+
+#if DAG_TRANS_SORTING
+            /* Set the global used for deciding which sort */
+            bUseFullSort = bFullSort;
+            if (bUseFullSort == FALSE) {
+                /* Free the memory that we won't be using */
+                CloseRegionDataL();
+            }
 #endif
 #if PCX2
-			/* Do we use the full masking plane or not. The full masking plane
-			 * is required to prevent sparkles in D3D applications when the
-			 * masking plane is being used. This is due to a bug in the hardware.
-			 * Should be fixed in PCX2-003. This has a side effect of some
-			 * applications running slower.
-			 * The default is with the minimum masking plane.
-			 */
-			bFullMaskingPlane = (sgl_bool) HWRdValFileUInt("FullMaskingPlane", FALSE);
+            /* Do we use the full masking plane or not. The full masking plane
+             * is required to prevent sparkles in D3D applications when the
+             * masking plane is being used. This is due to a bug in the hardware.
+             * Should be fixed in PCX2-003. This has a side effect of some
+             * applications running slower.
+             * The default is with the minimum masking plane.
+             */
+            bFullMaskingPlane = (sgl_bool) HWRdValFileUInt("FullMaskingPlane", FALSE);
 
-			/* Do we allow the user to set the colour of the masking plane.
-			 */
-			bSetMaskingBGColour = (sgl_bool) HWRdValFileUInt("SetMaskingBGColour", FALSE);
+            /* Do we allow the user to set the colour of the masking plane.
+             */
+            bSetMaskingBGColour = (sgl_bool) HWRdValFileUInt("SetMaskingBGColour", FALSE);
 #endif
-		}
-		else
-		{
-			/* Error creating the callback.
-			 */
-			DPF((DBG_MESSAGE, "Couldn't create logical device.\n"));
-			Error = PVROS_DODGY;
-		}
-	}
-	else
-	{
-		/* No logical device available.
-		 */
-		DPF((DBG_MESSAGE, "No logical device available.\n"));
-		Error = PVROS_DODGY;
-	}
+        } else {
+            /* Error creating the callback.
+             */
+            DPF((DBG_MESSAGE, "Couldn't create logical device.\n"));
+            Error = PVROS_DODGY;
+        }
+    } else {
+        /* No logical device available.
+         */
+        DPF((DBG_MESSAGE, "No logical device available.\n"));
+        Error = PVROS_DODGY;
+    }
 
-	/* Return the error condition.
-	 */
-	return(Error);
+    /* Return the error condition.
+     */
+    return (Error);
 }
 
 /**************************************************************************
@@ -1018,32 +1005,28 @@ PVROSERR CALL_CONV PVRDCreateRenderContext(PPVR_RENDERCONTEXT pRenderContext)
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDDestroyRenderContext(PPVR_RENDERCONTEXT pRenderContext)
-{
-	PVROSERR	Error = PVROS_GROOVY;
+PVROSERR CALL_CONV PVRDDestroyRenderContext(PPVR_RENDERCONTEXT pRenderContext) {
+    PVROSERR Error = PVROS_GROOVY;
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDDestroyRenderContext() call.\n"));
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDDestroyRenderContext() call.\n"));
 
-	/* Check that a proper render context structure is passed.
-	 */
-	if (pRenderContext != NULL)
-	{
-		/* Destroy the logical device.
-		 */
-		//PVROSDestroyLogicalDevice(pRenderContext->hLogicalDevice);
-	}
-	else
-	{
-		/* the given name is invalid
-		 */
-		Error = PVROS_DODGY;
-	}
+    /* Check that a proper render context structure is passed.
+     */
+    if (pRenderContext != NULL) {
+        /* Destroy the logical device.
+         */
+        //PVROSDestroyLogicalDevice(pRenderContext->hLogicalDevice);
+    } else {
+        /* the given name is invalid
+         */
+        Error = PVROS_DODGY;
+    }
 
-	/* Return the error condition.
-	 */
-	return(Error);
+    /* Return the error condition.
+     */
+    return (Error);
 }
 
 /**************************************************************************
@@ -1056,240 +1039,219 @@ PVROSERR CALL_CONV PVRDDestroyRenderContext(PPVR_RENDERCONTEXT pRenderContext)
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDStartFrame(PPVR_RENDERCONTEXT pRenderContext)
-
-{
-	PVROSERR			Error = PVROS_GROOVY;
-	SGLCONTEXT			*pContext = &pRenderContext->SGLContext;
-	REGIONS_RECT_STRUCT	RegionRect;
-	sgl_int32  			BackGroundStart;
-	sgl_uint32			TSPBackgroundAddress = 0;
+PVROSERR CALL_CONV PVRDStartFrame(PPVR_RENDERCONTEXT pRenderContext) {
+    PVROSERR Error = PVROS_GROOVY;
+    SGLCONTEXT *pContext = &pRenderContext->SGLContext;
+    REGIONS_RECT_STRUCT RegionRect;
+    sgl_int32 BackGroundStart;
+    sgl_uint32 TSPBackgroundAddress = 0;
 
 #if PCX2 || PCX2_003
-	sgl_texture_filter_type		eFilterType;
+    sgl_texture_filter_type eFilterType;
 #endif
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDStartFrame() call.\n"));
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDStartFrame() call.\n"));
 
-	/* If the render context has a valid Y region size - use it
-	 */
-	if(pRenderContext->RegionYHeight == 16 || pRenderContext->RegionYHeight == 32 || 
-	   pRenderContext->RegionYHeight == 64 )
-	{
-		RegionInfo.YSize = pRenderContext->RegionYHeight;
+    /* If the render context has a valid Y region size - use it
+     */
+    if (pRenderContext->RegionYHeight == 16 || pRenderContext->RegionYHeight == 32 ||
+        pRenderContext->RegionYHeight == 64) {
+        RegionInfo.YSize = pRenderContext->RegionYHeight;
 
-		/*
-		** Calculate how many regions there are
-		*/
-		RegionInfo.NumYRegions = 
-			(pRenderContext->dwHeight + RegionInfo.YSize - 1) / RegionInfo.YSize;
+        /*
+        ** Calculate how many regions there are
+        */
+        RegionInfo.NumYRegions =
+                (pRenderContext->dwHeight + RegionInfo.YSize - 1) / RegionInfo.YSize;
 
-		/*
-		** Check that we don't exceed the max number of regions we
-		** can handle
-		*/
-		RegionInfo.NumYRegions = MIN(RegionInfo.NumYRegions, MAX_Y_REGIONS);
+        /*
+        ** Check that we don't exceed the max number of regions we
+        ** can handle
+        */
+        RegionInfo.NumYRegions = MIN(RegionInfo.NumYRegions, MAX_Y_REGIONS);
 
-		/*
-		** See if there is a small portion left over for y.
-		*/
-		RegionInfo.LeftOverY =	pRenderContext->dwHeight - 
-			((RegionInfo.NumYRegions-1)*RegionInfo.YSize);
-		RegionInfo.HasLeftOver = (RegionInfo.LeftOverY!=0);
-		
-
-		/* Reset the region lists structures to be empty
-		 */
-		ResetRegionDataL (TRUE);
-	}
-	else
-	{
-		/* Reset the region lists structures to be empty
-		 */
-		ResetRegionDataL (FALSE);
-	}   
-
-	/* Get parameter memory, if available...
-	 * Make call directly to the VXD.
-	 */
-	if (PVROSAssignVirtualBuffers(PVRParamBuffs, gHLogicalDev) == PVROS_GROOVY)
-	{
-		/* Add some "special" objects direct to the parameter store.
-		 */
-		AddDummyPlanesL(FALSE);
-
-		RegionRect.FirstXRegion	= 0;
-		RegionRect.FirstYRegion	= 0;
-		RegionRect.LastXRegion	= RegionInfo.NumXRegions - 1;
-		RegionRect.LastYRegion	= RegionInfo.NumYRegions - 1;
-
-		BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+        /*
+        ** See if there is a small portion left over for y.
+        */
+        RegionInfo.LeftOverY = pRenderContext->dwHeight -
+                               ((RegionInfo.NumYRegions - 1) * RegionInfo.YSize);
+        RegionInfo.HasLeftOver = (RegionInfo.LeftOverY != 0);
 
 
-	#if PCX2 || PCX2_003
-		/* Masking support. Only available with PCX2.
-		 */
-		if (pContext->u32Flags & SGLTT_TRANSBACKGROUND)
-		{
-			/**************************************************
-			 * When masking support is enabled fast fog must be
-			 * disabled. Currently the assumption is that fast
-			 * fogging will be disabled in the sglhw.ini or in
-			 * the registry settings.
-			 *
-			 * This is only relevant to PCX2 drivers (ie sglmid5)
-			 * since PCX1 drivers never have fast fog even when
-			 * using PCX2 hardware.
-			 **************************************************/
+        /* Reset the region lists structures to be empty
+         */
+        ResetRegionDataL(TRUE);
+    } else {
+        /* Reset the region lists structures to be empty
+         */
+        ResetRegionDataL(FALSE);
+    }
 
-			/* Pack a textured plane for the masking plane. The routine
-			 * PackTexasMask() automatically sets the TSP tag for the
-			 * masking plane to 2. ie no need to save and restore TSP tags.
-			 */
-			TSPBackgroundAddress = PackTexasMask (pContext->cBackgroundColour,
-												 FALSE, 
-												 FALSE);
-		}
-		else
-	#endif	/* #if PCX2	*/
-		{
-			/* Masking not required.
-			 */
-			TSPBackgroundAddress = PackTexasFlat(pContext->cBackgroundColour, 
-												pContext->bFogOn, 
-												pContext->eShadowLightVolMode);
-		}
+    /* Get parameter memory, if available...
+     * Make call directly to the VXD.
+     */
+    if (PVROSAssignVirtualBuffers(PVRParamBuffs, gHLogicalDev) == PVROS_GROOVY) {
+        /* Add some "special" objects direct to the parameter store.
+         */
+        AddDummyPlanesL(FALSE);
 
-		/* Add the background plane. The TSP tag used is either a flat
-		 * textured plane or a full textured masking plane.
-		 */
-	#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackBackgroundPlane (TSPBackgroundAddress, 0.0f);
-	#else
-		PackBackgroundPlane (TSPBackgroundAddress, 0);
-	#endif
-		AddRegionOpaqueL (&RegionRect, BackGroundStart, 1);
+        RegionRect.FirstXRegion = 0;
+        RegionRect.FirstYRegion = 0;
+        RegionRect.LastXRegion = RegionInfo.NumXRegions - 1;
+        RegionRect.LastYRegion = RegionInfo.NumYRegions - 1;
+
+        BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 
-		/* Add the opaque pass flushing plane. Use a seperate flat textured
-		 * plane since if D3D a full textured plane may be specified in
-		 * TSPBackgroundAddress.
-		 */
-		BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+#if PCX2 || PCX2_003
+        /* Masking support. Only available with PCX2.
+         */
+        if (pContext->u32Flags & SGLTT_TRANSBACKGROUND) {
+            /**************************************************
+             * When masking support is enabled fast fog must be
+             * disabled. Currently the assumption is that fast
+             * fogging will be disabled in the sglhw.ini or in
+             * the registry settings.
+             *
+             * This is only relevant to PCX2 drivers (ie sglmid5)
+             * since PCX1 drivers never have fast fog even when
+             * using PCX2 hardware.
+             **************************************************/
+
+            /* Pack a textured plane for the masking plane. The routine
+             * PackTexasMask() automatically sets the TSP tag for the
+             * masking plane to 2. ie no need to save and restore TSP tags.
+             */
+            TSPBackgroundAddress = PackTexasMask(pContext->cBackgroundColour,
+                                                 FALSE,
+                                                 FALSE);
+        } else
+#endif    /* #if PCX2	*/
+        {
+            /* Masking not required.
+             */
+            TSPBackgroundAddress = PackTexasFlat(pContext->cBackgroundColour,
+                                                 pContext->bFogOn,
+                                                 pContext->eShadowLightVolMode);
+        }
+
+        /* Add the background plane. The TSP tag used is either a flat
+         * textured plane or a full textured masking plane.
+         */
+#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
+        PackBackgroundPlane(TSPBackgroundAddress, 0.0f);
+#else
+        PackBackgroundPlane (TSPBackgroundAddress, 0);
+#endif
+        AddRegionOpaqueL(&RegionRect, BackGroundStart, 1);
+
+
+        /* Add the opaque pass flushing plane. Use a seperate flat textured
+         * plane since if D3D a full textured plane may be specified in
+         * TSPBackgroundAddress.
+         */
+        BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackBackgroundPlane ( PackTexasFlat(pContext->cBackgroundColour, 
-												FALSE, FALSE), -1.0f);
+        PackBackgroundPlane(PackTexasFlat(pContext->cBackgroundColour,
+                                          FALSE, FALSE), -1.0f);
 #else
-		PackBackgroundPlane ( PackTexasFlat(pContext->cBackgroundColour, 
-												FALSE, FALSE), -64);
+        PackBackgroundPlane ( PackTexasFlat(pContext->cBackgroundColour,
+                                                FALSE, FALSE), -64);
 #endif
-		AddFlushingPlaneL (BackGroundStart);
+        AddFlushingPlaneL(BackGroundStart);
 
-			
-		/* Add translucent flushing plane.
-		 */
-		BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+
+        /* Add translucent flushing plane.
+         */
+        BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackBackgroundPlane (PackTexasTransparent (FALSE), -1.0f);
+        PackBackgroundPlane(PackTexasTransparent(FALSE), -1.0f);
 #else
-		PackBackgroundPlane (PackTexasTransparent (FALSE), -64);
+        PackBackgroundPlane (PackTexasTransparent (FALSE), -64);
 #endif
-		AddTransFlushingPlaneL (BackGroundStart);
+        AddTransFlushingPlaneL(BackGroundStart);
 
-		pContext->FirstXRegion = RegionRect.FirstXRegion;
-		pContext->FirstYRegion = RegionRect.FirstYRegion;
-		pContext->LastXRegion = RegionRect.LastXRegion;
-		pContext->LastYRegion = RegionRect.LastYRegion;
+        pContext->FirstXRegion = RegionRect.FirstXRegion;
+        pContext->FirstYRegion = RegionRect.FirstYRegion;
+        pContext->LastXRegion = RegionRect.LastXRegion;
+        pContext->LastYRegion = RegionRect.LastYRegion;
 
-		/* Used to calculate the bounding box for shadow and light volumes.
-		 */
-		pContext->invRegX = 1.0f / RegionInfo.XSize;
-		pContext->invRegY = 1.0f / RegionInfo.YSize;
+        /* Used to calculate the bounding box for shadow and light volumes.
+         */
+        pContext->invRegX = 1.0f / RegionInfo.XSize;
+        pContext->invRegY = 1.0f / RegionInfo.YSize;
 
-		if (pContext->eShadowLightVolMode == ENABLE_LIGHTVOLS)
-		{
-			AllowLightVolAdditionL (&RegionRect);
-		}
+        if (pContext->eShadowLightVolMode == ENABLE_LIGHTVOLS) {
+            AllowLightVolAdditionL(&RegionRect);
+        }
 
-		/* Set bogus Z to 0.
-		 */
-		gfBogusInvZ = 0.0f;
+        /* Set bogus Z to 0.
+         */
+        gfBogusInvZ = 0.0f;
 
-	#if PCX2
-		/* For PCX2-002 the filter selection is completely determined by
-		 * eFilterType - i.e. the SGLTT_BILINEAR flag is ignored.
-		 */
-		bFilteringOverRide	=  PVROSFilteringOveride();
-		bBilinearEnabled	=  PVROSBilinearEnabled();
+#if PCX2
+        /* For PCX2-002 the filter selection is completely determined by
+         * eFilterType - i.e. the SGLTT_BILINEAR flag is ignored.
+         */
+        bFilteringOverRide = PVROSFilteringOveride();
+        bBilinearEnabled = PVROSBilinearEnabled();
 
-		eFilterType = pContext->eFilterType;
+        eFilterType = pContext->eFilterType;
 
-		if (!bFilteringOverRide)
-		{
-			/* We haven't overriden the application settings so continue.
-			 * Bilinear enabled or not ????
-			 */
-			bBilinearEnabled = (eFilterType == sgl_tf_point_sample) ? FALSE : TRUE;
-			HWSetBilinearRegister(eFilterType);
-		}
-	#endif
+        if (!bFilteringOverRide) {
+            /* We haven't overriden the application settings so continue.
+             * Bilinear enabled or not ????
+             */
+            bBilinearEnabled = (eFilterType == sgl_tf_point_sample) ? FALSE : TRUE;
+            HWSetBilinearRegister(eFilterType);
+        }
+#endif
 
-	#if DAG_TRANS_SORTING
-		/* Decision sorting method based on the number of translucent triangles. */
+#if DAG_TRANS_SORTING
+        /* Decision sorting method based on the number of translucent triangles. */
 
-		if (bFullSort)
-		{
-			if (guTransTriCounter > FULL_SORT_FINAL_CUTOFF)
-			{
-				/* New sorting no more. */
-				bUseFullSort = FALSE;
-				bFullSort = FALSE;
-				CloseRegionDataL();
-			}
-			else
-			{
-				bUseFullSort = TRUE;
-			}
-		}
+        if (bFullSort) {
+            if (guTransTriCounter > FULL_SORT_FINAL_CUTOFF) {
+                /* New sorting no more. */
+                bUseFullSort = FALSE;
+                bFullSort = FALSE;
+                CloseRegionDataL();
+            } else {
+                bUseFullSort = TRUE;
+            }
+        }
 
-		/* Reset Translucent triangle count */
+        /* Reset Translucent triangle count */
 
-		guTransTriCounter = 0;
+        guTransTriCounter = 0;
 
-		/* no sort method */
-		if(!nNoSortAppHint)
-		{
-			if(pContext->u32Flags & SGLTT_SELECTTRANSSORT)
-			{
-				gNoSortTransFaces = (int)pContext->eTransSortMethod;
-				if(gNoSortTransFaces && gNoSortTransFaces != FULL_SORT)
-				{
-				   	/* force full sort off for NO_SORT, REVERSED_NO_SORT and MINZ_SORT */
-					bUseFullSort = FALSE;
-					bFullSort = FALSE;
-					CloseRegionDataL();
-				}
-			}
-		}
-		else
-		{
-			gNoSortTransFaces = nNoSortAppHint;
-		}	
-	#endif
-	}
-	else
-	{
-		/* No logical device available.
-		 */
-		DPF((DBG_MESSAGE, "No buffers avaiable.\n"));
-		Error = PVROS_DODGY;
-	}
+        /* no sort method */
+        if (!nNoSortAppHint) {
+            if (pContext->u32Flags & SGLTT_SELECTTRANSSORT) {
+                gNoSortTransFaces = (int) pContext->eTransSortMethod;
+                if (gNoSortTransFaces && gNoSortTransFaces != FULL_SORT) {
+                    /* force full sort off for NO_SORT, REVERSED_NO_SORT and MINZ_SORT */
+                    bUseFullSort = FALSE;
+                    bFullSort = FALSE;
+                    CloseRegionDataL();
+                }
+            }
+        } else {
+            gNoSortTransFaces = nNoSortAppHint;
+        }
+#endif
+    } else {
+        /* No logical device available.
+         */
+        DPF((DBG_MESSAGE, "No buffers avaiable.\n"));
+        Error = PVROS_DODGY;
+    }
 
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1305,24 +1267,22 @@ PVROSERR CALL_CONV PVRDStartFrame(PPVR_RENDERCONTEXT pRenderContext)
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDTriangles(	PPVR_RENDERCONTEXT	pRenderContext,
-									sgl_uint32			dwNumFaces,
-									int 				pFaces[][3],
-									PSGLVERTEX			pVertices)
+PVROSERR CALL_CONV PVRDTriangles(PPVR_RENDERCONTEXT pRenderContext,
+                                 sgl_uint32 dwNumFaces,
+                                 int pFaces[][3],
+                                 PSGLVERTEX pVertices) {
+    PVROSERR Error = PVROS_GROOVY;
 
-{
-	PVROSERR Error = PVROS_GROOVY;
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDTriangles() call.\n"));
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDTriangles() call.\n"));
+    /* bFullSort selects which sorting algorithm to use.
+     */
+    DirectD3DPolygons(pRenderContext->hTextureHeap, &pRenderContext->SGLContext,
+                      dwNumFaces, pFaces, pVertices, bUseFullSort);
 
-	/* bFullSort selects which sorting algorithm to use.
-	 */
-	DirectD3DPolygons(	pRenderContext->hTextureHeap, &pRenderContext->SGLContext, 
-						dwNumFaces, pFaces, pVertices, bUseFullSort );
-
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1340,23 +1300,21 @@ PVROSERR CALL_CONV PVRDTriangles(	PPVR_RENDERCONTEXT	pRenderContext,
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDTrianglesPrimitive(	PPVR_RENDERCONTEXT	pRenderContext,
-									sgl_uint32			dwNumFaces,
-									sgl_uint16			*pFaces,
-									PSGLVERTEX			pVertices,
-									PRIMITIVETYPE		PrimitiveType)
+PVROSERR CALL_CONV PVRDTrianglesPrimitive(PPVR_RENDERCONTEXT pRenderContext,
+                                          sgl_uint32 dwNumFaces,
+                                          sgl_uint16 *pFaces,
+                                          PSGLVERTEX pVertices,
+                                          PRIMITIVETYPE PrimitiveType) {
+    PVROSERR Error = PVROS_GROOVY;
 
-{
-	PVROSERR Error = PVROS_GROOVY;
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDTrianglesPrimitive() call.\n"));
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDTrianglesPrimitive() call.\n"));
+    DirectTriPrimitive(pRenderContext->hTextureHeap, &pRenderContext->SGLContext,
+                       dwNumFaces, pFaces, pVertices, bUseFullSort, PrimitiveType);
 
-	DirectTriPrimitive (pRenderContext->hTextureHeap, &pRenderContext->SGLContext, 
-						dwNumFaces, pFaces, pVertices, bUseFullSort, PrimitiveType);
-
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1371,71 +1329,68 @@ PVROSERR CALL_CONV PVRDTrianglesPrimitive(	PPVR_RENDERCONTEXT	pRenderContext,
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDLines(	PPVR_RENDERCONTEXT	pRenderContext,
-								sgl_uint32			dwNumLines,
-								sgl_uint16			pLines[][2],
-								PSGLVERTEX			pVertices,
-								PRIMITIVETYPE		PrimitiveType)
+PVROSERR CALL_CONV PVRDLines(PPVR_RENDERCONTEXT pRenderContext,
+                             sgl_uint32 dwNumLines,
+                             sgl_uint16 pLines[][2],
+                             PSGLVERTEX pVertices,
+                             PRIMITIVETYPE PrimitiveType) {
+    PVROSERR Error = PVROS_GROOVY;
+    sgl_uint32 nNextLineInc;
 
-{
-	PVROSERR	Error = PVROS_GROOVY;
-	sgl_uint32	nNextLineInc;
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDLines() call.\n"));
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDLines() call.\n"));
+    /* Have we been called from D3D Execute buffer or DrawPrimitive.
+     */
+    switch (PrimitiveType) {
+        /* Need to determine the type of DrawPrimitive triangle.
+         */
+        case LINELIST:
+            /* Line lists.
+             * The line index count here is 1.
+             *
+             * L1 = V1, V2
+             * L2 = V3, V4
+             * .
+             * Ln = V2n-1, V2n
+             *
+             * After processing line n the line index count
+             * is 2n. The first vertex for Ln+1 is V2(n+1)-1
+             * which equals 2n+1. Therefore the line index increment
+             * is 1.
+             */
+            nNextLineInc = 1;
+            break;
 
-	/* Have we been called from D3D Execute buffer or DrawPrimitive.
-	 */
-	switch(PrimitiveType)
-	{
-		/* Need to determine the type of DrawPrimitive triangle.
-		 */
-	case LINELIST:
-		/* Line lists.
-		 * The line index count here is 1.
-		 *
-		 * L1 = V1, V2
-		 * L2 = V3, V4
-		 * .
-		 * Ln = V2n-1, V2n
-		 *
-		 * After processing line n the line index count
-		 * is 2n. The first vertex for Ln+1 is V2(n+1)-1
-		 * which equals 2n+1. Therefore the line index increment
-		 * is 1.
-		 */
-		nNextLineInc = 1;
-		break;
+        case LINESTRIP:
+            /* Line strips.
+             * The line index count here is 0.
+             *
+             * L1 = V1, V2
+             * L2 = V2, V3
+             * .
+             * Ln = Vn, Vn+1
+             *
+             * After processing line n the line index count
+             * is n+1. The first vertex for Ln+1 is V(n+1)
+             * Therefore the face index increment is 0.
+             */
+            nNextLineInc = 0;
+            break;
 
-	case LINESTRIP:
-		/* Line strips.
-		 * The line index count here is 0.
-		 *
-		 * L1 = V1, V2
-		 * L2 = V2, V3
-		 * .
-		 * Ln = Vn, Vn+1
-		 *
-		 * After processing line n the line index count
-		 * is n+1. The first vertex for Ln+1 is V(n+1)
-		 * Therefore the face index increment is 0.
-		 */
-		nNextLineInc = 0;
-		break;
+        default:
+            /* Default to normal line mode. ie D3D execute buffer.
+             */
+            nNextLineInc = 1;
+            break;
+    }
 
-	default:
-		/* Default to normal line mode. ie D3D execute buffer.
-		 */
-		nNextLineInc = 1;
-		break;
-	}
+    /* Call the low level lines function.
+     */
+    DirectLines(&pRenderContext->SGLContext, dwNumLines, pLines, pVertices, nNextLineInc);
 
-	/* Call the low level lines function.
-	 */
-	DirectLines(&pRenderContext->SGLContext, dwNumLines, pLines, pVertices, nNextLineInc);
-
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1450,24 +1405,22 @@ PVROSERR CALL_CONV PVRDLines(	PPVR_RENDERCONTEXT	pRenderContext,
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDPoints(	PPVR_RENDERCONTEXT	pRenderContext,
-				 				sgl_uint32			dwNumPoints,
-								sgl_uint16			*pPoints,
-								PSGLVERTEX			pVertices)
+PVROSERR CALL_CONV PVRDPoints(PPVR_RENDERCONTEXT pRenderContext,
+                              sgl_uint32 dwNumPoints,
+                              sgl_uint16 *pPoints,
+                              PSGLVERTEX pVertices) {
+    PVROSERR Error = PVROS_GROOVY;
 
-{
-	PVROSERR Error = PVROS_GROOVY;
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDPoints() call.\n"));
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDPoints() call.\n"));
+    /* Call with the a vertex and point list. The point list will only
+     * be used in DrawIndexPrimitive.
+     */
+    DirectPoints(&pRenderContext->SGLContext, dwNumPoints, pPoints, pVertices);
 
-	/* Call with the a vertex and point list. The point list will only
-	 * be used in DrawIndexPrimitive.
-	 */
-	DirectPoints (&pRenderContext->SGLContext, dwNumPoints, pPoints, pVertices);
-
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1484,25 +1437,24 @@ PVROSERR CALL_CONV PVRDPoints(	PPVR_RENDERCONTEXT	pRenderContext,
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDShadows(	PPVR_RENDERCONTEXT	pRenderContext,
-							   	int					nNumFaces,
-							   	int					pFaces[][3],
-						 	   	PSGLVERTEX			pVertices,
-							   	float				fBoundingBox[2][2] )
-{
-	PVROSERR Error = PVROS_GROOVY;
+PVROSERR CALL_CONV PVRDShadows(PPVR_RENDERCONTEXT pRenderContext,
+                               int nNumFaces,
+                               int pFaces[][3],
+                               PSGLVERTEX pVertices,
+                               float fBoundingBox[2][2]) {
+    PVROSERR Error = PVROS_GROOVY;
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDShadows() call.\n"));
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDShadows() call.\n"));
 
-	DirectShadows(	&pRenderContext->SGLContext,
-					nNumFaces,
-					pFaces,
-					pVertices,
-					fBoundingBox);
+    DirectShadows(&pRenderContext->SGLContext,
+                  nNumFaces,
+                  pFaces,
+                  pVertices,
+                  fBoundingBox);
 
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1515,143 +1467,130 @@ PVROSERR CALL_CONV PVRDShadows(	PPVR_RENDERCONTEXT	pRenderContext,
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDPreRender(PPVR_RENDERCONTEXT pRenderContext)
-
-{
-	PVROSERR				Error = PVROS_GROOVY;
-	SGLCONTEXT				*pContext = &pRenderContext->SGLContext;
-	REGIONS_RECT_STRUCT		RegionRect;
-	sgl_bool				bRenderAllRegions;
+PVROSERR CALL_CONV PVRDPreRender(PPVR_RENDERCONTEXT pRenderContext) {
+    PVROSERR Error = PVROS_GROOVY;
+    SGLCONTEXT *pContext = &pRenderContext->SGLContext;
+    REGIONS_RECT_STRUCT RegionRect;
+    sgl_bool bRenderAllRegions;
 #if DEBUG
-	static int snDrawGrid = -1;
+    static int snDrawGrid = -1;
 #endif
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDPreRender() call.\n"));
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDPreRender() call.\n"));
 
 #if DEBUG
-	if(snDrawGrid == -1)
-	{
-		snDrawGrid = SglReadPrivateProfileInt ("DEBUG", "RegionGrid", 0, "sglhw.ini");
-	}
-	if(snDrawGrid == 1)
-	{
-		DrawPVRDRegionGrid(pRenderContext);
-	}
+    if(snDrawGrid == -1)
+    {
+        snDrawGrid = SglReadPrivateProfileInt ("DEBUG", "RegionGrid", 0, "sglhw.ini");
+    }
+    if(snDrawGrid == 1)
+    {
+        DrawPVRDRegionGrid(pRenderContext);
+    }
 #endif
-	/* Setup the region information.
-	 */
-	RegionRect.FirstXRegion	= pContext->FirstXRegion;
-	RegionRect.FirstYRegion = pContext->FirstYRegion;
-	RegionRect.LastXRegion	= pContext->LastXRegion;
-	RegionRect.LastYRegion	= pContext->LastYRegion;
+    /* Setup the region information.
+     */
+    RegionRect.FirstXRegion = pContext->FirstXRegion;
+    RegionRect.FirstYRegion = pContext->FirstYRegion;
+    RegionRect.LastXRegion = pContext->LastXRegion;
+    RegionRect.LastYRegion = pContext->LastYRegion;
 
-	/* D3D decides whether or not to render all the regions.
-	 */
-	if (pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS)
-	{
-		bRenderAllRegions = FALSE;
-	}
-	else
-	{
-		bRenderAllRegions = TRUE;
-	}
+    /* D3D decides whether or not to render all the regions.
+     */
+    if (pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS) {
+        bRenderAllRegions = FALSE;
+    } else {
+        bRenderAllRegions = TRUE;
+    }
 
-	GenerateObjectPtrLite( &RegionRect, bRenderAllRegions );
+    GenerateObjectPtrLite(&RegionRect, bRenderAllRegions);
 
-	/* Convert the supplied fog colour ... providing it's valid,
-	 * u32FogDensity is an unsigned int, so it's always >= 0
-	 */
-	if( (pContext->u32FogDensity<=31) &&
-		(pContext->fFogR >= 0.0f) &&
-		(pContext->fFogR <= 1.0f) &&
-		(pContext->fFogG >= 0.0f) &&
-		(pContext->fFogG <= 1.0f) &&
-		(pContext->fFogB >= 0.0f) &&
-		(pContext->fFogB <= 1.0f))
-	{
-		sgl_map_pixel  fogColour;
+    /* Convert the supplied fog colour ... providing it's valid,
+     * u32FogDensity is an unsigned int, so it's always >= 0
+     */
+    if ((pContext->u32FogDensity <= 31) &&
+        (pContext->fFogR >= 0.0f) &&
+        (pContext->fFogR <= 1.0f) &&
+        (pContext->fFogG >= 0.0f) &&
+        (pContext->fFogG <= 1.0f) &&
+        (pContext->fFogB >= 0.0f) &&
+        (pContext->fFogB <= 1.0f)) {
+        sgl_map_pixel fogColour;
 
-		/* Set the fog virtual register directly.
-		 */
-		gHLogicalDev->Registers[PCX_FOGAMOUNT] = pContext->u32FogDensity;	
+        /* Set the fog virtual register directly.
+         */
+        gHLogicalDev->Registers[PCX_FOGAMOUNT] = pContext->u32FogDensity;
 
-		fogColour.red	 =	(unsigned char) (pContext->fFogR * 255);
-		fogColour.green  =	(unsigned char) (pContext->fFogG * 255);
-		fogColour.blue	 =	(unsigned char) (pContext->fFogB * 255);
-		fogColour.alpha  =	0;
+        fogColour.red = (unsigned char) (pContext->fFogR * 255);
+        fogColour.green = (unsigned char) (pContext->fFogG * 255);
+        fogColour.blue = (unsigned char) (pContext->fFogB * 255);
+        fogColour.alpha = 0;
 
-		TexasSetFogColour (fogColour);
-	}
-	/* Else set the least dense, black fog
-	 */
-	else
-	{
-		sgl_map_pixel  fogColour;
+        TexasSetFogColour(fogColour);
+    }
+        /* Else set the least dense, black fog
+         */
+    else {
+        sgl_map_pixel fogColour;
 
-		/* Set the fog virtual register directly.
-		 */
-		gHLogicalDev->Registers[PCX_FOGAMOUNT] = 0;
+        /* Set the fog virtual register directly.
+         */
+        gHLogicalDev->Registers[PCX_FOGAMOUNT] = 0;
 
-		fogColour.red	 =	0;
-		fogColour.green  =	0;
-		fogColour.blue	 =	0;
-		fogColour.alpha  =	0;
+        fogColour.red = 0;
+        fogColour.green = 0;
+        fogColour.blue = 0;
+        fogColour.alpha = 0;
 
-		TexasSetFogColour (fogColour);
-	}	
+        TexasSetFogColour(fogColour);
+    }
 
-	/*  write the scale into the virtual register directly.
-	 */
-	gHLogicalDev->Registers[PCX_CAMERA] = MAX_CFR_VALUE;
+    /*  write the scale into the virtual register directly.
+     */
+    gHLogicalDev->Registers[PCX_CAMERA] = MAX_CFR_VALUE;
 
-	/* Set the X clip value. If (nDeviceX + 1) is more than 1023,
-	   fix it to be 1023 as there are only 10 bits in the register
-	   for the right clip value. Left clipping has been disabled.
-	 */
-	
-	gHLogicalDev->Registers[PCX_XCLIP] = 
-		((1 << 28) | (((nDeviceX > 1022) ? 1023 : nDeviceX+1) << 16));
+    /* Set the X clip value. If (nDeviceX + 1) is more than 1023,
+       fix it to be 1023 as there are only 10 bits in the register
+       for the right clip value. Left clipping has been disabled.
+     */
 
-	/* Set the pixel bit depth and whether dithering is enabled or not.
-	 * If the uDithering value is 0x2 then we don't want to override
-	 * the dithering setting.
-	 */
-	if (uDithering == 0x2)
-	{
-		if (pContext->u32Flags & SGLTT_DISABLEDITHERING)
-		{
-			/* Disable dithering.
-			 */
-			PVROSSetPCIPixelFormat ((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
-									FALSE);
-		}
-		else
-		{
-			/* Enable dithering.
-			 */
-			PVROSSetPCIPixelFormat ((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
-									TRUE);
-		}
-	}
-	else
-	{
-		/* Set dithering based on uDithering field.
-		 */
-		PVROSSetPCIPixelFormat ((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
-								(sgl_bool) uDithering);
-	}
-	
-	/* Program virtual SOF register directly.
-	 */
-	gHLogicalDev->Registers[PCX_SOFADDR] = pRenderContext->dwPhysRenderAddress;
+    gHLogicalDev->Registers[PCX_XCLIP] =
+            ((1 << 28) | (((nDeviceX > 1022) ? 1023 : nDeviceX + 1) << 16));
 
-	/* Program virtual stride register directly.
-	 */
-	gHLogicalDev->Registers[PCX_LSTRIDE] = pRenderContext->lStride;
+    /* Set the pixel bit depth and whether dithering is enabled or not.
+     * If the uDithering value is 0x2 then we don't want to override
+     * the dithering setting.
+     */
+    if (uDithering == 0x2) {
+        if (pContext->u32Flags & SGLTT_DISABLEDITHERING) {
+            /* Disable dithering.
+             */
+            PVROSSetPCIPixelFormat((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
+                                   FALSE);
+        } else {
+            /* Enable dithering.
+             */
+            PVROSSetPCIPixelFormat((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
+                                   TRUE);
+        }
+    } else {
+        /* Set dithering based on uDithering field.
+         */
+        PVROSSetPCIPixelFormat((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
+                               (sgl_bool) uDithering);
+    }
 
-	return(Error);
+    /* Program virtual SOF register directly.
+     */
+    gHLogicalDev->Registers[PCX_SOFADDR] = pRenderContext->dwPhysRenderAddress;
+
+    /* Program virtual stride register directly.
+     */
+    gHLogicalDev->Registers[PCX_LSTRIDE] = pRenderContext->lStride;
+
+    return (Error);
 }
 
 /**************************************************************************
@@ -1664,21 +1603,19 @@ PVROSERR CALL_CONV PVRDPreRender(PPVR_RENDERCONTEXT pRenderContext)
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDRender(PPVR_RENDERCONTEXT	pRenderContext)
+PVROSERR CALL_CONV PVRDRender(PPVR_RENDERCONTEXT pRenderContext) {
+    PVROSERR Error = PVROS_GROOVY;
 
-{
-	PVROSERR Error = PVROS_GROOVY;
+#if DUMP_SABRE_AND_TEXAS
+    DumpSabreAndTexas();
+#endif
+    /* Start render.
+     */
+    Error = PVROSScheduleRender(gHLogicalDev);
 
-	#if DUMP_SABRE_AND_TEXAS
-		DumpSabreAndTexas();
-	#endif
-	/* Start render.
-	 */
-	Error = PVROSScheduleRender(gHLogicalDev);
+    DPF((DBG_MESSAGE, "Done HWStartRender !!!!"));
 
-	DPF((DBG_MESSAGE, "Done HWStartRender !!!!"));
-
-	return(Error);
+    return (Error);
 }
 
 /**************************************************************************
@@ -1692,176 +1629,160 @@ PVROSERR CALL_CONV PVRDRender(PPVR_RENDERCONTEXT	pRenderContext)
  *
  **************************************************************************/
 
-PVROSERR CALL_CONV PVRDRenderStrip(	PPVR_RENDERCONTEXT pRenderContext,
-									int nStrip,
-									int nXExtent[2])
+PVROSERR CALL_CONV PVRDRenderStrip(PPVR_RENDERCONTEXT pRenderContext,
+                                   int nStrip,
+                                   int nXExtent[2]) {
+    PVROSERR Error = PVROS_GROOVY;
+    SGLCONTEXT *pContext = &pRenderContext->SGLContext;
+    REGIONS_RECT_STRUCT RegionRect;
+    sgl_bool bRenderAllRegions;
 
-{
-	PVROSERR						Error = PVROS_GROOVY;
-	SGLCONTEXT						*pContext = &pRenderContext->SGLContext;
-	REGIONS_RECT_STRUCT				RegionRect;
-	sgl_bool						bRenderAllRegions;
+    /* Debug message.
+     */
+    DPF((DBG_MESSAGE, "PVRDRenderStrip() call.\n"));
 
-	/* Debug message.
-	 */
-	DPF((DBG_MESSAGE, "PVRDRenderStrip() call.\n"));
-	
-	RegionRect.FirstXRegion = pContext->FirstXRegion;
-	RegionRect.FirstYRegion = pContext->FirstYRegion;
-	RegionRect.LastXRegion = pContext->LastXRegion;
-	RegionRect.LastYRegion = pContext->LastYRegion;
-	
-	if (nStrip == -2)
-	{
-		/* End of strip render. decrement in use count, free the buffer
-		*/
-		gHLogicalDev->VirtualBuffer->bInUse--;
-	}
-	else if (nStrip == -1)
-	{
-		/*
-		// If we are called by Direct3D and there is no fog then render only those
-		// regions that contain objects, else render all regions in the device.
-		*/
-		if (pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS)
-		{
-			bRenderAllRegions = FALSE;
-		}
-		else
-		{
-			bRenderAllRegions = TRUE;
-		}
+    RegionRect.FirstXRegion = pContext->FirstXRegion;
+    RegionRect.FirstYRegion = pContext->FirstYRegion;
+    RegionRect.LastXRegion = pContext->LastXRegion;
+    RegionRect.LastYRegion = pContext->LastYRegion;
 
-		GenerateObjectPtrLiteStrip (&RegionRect, bRenderAllRegions);
+    if (nStrip == -2) {
+        /* End of strip render. decrement in use count, free the buffer
+        */
+        gHLogicalDev->VirtualBuffer->bInUse--;
+    } else if (nStrip == -1) {
+        /*
+        // If we are called by Direct3D and there is no fog then render only those
+        // regions that contain objects, else render all regions in the device.
+        */
+        if (pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS) {
+            bRenderAllRegions = FALSE;
+        } else {
+            bRenderAllRegions = TRUE;
+        }
 
-		/*
-		// Convert the supplied fog colour ... providing it's valid
-		*/
-		if(	(pContext->u32FogDensity<=31) &&
-			(pContext->fFogR >= 0.0f) &&
-			(pContext->fFogR <= 1.0f) &&
-			(pContext->fFogG >= 0.0f) &&
-			(pContext->fFogG <= 1.0f) &&
-			(pContext->fFogB >= 0.0f) &&
-			(pContext->fFogB <= 1.0f))
-		{
-			sgl_map_pixel  fogColour;
+        GenerateObjectPtrLiteStrip(&RegionRect, bRenderAllRegions);
 
-			/* Set the fog virtual register directly.
-			 */
-			gHLogicalDev->Registers[PCX_FOGAMOUNT] = pContext->u32FogDensity;	
+        /*
+        // Convert the supplied fog colour ... providing it's valid
+        */
+        if ((pContext->u32FogDensity <= 31) &&
+            (pContext->fFogR >= 0.0f) &&
+            (pContext->fFogR <= 1.0f) &&
+            (pContext->fFogG >= 0.0f) &&
+            (pContext->fFogG <= 1.0f) &&
+            (pContext->fFogB >= 0.0f) &&
+            (pContext->fFogB <= 1.0f)) {
+            sgl_map_pixel fogColour;
 
-			fogColour.red	 =	(unsigned char) (pContext->fFogR * 255);
-			fogColour.green  =	(unsigned char) (pContext->fFogG * 255);
-			fogColour.blue	 =	(unsigned char) (pContext->fFogB * 255);
-			fogColour.alpha  =	0;
+            /* Set the fog virtual register directly.
+             */
+            gHLogicalDev->Registers[PCX_FOGAMOUNT] = pContext->u32FogDensity;
 
-			TexasSetFogColour (fogColour);
-		}
-		/*
-		// Else set the least dense, black fog
-		*/
-		else
-		{
-			sgl_map_pixel  fogColour;
+            fogColour.red = (unsigned char) (pContext->fFogR * 255);
+            fogColour.green = (unsigned char) (pContext->fFogG * 255);
+            fogColour.blue = (unsigned char) (pContext->fFogB * 255);
+            fogColour.alpha = 0;
 
-			/* Set the fog virtual register directly.
-			 */
-			gHLogicalDev->Registers[PCX_FOGAMOUNT] = 0;	
+            TexasSetFogColour(fogColour);
+        }
+            /*
+            // Else set the least dense, black fog
+            */
+        else {
+            sgl_map_pixel fogColour;
 
-			fogColour.red	 =	0;
-			fogColour.green  =	0;
-			fogColour.blue	 =	0;
-			fogColour.alpha  =	0;
-	
-			TexasSetFogColour (fogColour);
-		}	
+            /* Set the fog virtual register directly.
+             */
+            gHLogicalDev->Registers[PCX_FOGAMOUNT] = 0;
 
-		/*  write the scale into the virtual register directly.
-		 */
-		gHLogicalDev->Registers[PCX_CAMERA] = MAX_CFR_VALUE;
+            fogColour.red = 0;
+            fogColour.green = 0;
+            fogColour.blue = 0;
+            fogColour.alpha = 0;
 
-		/* Set the X clip value.
-		 */
-		gHLogicalDev->Registers[PCX_XCLIP] = 
-			((1 << 28) | (((nDeviceX > 1022) ? 1023 : nDeviceX+1) << 16));	
+            TexasSetFogColour(fogColour);
+        }
 
-		/* Set the pixel bit depth and whether dithering is enabled or not.
-		 */
-		if (pContext->u32Flags & SGLTT_DISABLEDITHERING)
-		{
-			/* Disable dithering.
-			 */
-			PVROSSetPCIPixelFormat ((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
-									FALSE);
-		}
-		else
-		{
-			/* Enable dithering.
-			 */
-			PVROSSetPCIPixelFormat ((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
-									TRUE);
-		}
-	}
-	else
-	{
-		REGION_STRIP_DATA	RegionStrip; 
-		REGION_STRIP_DATA	*pRegionStrip = &RegionStrip;
-		sgl_uint32 			dwSOFScanlineOffset;
+        /*  write the scale into the virtual register directly.
+         */
+        gHLogicalDev->Registers[PCX_CAMERA] = MAX_CFR_VALUE;
 
-		pRegionStrip->fObjectsPresent = FALSE;
+        /* Set the X clip value.
+         */
+        gHLogicalDev->Registers[PCX_XCLIP] =
+                ((1 << 28) | (((nDeviceX > 1022) ? 1023 : nDeviceX + 1) << 16));
 
-		SetupStripLite (nStrip, &RegionRect, pRegionStrip);
+        /* Set the pixel bit depth and whether dithering is enabled or not.
+         */
+        if (pContext->u32Flags & SGLTT_DISABLEDITHERING) {
+            /* Disable dithering.
+             */
+            PVROSSetPCIPixelFormat((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
+                                   FALSE);
+        } else {
+            /* Enable dithering.
+             */
+            PVROSSetPCIPixelFormat((sgl_uint16) pRenderContext->RenderSurfFormat.BitDepth,
+                                   TRUE);
+        }
+    } else {
+        REGION_STRIP_DATA RegionStrip;
+        REGION_STRIP_DATA *pRegionStrip = &RegionStrip;
+        sgl_uint32 dwSOFScanlineOffset;
 
-		if (pRegionStrip->fObjectsPresent)
-		{
-			sgl_uint32 ObjectOffset;
+        pRegionStrip->fObjectsPresent = FALSE;
 
-			/*
-			// Set up the hardware registers:
-			*/
+        SetupStripLite(nStrip, &RegionRect, pRegionStrip);
 
-			dwSOFScanlineOffset = RegionInfo.YSize * pRenderContext->lStride * nStrip;
+        if (pRegionStrip->fObjectsPresent) {
+            sgl_uint32 ObjectOffset;
 
-			/* Program virtual SOF register directly.
-			 */
-			gHLogicalDev->Registers[PCX_SOFADDR] = pRenderContext->dwPhysRenderAddress -
-												   dwSOFScanlineOffset;
+            /*
+            // Set up the hardware registers:
+            */
 
-			/* Program virtual stride register directly.
-			 */
-			gHLogicalDev->Registers[PCX_LSTRIDE] = pRenderContext->lStride;
+            dwSOFScanlineOffset = RegionInfo.YSize * pRenderContext->lStride * nStrip;
 
-			/* save current reg and add offset onto current object offset address
-			 */
-			ObjectOffset = gHLogicalDev->Registers[PCX_OBJECT_OFFSET]; 
-			gHLogicalDev->Registers[PCX_OBJECT_OFFSET] = ObjectOffset + pRegionStrip->FirstObjectOffset; 
+            /* Program virtual SOF register directly.
+             */
+            gHLogicalDev->Registers[PCX_SOFADDR] = pRenderContext->dwPhysRenderAddress -
+                                                   dwSOFScanlineOffset;
 
-			/* increment in use count so we don't lose the buffer; vxd will decrement
-			*/
-			gHLogicalDev->VirtualBuffer->bInUse++;
+            /* Program virtual stride register directly.
+             */
+            gHLogicalDev->Registers[PCX_LSTRIDE] = pRenderContext->lStride;
 
-			/* Schedule the hardware render.
-			 */
-			Error = PVROSScheduleRender(gHLogicalDev);
+            /* save current reg and add offset onto current object offset address
+             */
+            ObjectOffset = gHLogicalDev->Registers[PCX_OBJECT_OFFSET];
+            gHLogicalDev->Registers[PCX_OBJECT_OFFSET] = ObjectOffset + pRegionStrip->FirstObjectOffset;
 
-			/* restore object reg
-			 */
-			gHLogicalDev->Registers[PCX_OBJECT_OFFSET] = ObjectOffset;
+            /* increment in use count so we don't lose the buffer; vxd will decrement
+            */
+            gHLogicalDev->VirtualBuffer->bInUse++;
 
-			/* Fill out the extent business.
-			 */
-			nXExtent[0] = pRegionStrip->nXExtents[0];
-			nXExtent[1] = pRegionStrip->nXExtents[1];
-		}
-	}
+            /* Schedule the hardware render.
+             */
+            PVROSScheduleRender(gHLogicalDev);
 
-	/* Set the return to dodgy since it doesn't work with groovy.
-	 * This needs to be fixed in the hal.
-	 */
-	Error = PVROS_DODGY;
+            /* restore object reg
+             */
+            gHLogicalDev->Registers[PCX_OBJECT_OFFSET] = ObjectOffset;
 
-	return(Error);
+            /* Fill out the extent business.
+             */
+            nXExtent[0] = pRegionStrip->nXExtents[0];
+            nXExtent[1] = pRegionStrip->nXExtents[1];
+        }
+    }
+
+    /* Set the return to dodgy since it doesn't work with groovy.
+     * This needs to be fixed in the hal.
+     */
+    Error = PVROS_DODGY;
+
+    return (Error);
 }
 
 /**************************************************************************
@@ -1883,199 +1804,195 @@ PVROSERR CALL_CONV PVRDRenderStrip(	PPVR_RENDERCONTEXT pRenderContext,
 #define COMPRESSOR				FALSE
 
 #if TIMED_CAPTURE
-	/* Write parameters to the desktop.
-	 */
-	#define DUMP_PATH "c:\\Windows\\Desktop\\"
+/* Write parameters to the desktop.
+ */
+#define DUMP_PATH "c:\\Windows\\Desktop\\"
 #else
-	/* Set up a mapped drive. This is used to initiate the parameter dump
-	 * and also the parameters are written here.
-	 */
-	#define DUMP_PATH "e:\\"
+/* Set up a mapped drive. This is used to initiate the parameter dump
+ * and also the parameters are written here.
+ */
+#define DUMP_PATH "e:\\"
 #endif
 
 void DumpSabreAndTexas(void)
 {
-	FILE *fp;
-	FILE *fp2;
-	sgl_uint32 *pISP, *pTSP, *pObj;
-	sgl_uint32 i, PlanesLimit, TexasLimit, RegionLimit, Val;
-   	char fileEnding[100]="\0", paramFile[100]="\0", InputFile[100]="\0", info[100]="\0";
-	char path[] = DUMP_PATH;
-	static int frame;
-	static int filenumber=0;
-	int captureFrame;
+FILE *fp;
+FILE *fp2;
+sgl_uint32 *pISP, *pTSP, *pObj;
+sgl_uint32 i, PlanesLimit, TexasLimit, RegionLimit, Val;
+   char fileEnding[100]="\0", paramFile[100]="\0", InputFile[100]="\0", info[100]="\0";
+char path[] = DUMP_PATH;
+static int frame;
+static int filenumber=0;
+int captureFrame;
 
-	frame++;
+frame++;
 
-	captureFrame=FALSE;
+captureFrame=FALSE;
 
 #if TIMED_CAPTURE
-	if (frame==CAPTURE_RATE)
-		captureFrame=TRUE;
+if (frame==CAPTURE_RATE)
+    captureFrame=TRUE;
 #else
-	strcpy(InputFile, DUMP_PATH);
-	strcat(InputFile, "capstat.txt");
+strcpy(InputFile, DUMP_PATH);
+strcat(InputFile, "capstat.txt");
 
-	if( (fp = fopen(InputFile, "r"))==NULL);
-	else if(fgetc(fp)!=0)
-	{
-		captureFrame=TRUE;
-		fclose(fp);
-		fp = fopen(InputFile, "w");
-		fputc(0, fp);
-		fclose(fp);
-	}
-	else
-	{
-		fclose(fp);
-	}
+if( (fp = fopen(InputFile, "r"))==NULL);
+else if(fgetc(fp)!=0)
+{
+    captureFrame=TRUE;
+    fclose(fp);
+    fp = fopen(InputFile, "w");
+    fputc(0, fp);
+    fclose(fp);
+}
+else
+{
+    fclose(fp);
+}
 #endif
 
-	if(captureFrame)
-	{
+if(captureFrame)
+{
 #if COMPRESSOR
-		/* wait until the compressor is ready */
-		fp = fopen("e:\\compstat.txt", "r");
-		while(fgetc(fp)==1)
-	  	{
-			fclose(fp);
-			PVROSDelay(PVR_DELAY_MS, 100);
-	  		fp = fopen("e:\\compstat.txt", "r");
-	 	}
-		fclose(fp);
+    /* wait until the compressor is ready */
+    fp = fopen("e:\\compstat.txt", "r");
+    while(fgetc(fp)==1)
+      {
+        fclose(fp);
+        PVROSDelay(PVR_DELAY_MS, 100);
+          fp = fopen("e:\\compstat.txt", "r");
+     }
+    fclose(fp);
 #endif
 
-		frame=0;
-		filenumber++;
+    frame=0;
+    filenumber++;
 
-		itoa(filenumber, fileEnding, 10);
-    	
-    	/* set limits */
-		PlanesLimit = gHLogicalDev->Buffers[0].uBufferPos;
-		TexasLimit	= 1024 * 1024; /*gHLogicalDev->Buffers[1].uBufferLimit;*/
-		RegionLimit = gHLogicalDev->Buffers[2].uBufferPos;
-		
-		pISP = gHLogicalDev->Buffers[0].pBuffer;
-		pTSP = gHLogicalDev->TexHeap->pTextureMemory;/*gHLogicalDev->Buffers[1].pBuffer;*/
-		pObj = gHLogicalDev->Buffers[2].pBuffer;
+    itoa(filenumber, fileEnding, 10);
 
-		/* open info file */	 
-		strcat(info, path);
-		strcat(info, "info");
-		strcat(info, fileEnding);
-		strcat(info, ".txt");
-		fp2 = fopen(info, "w");
+    /* set limits */
+    PlanesLimit = gHLogicalDev->Buffers[0].uBufferPos;
+    TexasLimit	= 1024 * 1024; /*gHLogicalDev->Buffers[1].uBufferLimit;*/
+    RegionLimit = gHLogicalDev->Buffers[2].uBufferPos;
 
-		/* open sabre file */
-		strcat(paramFile, path);
-		strcat(paramFile, "sab");
-		strcat(paramFile, fileEnding);
-		//strcat(paramFile, ".Z");
-		fp = fopen(paramFile, "wb");
-	 
-		if( (fp!=NULL) && (fp2!=NULL) )
-		{	
-			/* dump plane data */
+    pISP = gHLogicalDev->Buffers[0].pBuffer;
+    pTSP = gHLogicalDev->TexHeap->pTextureMemory;/*gHLogicalDev->Buffers[1].pBuffer;*/
+    pObj = gHLogicalDev->Buffers[2].pBuffer;
 
-			for(i = 0; i <= PlanesLimit; i++, pISP++)
-			{
-				Val = *pISP;
-		
-				#if OUTPUT_LITTLE_END
-					fputc(Val & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 24 & 0xff, fp);
-					#else
-					fputc(Val >> 24 & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val & 0xff, fp);
-				#endif		
-			}	  
+    /* open info file */
+    strcat(info, path);
+    strcat(info, "info");
+    strcat(info, fileEnding);
+    strcat(info, ".txt");
+    fp2 = fopen(info, "w");
 
-			/* output address of plane/tile division pointer in 32 bit words */
-			fprintf(fp2, "%d", i);
-	
-			/* dump region data (NOTE region data is NOT in pParamBlock for PCX1) */ 
-		 
-			for(i = 0; i <= RegionLimit; i++, pObj++)
-			{
-				Val = *pObj;
-		
-				#if OUTPUT_LITTLE_END
-					fputc(Val & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 24 & 0xff, fp);
-				#else
-					fputc(Val >> 24 & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val & 0xff, fp);
-				#endif		
-			} 
+    /* open sabre file */
+    strcat(paramFile, path);
+    strcat(paramFile, "sab");
+    strcat(paramFile, fileEnding);
+    //strcat(paramFile, ".Z");
+    fp = fopen(paramFile, "wb");
 
-			fclose(fp);
-			fclose(fp2);
-		}
-		else
-			fprintf(stderr, "Couldn't write sabre file");
-			  
-		/* open Texas files */ 
-		strcpy(paramFile, path);
-		strcat(paramFile, "tex");
-		strcat(paramFile, fileEnding);
-		//strcat(paramFile, ".Z");
-		fp = fopen(paramFile, "wb");
-	
-		if(fp!=NULL)
-		{
-		
-		/* we may only want the texels on the first frame */
-		#if TEXPARAMS_ONLY==TRUE
-		if(filenumber != 1)
-			TexasLimit = 0;	
-		#endif
-			
-			for(i = 0; i<TexasLimit; i++, pTSP++)
-			{		
-				Val = *pTSP; 
-  	
-			#if OUTPUT_LITTLE_END
-				fputc(Val & 0xff, fp);
-				fputc(Val >> 8  & 0xff, fp);
-				fputc(Val >> 16 & 0xff, fp);
-				fputc(Val >> 24 & 0xff, fp);
-			#else
-				fputc(Val >> 24 & 0xff, fp);
-				fputc(Val >> 16 & 0xff, fp);
-				fputc(Val >> 8  & 0xff, fp);
-				fputc(Val & 0xff, fp);
-			#endif
-			}
+    if( (fp!=NULL) && (fp2!=NULL) )
+    {
+        /* dump plane data */
 
-			fclose(fp);
-		}
-		else
-		{
-			fprintf(stderr, "Couldn't write texas file");
-		}
-		fclose(fp);	 
+        for(i = 0; i <= PlanesLimit; i++, pISP++)
+        {
+            Val = *pISP;
+
+#if OUTPUT_LITTLE_END
+                fputc(Val & 0xff, fp);
+                fputc(Val >> 8  & 0xff, fp);
+                fputc(Val >> 16 & 0xff, fp);
+                fputc(Val >> 24 & 0xff, fp);
+#else
+                fputc(Val >> 24 & 0xff, fp);
+                fputc(Val >> 16 & 0xff, fp);
+                fputc(Val >> 8  & 0xff, fp);
+                fputc(Val & 0xff, fp);
+#endif
+        }
+
+        /* output address of plane/tile division pointer in 32 bit words */
+        fprintf(fp2, "%d", i);
+
+        /* dump region data (NOTE region data is NOT in pParamBlock for PCX1) */
+
+        for(i = 0; i <= RegionLimit; i++, pObj++)
+        {
+            Val = *pObj;
+
+#if OUTPUT_LITTLE_END
+                fputc(Val & 0xff, fp);
+                fputc(Val >> 8  & 0xff, fp);
+                fputc(Val >> 16 & 0xff, fp);
+                fputc(Val >> 24 & 0xff, fp);
+#else
+                fputc(Val >> 24 & 0xff, fp);
+                fputc(Val >> 16 & 0xff, fp);
+                fputc(Val >> 8  & 0xff, fp);
+                fputc(Val & 0xff, fp);
+#endif
+        }
+
+        fclose(fp);
+        fclose(fp2);
+    }
+    else
+        fprintf(stderr, "Couldn't write sabre file");
+
+    /* open Texas files */
+    strcpy(paramFile, path);
+    strcat(paramFile, "tex");
+    strcat(paramFile, fileEnding);
+    //strcat(paramFile, ".Z");
+    fp = fopen(paramFile, "wb");
+
+    if(fp!=NULL)
+    {
+
+    /* we may only want the texels on the first frame */
+#if TEXPARAMS_ONLY==TRUE
+    if(filenumber != 1)
+        TexasLimit = 0;
+#endif
+
+        for(i = 0; i<TexasLimit; i++, pTSP++)
+        {
+            Val = *pTSP;
+
+#if OUTPUT_LITTLE_END
+            fputc(Val & 0xff, fp);
+            fputc(Val >> 8  & 0xff, fp);
+            fputc(Val >> 16 & 0xff, fp);
+            fputc(Val >> 24 & 0xff, fp);
+#else
+            fputc(Val >> 24 & 0xff, fp);
+            fputc(Val >> 16 & 0xff, fp);
+            fputc(Val >> 8  & 0xff, fp);
+            fputc(Val & 0xff, fp);
+#endif
+        }
+
+        fclose(fp);
+    }
+    else
+    {
+        fprintf(stderr, "Couldn't write texas file");
+    }
+    fclose(fp);
 
 #if COMPRESSOR
-		/* indicate to compressor that ready */
-		fp = fopen("e:\\compstat.txt", "w");
-		fputc(1, fp);
-		fclose(fp);
+    /* indicate to compressor that ready */
+    fp = fopen("e:\\compstat.txt", "w");
+    fputc(1, fp);
+    fclose(fp);
 
 #endif
-	} /* if (captureFrame) */
+} /* if (captureFrame) */
 
 } /* DumpSabreAndTexas */
 
-#endif /* #if DUMP_SABRE_AND_TEXAS */
-
-
-/* end of $RCSfile: pvrd.c,v $ */
-
+#endif
