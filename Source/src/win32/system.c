@@ -329,8 +329,11 @@
 #include <windows.h>
 
 #define API_FNBLOCK
+
 #include <sgl.h>
+
 #undef API_FNBLOCK
+
 #include <sgl_defs.h>
 #include <pvrosapi.h>
 #include <vsgl.h>
@@ -349,211 +352,202 @@
 
 #if DEBUGDEV || TIMING
 #pragma data_seg(".onetime")
-	#define NUMBER_OF_SHARED_BUFFER 20
-	char 	szBuffer[NUMBER_OF_SHARED_BUFFER][256]=
-		{"8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8"};
+#define NUMBER_OF_SHARED_BUFFER 20
+char 	szBuffer[NUMBER_OF_SHARED_BUFFER][256]=
+    {"8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8","8"};
 #pragma data_seg()
 #endif
 
 #ifdef __WATCOMC__
 
-	
-	extern void Int3 (void);
-	#pragma aux Int3 = 0xCC;
+
+extern void Int3 (void);
+#pragma aux Int3 = 0xCC;
 
 #elif defined (_MSC_VER)
 
-	#define Int3 DebugBreak
+#define Int3 DebugBreak
 
 #else
 
-	#define Int3 / ## /
+#define Int3 / ## /
 
 #endif
-	
-typedef struct SYSTEM_OBJECT
-{
-	struct SYSTEM_OBJECT	*pNext;
-	void					*pObject;
-	
+
+typedef struct SYSTEM_OBJECT {
+    struct SYSTEM_OBJECT *pNext;
+    void *pObject;
+
 } SYSTEM_OBJECT, *PSO;
 
-char* SGLLibNames[] = {"sglmid3.dll", "sglmid4.dll", "sglmid5.dll", "sglmid5a.dll"};
-char* PVRDLibNames[] = {"pvrmid3.dll", "pvrmid4.dll", "pvrmid5.dll", "pvrmid5a.dll"};
+char *SGLLibNames[] = {"sglmid3.dll", "sglmid4.dll", "sglmid5.dll", "sglmid5a.dll"};
+char *PVRDLibNames[] = {"pvrmid3.dll", "pvrmid4.dll", "pvrmid5.dll", "pvrmid5a.dll"};
 
-HANDLE	hBufferMutex = NULL;
-HANDLE 	hSystemVxD = NULL;
-DWORD	hSysProcess = 0;
+HANDLE hBufferMutex = NULL;
+HANDLE hSystemVxD = NULL;
+DWORD hSysProcess = 0;
 
 #if 0
 typedef struct PRIVATE_SYSTEM_BLOCK
 {
-	struct PRIVATE_SYSTEM_BLOCK	*pNext;
+    struct PRIVATE_SYSTEM_BLOCK	*pNext;
 
-	DWORD						hProcess;	/* current parent process's id */
-	HINSTANCE					hInstance;
-	HANDLE                      hBufferMutex;
+    DWORD						hProcess;	/* current parent process's id */
+    HINSTANCE					hInstance;
+    HANDLE                      hBufferMutex;
 
-	HANDLE						hVxD;
+    HANDLE						hVxD;
 
-	LIB_DATA					SGLLibs[4];
-	LIB_DATA					PVRDLibs[4];
+    LIB_DATA					SGLLibs[4];
+    LIB_DATA					PVRDLibs[4];
 
-	DWORD						dwReason;
-	int							nRefCnt;
-	
+    DWORD						dwReason;
+    int							nRefCnt;
+
 } PRIVATE_SYSTEM_BLOCK, *PPSB;
 
 static PPSB pPSBs = NULL;
 #endif
 
-static SYSTEM_OBJECT  *gpPhysAlias = NULL;
-static SYSTEM_OBJECT  *gpPhysBoard = NULL;
-static SYSTEM_OBJECT  *gpSharedBlock = NULL;
-static SYSTEM_OBJECT  *gpDMASB = NULL;
+static SYSTEM_OBJECT *gpPhysAlias = NULL;
+static SYSTEM_OBJECT *gpPhysBoard = NULL;
+static SYSTEM_OBJECT *gpSharedBlock = NULL;
+static SYSTEM_OBJECT *gpDMASB = NULL;
 
 static sgl_bool gbNoGDI = TRUE; /* Default is for ASSERTs to go to the */
-static sgl_bool gbODS	= TRUE;	/* WinICE output                       */
+static sgl_bool gbODS = TRUE;    /* WinICE output                       */
 static sgl_bool gbInitialisedAsserts = FALSE;
-static int 		gnRefCount = 0;
+static int gnRefCount = 0;
 
 sgl_bool gBogusPCX1 = FALSE;
 
 #define API_FNBLOCK
+
 #include "pvrosapi.h"
+
 #undef  API_FNBLOCK
 
 #define API_INSTANTIATE
+
 #include "pvrosapi.h"
+
 #undef  API_INSTANTIATE
 
-#define	API_FNBLOCK
+#define    API_FNBLOCK
+
 #include "pvrd.h"
-#undef	API_FNBLOCK
+
+#undef    API_FNBLOCK
 
 /************************** Local Prototypes ******************************/
-PVROSERR CALL_CONV PVROSCreateSystemContext (HINSTANCE hInstance, DWORD dwReason);
+PVROSERR CALL_CONV PVROSCreateSystemContext(HINSTANCE hInstance, DWORD dwReason);
 /************************* End Local Prototypes ****************************/
 
 /************************** Private Extern Prototypes **********************/
 extern void PVROSDestroyAllVirtualBuffers(void);
+
 /*********************** End Private Extern Prototypes **********************/
 
 
-char *PVROSDbgDevBuffer(int k)
-{
-#if DEBUGDEV || TIMING	
-	if((sgl_uint32)szBuffer & 0x80000000)
-	{
-		return szBuffer[k];
-	}
-	else
-	{
-		PVROSPrintf("Debug buffer unavailable\n");
-		return NULL;
-	}
+char *PVROSDbgDevBuffer(int k) {
+#if DEBUGDEV || TIMING
+    if((sgl_uint32)szBuffer & 0x80000000)
+    {
+        return szBuffer[k];
+    }
+    else
+    {
+        PVROSPrintf("Debug buffer unavailable\n");
+        return NULL;
+    }
 #else
-	return NULL;
+    return NULL;
 #endif
 }
 
 
-static void OutputLastErrorMessage ()
-{
-	LPVOID lpMsgBuf;
+static void OutputLastErrorMessage() {
+    LPVOID lpMsgBuf;
 
-	FormatMessage( 
-	    FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-	    NULL,
-	    GetLastError(),
-	    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-	    (LPTSTR) &lpMsgBuf,
-	    0,
-	    NULL 
-	);
+    FormatMessage(
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL,
+            GetLastError(),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+            (LPTSTR) &lpMsgBuf,
+            0,
+            NULL
+    );
 
-	// Display the string.
-	PVROSPrintf ("%s\n", lpMsgBuf);
+    // Display the string.
+    PVROSPrintf("%s\n", lpMsgBuf);
 
-	// Free the buffer.
-	LocalFree( lpMsgBuf );
+    // Free the buffer.
+    LocalFree(lpMsgBuf);
 }
 
-HANDLE OpenVxd(void)
-{
-	HANDLE hVxD;
-	DWORD pid = GetCurrentProcessId();
+HANDLE OpenVxd(void) {
+    HANDLE hVxD;
+    DWORD pid = GetCurrentProcessId();
 
-	/* we check for 0 and then don't do anything --
-	** I assume then zero is a non significant condition 
-	** so I'll compile out this bit of code ...
-	** ... by the way is 0 a valid win95 process ID ??
-	*/
+    /* we check for 0 and then don't do anything --
+    ** I assume then zero is a non significant condition
+    ** so I'll compile out this bit of code ...
+    ** ... by the way is 0 a valid win95 process ID ??
+    */
 #if 0
-	if (hSysProcess == 0)
-	{
-		PVROSPrintf ("hSysProcess is uninitialised\n");
-	}
+    if (hSysProcess == 0)
+    {
+        PVROSPrintf ("hSysProcess is uninitialised\n");
+    }
 #endif
 
-	if (pid == hSysProcess)
-	{
-		hVxD = hSystemVxD;
-	}
-	else
-	{
+    if (pid == hSysProcess) {
+        hVxD = hSystemVxD;
+    } else {
 
-		hVxD = CreateFile("\\\\.\\SGL", 
-					  0, 
-					  0, 
-					  NULL, 
-					  0, 
-					  FILE_FLAG_DELETE_ON_CLOSE, 
-					  NULL);
-		
-		if (hVxD == INVALID_HANDLE_VALUE)
-		{
-			DPF((DBG_ERROR,"Failed to open VxD"));
+        hVxD = CreateFile("\\\\.\\SGL",
+                          0,
+                          0,
+                          NULL,
+                          0,
+                          FILE_FLAG_DELETE_ON_CLOSE,
+                          NULL);
 
-			OutputLastErrorMessage ();
+        if (hVxD == INVALID_HANDLE_VALUE) {
+            DPF((DBG_ERROR, "Failed to open VxD"));
 
-			hVxD = NULL;
-		}
-	}
+            OutputLastErrorMessage();
 
-	return(hVxD);
+            hVxD = NULL;
+        }
+    }
+
+    return (hVxD);
 }
 
-void CloseVxd (HANDLE hVxD)
-{
-	if (GetCurrentProcessId() == hSysProcess)
-	{
-		return ;
-	}
-	else
-	{
-			CloseHandle (hVxD);
-	}
+void CloseVxd(HANDLE hVxD) {
+    if (GetCurrentProcessId() == hSysProcess) {
+        return;
+    } else {
+        CloseHandle(hVxD);
+    }
 }
 
-void * CALL_CONV PVROSMalloc(sgl_uint32 X)
-{
-	return (MemAlloc (X));
+void *CALL_CONV PVROSMalloc(sgl_uint32 X) {
+    return (MemAlloc(X));
 }
 
-void *CALL_CONV PVROSCalloc(sgl_uint32 X, sgl_uint32 Y)
-{
-	return (MemAlloc (X*Y));
+void *CALL_CONV PVROSCalloc(sgl_uint32 X, sgl_uint32 Y) {
+    return (MemAlloc(X * Y));
 }
 
-void *CALL_CONV PVROSRealloc(void * X, sgl_uint32 Y)
-{
-	return (MemReAlloc (X, Y));
+void *CALL_CONV PVROSRealloc(void *X, sgl_uint32 Y) {
+    return (MemReAlloc(X, Y));
 }
 
-void CALL_CONV PVROSFree (void * X)
-{
-	MemFree (X);
+void CALL_CONV PVROSFree(void *X) {
+    MemFree(X);
 }
 
 
@@ -570,54 +564,49 @@ void CALL_CONV PVROSFree (void * X)
  *				  A 2Mb linear block is resevred but only dwSize is commited.
  *
  *****************************************************************************/
-void *CALL_CONV PVROSTSPAlloc(HANDLE hVxD, sgl_uint32 dwSize)
-{
-	DWORD 	dwInData[2];
-	DWORD 	dwOutData;
-	DWORD	LinearAddress;
+void *CALL_CONV PVROSTSPAlloc(HANDLE hVxD, sgl_uint32 dwSize) {
+    DWORD dwInData[2];
+    DWORD dwOutData;
+    DWORD LinearAddress;
 
-	DPF((DBG_MESSAGE,"PVROSTSPAlloc: Size to allocate %d.\n", dwSize));
+    DPF((DBG_MESSAGE, "PVROSTSPAlloc: Size to allocate %d.\n", dwSize));
 
-	/* Always reserve up to 2Mb i.e. 500 pages.
-	 */
-	dwInData[0] = 500;
+    /* Always reserve up to 2Mb i.e. 500 pages.
+     */
+    dwInData[0] = 500;
 
-	/* Reserve linear address.
-	 */
-	if (DeviceIoControl (hVxD, VSGL_PAGE_RESERVE, 
-						 dwInData, sizeof (DWORD),
-						 &dwOutData, sizeof (dwOutData), 
-						 NULL, NULL))
-	{
-		/* Copy address.
-		 */
-		LinearAddress = dwOutData;
+    /* Reserve linear address.
+     */
+    if (DeviceIoControl(hVxD, VSGL_PAGE_RESERVE,
+                        dwInData, sizeof(DWORD),
+                        &dwOutData, sizeof(dwOutData),
+                        NULL, NULL)) {
+        /* Copy address.
+         */
+        LinearAddress = dwOutData;
 
-		/* Setup the parameters.
-		 */
-		dwInData[0] = (dwOutData >> 12);
+        /* Setup the parameters.
+         */
+        dwInData[0] = (dwOutData >> 12);
 
-		/* Need to calculate the number of pages.
-		 */
-		dwInData[1] = (dwSize + 4095) >> 12;
+        /* Need to calculate the number of pages.
+         */
+        dwInData[1] = (dwSize + 4095) >> 12;
 
-		/* Commit linear addresses to physical addresses.
-		 */
-		if (DeviceIoControl (hVxD, VSGL_PAGE_COMMIT, 
-							 dwInData, sizeof (dwInData), 
-							 &dwOutData, sizeof (dwOutData), 
-							 NULL, NULL))
-		{
-			DPF((DBG_MESSAGE,"PVROSTSPAlloc: Address allocated 0x%08x.\n", LinearAddress));
+        /* Commit linear addresses to physical addresses.
+         */
+        if (DeviceIoControl(hVxD, VSGL_PAGE_COMMIT,
+                            dwInData, sizeof(dwInData),
+                            &dwOutData, sizeof(dwOutData),
+                            NULL, NULL)) {
+            DPF((DBG_MESSAGE, "PVROSTSPAlloc: Address allocated 0x%08x.\n", LinearAddress));
 
-			return((void *)LinearAddress);
+            return ((void *) LinearAddress);
 
-		}
-		else
-			return(NULL);
-	}
-	else
-		return(NULL);
+        } else
+            return (NULL);
+    } else
+        return (NULL);
 }
 
 /******************************************************************************
@@ -631,21 +620,20 @@ void *CALL_CONV PVROSTSPAlloc(HANDLE hVxD, sgl_uint32 dwSize)
  * Description  : Frees resevred memory pointed to by a linear address.
  *
  *****************************************************************************/
-DWORD CALL_CONV PVROSTSPFree (HANDLE hVxD, void *Address)
-{
-	DWORD	dwInData, dwOutData;
+DWORD CALL_CONV PVROSTSPFree(HANDLE hVxD, void *Address) {
+    DWORD dwInData, dwOutData;
 
-	dwInData = (DWORD) Address;
+    dwInData = (DWORD) Address;
 
-	DPF((DBG_MESSAGE,"PVROSTSPFree: Address to free 0x%08x.\n", Address));
+    DPF((DBG_MESSAGE, "PVROSTSPFree: Address to free 0x%08x.\n", Address));
 
-	DeviceIoControl (hVxD, VSGL_PAGE_FREE,
-						 &dwInData, sizeof (dwInData),
-						 &dwOutData, sizeof (dwOutData),
-						 NULL, NULL);
-	/* Return result.
-	 */
-	return(dwOutData);
+    DeviceIoControl(hVxD, VSGL_PAGE_FREE,
+                    &dwInData, sizeof(dwInData),
+                    &dwOutData, sizeof(dwOutData),
+                    NULL, NULL);
+    /* Return result.
+     */
+    return (dwOutData);
 }
 
 /******************************************************************************
@@ -659,90 +647,76 @@ DWORD CALL_CONV PVROSTSPFree (HANDLE hVxD, void *Address)
  * Description  : Reallocates memory from an already reserved block of memory.
  *
  *****************************************************************************/
-void *CALL_CONV PVROSTSPRealloc(HANDLE hVxD, void *Address, sgl_uint32 dwSize)
-{
-	DWORD 	dwInData[2];
-	DWORD 	dwOutData;
+void *CALL_CONV PVROSTSPRealloc(HANDLE hVxD, void *Address, sgl_uint32 dwSize) {
+    DWORD dwInData[2];
+    DWORD dwOutData;
 
-	/* Setup the parameters.
-	 */
-	dwInData[0] = (DWORD) Address;
+    /* Setup the parameters.
+     */
+    dwInData[0] = (DWORD) Address;
 
-	/* Need to calculate the number of pages.
-	 */
-	dwInData[1] = (dwSize + 4095) >> 12;
+    /* Need to calculate the number of pages.
+     */
+    dwInData[1] = (dwSize + 4095) >> 12;
 
-	/* Commit linear addresses to physical addresses.
-	 */
-	if (DeviceIoControl (hVxD, VSGL_PAGE_REALLOCATE, 
-						 dwInData, sizeof (dwInData), 
-						 &dwOutData, sizeof (dwOutData), 
-						 NULL, NULL))
-	{
-		DPF((DBG_MESSAGE,"PVROSTSPRealloc: Address allocated 0x%08x.\n", dwOutData));
+    /* Commit linear addresses to physical addresses.
+     */
+    if (DeviceIoControl(hVxD, VSGL_PAGE_REALLOCATE,
+                        dwInData, sizeof(dwInData),
+                        &dwOutData, sizeof(dwOutData),
+                        NULL, NULL)) {
+        DPF((DBG_MESSAGE, "PVROSTSPRealloc: Address allocated 0x%08x.\n", dwOutData));
 
-		return((void *)dwOutData);
+        return ((void *) dwOutData);
 
-	}
-	else
-		return(NULL);
+    } else
+        return (NULL);
 }
 
 
+HANDLE PVROSGetInstance() {
+    /* PPSB pPSB = GetInstanceData (TRUE);
+     * ASSERT (pPSB);
+     */
 
-
-
-
-HANDLE PVROSGetInstance ()
-{
-	/* PPSB pPSB = GetInstanceData (TRUE); 
-	 * ASSERT (pPSB); 	 
-	 */
-	 
-	return NULL; /* pPSB->hInstance; */
-}
-extern sgl_bool GetVirtualBufferMutex(HANDLE hMutex)
-{
-	sgl_uint32 dwWaitResult; 
-	sgl_uint32 TryAgain = 10;
-
-	while(TryAgain)
-	{
-		/* Request ownership of mutex, five-second time-out interval */
-		dwWaitResult = WaitForSingleObject(hMutex,100L);
-
-		switch (dwWaitResult) 
-		{
-			/* The thread got mutex ownership.*/
-			case WAIT_OBJECT_0: 
-			{
-				return TRUE; 
-			}
-			/* Cannot get mutex ownership due to time-out.*/
-			case WAIT_ABANDONED: 
-			case WAIT_TIMEOUT: 
-				/* Got ownership of the abandoned mutex object.*/
-			default:
-			{
-				break; 
-			}
-		}
-
-		TryAgain--;
-	}
-
-	PVROSPrintf("Failed to get Mutex\n");
-
-    return FALSE; 
+    return NULL; /* pPSB->hInstance; */
 }
 
-extern void ReleaseVirtualBufferMutex(HANDLE hMutex)
-{
-	/* Release ownership of the mutex object.*/
-	if (! ReleaseMutex(hMutex)) 
-	{ 
-		PVROSPrintf("Error : Failed to release Mutex\n");
-	} 
+extern sgl_bool GetVirtualBufferMutex(HANDLE hMutex) {
+    sgl_uint32 dwWaitResult;
+    sgl_uint32 TryAgain = 10;
+
+    while (TryAgain) {
+        /* Request ownership of mutex, five-second time-out interval */
+        dwWaitResult = WaitForSingleObject(hMutex, 100L);
+
+        switch (dwWaitResult) {
+            /* The thread got mutex ownership.*/
+            case WAIT_OBJECT_0: {
+                return TRUE;
+            }
+                /* Cannot get mutex ownership due to time-out.*/
+            case WAIT_ABANDONED:
+            case WAIT_TIMEOUT:
+                /* Got ownership of the abandoned mutex object.*/
+            default: {
+                break;
+            }
+        }
+
+        TryAgain--;
+    }
+
+    PVROSPrintf("Failed to get Mutex\n");
+
+    return FALSE;
+}
+
+extern void ReleaseVirtualBufferMutex(HANDLE hMutex) {
+    /* Release ownership of the mutex object.*/
+    if (!ReleaseMutex(hMutex)) {
+        PVROSPrintf("Error : Failed to release Mutex\n");
+    }
 }
 
 /******************************************************************************
@@ -752,39 +726,31 @@ extern void ReleaseVirtualBufferMutex(HANDLE hMutex)
  *
  * Description  : place a reference to a system resource in specified list
  *****************************************************************************/
-static sgl_uint32 Remember (PSO *pPSO, void *pObject)
-{
-	PSO pNew = PVROSMalloc (sizeof (SYSTEM_OBJECT));
-	PSO pThis = *pPSO;
-	
-	if (pNew)
-	{
-		pNew->pNext = NULL;
-		pNew->pObject = pObject;
-		
-		if (pThis)
-		{
-			while (pThis->pNext)
-			{
-				pThis = pThis->pNext;
-			}
-			
-			pThis->pNext = pNew;			
-		}
-		else
-		{
-			*pPSO = pNew;
-		}
-	}
-	else
-	{
-		DPF ((DBG_ERROR, "Unable to allocate resource reference"));
+static sgl_uint32 Remember(PSO *pPSO, void *pObject) {
+    PSO pNew = PVROSMalloc(sizeof(SYSTEM_OBJECT));
+    PSO pThis = *pPSO;
 
-		return (0);
-	}
+    if (pNew) {
+        pNew->pNext = NULL;
+        pNew->pObject = pObject;
 
-	return (1);
-}	
+        if (pThis) {
+            while (pThis->pNext) {
+                pThis = pThis->pNext;
+            }
+
+            pThis->pNext = pNew;
+        } else {
+            *pPSO = pNew;
+        }
+    } else {
+        DPF ((DBG_ERROR, "Unable to allocate resource reference"));
+
+        return (0);
+    }
+
+    return (1);
+}
 
 /******************************************************************************
  * Function Name: Forget
@@ -793,37 +759,31 @@ static sgl_uint32 Remember (PSO *pPSO, void *pObject)
  *
  * Description  : Delete a reference to a system resource from specified list
  *****************************************************************************/
-static sgl_uint32 Forget (PSO *pPSO, void *pObject)
-{
-	PSO pThis = *pPSO;
-	PSO pLast = NULL;
-	
-	while (pThis)
-	{
-		if (pThis->pObject == pObject)
-		{
-			if (pLast == NULL)
-			{
-				*pPSO = pThis->pNext;
-			}
-			else
-			{
-				pLast->pNext = pThis->pNext;
-			}
-			
-			PVROSFree (pThis);
-			
-			return (1);
-		}
-		
-		pLast = pThis;
-		pThis = pThis->pNext;		
-	}
+static sgl_uint32 Forget(PSO *pPSO, void *pObject) {
+    PSO pThis = *pPSO;
+    PSO pLast = NULL;
 
-	DPF ((DBG_WARNING, "Unable to find system resource reference in this context"));
-	
-	return (0);
-}	
+    while (pThis) {
+        if (pThis->pObject == pObject) {
+            if (pLast == NULL) {
+                *pPSO = pThis->pNext;
+            } else {
+                pLast->pNext = pThis->pNext;
+            }
+
+            PVROSFree(pThis);
+
+            return (1);
+        }
+
+        pLast = pThis;
+        pThis = pThis->pNext;
+    }
+
+    DPF ((DBG_WARNING, "Unable to find system resource reference in this context"));
+
+    return (0);
+}
 
 /******************************************************************************
  * Function Name: AllocatePhysicalAlias
@@ -836,13 +796,13 @@ static sgl_uint32 Forget (PSO *pPSO, void *pObject)
  *
  * Description  : Maps physical addresses into linear address space
  *****************************************************************************/
-static int AllocatePhysicalAlias (HANDLE hVxD, SHAREDBLOCK *blk)
-{
-	DWORD dwBytesReturned;
+static int AllocatePhysicalAlias(HANDLE hVxD, SHAREDBLOCK *blk) {
+    DWORD dwBytesReturned;
 
-	ASSERT (hVxD);
+    ASSERT (hVxD);
 
-	return (DeviceIoControl (hVxD, VSGL_ALLOCPHYSALIAS, blk, sizeof (SHAREDBLOCK), blk, sizeof (SHAREDBLOCK), &dwBytesReturned, NULL));
+    return (DeviceIoControl(hVxD, VSGL_ALLOCPHYSALIAS, blk, sizeof(SHAREDBLOCK), blk, sizeof(SHAREDBLOCK),
+                            &dwBytesReturned, NULL));
 }
 
 /******************************************************************************
@@ -855,13 +815,12 @@ static int AllocatePhysicalAlias (HANDLE hVxD, SHAREDBLOCK *blk)
  *
  * Description  : frees a physical alias (doesn't do anything actually!)
  *****************************************************************************/
-static int FreePhysicalAlias (HANDLE hVxD, SHAREDBLOCK *blk)
-{
-	DWORD dwBytesReturned;
+static int FreePhysicalAlias(HANDLE hVxD, SHAREDBLOCK *blk) {
+    DWORD dwBytesReturned;
 
-	ASSERT (hVxD);
+    ASSERT (hVxD);
 
-	return (DeviceIoControl (hVxD, VSGL_FREEPHYSALIAS, blk, sizeof (SHAREDBLOCK), NULL, 0, &dwBytesReturned, NULL));
+    return (DeviceIoControl(hVxD, VSGL_FREEPHYSALIAS, blk, sizeof(SHAREDBLOCK), NULL, 0, &dwBytesReturned, NULL));
 }
 
 /******************************************************************************
@@ -874,21 +833,20 @@ static int FreePhysicalAlias (HANDLE hVxD, SHAREDBLOCK *blk)
  *
  * Description  : Allocates a contiguous sharable phys. mem. block
  *****************************************************************************/
-static int AllocateSharedBlock (HANDLE hVxD, DWORD ParamPages, SHAREDBLOCK *blk)
-{
-	int nRes;
-	DWORD dwBytesReturned;
-	
-	ASSERT (hVxD);
+static int AllocateSharedBlock(HANDLE hVxD, DWORD ParamPages, SHAREDBLOCK *blk) {
+    int nRes;
+    DWORD dwBytesReturned;
 
-	nRes = DeviceIoControl (hVxD, VSGL_ALLOCATEBLOCK, &ParamPages, sizeof (DWORD), blk, sizeof (SHAREDBLOCK), &dwBytesReturned, NULL);
+    ASSERT (hVxD);
 
-	if (nRes)
-	{
-		ASSERT (dwBytesReturned == sizeof (SHAREDBLOCK))
-	}
+    nRes = DeviceIoControl(hVxD, VSGL_ALLOCATEBLOCK, &ParamPages, sizeof(DWORD), blk, sizeof(SHAREDBLOCK),
+                           &dwBytesReturned, NULL);
 
-	return (nRes);
+    if (nRes) {
+        ASSERT (dwBytesReturned == sizeof(SHAREDBLOCK))
+    }
+
+    return (nRes);
 }
 
 /******************************************************************************
@@ -901,13 +859,12 @@ static int AllocateSharedBlock (HANDLE hVxD, DWORD ParamPages, SHAREDBLOCK *blk)
  *
  * Description  : frees a block allocated by AllocateSharedBlock
  *****************************************************************************/
-static int FreeSharedBlock (HANDLE hVxD, SHAREDBLOCK *blk)
-{
-	DWORD dwBytesReturned;
-	
-	ASSERT (hVxD);
+static int FreeSharedBlock(HANDLE hVxD, SHAREDBLOCK *blk) {
+    DWORD dwBytesReturned;
 
-	return (DeviceIoControl (hVxD, VSGL_FREEBLOCK, blk, sizeof (SHAREDBLOCK), NULL, 0, &dwBytesReturned, NULL));
+    ASSERT (hVxD);
+
+    return (DeviceIoControl(hVxD, VSGL_FREEBLOCK, blk, sizeof(SHAREDBLOCK), NULL, 0, &dwBytesReturned, NULL));
 }
 
 /******************************************************************************
@@ -920,30 +877,27 @@ static int FreeSharedBlock (HANDLE hVxD, SHAREDBLOCK *blk)
  *
  * Description  : Converts linear address to physical address
  *****************************************************************************/
-static int MapLinearToPhysical(HANDLE hVxD, sgl_uint32 dwLinear, sgl_uint32* pPhysical)
-{
-	sgl_uint32 dwIoBuffer;
-	sgl_uint64 dwBytesReturned;
-	sgl_uint16 wRet;
+static int MapLinearToPhysical(HANDLE hVxD, sgl_uint32 dwLinear, sgl_uint32 *pPhysical) {
+    sgl_uint32 dwIoBuffer;
+    sgl_uint64 dwBytesReturned;
+    sgl_uint16 wRet;
 
-	dwIoBuffer = dwLinear;
+    dwIoBuffer = dwLinear;
 
-	ASSERT (hVxD);
+    ASSERT (hVxD);
 
-	wRet = (sgl_uint16) DeviceIoControl (hVxD, VSGL_GETPHYSADDRESS, &dwIoBuffer, sizeof (dwIoBuffer),
-						&dwIoBuffer, sizeof (dwIoBuffer), &dwBytesReturned, NULL);
-	if (!wRet)
-	{
-		return FALSE;
-	}
+    wRet = (sgl_uint16) DeviceIoControl(hVxD, VSGL_GETPHYSADDRESS, &dwIoBuffer, sizeof(dwIoBuffer),
+                                        &dwIoBuffer, sizeof(dwIoBuffer), &dwBytesReturned, NULL);
+    if (!wRet) {
+        return FALSE;
+    }
 
-	if (dwIoBuffer == 0)
-	{
-		return FALSE;
-	}
+    if (dwIoBuffer == 0) {
+        return FALSE;
+    }
 
-	*pPhysical = dwIoBuffer;
-	return TRUE;
+    *pPhysical = dwIoBuffer;
+    return TRUE;
 
 }/*MapLinearToPhysical*/
 
@@ -957,33 +911,13 @@ static int MapLinearToPhysical(HANDLE hVxD, sgl_uint32 dwLinear, sgl_uint32* pPh
  *
  * Description  : 
  *****************************************************************************/
-static sgl_uint32 EnumeratePhysicalBoards (HANDLE hVxD, void *pBuff, sgl_uint32 dwBuffSize)
-{
-	ASSERT (hVxD);
+static sgl_uint32 EnumeratePhysicalBoards(HANDLE hVxD, void *pBuff, sgl_uint32 dwBuffSize) {
+    ASSERT (hVxD);
 
-	return (DeviceIoControl (hVxD, VSGL_ENUM_PHYSICAL_BOARDS, 
-											NULL, 0, 
-											pBuff, dwBuffSize, 
-											NULL, NULL));
-}
-/******************************************************************************
- * Function Name: GetPhysicalBoard
- *
- * Inputs       : -
- * Outputs      : -
- * Returns      : -
- * Globals Used : -
- *
- * Description  : clean up at end of session
- *****************************************************************************/
-static sgl_uint32 GetPhysicalBoard (HANDLE hVxD, DWORD ID, DWORD *pdwPhysBoardID)
-{
-	ASSERT (hVxD);
-
-	return (DeviceIoControl (hVxD, VSGL_GET_PHYSICAL_BOARD, 
-										&ID, sizeof (ID), 
-										pdwPhysBoardID, sizeof (*pdwPhysBoardID), 
-										NULL, NULL));
+    return (DeviceIoControl(hVxD, VSGL_ENUM_PHYSICAL_BOARDS,
+                            NULL, 0,
+                            pBuff, dwBuffSize,
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -996,14 +930,32 @@ static sgl_uint32 GetPhysicalBoard (HANDLE hVxD, DWORD ID, DWORD *pdwPhysBoardID
  *
  * Description  : clean up at end of session
  *****************************************************************************/
-static sgl_uint32 GetPhysicalBoardInfo (HANDLE hVxD, DWORD *pPhysBoardID, BoardDataBlock *pb)
-{
-	ASSERT (hVxD);
-	
-	return (DeviceIoControl (hVxD, VSGL_GET_PHYSICAL_BOARD_INFO, 
-										pPhysBoardID, sizeof (*pPhysBoardID), 
-										pb, sizeof (*pb), 
-										NULL, NULL));
+static sgl_uint32 GetPhysicalBoard(HANDLE hVxD, DWORD ID, DWORD *pdwPhysBoardID) {
+    ASSERT (hVxD);
+
+    return (DeviceIoControl(hVxD, VSGL_GET_PHYSICAL_BOARD,
+                            &ID, sizeof(ID),
+                            pdwPhysBoardID, sizeof(*pdwPhysBoardID),
+                            NULL, NULL));
+}
+
+/******************************************************************************
+ * Function Name: GetPhysicalBoard
+ *
+ * Inputs       : -
+ * Outputs      : -
+ * Returns      : -
+ * Globals Used : -
+ *
+ * Description  : clean up at end of session
+ *****************************************************************************/
+static sgl_uint32 GetPhysicalBoardInfo(HANDLE hVxD, DWORD *pPhysBoardID, BoardDataBlock *pb) {
+    ASSERT (hVxD);
+
+    return (DeviceIoControl(hVxD, VSGL_GET_PHYSICAL_BOARD_INFO,
+                            pPhysBoardID, sizeof(*pPhysBoardID),
+                            pb, sizeof(*pb),
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -1016,14 +968,13 @@ static sgl_uint32 GetPhysicalBoardInfo (HANDLE hVxD, DWORD *pPhysBoardID, BoardD
  *
  * Description  : clean up at end of session
  *****************************************************************************/
-static sgl_uint32 ReleasePhysicalBoard (HANDLE hVxD, DWORD *pPhysBoardID)
-{
-	ASSERT (hVxD);
-	
-	return (DeviceIoControl (hVxD, VSGL_RELEASE_PHYSICAL_BOARD, 
-										pPhysBoardID, sizeof (*pPhysBoardID), 
-										NULL, 0, 
-										NULL, NULL));
+static sgl_uint32 ReleasePhysicalBoard(HANDLE hVxD, DWORD *pPhysBoardID) {
+    ASSERT (hVxD);
+
+    return (DeviceIoControl(hVxD, VSGL_RELEASE_PHYSICAL_BOARD,
+                            pPhysBoardID, sizeof(*pPhysBoardID),
+                            NULL, 0,
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -1036,14 +987,13 @@ static sgl_uint32 ReleasePhysicalBoard (HANDLE hVxD, DWORD *pPhysBoardID)
  *
  * Description  : clean up at end of session
  *****************************************************************************/
-static sgl_uint32 EnablePhysicalBoard (HANDLE hVxD, DWORD *pPhysBoardID)
-{
-	ASSERT (hVxD);
-	
-	return (DeviceIoControl (hVxD, VSGL_ENABLE_PHYSICAL_BOARD, 
-									pPhysBoardID, sizeof (*pPhysBoardID), 
-									NULL, 0, 
-									NULL, NULL));
+static sgl_uint32 EnablePhysicalBoard(HANDLE hVxD, DWORD *pPhysBoardID) {
+    ASSERT (hVxD);
+
+    return (DeviceIoControl(hVxD, VSGL_ENABLE_PHYSICAL_BOARD,
+                            pPhysBoardID, sizeof(*pPhysBoardID),
+                            NULL, 0,
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -1056,14 +1006,13 @@ static sgl_uint32 EnablePhysicalBoard (HANDLE hVxD, DWORD *pPhysBoardID)
  *
  * Description  : clean up at end of session
  *****************************************************************************/
-static sgl_uint32 DisablePhysicalBoard (HANDLE hVxD, DWORD *pPhysBoardID)
-{
-	ASSERT (hVxD);
-	
-	return (DeviceIoControl (hVxD, VSGL_DISABLE_PHYSICAL_BOARD, 
-									pPhysBoardID, sizeof (*pPhysBoardID), 
-									NULL, 0, 
-									NULL, NULL));
+static sgl_uint32 DisablePhysicalBoard(HANDLE hVxD, DWORD *pPhysBoardID) {
+    ASSERT (hVxD);
+
+    return (DeviceIoControl(hVxD, VSGL_DISABLE_PHYSICAL_BOARD,
+                            pPhysBoardID, sizeof(*pPhysBoardID),
+                            NULL, 0,
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -1076,16 +1025,15 @@ static sgl_uint32 DisablePhysicalBoard (HANDLE hVxD, DWORD *pPhysBoardID)
  *
  * Description  : clean up at end of session
  *****************************************************************************/
-static sgl_bool CreateDMAScatterBuffer (HANDLE hVxD, DMASCATTERBUFFER *pDMASB, DWORD dwSize)
-{
-	ASSERT (hVxD);
-	ASSERT (pDMASB);
-	ASSERT (dwSize >> 12);
-													     
-	return (DeviceIoControl (hVxD, VSGL_CREATE_DMA_SCATTER_BUFFER, 
-									&dwSize, sizeof (dwSize), 
-									pDMASB, sizeof (DMASCATTERBUFFER), 
-									NULL, NULL));
+static sgl_bool CreateDMAScatterBuffer(HANDLE hVxD, DMASCATTERBUFFER *pDMASB, DWORD dwSize) {
+    ASSERT (hVxD);
+    ASSERT (pDMASB);
+    ASSERT (dwSize >> 12);
+
+    return (DeviceIoControl(hVxD, VSGL_CREATE_DMA_SCATTER_BUFFER,
+                            &dwSize, sizeof(dwSize),
+                            pDMASB, sizeof(DMASCATTERBUFFER),
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -1098,15 +1046,14 @@ static sgl_bool CreateDMAScatterBuffer (HANDLE hVxD, DMASCATTERBUFFER *pDMASB, D
  *
  * Description  : clean up at end of session
  *****************************************************************************/
-static int DestroyDMAScatterBuffer (HANDLE hVxD, DMASCATTERBUFFER *pDMASB)
-{
-	ASSERT (hVxD);
-	ASSERT (pDMASB);
-	
-	return (DeviceIoControl (hVxD, VSGL_DESTROY_DMA_SCATTER_BUFFER, 
-									pDMASB, sizeof (DMASCATTERBUFFER), 
-									NULL, 0, 
-									NULL, NULL));
+static int DestroyDMAScatterBuffer(HANDLE hVxD, DMASCATTERBUFFER *pDMASB) {
+    ASSERT (hVxD);
+    ASSERT (pDMASB);
+
+    return (DeviceIoControl(hVxD, VSGL_DESTROY_DMA_SCATTER_BUFFER,
+                            pDMASB, sizeof(DMASCATTERBUFFER),
+                            NULL, 0,
+                            NULL, NULL));
 }
 
 /******************************************************************************
@@ -1119,24 +1066,20 @@ static int DestroyDMAScatterBuffer (HANDLE hVxD, DMASCATTERBUFFER *pDMASB)
  *
  * Description  : Allocates some virtual memory
  *****************************************************************************/
-static void *AllocVirtualPages (HANDLE hVxD, sgl_uint32 dwPages)
-{
-	void *pNew;
+static void *AllocVirtualPages(HANDLE hVxD, sgl_uint32 dwPages) {
+    void *pNew;
 
-	ASSERT (hVxD);
-	ASSERT (dwPages);
-	
-	if (DeviceIoControl (hVxD, VSGL_ALLOC_VIRTUAL_PAGES, 
-									&dwPages, sizeof (dwPages), 
-									&pNew, sizeof (void *), 
-									NULL, NULL))
-	{
-		return (pNew);
-	}
-	else
-	{
-		return (NULL);
-	}
+    ASSERT (hVxD);
+    ASSERT (dwPages);
+
+    if (DeviceIoControl(hVxD, VSGL_ALLOC_VIRTUAL_PAGES,
+                        &dwPages, sizeof(dwPages),
+                        &pNew, sizeof(void *),
+                        NULL, NULL)) {
+        return (pNew);
+    } else {
+        return (NULL);
+    }
 }
 
 /******************************************************************************
@@ -1149,273 +1092,245 @@ static void *AllocVirtualPages (HANDLE hVxD, sgl_uint32 dwPages)
  *
  * Description  : frees some virtual memory allocated by AllocVirtualPages
  *****************************************************************************/
-static void FreeVirtualPages (HANDLE hVxD, void *pPtr)
-{
-	ASSERT (hVxD);
-	
-	DeviceIoControl (hVxD, VSGL_FREE_VIRTUAL_PAGES, 
-									(LPVOID) &pPtr, sizeof (void *), 
-									NULL, 0, 
-									NULL, NULL);
+static void FreeVirtualPages(HANDLE hVxD, void *pPtr) {
+    ASSERT (hVxD);
+
+    DeviceIoControl(hVxD, VSGL_FREE_VIRTUAL_PAGES,
+                    (LPVOID) &pPtr, sizeof(void *),
+                    NULL, 0,
+                    NULL, NULL);
 }
 
-DMABUFFER * CALL_CONV PVROSCreateDMABuffer (HANDLE hVxD,sgl_uint32 Bytes)
-{
-	DMABUFFER	*pDMAB	= PVROSMalloc (sizeof (DMABUFFER));
-	
-	if (pDMAB)
-	{
-		if (AllocateSharedBlock (hVxD, Bytes >> 12, (SHAREDBLOCK *) pDMAB))
-		{
-			if (Remember (&gpSharedBlock, pDMAB))
-			{
-				return (pDMAB);
-			}
+DMABUFFER *CALL_CONV PVROSCreateDMABuffer(HANDLE hVxD, sgl_uint32 Bytes) {
+    DMABUFFER *pDMAB = PVROSMalloc(sizeof(DMABUFFER));
 
-			PVROSPrintf("PVROSCreateDMABuffer: Couldn't bung block in list\n");
-		}
-		
-		PVROSFree (pDMAB);
-	}
-	
-	return (NULL);	
-}	
+    if (pDMAB) {
+        if (AllocateSharedBlock(hVxD, Bytes >> 12, (SHAREDBLOCK *) pDMAB)) {
+            if (Remember(&gpSharedBlock, pDMAB)) {
+                return (pDMAB);
+            }
 
-PVROSERR CALL_CONV PVROSDestroyDMABuffer (HANDLE hVxD,DMABUFFER *pDMAB)
-{
-	ASSERT (pDMAB);
-	
-	if (!Forget (&gpSharedBlock, pDMAB))
-	{
-		PVROSPrintf("Attempt to destroy a DMA buffer more than once\n");
-	}
-	else
-	{
-		if (FreeSharedBlock (hVxD, (SHAREDBLOCK *) pDMAB))
-		{
-			PVROSFree (pDMAB);	
-			
-			return (PVROS_GROOVY);		
-		}
-	}
+            PVROSPrintf("PVROSCreateDMABuffer: Couldn't bung block in list\n");
+        }
 
-	return (PVROS_DODGY);
-}	
+        PVROSFree(pDMAB);
+    }
 
-void *CALL_CONV PVROSMapPhysicalToLinear (sgl_uint32 dwPhysical, sgl_uint32 Bytes)
-{
-	HANDLE hVxD = OpenVxd();
-	DMABUFFER 	DMAB;
+    return (NULL);
+}
 
-	DMAB.PhysicalAddress = dwPhysical;
-	DMAB.Pages = Bytes >> 12;
-	
-	if (AllocatePhysicalAlias (hVxD, (SHAREDBLOCK *) &DMAB))
-	{
-		if (Remember (&gpPhysAlias, (void *) dwPhysical))
-		{
-			CloseVxd (hVxD);
+PVROSERR CALL_CONV PVROSDestroyDMABuffer(HANDLE hVxD, DMABUFFER *pDMAB) {
+    ASSERT (pDMAB);
 
-			return ((void *)DMAB.GlobalAlias);
-		}
-	}
-	
-	CloseVxd (hVxD);
+    if (!Forget(&gpSharedBlock, pDMAB)) {
+        PVROSPrintf("Attempt to destroy a DMA buffer more than once\n");
+    } else {
+        if (FreeSharedBlock(hVxD, (SHAREDBLOCK *) pDMAB)) {
+            PVROSFree(pDMAB);
 
-	return (NULL);	
-}	
+            return (PVROS_GROOVY);
+        }
+    }
 
-sgl_uint32 CALL_CONV PVROSMapLinearToPhysical (sgl_uint32 dwLinear)
-{
+    return (PVROS_DODGY);
+}
+
+void *CALL_CONV PVROSMapPhysicalToLinear(sgl_uint32 dwPhysical, sgl_uint32 Bytes) {
+    HANDLE hVxD = OpenVxd();
+    DMABUFFER DMAB;
+
+    DMAB.PhysicalAddress = dwPhysical;
+    DMAB.Pages = Bytes >> 12;
+
+    if (AllocatePhysicalAlias(hVxD, (SHAREDBLOCK *) &DMAB)) {
+        if (Remember(&gpPhysAlias, (void *) dwPhysical)) {
+            CloseVxd(hVxD);
+
+            return ((void *) DMAB.GlobalAlias);
+        }
+    }
+
+    CloseVxd(hVxD);
+
+    return (NULL);
+}
+
+sgl_uint32 CALL_CONV PVROSMapLinearToPhysical(sgl_uint32 dwLinear) {
 #if 1
 
-	#pragma message ("PVROSMapLinearToPhysical is not doing anything! (it's now done in the VxD)")
-	
-	return (dwLinear);
+#pragma message ("PVROSMapLinearToPhysical is not doing anything! (it's now done in the VxD)")
+
+    return (dwLinear);
 
 #else
 
-	#define MAP_CACHE_SIZE	16
+#define MAP_CACHE_SIZE	16
 
-	typedef struct CACHE_LINE
-	{
-		sgl_uint32	dwPhysical;
-		sgl_uint32	dwLinear;
-	} CACHE_LINE;
-	
-	static CACHE_LINE MapCache[MAP_CACHE_SIZE];
+    typedef struct CACHE_LINE
+    {
+        sgl_uint32	dwPhysical;
+        sgl_uint32	dwLinear;
+    } CACHE_LINE;
 
-	static int nValid = 0;
-	int k = 0;
+    static CACHE_LINE MapCache[MAP_CACHE_SIZE];
 
-	HANDLE hVxD;
-	sgl_uint32	dwPhysical;
+    static int nValid = 0;
+    int k = 0;
 
-	while (k < nValid)
-	{
-		if (MapCache[k].dwLinear == dwLinear)
-		{
-			if (k != 0)
-			{
-				CACHE_LINE t;
+    HANDLE hVxD;
+    sgl_uint32	dwPhysical;
 
-				t = MapCache[k];
-				MapCache[k] = MapCache[0];
-				MapCache[0] = t;
-			}
+    while (k < nValid)
+    {
+        if (MapCache[k].dwLinear == dwLinear)
+        {
+            if (k != 0)
+            {
+                CACHE_LINE t;
 
-			return (MapCache[0].dwPhysical);
-		}
+                t = MapCache[k];
+                MapCache[k] = MapCache[0];
+                MapCache[0] = t;
+            }
 
-		++k;
-	}
+            return (MapCache[0].dwPhysical);
+        }
 
-	hVxD = OpenVxd();
+        ++k;
+    }
 
-	if (MapLinearToPhysical (hVxD, dwLinear, &dwPhysical))
-	{
-		CloseVxd (hVxD);
+    hVxD = OpenVxd();
 
-		if (nValid == MAP_CACHE_SIZE)
-		{
-			memcpy (MapCache + 1, MapCache, sizeof (CACHE_LINE)*(MAP_CACHE_SIZE-1));
-		}
-		else
-		{
-			memcpy (MapCache + 1, MapCache, sizeof (CACHE_LINE)*nValid);
-			++nValid;
-		}
+    if (MapLinearToPhysical (hVxD, dwLinear, &dwPhysical))
+    {
+        CloseVxd (hVxD);
 
-		PVROSPrintf ("New physical address mapping %d: 0x%08lx->0x%08lx\n", nValid, dwPhysical, dwLinear);
+        if (nValid == MAP_CACHE_SIZE)
+        {
+            memcpy (MapCache + 1, MapCache, sizeof (CACHE_LINE)*(MAP_CACHE_SIZE-1));
+        }
+        else
+        {
+            memcpy (MapCache + 1, MapCache, sizeof (CACHE_LINE)*nValid);
+            ++nValid;
+        }
 
-		MapCache[0].dwPhysical = dwPhysical;
-		MapCache[0].dwLinear = dwLinear;
+        PVROSPrintf ("New physical address mapping %d: 0x%08lx->0x%08lx\n", nValid, dwPhysical, dwLinear);
 
-		return (dwPhysical);
-	}
-	
-	CloseVxd (hVxD);
+        MapCache[0].dwPhysical = dwPhysical;
+        MapCache[0].dwLinear = dwLinear;
 
-	return (0);	
+        return (dwPhysical);
+    }
+
+    CloseVxd (hVxD);
+
+    return (0);
 
 #endif
-}	
-
-DMASCATTERBUFFER * CALL_CONV PVROSCreateDMAScatterBuffer (HANDLE hVxD,sgl_uint32 Bytes)
-{
-	DMASCATTERBUFFER *pDMASB = PVROSMalloc (sizeof (DMASCATTERBUFFER));
-
-	if (pDMASB)
-	{
-		if (CreateDMAScatterBuffer (hVxD, (DMASCATTERBUFFER *) pDMASB, Bytes))
-		{
-			if (Remember (&gpDMASB, pDMASB))
-			{
-				return (pDMASB);
-			}
-		}
-		
-		PVROSFree (pDMASB);
-	}
-	
-	return (NULL);	
-}	
-
-void * CALL_CONV PVROSAllocSharedMemory (sgl_uint32 Bytes)
-{
-	HANDLE hVxD = OpenVxd();
-	void *pNew;
-	
-	pNew = AllocVirtualPages (hVxD, Bytes >> 12);
-
-	if (pNew)
-	{
-		#if 0
-		if (Remember (&gpSharedMem, pNew))
-		{
-			CloseVxd (hVxD);
-
-			return (pNew);
-		}
-		#else
-			CloseVxd (hVxD);
-
-			return (pNew);
-		#endif
-	}
-	
-	CloseVxd (hVxD);
-	return (NULL);	
-}	
-
-void CALL_CONV PVROSFreeSharedMemory (void *pPtr)
-{
-	HANDLE hVxD = OpenVxd();
-
-	ASSERT (pPtr);
-	
-	#if 0
-	if (!Forget (&gpSharedMem, pPtr))
-	{
-		PVROSPrintf("Attempt to destroy a peice of shared memory more than once\n");
-	}
-	else
-	{
-		FreeVirtualPages (hVxD, pPtr);
-	}
-	#else
-		FreeVirtualPages (hVxD, pPtr);
-	#endif
-
-	CloseVxd (hVxD);
-}	
-
-PVROSERR CALL_CONV PVROSDestroyDMAScatterBuffer (HANDLE hVxD,DMASCATTERBUFFER *pDMASB)
-{
-	ASSERT (pDMASB);
-	
-	if (!Forget (&gpDMASB, pDMASB))
-	{
-		PVROSPrintf("Attempt to destroy a DMA scatter buffer more than once\n");
-	}
-	else
-	{
-		if (DestroyDMAScatterBuffer (hVxD, (DMASCATTERBUFFER *) pDMASB))
-		{
-			PVROSFree (pDMASB);	
-			
-			return (PVROS_GROOVY);		
-		}
-	}
-	
-	return (PVROS_DODGY);
-}	
-
-
-PVROSERR CALL_CONV PVROSReadPCIConfigSpace(HDEVICE hDevice, sgl_uint32 dwRegNo, sgl_uint32 *dwRegValue)
-{
-	int nPCIErr;
-	BoardDataBlock	pb;
-	
-	PVROSGetPCIDeviceInfo (hDevice, &pb);
-
-	nPCIErr = PCIRead32 ( (sgl_uint8) pb.PCIBus, 
-			 (sgl_uint8)((pb.PCIDev << 3) | pb.PCIFunc), (sgl_uint16) dwRegNo, dwRegValue);
-
-	return(nPCIErr);
 }
 
-PVROSERR CALL_CONV PVROSWritePCIConfigSpace(HDEVICE hDevice, sgl_uint32 dwRegNo, sgl_uint32 dwRegValue)
-{
-	int nPCIErr;
-	BoardDataBlock	pb;
+DMASCATTERBUFFER *CALL_CONV PVROSCreateDMAScatterBuffer(HANDLE hVxD, sgl_uint32 Bytes) {
+    DMASCATTERBUFFER *pDMASB = PVROSMalloc(sizeof(DMASCATTERBUFFER));
 
-	PVROSGetPCIDeviceInfo (hDevice, &pb);
+    if (pDMASB) {
+        if (CreateDMAScatterBuffer(hVxD, (DMASCATTERBUFFER *) pDMASB, Bytes)) {
+            if (Remember(&gpDMASB, pDMASB)) {
+                return (pDMASB);
+            }
+        }
 
-	nPCIErr = PCIWrite32 ( (sgl_uint8) pb.PCIBus, 
-			(sgl_uint8) ((pb.PCIDev << 3) |  pb.PCIFunc), (sgl_uint16) dwRegNo, dwRegValue);
+        PVROSFree(pDMASB);
+    }
 
-	return(nPCIErr);
+    return (NULL);
+}
+
+void *CALL_CONV PVROSAllocSharedMemory(sgl_uint32 Bytes) {
+    HANDLE hVxD = OpenVxd();
+    void *pNew;
+
+    pNew = AllocVirtualPages(hVxD, Bytes >> 12);
+
+    if (pNew) {
+#if 0
+        if (Remember (&gpSharedMem, pNew))
+        {
+            CloseVxd (hVxD);
+
+            return (pNew);
+        }
+#else
+        CloseVxd(hVxD);
+
+        return (pNew);
+#endif
+    }
+
+    CloseVxd(hVxD);
+    return (NULL);
+}
+
+void CALL_CONV PVROSFreeSharedMemory(void *pPtr) {
+    HANDLE hVxD = OpenVxd();
+
+    ASSERT (pPtr);
+
+#if 0
+    if (!Forget (&gpSharedMem, pPtr))
+    {
+        PVROSPrintf("Attempt to destroy a peice of shared memory more than once\n");
+    }
+    else
+    {
+        FreeVirtualPages (hVxD, pPtr);
+    }
+#else
+    FreeVirtualPages(hVxD, pPtr);
+#endif
+
+    CloseVxd(hVxD);
+}
+
+PVROSERR CALL_CONV PVROSDestroyDMAScatterBuffer(HANDLE hVxD, DMASCATTERBUFFER *pDMASB) {
+    ASSERT (pDMASB);
+
+    if (!Forget(&gpDMASB, pDMASB)) {
+        PVROSPrintf("Attempt to destroy a DMA scatter buffer more than once\n");
+    } else {
+        if (DestroyDMAScatterBuffer(hVxD, (DMASCATTERBUFFER *) pDMASB)) {
+            PVROSFree(pDMASB);
+
+            return (PVROS_GROOVY);
+        }
+    }
+
+    return (PVROS_DODGY);
+}
+
+
+PVROSERR CALL_CONV PVROSReadPCIConfigSpace(HDEVICE hDevice, sgl_uint32 dwRegNo, sgl_uint32 *dwRegValue) {
+    int nPCIErr;
+    BoardDataBlock pb;
+
+    PVROSGetPCIDeviceInfo(hDevice, &pb);
+
+    nPCIErr = PCIRead32((sgl_uint8) pb.PCIBus,
+                        (sgl_uint8) ((pb.PCIDev << 3) | pb.PCIFunc), (sgl_uint16) dwRegNo, dwRegValue);
+
+    return (nPCIErr);
+}
+
+PVROSERR CALL_CONV PVROSWritePCIConfigSpace(HDEVICE hDevice, sgl_uint32 dwRegNo, sgl_uint32 dwRegValue) {
+    int nPCIErr;
+    BoardDataBlock pb;
+
+    PVROSGetPCIDeviceInfo(hDevice, &pb);
+
+    nPCIErr = PCIWrite32((sgl_uint8) pb.PCIBus,
+                         (sgl_uint8) ((pb.PCIDev << 3) | pb.PCIFunc), (sgl_uint16) dwRegNo, dwRegValue);
+
+    return (nPCIErr);
 }
 
 /******************************************************************************
@@ -1439,31 +1354,29 @@ PVROSERR CALL_CONV PVROSWritePCIConfigSpace(HDEVICE hDevice, sgl_uint32 dwRegNo,
  * set to give Memory Type 0x01 AND MTRR enable bit = 1 in MTRRdefType register.
  *
  *****************************************************************************/
-PVROSERR CALL_CONV PVROSSetCacheMode (DMABUFFER *blk, sgl_uint32 mode)
-{
-	HANDLE hVxD = OpenVxd();
+PVROSERR CALL_CONV PVROSSetCacheMode(DMABUFFER *blk, sgl_uint32 mode) {
+    HANDLE hVxD = OpenVxd();
 
 #if PCX2 || PCX2_003
-	DWORD 		Data[3];
+    DWORD Data[3];
 
-	/* Only needed for PCX2 to do write combining.
-	 */
+    /* Only needed for PCX2 to do write combining.
+     */
 
-	if (mode == 0)
-	{
-		DPF ((DBG_WARNING, "Write combining not supported through this API"));
-		return (TRUE);
-	}
-	
-	Data[0] = blk->GlobalAlias;
-	Data[1] = blk->Pages;
-	Data[2] = mode;
-		
-	CloseVxd (hVxD);
-	return (DeviceIoControl (hVxD, VSGL_SETCACHEMODE, Data, 12, NULL, 0, NULL, NULL));
+    if (mode == 0) {
+        DPF ((DBG_WARNING, "Write combining not supported through this API"));
+        return (TRUE);
+    }
+
+    Data[0] = blk->GlobalAlias;
+    Data[1] = blk->Pages;
+    Data[2] = mode;
+
+    CloseVxd(hVxD);
+    return (DeviceIoControl(hVxD, VSGL_SETCACHEMODE, Data, 12, NULL, 0, NULL, NULL));
 #else
-	CloseVxd (hVxD);
-	return(TRUE);
+    CloseVxd (hVxD);
+    return(TRUE);
 #endif
 }
 
@@ -1479,497 +1392,419 @@ PVROSERR CALL_CONV PVROSSetCacheMode (DMABUFFER *blk, sgl_uint32 mode)
  * Description  : Copies a buffer over to a hardware buffer
  *****************************************************************************/
 
-PVROSERR CALL_CONV PVROSCopyBufferToHardware (void *Src, void *Dst, sgl_uint32 Bytes, sgl_uint32 CheckCopy)
-{
-	DWORD Data[4];
-	HANDLE hVxD = OpenVxd();
-	
+PVROSERR CALL_CONV PVROSCopyBufferToHardware(void *Src, void *Dst, sgl_uint32 Bytes, sgl_uint32 CheckCopy) {
+    DWORD Data[4];
+    HANDLE hVxD = OpenVxd();
+
 /*	ASSERT (((DWORD) Src & 0x00000FFFL) == 0);*/
 
-	Data[0] = (DWORD) Src;
-	Data[1] = (DWORD) Dst;
-	Data[2] = (DWORD) Bytes;
-	Data[3] = (DWORD) CheckCopy;
-	
-	DeviceIoControl (hVxD, VSGL_COPYBUFFER, Data, 16, NULL, 0, NULL, NULL);
+    Data[0] = (DWORD) Src;
+    Data[1] = (DWORD) Dst;
+    Data[2] = (DWORD) Bytes;
+    Data[3] = (DWORD) CheckCopy;
 
-	CloseVxd (hVxD);
-	return (PVROS_GROOVY);		
+    DeviceIoControl(hVxD, VSGL_COPYBUFFER, Data, 16, NULL, 0, NULL, NULL);
+
+    CloseVxd(hVxD);
+    return (PVROS_GROOVY);
 }
 
 /**********************************************************************/
 
-sgl_uint32 CALL_CONV PVROSEnumPCIDevices (PciDeviceTable *pPDT)
-{
-	DWORD dwDevices;
-	HANDLE hVxD = OpenVxd();
-	
-	if (EnumeratePhysicalBoards (hVxD, &dwDevices, sizeof (dwDevices)))
-	{
-		if (pPDT == NULL)
-		{
-			CloseVxd (hVxD);
-			return (dwDevices);
-		}
-		else
-		{
-			if (EnumeratePhysicalBoards (hVxD, pPDT, dwDevices * sizeof (PciDeviceTable)))
-			{
-				CloseVxd (hVxD);
-				return (dwDevices);
-			}
-		}
-	}
-	
-	CloseVxd (hVxD);
-	return (0);
-}	
+sgl_uint32 CALL_CONV PVROSEnumPCIDevices(PciDeviceTable *pPDT) {
+    DWORD dwDevices;
+    HANDLE hVxD = OpenVxd();
 
-/**********************************************************************/
+    if (EnumeratePhysicalBoards(hVxD, &dwDevices, sizeof(dwDevices))) {
+        if (pPDT == NULL) {
+            CloseVxd(hVxD);
+            return (dwDevices);
+        } else {
+            if (EnumeratePhysicalBoards(hVxD, pPDT, dwDevices * sizeof(PciDeviceTable))) {
+                CloseVxd(hVxD);
+                return (dwDevices);
+            }
+        }
+    }
 
-void GetLibraryModule(HLDEVICE hLDevice,PVR_Interface Spec)
-{
-	
-	char**		pszLibName;
-
-	hLDevice->hLib = NULL;
-
-	switch(Spec)
-	{
-		case PVR_SGL:
-		case PVR_SGLLite:
-		{
-			pszLibName = SGLLibNames;
-
-			break;
-		}
-		case PVR_PVRDirect:
-		{
-			pszLibName = PVRDLibNames;
-
-			break;
-		}
-		case PVR_Texture:
-		default:
-		{
-			return;
-		}
-	}
-
-	switch(hLDevice->DeviceType)
-	{
-		case MIDAS3:
-		{
-			if (hLDevice->hLib == NULL)
-			{
-				hLDevice->hLib = LoadLibrary(pszLibName[0]);
-			}
-			break;
-		}
-		case MIDAS4:
-		{
-			if (hLDevice->hLib == NULL)
-			{
-				hLDevice->hLib = LoadLibrary(pszLibName[1]);
-			}
-			break;
-		}
-		case MIDAS5:
-		{
-			if (hLDevice->hLib == NULL)
-			{
-				hLDevice->hLib = LoadLibrary(pszLibName[2]);
-			}
-			break;
-		}
-		case MIDAS5_003:
-		{
-			if (hLDevice->hLib == NULL)
-			{
-				hLDevice->hLib = LoadLibrary(pszLibName[3]);
-			}
-			break;
-		}
-	}
-
-	return;
+    CloseVxd(hVxD);
+    return (0);
 }
 
 /**********************************************************************/
 
-sgl_uint32 CALL_CONV PVROSGetInterface(HLDEVICE			hLDevice,
-									   PVR_Interface 	Spec, 
-									   void 			**ppIF)
-{
-	HINSTANCE 	hLib = NULL;
-	sgl_uint32	nStructSize = 0;
+void GetLibraryModule(HLDEVICE hLDevice, PVR_Interface Spec) {
 
+    char **pszLibName;
 
-	GetLibraryModule(hLDevice,Spec);
+    hLDevice->hLib = NULL;
 
-	if (!hLDevice->hLib)
-	{
-		DPF((DBG_WARNING,"PVROSGetInterface: Library not found."));
-		return (0);
-	}
+    switch (Spec) {
+        case PVR_SGL:
+        case PVR_SGLLite: {
+            pszLibName = SGLLibNames;
 
-	hLib = hLDevice->hLib;
+            break;
+        }
+        case PVR_PVRDirect: {
+            pszLibName = PVRDLibNames;
 
-	/* 
-		get the number of functions 
-	*/
-	switch(Spec)
-	{
-		case(PVR_SGL):
-		case(PVR_SGLLite):
-		{
-			API_GETFNTYPE(SGL) pfnGetAPI = (void *) GetProcAddress (hLib, "GetSGL_IF");
+            break;
+        }
+        case PVR_Texture:
+        default: {
+            return;
+        }
+    }
 
-			if (!pfnGetAPI)
-			{
-				DPF ((DBG_ERROR, "Could not get SGL API"));
-			}
-			else 
-			{
-				if (pfnGetAPI ((SGL_IF **)ppIF) != sizeof (API_STRUCTTYPE(SGL)))
-				{
-					DPF ((DBG_ERROR, "SGL API was the wrong size"));
-				}
-				else
-				{
-					return sizeof (API_STRUCTTYPE(SGL));
-				}
-			}
+    switch (hLDevice->DeviceType) {
+        case MIDAS3: {
+            if (hLDevice->hLib == NULL) {
+                hLDevice->hLib = LoadLibrary(pszLibName[0]);
+            }
+            break;
+        }
+        case MIDAS4: {
+            if (hLDevice->hLib == NULL) {
+                hLDevice->hLib = LoadLibrary(pszLibName[1]);
+            }
+            break;
+        }
+        case MIDAS5: {
+            if (hLDevice->hLib == NULL) {
+                hLDevice->hLib = LoadLibrary(pszLibName[2]);
+            }
+            break;
+        }
+        case MIDAS5_003: {
+            if (hLDevice->hLib == NULL) {
+                hLDevice->hLib = LoadLibrary(pszLibName[3]);
+            }
+            break;
+        }
+    }
 
-			break;
-		}
-		case(PVR_PVRDirect):
-		{
-			API_GETFNTYPE(PVRDIRECT) pfnGetAPI = (void *) GetProcAddress (hLib, "GetPVRDIRECT_IF");
-
-			if (!pfnGetAPI)
-			{
-				DPF ((DBG_ERROR, "Could not get PVRDirect API"));
-			}
-			else 
-			{
-				if (pfnGetAPI ((PVRDIRECT_IF **)ppIF) != sizeof (API_STRUCTTYPE(PVRDIRECT)))
-				{
-					DPF ((DBG_ERROR, "PVRDirect API was the wrong size"));
-				}
-				else
-				{
-					return sizeof (API_STRUCTTYPE(PVRDIRECT));
-				}
-			}
-
-			break;
-		}
-		default:
-		{
-			break;
-		}
-	}
-
-	FreeLibrary (hLib);
-	
-	/*
-		 return the number of functions....NOT
-	*/
-	return 0;
+    return;
 }
 
 /**********************************************************************/
 
-sgl_uint32 CALL_CONV PVROSReleaseInterface(HLDEVICE hLDevice)
-{
-	FreeLibrary (hLDevice->hLib);
+sgl_uint32 CALL_CONV PVROSGetInterface(HLDEVICE hLDevice,
+                                       PVR_Interface Spec,
+                                       void **ppIF) {
+    HINSTANCE hLib = NULL;
+    sgl_uint32 nStructSize = 0;
 
-	return(0);
+
+    GetLibraryModule(hLDevice, Spec);
+
+    if (!hLDevice->hLib) {
+        DPF((DBG_WARNING, "PVROSGetInterface: Library not found."));
+        return (0);
+    }
+
+    hLib = hLDevice->hLib;
+
+    /*
+        get the number of functions
+    */
+    switch (Spec) {
+        case (PVR_SGL):
+        case (PVR_SGLLite): {
+            API_GETFNTYPE(SGL) pfnGetAPI = (void *) GetProcAddress(hLib, "GetSGL_IF");
+
+            if (!pfnGetAPI) {
+                DPF ((DBG_ERROR, "Could not get SGL API"));
+            } else {
+                if (pfnGetAPI((SGL_IF **) ppIF) != sizeof(API_STRUCTTYPE(SGL))) {
+                    DPF ((DBG_ERROR, "SGL API was the wrong size"));
+                } else {
+                    return sizeof(API_STRUCTTYPE(SGL));
+                }
+            }
+
+            break;
+        }
+        case (PVR_PVRDirect): {
+            API_GETFNTYPE(PVRDIRECT) pfnGetAPI = (void *) GetProcAddress(hLib, "GetPVRDIRECT_IF");
+
+            if (!pfnGetAPI) {
+                DPF ((DBG_ERROR, "Could not get PVRDirect API"));
+            } else {
+                if (pfnGetAPI((PVRDIRECT_IF **) ppIF) != sizeof(API_STRUCTTYPE(PVRDIRECT))) {
+                    DPF ((DBG_ERROR, "PVRDirect API was the wrong size"));
+                } else {
+                    return sizeof(API_STRUCTTYPE(PVRDIRECT));
+                }
+            }
+
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+
+    FreeLibrary(hLib);
+
+    /*
+         return the number of functions....NOT
+    */
+    return 0;
+}
+
+/**********************************************************************/
+
+sgl_uint32 CALL_CONV PVROSReleaseInterface(HLDEVICE hLDevice) {
+    FreeLibrary(hLDevice->hLib);
+
+    return (0);
 }
 
 
 /**********************************************************************/
 
-HDEVICE CALL_CONV PVROSOpenPCIDevice (DEVICEID DeviceID)
-{
-	DWORD	*pPhysBoardID = PVROSMalloc (sizeof (DWORD));
-	HANDLE hVxD = OpenVxd();
-	
-	if (pPhysBoardID)
-	{
-		if (GetPhysicalBoard (hVxD, (sgl_uint32) DeviceID, pPhysBoardID))
-		{
-			if (Remember (&gpPhysBoard, pPhysBoardID))
-			{
-				CloseVxd (hVxD);
-				return (pPhysBoardID);
-			}
-		}
-		
-		PVROSFree (pPhysBoardID);
-	}
-	
-	CloseVxd (hVxD);
-	return (NULL);	
-}	
+HDEVICE CALL_CONV PVROSOpenPCIDevice(DEVICEID DeviceID) {
+    DWORD *pPhysBoardID = PVROSMalloc(sizeof(DWORD));
+    HANDLE hVxD = OpenVxd();
+
+    if (pPhysBoardID) {
+        if (GetPhysicalBoard(hVxD, (sgl_uint32) DeviceID, pPhysBoardID)) {
+            if (Remember(&gpPhysBoard, pPhysBoardID)) {
+                CloseVxd(hVxD);
+                return (pPhysBoardID);
+            }
+        }
+
+        PVROSFree(pPhysBoardID);
+    }
+
+    CloseVxd(hVxD);
+    return (NULL);
+}
 
 /**********************************************************************/
 
-PVROSERR CALL_CONV PVROSGetPCIDeviceInfo (HDEVICE hDevice, BoardDataBlock *pBDB)
-{
-	DWORD 	*pPhysBoardID = hDevice;
-	HANDLE hVxD = OpenVxd();
-	
-	ASSERT (pPhysBoardID);
-	
-	if (GetPhysicalBoardInfo (hVxD, pPhysBoardID, pBDB))
-	{
-		CloseVxd (hVxD);
-		return (PVROS_GROOVY);
-	}
+PVROSERR CALL_CONV PVROSGetPCIDeviceInfo(HDEVICE hDevice, BoardDataBlock *pBDB) {
+    DWORD *pPhysBoardID = hDevice;
+    HANDLE hVxD = OpenVxd();
 
-	CloseVxd (hVxD);
-	return (PVROS_DODGY);
-}	
+    ASSERT (pPhysBoardID);
+
+    if (GetPhysicalBoardInfo(hVxD, pPhysBoardID, pBDB)) {
+        CloseVxd(hVxD);
+        return (PVROS_GROOVY);
+    }
+
+    CloseVxd(hVxD);
+    return (PVROS_DODGY);
+}
 
 /**********************************************************************/
 
-PVROSERR CALL_CONV PVROSClosePCIDevice (HDEVICE hDevice)
-{
-	DWORD 	*pPhysBoardID = hDevice;
-	HANDLE hVxD = OpenVxd();
-	
-	ASSERT (pPhysBoardID);
-	
-	if (!Forget (&gpPhysBoard, pPhysBoardID))
-	{
-		PVROSPrintf("Attempt to destroy a physical board more than once\n");
-	}
-	else
-	{
-		if (ReleasePhysicalBoard (hVxD, pPhysBoardID))
-		{
-			PVROSFree (pPhysBoardID);	
-			
-			CloseVxd (hVxD);
-			return (PVROS_GROOVY);		
-		}
-	}
-	
-	CloseVxd (hVxD);
-	return (PVROS_DODGY);
-}	
+PVROSERR CALL_CONV PVROSClosePCIDevice(HDEVICE hDevice) {
+    DWORD *pPhysBoardID = hDevice;
+    HANDLE hVxD = OpenVxd();
+
+    ASSERT (pPhysBoardID);
+
+    if (!Forget(&gpPhysBoard, pPhysBoardID)) {
+        PVROSPrintf("Attempt to destroy a physical board more than once\n");
+    } else {
+        if (ReleasePhysicalBoard(hVxD, pPhysBoardID)) {
+            PVROSFree(pPhysBoardID);
+
+            CloseVxd(hVxD);
+            return (PVROS_GROOVY);
+        }
+    }
+
+    CloseVxd(hVxD);
+    return (PVROS_DODGY);
+}
 
 /**********************************************************************/
 
 /* this function sets up all board specific interrupt handlers */
-__attribute__((unused)) PVROSERR CALL_CONV PVROSSetupPowerVRDevice (HDEVICE hDevice, DEVICE_TYPE_POWERVR BoardType)
-{
-	DWORD 	*pPhysBoardID = hDevice;
-	HANDLE hVxD = OpenVxd();
-	
-	ASSERT (pPhysBoardID);
-	
-	if (BoardType == DISABLE_BOARD)
-	{
-		if (DisablePhysicalBoard (hVxD, pPhysBoardID))
-		{
-			CloseVxd (hVxD);
-			return (PVROS_GROOVY);
-		}
-	}
-	else
-	{
-		if (EnablePhysicalBoard (hVxD, pPhysBoardID))
-		{
-			CloseVxd (hVxD);
-			return (PVROS_GROOVY);
-		}
-	}
-	
-	CloseVxd (hVxD);
-	return (PVROS_DODGY);
-}	
+__attribute__((unused)) PVROSERR CALL_CONV PVROSSetupPowerVRDevice(HDEVICE hDevice, DEVICE_TYPE_POWERVR BoardType) {
+    DWORD *pPhysBoardID = hDevice;
+    HANDLE hVxD = OpenVxd();
+
+    ASSERT (pPhysBoardID);
+
+    if (BoardType == DISABLE_BOARD) {
+        if (DisablePhysicalBoard(hVxD, pPhysBoardID)) {
+            CloseVxd(hVxD);
+            return (PVROS_GROOVY);
+        }
+    } else {
+        if (EnablePhysicalBoard(hVxD, pPhysBoardID)) {
+            CloseVxd(hVxD);
+            return (PVROS_GROOVY);
+        }
+    }
+
+    CloseVxd(hVxD);
+    return (PVROS_DODGY);
+}
 
 /**********************************************************************/
 
-PVROSERR CALL_CONV PVROSCreateSystemContext (HINSTANCE hInstance, DWORD dwReason)
-{
-	hSysProcess = GetCurrentProcessId();
+PVROSERR CALL_CONV PVROSCreateSystemContext(HINSTANCE hInstance, DWORD dwReason) {
+    hSysProcess = GetCurrentProcessId();
 
-	ASSERT (sizeof (DMABUFFER) == sizeof (SHAREDBLOCK));
-		
-	if (hSystemVxD == NULL)
-	{
-		hSystemVxD = CreateFile ("\\\\.\\SGL", 0, 0, NULL, 0, FILE_FLAG_DELETE_ON_CLOSE, NULL);
-		
-		if (hSystemVxD == INVALID_HANDLE_VALUE)
-		{
-			DPF ((DBG_FATAL, "PVROSCreateSystemContext: Unable to load VxD"));
-		}
-		else
-		{
-			unsigned char VersionID[4];
-			DWORD Dross;
-			
-#if DEBUG			
-			DebugInit (DBGPRIV_WARNING);
+    ASSERT (sizeof(DMABUFFER) == sizeof(SHAREDBLOCK));
+
+    if (hSystemVxD == NULL) {
+        hSystemVxD = CreateFile("\\\\.\\SGL", 0, 0, NULL, 0, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+
+        if (hSystemVxD == INVALID_HANDLE_VALUE) {
+            DPF ((DBG_FATAL, "PVROSCreateSystemContext: Unable to load VxD"));
+        } else {
+            unsigned char VersionID[4];
+            DWORD Dross;
+
+#if DEBUG
+            DebugInit (DBGPRIV_WARNING);
 #endif
 
 #if DEBUGDEV
-		   	DebugInit(DBGPRIV_MESSAGE);
+            DebugInit(DBGPRIV_MESSAGE);
 #endif
 
-			hBufferMutex = CreateMutex(NULL,     /* no security attributes*/
-									   FALSE,    /* initially not owned*/
-									   "VirtualBufferMutex");  /* name of mutex*/
+            hBufferMutex = CreateMutex(NULL,     /* no security attributes*/
+                                       FALSE,    /* initially not owned*/
+                                       "VirtualBufferMutex");  /* name of mutex*/
 
-			if (hBufferMutex == NULL) 
-			{
-				PVROSPrintf("Bad news\n");
-			}
-			
+            if (hBufferMutex == NULL) {
+                PVROSPrintf("Bad news\n");
+            }
+
 #if 0
-			pPSB->hInstance = hInstance;
-			pPSB->dwReason = dwReason;
+            pPSB->hInstance = hInstance;
+            pPSB->dwReason = dwReason;
 #endif
-			/* get and print version number */
-			DeviceIoControl (hSystemVxD, 1, NULL, 0, VersionID, sizeof (VersionID), &Dross, NULL);
-		
-			#if DEBUG
-			
-				PVROSPrintf("VxD version: %d.%d\n", (int) VersionID[1], (int) VersionID[0]);
+            /* get and print version number */
+            DeviceIoControl(hSystemVxD, 1, NULL, 0, VersionID, sizeof(VersionID), &Dross, NULL);
 
-			#endif
+#if DEBUG
 
-			if (VersionID[1] >= 4)
-			{
-				DPF((DBG_MESSAGE,"PVROSCreateSystemContext: Process ID: %x.\n", hSysProcess));
+            PVROSPrintf("VxD version: %d.%d\n", (int) VersionID[1], (int) VersionID[0]);
 
-				return (PVROS_GROOVY);
-			}
-			else
-			{
-				PVROSPrintf("Obsolete VxD! Version: %d.%d\n", (int) VersionID[1], (int) VersionID[0]);
-			}
-		}
-	}
-	else
-	{
-		char szParentProcess[256];
-		
-		GetModuleFileName (NULL, szParentProcess, sizeof (szParentProcess));
-		
-		if (dwReason == DLL_PROCESS_ATTACH)
-		{
-			PVROSPrintf("AARGH! process attach in another process's context (%s)\n", szParentProcess);
-		}
-		else
-		{
-			PVROSPrintf("Thread attach in existing process's context (%s)\n", szParentProcess);
-		}
-	
-		return (PVROS_GROOVY); 
-	}
-			
-	return (PVROS_DODGY);
-}	
+#endif
 
-PVROSERR CALL_CONV PVROSDestroySystemContextLocal (void)
-{
-	PSO 	pSO, pSONext;
-	HANDLE	hVxD = OpenVxd();
-	
-	if (gnRefCount == 0)
-	{
-		PVROSPrintf("PVROSDestroySystemContext: Shutdown\n");
+            if (VersionID[1] >= 4) {
+                DPF((DBG_MESSAGE, "PVROSCreateSystemContext: Process ID: %x.\n", hSysProcess));
 
-		PVROSDestroyAllVirtualBuffers();
+                return (PVROS_GROOVY);
+            } else {
+                PVROSPrintf("Obsolete VxD! Version: %d.%d\n", (int) VersionID[1], (int) VersionID[0]);
+            }
+        }
+    } else {
+        char szParentProcess[256];
 
-		/* release leaked physical aliases */
-	
-		pSO = gpPhysAlias;
+        GetModuleFileName(NULL, szParentProcess, sizeof(szParentProcess));
 
-		while (pSO)
-		{
-			ASSERT (pSO->pObject);
+        if (dwReason == DLL_PROCESS_ATTACH) {
+            PVROSPrintf("AARGH! process attach in another process's context (%s)\n", szParentProcess);
+        } else {
+            PVROSPrintf("Thread attach in existing process's context (%s)\n", szParentProcess);
+        }
 
-			PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing physical alias\n");
+        return (PVROS_GROOVY);
+    }
 
-			FreePhysicalAlias (hVxD, pSO->pObject);
+    return (PVROS_DODGY);
+}
 
-			pSONext = pSO->pNext;
-			PVROSFree (pSO->pObject);
-			PVROSFree (pSO);
-			pSO = pSONext;		
-		}
+PVROSERR CALL_CONV PVROSDestroySystemContextLocal(void) {
+    PSO pSO, pSONext;
+    HANDLE hVxD = OpenVxd();
 
-		/* release leaked physical boards */
-		
-		pSO = gpPhysBoard;
-		
-		while (pSO)
-		{
-			PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing physical board\n");
+    if (gnRefCount == 0) {
+        PVROSPrintf("PVROSDestroySystemContext: Shutdown\n");
 
-			ReleasePhysicalBoard (hVxD, pSO->pObject);
+        PVROSDestroyAllVirtualBuffers();
 
-			pSONext = pSO->pNext;
-			PVROSFree (pSO->pObject);
-			PVROSFree (pSO);
-			pSO = pSONext;		
-		}
+        /* release leaked physical aliases */
 
-		/* release leaked shared blocks */
-		
-		pSO = gpSharedBlock;
-		
-		while (pSO)
-		{
-			ASSERT (pSO->pObject);
+        pSO = gpPhysAlias;
 
-			PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing DMA buffer\n");
+        while (pSO) {
+            ASSERT (pSO->pObject);
 
-			FreeSharedBlock (hVxD, pSO->pObject);
+            PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing physical alias\n");
 
-			pSONext = pSO->pNext;
-			PVROSFree (pSO->pObject);
-			PVROSFree (pSO);
-			pSO = pSONext;		
-		}
+            FreePhysicalAlias(hVxD, pSO->pObject);
 
-		/* release leaked pcx buffers */
-		
-		pSO = gpDMASB;
-		
-		while (pSO)
-		{
-			ASSERT (pSO->pObject);
+            pSONext = pSO->pNext;
+            PVROSFree(pSO->pObject);
+            PVROSFree(pSO);
+            pSO = pSONext;
+        }
 
-			PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing DMA scatter buffer\n");
+        /* release leaked physical boards */
 
-			DestroyDMAScatterBuffer (hVxD, pSO->pObject);
+        pSO = gpPhysBoard;
 
-			pSONext = pSO->pNext;
-			PVROSFree (pSO->pObject);
-			PVROSFree (pSO);
-			pSO = pSONext;		
-		}
+        while (pSO) {
+            PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing physical board\n");
 
-		PVROSPrintf("PVROSDestroySystemContext: Shutdown complete\n");
-	}
+            ReleasePhysicalBoard(hVxD, pSO->pObject);
 
-	//CloseHandle (hBufferMutex);
-	CloseVxd (hVxD);
-	
-	return (PVROS_GROOVY);
-}	
+            pSONext = pSO->pNext;
+            PVROSFree(pSO->pObject);
+            PVROSFree(pSO);
+            pSO = pSONext;
+        }
 
-PVROSERR CALL_CONV PVROSDestroySystemContext (DWORD dwReason)
-{
-	PVROSDestroySystemContextLocal ();
-	return (PVROS_GROOVY);
+        /* release leaked shared blocks */
+
+        pSO = gpSharedBlock;
+
+        while (pSO) {
+            ASSERT (pSO->pObject);
+
+            PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing DMA buffer\n");
+
+            FreeSharedBlock(hVxD, pSO->pObject);
+
+            pSONext = pSO->pNext;
+            PVROSFree(pSO->pObject);
+            PVROSFree(pSO);
+            pSO = pSONext;
+        }
+
+        /* release leaked pcx buffers */
+
+        pSO = gpDMASB;
+
+        while (pSO) {
+            ASSERT (pSO->pObject);
+
+            PVROSPrintf("PVROSDestroySystemContext: Shutdown: releasing DMA scatter buffer\n");
+
+            DestroyDMAScatterBuffer(hVxD, pSO->pObject);
+
+            pSONext = pSO->pNext;
+            PVROSFree(pSO->pObject);
+            PVROSFree(pSO);
+            pSO = pSONext;
+        }
+
+        PVROSPrintf("PVROSDestroySystemContext: Shutdown complete\n");
+    }
+
+    //CloseHandle (hBufferMutex);
+    CloseVxd(hVxD);
+
+    return (PVROS_GROOVY);
+}
+
+PVROSERR CALL_CONV PVROSDestroySystemContext(DWORD dwReason) {
+    PVROSDestroySystemContextLocal();
+    return (PVROS_GROOVY);
 }
 
 /******************************************************************************
@@ -1982,23 +1817,20 @@ PVROSERR CALL_CONV PVROSDestroySystemContext (DWORD dwReason)
  *
  * Description  : Waits the specified number of bus cycles or milliseconds
  *****************************************************************************/
-void CALL_CONV PVROSDelay(PVR_DELAY eDelay, sgl_uint32 uCount)
-{
-	switch(eDelay)
-	{
-		case PVR_DELAY_MS:
-			Sleep(uCount);
-			break;
-		case PVR_DELAY_BUS_CYCLES:
-			{
-				volatile sgl_uint32 i;
-				for (i = 0; i < uCount; i++);
-			}
-			break;	
-		default: 
-			PVROSPrintf("Invalid type of PVROSDelay\n");
-			break;
-	}
+void CALL_CONV PVROSDelay(PVR_DELAY eDelay, sgl_uint32 uCount) {
+    switch (eDelay) {
+        case PVR_DELAY_MS:
+            Sleep(uCount);
+            break;
+        case PVR_DELAY_BUS_CYCLES: {
+            volatile sgl_uint32 i;
+            for (i = 0; i < uCount; i++);
+        }
+            break;
+        default:
+            PVROSPrintf("Invalid type of PVROSDelay\n");
+            break;
+    }
 }
 
 /******************************************************************************
@@ -2013,14 +1845,13 @@ void CALL_CONV PVROSDelay(PVR_DELAY eDelay, sgl_uint32 uCount)
  * 				  'wvsprintf') to allow floating point number to be output.
  *****************************************************************************/
 
-void CALL_CONV PVROSPrintf(char* pszFormat, ...)
-{
-	char szBuffer[128];
+void CALL_CONV PVROSPrintf(char *pszFormat, ...) {
+    char szBuffer[128];
 
-	/* Use the windows library function.
-	 */	
-	wvsprintf (szBuffer, pszFormat, (void *)(((DWORD)(&pszFormat)) + sizeof(void *)));
-	OutputDebugString (szBuffer);
+    /* Use the windows library function.
+     */
+    wvsprintf(szBuffer, pszFormat, (void *) (((DWORD) (&pszFormat)) + sizeof(void *)));
+    OutputDebugString(szBuffer);
 }
 
 
@@ -2035,101 +1866,87 @@ void CALL_CONV PVROSPrintf(char* pszFormat, ...)
  * Description  : Handler for an ASSERT() statement  				  
  *****************************************************************************/
 
-void InitialiseAsserts(void)
-{
-	char szBuffer[256];
-	
-	#if WIN32
-	GetEnvironmentVariable ("WINDIR", szBuffer, sizeof (szBuffer)-1);
-	#else
-	strcpy( szBuffer, getenv("WINDIR") );
-	#endif
+void InitialiseAsserts(void) {
+    char szBuffer[256];
 
-	strcat( szBuffer, "\\" );
-	strcat( szBuffer, "sglhw.ini" );
-	
-	/* Output Debug String */
-	gbODS =	 SglReadPrivateProfileInt ("Debug", "ODS", gbODS, szBuffer);
-	gbNoGDI = SglReadPrivateProfileInt ("Debug", "NoGDI", gbNoGDI, szBuffer);
+#if WIN32
+    GetEnvironmentVariable("WINDIR", szBuffer, sizeof(szBuffer) - 1);
+#else
+    strcpy( szBuffer, getenv("WINDIR") );
+#endif
 
-	gbInitialisedAsserts = TRUE;
+    strcat(szBuffer, "\\");
+    strcat(szBuffer, "sglhw.ini");
+
+    /* Output Debug String */
+    gbODS = SglReadPrivateProfileInt("Debug", "ODS", gbODS, szBuffer);
+    gbNoGDI = SglReadPrivateProfileInt("Debug", "NoGDI", gbNoGDI, szBuffer);
+
+    gbInitialisedAsserts = TRUE;
 }
 
-void CALL_CONV PVROSAssert(char *szAssertText, char *szFileName, sgl_int32 nLine, int * ask)
-{
-	char szBuffer[256];
-	
-	if (!gbInitialisedAsserts)
-	{
-		InitialiseAsserts();
-	}
-	
-	if (!gbNoGDI)
-	{
-		int nRes;
-		static sgl_uint32 ReEnterCount=0;	
+void CALL_CONV PVROSAssert(char *szAssertText, char *szFileName, sgl_int32 nLine, int *ask) {
+    char szBuffer[256];
 
-		ReEnterCount++;
+    if (!gbInitialisedAsserts) {
+        InitialiseAsserts();
+    }
 
-		sprintf (szBuffer, 
-		 "Assertion (%s) failed (entry %d)!\nFile %s, line %ld\nAbort?(Cancel=Debug)",
-			 szAssertText, ReEnterCount, szFileName, (long)nLine);
+    if (!gbNoGDI) {
+        int nRes;
+        static sgl_uint32 ReEnterCount = 0;
 
-		nRes = MessageBox (NULL, szBuffer, "SGL debug", MB_TASKMODAL | MB_ICONSTOP | MB_YESNOCANCEL);
+        ReEnterCount++;
 
-		if (nRes == IDYES)
-		{
-			ExitProcess(0xFFFFFFFF);
-		}
-		else if (nRes == IDCANCEL)
-		{
-			Int3 ();
-		}
-		else if(*ask == 1)
-		{
-		
-			nRes = MessageBox (NULL, "Ignore this assert in future?(Cancel stops this occuring again)", "SGL debug 2",
-			  MB_TASKMODAL | MB_ICONSTOP | MB_YESNOCANCEL);
+        sprintf(szBuffer,
+                "Assertion (%s) failed (entry %d)!\nFile %s, line %ld\nAbort?(Cancel=Debug)",
+                szAssertText, ReEnterCount, szFileName, (long) nLine);
 
-	 		if (nRes == IDYES)
-			{
-				*ask = 0;
-			}
-			else if(nRes == IDCANCEL)
-			{
-				*ask = 2;
-			}
+        nRes = MessageBox(NULL, szBuffer, "SGL debug", MB_TASKMODAL | MB_ICONSTOP | MB_YESNOCANCEL);
 
-		}
-		
-		ReEnterCount--;
-	}
-	else
-	{
-		PVROSPrintf("Assertion (%s) failed! File %s, line %ld\n", szAssertText, szFileName, (long)nLine);
+        if (nRes == IDYES) {
+            ExitProcess(0xFFFFFFFF);
+        } else if (nRes == IDCANCEL) {
+            Int3();
+        } else if (*ask == 1) {
 
-		Int3 ();
-	}
+            nRes = MessageBox(NULL, "Ignore this assert in future?(Cancel stops this occuring again)", "SGL debug 2",
+                              MB_TASKMODAL | MB_ICONSTOP | MB_YESNOCANCEL);
+
+            if (nRes == IDYES) {
+                *ask = 0;
+            } else if (nRes == IDCANCEL) {
+                *ask = 2;
+            }
+
+        }
+
+        ReEnterCount--;
+    } else {
+        PVROSPrintf("Assertion (%s) failed! File %s, line %ld\n", szAssertText, szFileName, (long) nLine);
+
+        Int3();
+    }
 }
+
 /*
  * Performance tools
  */
 
-sgl_uint32 CALL_CONV PVROSQueryPerformanceCounter(sgl_largeint* Val)
-{
-	/* Read the Time Stamp Counter and adjust it's value down a bit */
+sgl_uint32 CALL_CONV PVROSQueryPerformanceCounter(sgl_largeint *Val) {
+    /* Read the Time Stamp Counter and adjust it's value down a bit */
     int result;
 #ifndef __GNUC__
-	_asm
-	{
-		_emit 0x0F
-		_emit 0x31	
-		mov		ecx, DWORD PTR [Val]
-		shrd	eax,edx,7
-		shr		edx,7
-		mov		[ecx], eax
-		mov		[ecx+4], edx	
-	}
+    _asm
+    {
+        _emit 0x0F
+        _emit 0x31
+        mov		ecx, DWORD PTR [Val]
+        shrd	eax,edx,7
+        shr		edx,7
+        mov		[ecx], eax
+        mov		[ecx+4], edx
+    }
 #else
     __asm__ __volatile__(
             ".byte 0x0f\n"
@@ -2142,42 +1959,41 @@ sgl_uint32 CALL_CONV PVROSQueryPerformanceCounter(sgl_largeint* Val)
             ::"m"(*Val)
             );
 #endif
-	
-	return(TRUE);
+
+    return (TRUE);
 }
-sgl_uint32 CALL_CONV PVROSQueryPerformanceFrequency(sgl_largeint* Val)
-{
-	/* Reset the Time Stamp Counter by loading 0's into it */
+
+sgl_uint32 CALL_CONV PVROSQueryPerformanceFrequency(sgl_largeint *Val) {
+    /* Reset the Time Stamp Counter by loading 0's into it */
 #ifndef __GNUC__
-	_asm
-	{
-		mov		ecx, 010h
-		mov		edx, 000h
-		mov		eax, 000h
-		_emit	0x0F
-		_emit	0x30
-	}
+    _asm
+    {
+        mov		ecx, 010h
+        mov		edx, 000h
+        mov		eax, 000h
+        _emit	0x0F
+        _emit	0x30
+    }
 #else
     __asm__ __volatile__(
-                         "mov $0x10, %ecx \n"
-                         "mov $0x0, %edx \n"
-                         "mov $0x0, %eax \n"
-                         ".byte 0x0f\n"
-                         ".byte 0x03\n"
+            "mov $0x10, %ecx \n"
+            "mov $0x0, %edx \n"
+            "mov $0x0, %eax \n"
+            ".byte 0x0f\n"
+            ".byte 0x03\n"
             );
 
 #endif
 
-	PVROSDelay(PVR_DELAY_MS,1000); /* 1 second pause */
-	PVROSQueryPerformanceCounter(Val);
+    PVROSDelay(PVR_DELAY_MS, 1000); /* 1 second pause */
+    PVROSQueryPerformanceCounter(Val);
 
-	return( TRUE );
+    return (TRUE);
 }
 
 /**********************************************************************/
 
-void CALL_CONV PVROSGetWinVersions(HLDEVICE LogicalDevice, char **VersionInfo)
-{
+void CALL_CONV PVROSGetWinVersions(HLDEVICE LogicalDevice, char **VersionInfo) {
 }
 
 /**********************************************************************/
@@ -2186,411 +2002,404 @@ void CALL_CONV PVROSGetWinVersions(HLDEVICE LogicalDevice, char **VersionInfo)
 BUFFER_LIST *PVROSGetSecretBuffer(HDEVICE hDeviceID);
 #endif
 
-PVROSERR CALL_CONV PVROSScheduleRender (HLDEVICE hLDevice)
-{
-	DWORD 	dwData[2];
+PVROSERR CALL_CONV PVROSScheduleRender(HLDEVICE hLDevice) {
+    DWORD dwData[2];
 #if USE_VIRTUAL_BUFFERS
-	int i, j, CopyTo;
-	sgl_uint32  *from, *to;
+    int i, j, CopyTo;
+    sgl_uint32  *from, *to;
 #endif
-	sgl_uint32  k, count;
-#if 0	
-	sgl_bool OutputStuff = FALSE;
+    sgl_uint32 k, count;
+#if 0
+    sgl_bool OutputStuff = FALSE;
 #endif
-		
-	ASSERT (hLDevice->hVxD);
+
+    ASSERT (hLDevice->hVxD);
 
 #if USE_VIRTUAL_BUFFERS
 
-	if(hLDevice->VirtualBuffer->BufferType == VIRTUAL_BUFFER)
-	{
-		BUFFER_LIST *pBuffer;
-		/* we've got to wait till the secret buffer is available,
-		** copy in all our parameters, and the kick of the render
-		*/
+    if(hLDevice->VirtualBuffer->BufferType == VIRTUAL_BUFFER)
+    {
+        BUFFER_LIST *pBuffer;
+        /* we've got to wait till the secret buffer is available,
+        ** copy in all our parameters, and the kick of the render
+        */
 
-		pBuffer = PVROSGetSecretBuffer(hLDevice->hDeviceID);
+        pBuffer = PVROSGetSecretBuffer(hLDevice->hDeviceID);
 
-		if(pBuffer == NULL)
-		{
-			PVROSPrintf("Real bad situation\n");
-			hLDevice->VirtualBuffer->bInUse = FALSE;
-			return PVROS_DODGY;
-		}
+        if(pBuffer == NULL)
+        {
+            PVROSPrintf("Real bad situation\n");
+            hLDevice->VirtualBuffer->bInUse = FALSE;
+            return PVROS_DODGY;
+        }
 
-		hLDevice->RendersPending++;
-		count=0;
-		while(pBuffer->bInUse == TRUE)
-		{
-			count++;
-			Sleep(2);
-			if(count>1000)
-			{
-				count=0;
-				PVROSPrintf("Waiting for secret buffer\n");
-				ASSERT(count);
-			}
-		}
+        hLDevice->RendersPending++;
+        count=0;
+        while(pBuffer->bInUse == TRUE)
+        {
+            count++;
+            Sleep(2);
+            if(count>1000)
+            {
+                count=0;
+                PVROSPrintf("Waiting for secret buffer\n");
+                ASSERT(count);
+            }
+        }
 
-		if(GetVirtualBufferMutex())
-		{
-			/* grab the buffer quickish */
-			pBuffer->bInUse == TRUE;
-			ReleaseVirtualBufferMutex();
-		}
-		else
-		{
-			PVROSPrintf("Couln't get mutex for secret buffer\n");
-		}
+        if(GetVirtualBufferMutex())
+        {
+            /* grab the buffer quickish */
+            pBuffer->bInUse == TRUE;
+            ReleaseVirtualBufferMutex();
+        }
+        else
+        {
+            PVROSPrintf("Couln't get mutex for secret buffer\n");
+        }
 
-		dwData[0] = (sgl_uint32)hLDevice;
-		dwData[1] = (sgl_uint32)pBuffer;
+        dwData[0] = (sgl_uint32)hLDevice;
+        dwData[1] = (sgl_uint32)pBuffer;
 
-		/* copy in our data */
-		for(i=0; i<3; i++)
-		{
-			CopyTo = hLDevice->Buffers[i].uBufferPos;
-			if(pBuffer->PVRParamBuf[i].uBufferLimit < hLDevice->Buffers[i].uBufferPos);
-			{
-				CopyTo = pBuffer->PVRParamBuf[i].uBufferLimit;
-			}
-			from = hLDevice->Buffers[i].pBuffer;
-			to = pBuffer->PVRParamBuf[i].pBuffer;
-			for(j=0; j<CopyTo; j++)
-			{
-				*to++ = *from++;
-			}
-		}
+        /* copy in our data */
+        for(i=0; i<3; i++)
+        {
+            CopyTo = hLDevice->Buffers[i].uBufferPos;
+            if(pBuffer->PVRParamBuf[i].uBufferLimit < hLDevice->Buffers[i].uBufferPos);
+            {
+                CopyTo = pBuffer->PVRParamBuf[i].uBufferLimit;
+            }
+            from = hLDevice->Buffers[i].pBuffer;
+            to = pBuffer->PVRParamBuf[i].pBuffer;
+            for(j=0; j<CopyTo; j++)
+            {
+                *to++ = *from++;
+            }
+        }
 
-		for (k = 0; k < 32; ++k)
-		{
-			pBuffer->Registers[k] = hLDevice->Registers[k];
-		}
+        for (k = 0; k < 32; ++k)
+        {
+            pBuffer->Registers[k] = hLDevice->Registers[k];
+        }
 
 
-		if(hLDevice->DeviceType==MIDAS4)
-		{
-			hLDevice->Registers[PCX_OBJECT_OFFSET] = 
-				pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer;
-		}
-		else
-		{
-			hLDevice->Registers[PCX_OBJECT_OFFSET] = 
-				(int)pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer - 
-				(int)pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer
-				| 0x00000001UL;
-		}
+        if(hLDevice->DeviceType==MIDAS4)
+        {
+            hLDevice->Registers[PCX_OBJECT_OFFSET] =
+                pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer;
+        }
+        else
+        {
+            hLDevice->Registers[PCX_OBJECT_OFFSET] =
+                (int)pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer -
+                (int)pBuffer->PVRParamBuf[PVR_PARAM_TYPE_ISP].pBuffer
+                | 0x00000001UL;
+        }
 
-		pBuffer->PVRParamBuf[0].uBufferPos = hLDevice->Buffers[0].uBufferPos;
-		pBuffer->PVRParamBuf[1].uBufferPos = hLDevice->Buffers[1].uBufferPos;
-		pBuffer->PVRParamBuf[2].uBufferPos = hLDevice->Buffers[2].uBufferPos;
-		
-		/* make the virtual virtual buffer free */
-		hLDevice->VirtualBuffer->bInUse == FALSE;
+        pBuffer->PVRParamBuf[0].uBufferPos = hLDevice->Buffers[0].uBufferPos;
+        pBuffer->PVRParamBuf[1].uBufferPos = hLDevice->Buffers[1].uBufferPos;
+        pBuffer->PVRParamBuf[2].uBufferPos = hLDevice->Buffers[2].uBufferPos;
 
-		/* in case  the VxD access the buffer thru the logical device */
-		hLDevice->VirtualBuffer = pBuffer;
+        /* make the virtual virtual buffer free */
+        hLDevice->VirtualBuffer->bInUse == FALSE;
 
-		/* set off the render after waiting */
-		count = 0;
-		while(hLDevice->RenderStatus == PVR_STATUS_PENDING)
-		{
-			count++;
-			Sleep(2);
-			if(count>500)
-			{
-				count=0;
-				ASSERT(count);
-			}
-		}
+        /* in case  the VxD access the buffer thru the logical device */
+        hLDevice->VirtualBuffer = pBuffer;
 
-		hLDevice->RenderStatus = PVR_STATUS_PENDING;
+        /* set off the render after waiting */
+        count = 0;
+        while(hLDevice->RenderStatus == PVR_STATUS_PENDING)
+        {
+            count++;
+            Sleep(2);
+            if(count>500)
+            {
+                count=0;
+                ASSERT(count);
+            }
+        }
 
-		if (DeviceIoControl (hLDevice->hVxD, VSGL_SCHEDULE_RENDER, 
-							 dwData, sizeof (dwData), 
-							 NULL, 0, 
-							 NULL, NULL))
-		{
-			return (PVROS_GROOVY);
-		}
-		
+        hLDevice->RenderStatus = PVR_STATUS_PENDING;
 
-	}
-	else
+        if (DeviceIoControl (hLDevice->hVxD, VSGL_SCHEDULE_RENDER,
+                             dwData, sizeof (dwData),
+                             NULL, 0,
+                             NULL, NULL))
+        {
+            return (PVROS_GROOVY);
+        }
+
+
+    }
+    else
 
 #endif
 
 #define USE_PCX2_AS_PCX1 0
 
 #if USE_PCX2_AS_PCX1
-	if(hLDevice->VirtualBuffer->BufferType == PCX2_AS_PCX1_BUFFER 
-	   && hLDevice->DeviceType == MIDAS4)
-	{
-		BUFFER_LIST *pBuffer;
-		/* we've got to wait till the secret buffer is available,
-		** copy in all our parameters, and the kick of the render
-		*/
+    if(hLDevice->VirtualBuffer->BufferType == PCX2_AS_PCX1_BUFFER
+       && hLDevice->DeviceType == MIDAS4)
+    {
+        BUFFER_LIST *pBuffer;
+        /* we've got to wait till the secret buffer is available,
+        ** copy in all our parameters, and the kick of the render
+        */
 
-		pBuffer = PVROSGetSecretBuffer(hLDevice->hDeviceID);
+        pBuffer = PVROSGetSecretBuffer(hLDevice->hDeviceID);
 
-		if(pBuffer == NULL)
-		{
-			PVROSPrintf("Real bad situation\n");
-			hLDevice->VirtualBuffer->bInUse = FALSE;
-			return PVROS_DODGY;
-		}
+        if(pBuffer == NULL)
+        {
+            PVROSPrintf("Real bad situation\n");
+            hLDevice->VirtualBuffer->bInUse = FALSE;
+            return PVROS_DODGY;
+        }
 
-		hLDevice->RendersPending++;
-		count=0;
-		while(pBuffer->bInUse == TRUE)
-		{
-			count++;
-			Sleep(2);
-			if(count>1000)
-			{
-				count=0;
-				PVROSPrintf("Waiting for secret buffer\n");
-				ASSERT(count);
-			}
-		}
+        hLDevice->RendersPending++;
+        count=0;
+        while(pBuffer->bInUse == TRUE)
+        {
+            count++;
+            Sleep(2);
+            if(count>1000)
+            {
+                count=0;
+                PVROSPrintf("Waiting for secret buffer\n");
+                ASSERT(count);
+            }
+        }
 
-		if(GetVirtualBufferMutex())
-		{
-			/* grab the buffer quickish */
-			pBuffer->bInUse == TRUE;
-			ReleaseVirtualBufferMutex();
-		}
-		else
-		{
-			PVROSPrintf("Couln't get mutex for secret buffer\n");
-		}
+        if(GetVirtualBufferMutex())
+        {
+            /* grab the buffer quickish */
+            pBuffer->bInUse == TRUE;
+            ReleaseVirtualBufferMutex();
+        }
+        else
+        {
+            PVROSPrintf("Couln't get mutex for secret buffer\n");
+        }
 
-		dwData[0] = (sgl_uint32)hLDevice;
-		dwData[1] = (sgl_uint32)pBuffer;
+        dwData[0] = (sgl_uint32)hLDevice;
+        dwData[1] = (sgl_uint32)pBuffer;
 
-		/* copy in our data */
-		for(i=0; i<3; i++)
-		{
-			CopyTo = hLDevice->Buffers[i].uBufferPos;
-			if(pBuffer->PVRParamBuf[i].uBufferLimit < hLDevice->Buffers[i].uBufferPos);
-			{
-				CopyTo = pBuffer->PVRParamBuf[i].uBufferLimit;
-			}
-			from = hLDevice->Buffers[i].pBuffer;
-			to = pBuffer->PVRParamBuf[i].pBuffer;
-			for(j=0; j<CopyTo; j++)
-			{
-				*to++ = *from++;
-			}
-		}
+        /* copy in our data */
+        for(i=0; i<3; i++)
+        {
+            CopyTo = hLDevice->Buffers[i].uBufferPos;
+            if(pBuffer->PVRParamBuf[i].uBufferLimit < hLDevice->Buffers[i].uBufferPos);
+            {
+                CopyTo = pBuffer->PVRParamBuf[i].uBufferLimit;
+            }
+            from = hLDevice->Buffers[i].pBuffer;
+            to = pBuffer->PVRParamBuf[i].pBuffer;
+            for(j=0; j<CopyTo; j++)
+            {
+                *to++ = *from++;
+            }
+        }
 
-		for (k = 0; k < 32; ++k)
-		{
-			pBuffer->Registers[k] = hLDevice->Registers[k];
-		}
+        for (k = 0; k < 32; ++k)
+        {
+            pBuffer->Registers[k] = hLDevice->Registers[k];
+        }
 
 
-		hLDevice->Registers[PCX_OBJECT_OFFSET] = 
-			pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer;
+        hLDevice->Registers[PCX_OBJECT_OFFSET] =
+            pBuffer->PVRParamBuf[PVR_PARAM_TYPE_REGION].pBuffer;
 
-		pBuffer->PVRParamBuf[0].uBufferPos = hLDevice->Buffers[0].uBufferPos;
-		pBuffer->PVRParamBuf[1].uBufferPos = hLDevice->Buffers[1].uBufferPos;
-		pBuffer->PVRParamBuf[2].uBufferPos = hLDevice->Buffers[2].uBufferPos;
-		
-		/* make the virtual virtual buffer free */
-		hLDevice->VirtualBuffer->bInUse == FALSE;
+        pBuffer->PVRParamBuf[0].uBufferPos = hLDevice->Buffers[0].uBufferPos;
+        pBuffer->PVRParamBuf[1].uBufferPos = hLDevice->Buffers[1].uBufferPos;
+        pBuffer->PVRParamBuf[2].uBufferPos = hLDevice->Buffers[2].uBufferPos;
 
-		/* in case  the VxD access the buffer thru the logical device */
-		hLDevice->VirtualBuffer = pBuffer;
+        /* make the virtual virtual buffer free */
+        hLDevice->VirtualBuffer->bInUse == FALSE;
 
-		/* set off the render after waiting */
-		count = 0;
-		while(hLDevice->RenderStatus == PVR_STATUS_PENDING)
-		{
-			count++;
-			Sleep(2);
-			if(count>500)
-			{
-				count=0;
-				ASSERT(count);
-			}
-		}
+        /* in case  the VxD access the buffer thru the logical device */
+        hLDevice->VirtualBuffer = pBuffer;
 
-		hLDevice->RenderStatus = PVR_STATUS_PENDING;
+        /* set off the render after waiting */
+        count = 0;
+        while(hLDevice->RenderStatus == PVR_STATUS_PENDING)
+        {
+            count++;
+            Sleep(2);
+            if(count>500)
+            {
+                count=0;
+                ASSERT(count);
+            }
+        }
 
-		if (DeviceIoControl (hLDevice->hVxD, VSGL_SCHEDULE_RENDER, 
-							 dwData, sizeof (dwData), 
-							 NULL, 0, 
-							 NULL, NULL))
-		{
-			return (PVROS_GROOVY);
-		}
-		
+        hLDevice->RenderStatus = PVR_STATUS_PENDING;
 
-	}
-	else
+        if (DeviceIoControl (hLDevice->hVxD, VSGL_SCHEDULE_RENDER,
+                             dwData, sizeof (dwData),
+                             NULL, 0,
+                             NULL, NULL))
+        {
+            return (PVROS_GROOVY);
+        }
+
+
+    }
+    else
 #endif
-	{
-		hLDevice->RendersPending++;
+    {
+        hLDevice->RendersPending++;
 
-		dwData[0] = (sgl_uint32)hLDevice;
-		dwData[1] = (sgl_uint32)hLDevice->VirtualBuffer;
+        dwData[0] = (sgl_uint32) hLDevice;
+        dwData[1] = (sgl_uint32) hLDevice->VirtualBuffer;
 
-		hLDevice->VirtualBuffer->PVRParamBuf[0].uBufferPos = hLDevice->Buffers[0].uBufferPos;
-		hLDevice->VirtualBuffer->PVRParamBuf[1].uBufferPos = hLDevice->Buffers[1].uBufferPos;
-		hLDevice->VirtualBuffer->PVRParamBuf[2].uBufferPos = hLDevice->Buffers[2].uBufferPos;
-		
-		for (k = 0; k < 32; ++k)
-		{
-			hLDevice->VirtualBuffer->Registers[k] = hLDevice->Registers[k];
-		}
+        hLDevice->VirtualBuffer->PVRParamBuf[0].uBufferPos = hLDevice->Buffers[0].uBufferPos;
+        hLDevice->VirtualBuffer->PVRParamBuf[1].uBufferPos = hLDevice->Buffers[1].uBufferPos;
+        hLDevice->VirtualBuffer->PVRParamBuf[2].uBufferPos = hLDevice->Buffers[2].uBufferPos;
+
+        for (k = 0; k < 32; ++k) {
+            hLDevice->VirtualBuffer->Registers[k] = hLDevice->Registers[k];
+        }
 
 #if 0
-		while(hLDevice->RendersPending > 1)
-		{
-			Sleep(1);
-		}
+        while(hLDevice->RendersPending > 1)
+        {
+            Sleep(1);
+        }
 #endif
 
-		count = 0;
-		while(hLDevice->RenderStatus == PVR_STATUS_PENDING)
-		{
-			/* if we wait longer than the render timeout for
-			** the previous render to finish - somethings wrong
-			*/
-			Sleep(1);
-			if(count>hLDevice->RenderTimeout)
-			{
-				count=0;
-				ASSERT(count);
-			}
-			count++;
-		}
+        count = 0;
+        while (hLDevice->RenderStatus == PVR_STATUS_PENDING) {
+            /* if we wait longer than the render timeout for
+            ** the previous render to finish - somethings wrong
+            */
+            Sleep(1);
+            if (count > hLDevice->RenderTimeout) {
+                count = 0;
+                ASSERT(count);
+            }
+            count++;
+        }
 
 #if 0
-		/* Output the object pointers (and plane instructions) -
-		 * compile uncommented and toggle on using WinICE when the 
-		 * desired frame is reached.
-		 */
+        /* Output the object pointers (and plane instructions) -
+         * compile uncommented and toggle on using WinICE when the
+         * desired frame is reached.
+         */
 
-		if (OutputStuff)
-		{
-			sgl_uint32 *pObjects = hLDevice->VirtualBuffer->PVRParamBuf[2].pBuffer;
-			sgl_uint32 *pPlanes = hLDevice->VirtualBuffer->PVRParamBuf[0].pBuffer;
-			sgl_bool Finished = FALSE;
-			int nPasses = 0;
+        if (OutputStuff)
+        {
+            sgl_uint32 *pObjects = hLDevice->VirtualBuffer->PVRParamBuf[2].pBuffer;
+            sgl_uint32 *pPlanes = hLDevice->VirtualBuffer->PVRParamBuf[0].pBuffer;
+            sgl_bool Finished = FALSE;
+            int nPasses = 0;
 
-			while (!Finished) /* object */
-			{
-				sgl_uint32 Word = *pObjects;
+            while (!Finished) /* object */
+            {
+                sgl_uint32 Word = *pObjects;
 
-				pObjects++;
+                pObjects++;
 
-				switch (Word >> 30)
-				{
-					case 0:
-					{
-						sgl_uint32 Addr = Word & 0x7ffff;
-						sgl_uint32 Instr = (pPlanes[Addr] >> 26) & 0xF;
+                switch (Word >> 30)
+                {
+                    case 0:
+                    {
+                        sgl_uint32 Addr = Word & 0x7ffff;
+                        sgl_uint32 Instr = (pPlanes[Addr] >> 26) & 0xF;
 
-						#if PCX1
-							Instr = (pPlanes[Addr] >> 26) & 0xF;
-						#else
-							Instr = pPlanes[Addr+3] & 0xF;
-						#endif
-
-						switch (Instr)
-						{
-							case 0xF:
-							{
-								PVROSPrintf ("\t%d Plane(s) at %X (%x): Trans pass start\n", ((Word >> 19) & 0x3ff), (Word & 0x7ffff) * 4, Instr);
-								nPasses++;
-								break;
-							}
-
-							default :
-							{
-								PVROSPrintf ("\t%d Plane(s) at %X (%x)\n", ((Word >> 19) & 0x3ff), (Word & 0x7ffff) * 4, Instr);
-								break;
-							}
-						}
-						break;
-					}
-
-					case 1:
-					{
-						PVROSPrintf ("TILE at (%d, %d), %d by %d\n", (((Word >> 15) & 0x1f) * 32), ((Word >> 20) & 0x3ff), (((Word & 0x1f)+ 1) * 32), ((Word >> 5) & 0x3ff)+1);
-						break;
-					}
-
-					case 3:
-					{
-						PVROSPrintf ("Error in object data\n");
-					}
-					case 2:
-					{
-						/* end of list */
-						PVROSPrintf ("Passes: %d\n", nPasses);
-						Finished = TRUE;
-						break;
-					}
-				}
-			}
-		}
+#if PCX1
+                            Instr = (pPlanes[Addr] >> 26) & 0xF;
+#else
+                            Instr = pPlanes[Addr+3] & 0xF;
 #endif
 
-		hLDevice->RenderStatus = PVR_STATUS_PENDING;
+                        switch (Instr)
+                        {
+                            case 0xF:
+                            {
+                                PVROSPrintf ("\t%d Plane(s) at %X (%x): Trans pass start\n", ((Word >> 19) & 0x3ff), (Word & 0x7ffff) * 4, Instr);
+                                nPasses++;
+                                break;
+                            }
 
-		if (DeviceIoControl (hLDevice->hVxD, VSGL_SCHEDULE_RENDER, 
-							 dwData, sizeof (dwData), 
-							 NULL, 0, 
-							 NULL, NULL))
-		{
-			return (PVROS_GROOVY);
-		}
+                            default :
+                            {
+                                PVROSPrintf ("\t%d Plane(s) at %X (%x)\n", ((Word >> 19) & 0x3ff), (Word & 0x7ffff) * 4, Instr);
+                                break;
+                            }
+                        }
+                        break;
+                    }
 
-		/* invalidate the buffers */
-		hLDevice->Buffers[0].uBufferPos = 0;
-		hLDevice->Buffers[1].uBufferPos = 0;
-		hLDevice->Buffers[2].uBufferPos = 0;
-		hLDevice->Buffers[0].pBuffer = NULL;
-		hLDevice->Buffers[1].pBuffer = NULL;
-		hLDevice->Buffers[2].pBuffer = NULL;
-		hLDevice->Buffers[0].uBufferLimit = 0;
-		hLDevice->Buffers[1].uBufferLimit = 0;
-		hLDevice->Buffers[2].uBufferLimit = 0;
-		hLDevice->VirtualBuffer->hLogicalDev = NULL;
-		hLDevice->VirtualBuffer = NULL;
-		
+                    case 1:
+                    {
+                        PVROSPrintf ("TILE at (%d, %d), %d by %d\n", (((Word >> 15) & 0x1f) * 32), ((Word >> 20) & 0x3ff), (((Word & 0x1f)+ 1) * 32), ((Word >> 5) & 0x3ff)+1);
+                        break;
+                    }
 
-	}
-	return (PVROS_DODGY);
+                    case 3:
+                    {
+                        PVROSPrintf ("Error in object data\n");
+                    }
+                    case 2:
+                    {
+                        /* end of list */
+                        PVROSPrintf ("Passes: %d\n", nPasses);
+                        Finished = TRUE;
+                        break;
+                    }
+                }
+            }
+        }
+#endif
+
+        hLDevice->RenderStatus = PVR_STATUS_PENDING;
+
+        if (DeviceIoControl(hLDevice->hVxD, VSGL_SCHEDULE_RENDER,
+                            dwData, sizeof(dwData),
+                            NULL, 0,
+                            NULL, NULL)) {
+            return (PVROS_GROOVY);
+        }
+
+        /* invalidate the buffers */
+        hLDevice->Buffers[0].uBufferPos = 0;
+        hLDevice->Buffers[1].uBufferPos = 0;
+        hLDevice->Buffers[2].uBufferPos = 0;
+        hLDevice->Buffers[0].pBuffer = NULL;
+        hLDevice->Buffers[1].pBuffer = NULL;
+        hLDevice->Buffers[2].pBuffer = NULL;
+        hLDevice->Buffers[0].uBufferLimit = 0;
+        hLDevice->Buffers[1].uBufferLimit = 0;
+        hLDevice->Buffers[2].uBufferLimit = 0;
+        hLDevice->VirtualBuffer->hLogicalDev = NULL;
+        hLDevice->VirtualBuffer = NULL;
+
+
+    }
+    return (PVROS_DODGY);
 }
 
-PVROSERR PVROSSchedulerLock (HDEVICE hDeviceID)
-{
-	HANDLE hVxD = OpenVxd();
+PVROSERR PVROSSchedulerLock(HDEVICE hDeviceID) {
+    HANDLE hVxD = OpenVxd();
 
-	DeviceIoControl (hVxD, VSGL_SCHEDULER_LOCK, 
-						 hDeviceID, sizeof (int), 
-						 NULL, 0, 
-						 NULL, NULL);
+    DeviceIoControl(hVxD, VSGL_SCHEDULER_LOCK,
+                    hDeviceID, sizeof(int),
+                    NULL, 0,
+                    NULL, NULL);
 
-	CloseVxd (hVxD);
-	return (PVROS_GROOVY);
+    CloseVxd(hVxD);
+    return (PVROS_GROOVY);
 }
 
-PVROSERR PVROSSchedulerUnlock (HDEVICE hDeviceID)
-{
-	HANDLE hVxD = OpenVxd();
+PVROSERR PVROSSchedulerUnlock(HDEVICE hDeviceID) {
+    HANDLE hVxD = OpenVxd();
 
-	DeviceIoControl (hVxD, VSGL_SCHEDULER_UNLOCK, 
-						 hDeviceID, sizeof (int), 
-						 NULL, 0, 
-						 NULL, NULL);
+    DeviceIoControl(hVxD, VSGL_SCHEDULER_UNLOCK,
+                    hDeviceID, sizeof(int),
+                    NULL, 0,
+                    NULL, NULL);
 
-	CloseVxd (hVxD);
-	return (PVROS_GROOVY);
+    CloseVxd(hVxD);
+    return (PVROS_GROOVY);
 }
 
 /**********************************************************************/
@@ -2598,73 +2407,66 @@ PVROSERR PVROSSchedulerUnlock (HDEVICE hDeviceID)
 #define AUTO_98_DETECT 1
 
 /* Checks to see if the system is a PC98 and sets the global wIsPC98 */
-void DetectPC98( void )
-{
-	#if AUTO_98_DETECT
-	
-		#pragma message ("Auto PC98 detection enabled")
+void DetectPC98(void) {
+#if AUTO_98_DETECT
 
-		/* use the windows keyboard type function to determine if we
-		   are in a PC98 machine - courtesy NEC */
+#pragma message ("Auto PC98 detection enabled")
 
-		if (GetKeyboardType (0) == 7)
-		{
-			/* Japanese keyboard */
-		#if 1
-			int	nSubType = GetKeyboardType (1);
+    /* use the windows keyboard type function to determine if we
+       are in a PC98 machine - courtesy NEC */
 
-			/* Check range since we are having problems detecting
-			 * new PC-98 keyboard types.
-			 */
-			if((nSubType > 0x0D00) && (nSubType < 0x0d08))
-			{ 
-				wIsPC98 = 1;   // PC-98
-				PVROSPrintf("PC98 detected!\n");
-			}
-			else
-			{
-				wIsPC98 = 0;   // PC-AT
-			}
-		#else
-			switch (GetKeyboardType (1))  /* get OEM type */
-			{
-				/* NEC PC98 subtypes */
+    if (GetKeyboardType(0) == 7) {
+        /* Japanese keyboard */
+#if 1
+        int nSubType = GetKeyboardType(1);
 
-				case 0x0D01:		/* PC-9800 series */
-				case 0x0D02:		/* PC-9801 VX/UX and PC-98XL/XL2 (normal mode) */
-				case 0x0D03:		/* PC-98XL/XL2 (high res mode) */
-				case 0x0D04:		/* PC-9800 series laptop keyboard */
-				{
-					wIsPC98 = 1;
-					PVROSPrintf("PC98 detected!\n");
-					break;
-				}
+        /* Check range since we are having problems detecting
+         * new PC-98 keyboard types.
+         */
+        if ((nSubType > 0x0D00) && (nSubType < 0x0d08)) {
+            wIsPC98 = 1;   // PC-98
+            PVROSPrintf("PC98 detected!\n");
+        } else {
+            wIsPC98 = 0;   // PC-AT
+        }
+#else
+        switch (GetKeyboardType (1))  /* get OEM type */
+        {
+            /* NEC PC98 subtypes */
 
-				default:
-				{
-					wIsPC98 = 0;
-					break;
-				}
-			}
-		#endif
-		}
-		else
-		{
-			wIsPC98 = 0;
-		}
+            case 0x0D01:		/* PC-9800 series */
+            case 0x0D02:		/* PC-9801 VX/UX and PC-98XL/XL2 (normal mode) */
+            case 0x0D03:		/* PC-98XL/XL2 (high res mode) */
+            case 0x0D04:		/* PC-9800 series laptop keyboard */
+            {
+                wIsPC98 = 1;
+                PVROSPrintf("PC98 detected!\n");
+                break;
+            }
 
-	#else
+            default:
+            {
+                wIsPC98 = 0;
+                break;
+            }
+        }
+#endif
+    } else {
+        wIsPC98 = 0;
+    }
 
-		#pragma message ("Auto PC98 detection disabled")
-		char szIniFile[512];	
+#else
 
-		strcpy(szIniFile, getenv ("WINDIR"));
-		strcat(szIniFile, "\\");
-		strcat(szIniFile, "sglhw.ini");
+#pragma message ("Auto PC98 detection disabled")
+    char szIniFile[512];
 
-		wIsPC98 = SglReadPrivateProfileInt ("System", "PC98", 0, szIniFile);
+    strcpy(szIniFile, getenv ("WINDIR"));
+    strcat(szIniFile, "\\");
+    strcat(szIniFile, "sglhw.ini");
 
-	#endif
+    wIsPC98 = SglReadPrivateProfileInt ("System", "PC98", 0, szIniFile);
+
+#endif
 }
 
 /**********************************************************************/
@@ -2673,222 +2475,197 @@ void DetectPC98( void )
 
 static BYTE bOrigData;
 
-PVROSERR ResetTritonControlRegister(void)
-{
-	static BYTE   bBusIDNum, bDevFncID, bData;
-	static WORD  device_id;
-	WORD wData;
-	int    nPCIErr;
+PVROSERR ResetTritonControlRegister(void) {
+    static BYTE bBusIDNum, bDevFncID, bData;
+    static WORD device_id;
+    WORD wData;
+    int nPCIErr;
 
-	nPCIErr = PCIRead16 (0, 0, 0x02, &wData);
+    nPCIErr = PCIRead16(0, 0, 0x02, &wData);
 
-	if ( nPCIErr != 0 )
-	{
-	    DPF((DBG_ERROR,"Error reading Device Id: Error %d.\n", nPCIErr ));
+    if (nPCIErr != 0) {
+        DPF((DBG_ERROR, "Error reading Device Id: Error %d.\n", nPCIErr));
 
-		return FALSE;
-	}
+        return FALSE;
+    }
 
-	DPF((DBG_MESSAGE,"Found the following Device Id: %X in Slot 0\n", wData ));
+    DPF((DBG_MESSAGE, "Found the following Device Id: %X in Slot 0\n", wData));
 
-	/* 
-		Check if it is an Intel Triton ChipSet capable of handling streaming,
-		try the standard one first 
-	*/
-    nPCIErr = PCIFindBoard (&bBusIDNum, &bDevFncID, INTEL_VENDOR_ID, 0x122D );
+    /*
+        Check if it is an Intel Triton ChipSet capable of handling streaming,
+        try the standard one first
+    */
+    nPCIErr = PCIFindBoard(&bBusIDNum, &bDevFncID, INTEL_VENDOR_ID, 0x122D);
 
-	if (nPCIErr != 0)
-	{
-		DPF((DBG_MESSAGE,"reading PCI registers containing the PCI Vendor and Device ID, returned %x\n", nPCIErr));
-		DPF((DBG_MESSAGE,"Triton Chipset not detected\n"));
+    if (nPCIErr != 0) {
+        DPF((DBG_MESSAGE, "reading PCI registers containing the PCI Vendor and Device ID, returned %x\n", nPCIErr));
+        DPF((DBG_MESSAGE, "Triton Chipset not detected\n"));
 
-		/* safe failure - it not a triton chipset */
-		return TRUE;
-	}
-	else
-	{ 	   
-		/* 
-		** Reset the value from stored original value
-		*/
+        /* safe failure - it not a triton chipset */
+        return TRUE;
+    } else {
+        /*
+        ** Reset the value from stored original value
+        */
 
-	 	nPCIErr = PCIWrite8 (bBusIDNum, bDevFncID, 0x50, bOrigData);
+        nPCIErr = PCIWrite8(bBusIDNum, bDevFncID, 0x50, bOrigData);
 
-	    if (nPCIErr != 0)
-	    {
-			DPF ((DBG_ERROR,"writing PCI register containing the PCI Control Byte, returned %x\n", nPCIErr));
-			return FALSE;
-	    }
+        if (nPCIErr != 0) {
+            DPF ((DBG_ERROR, "writing PCI register containing the PCI Control Byte, returned %x\n", nPCIErr));
+            return FALSE;
+        }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
-	
+
 }
 
 /**********************************************************************/
 
-static sgl_bool TridentConditionalGraphicsCard()
-{
-	short (*pfnGetPCIList)(unsigned short *, unsigned short *, unsigned short);
-	static BYTE   bTempBusIDNum, bTempDevFncID;
-	sgl_bool retval = FALSE;
-	HANDLE hLib;
-	sgl_bool bNeedsFree = FALSE;
+static sgl_bool TridentConditionalGraphicsCard() {
+    short (*pfnGetPCIList)(unsigned short *, unsigned short *, unsigned short);
+    static BYTE bTempBusIDNum, bTempDevFncID;
+    sgl_bool retval = FALSE;
+    HANDLE hLib;
+    sgl_bool bNeedsFree = FALSE;
 
-	if(!(hLib = GetModuleHandle("pvrsmx.dll")))
-	{
-		hLib = LoadLibrary("pvrsmx.dll");
-		bNeedsFree = TRUE;
-	}
+    if (!(hLib = GetModuleHandle("pvrsmx.dll"))) {
+        hLib = LoadLibrary("pvrsmx.dll");
+        bNeedsFree = TRUE;
+    }
 
-	if(hLib)
-	{
-		pfnGetPCIList = (short (*)(unsigned short *, unsigned short *, unsigned short))GetProcAddress(hLib,"GetPCIList");
+    if (hLib) {
+        pfnGetPCIList = (short (*)(unsigned short *, unsigned short *, unsigned short)) GetProcAddress(hLib,
+                                                                                                       "GetPCIList");
 
-		if(pfnGetPCIList)
-		{
-			short ListSize;
-			unsigned short vendor, device;
+        if (pfnGetPCIList) {
+            short ListSize;
+            unsigned short vendor, device;
 
-			ListSize = pfnGetPCIList(NULL,NULL,0);
-			while(ListSize--)
-			{
-				pfnGetPCIList(&vendor, &device, ListSize);
-				if(!PCIFindBoard(&bTempBusIDNum, &bTempDevFncID, 
-								 vendor, device))
-				{
-					retval = TRUE;
-				}
-				
-			}
-			
-		}
+            ListSize = pfnGetPCIList(NULL, NULL, 0);
+            while (ListSize--) {
+                pfnGetPCIList(&vendor, &device, ListSize);
+                if (!PCIFindBoard(&bTempBusIDNum, &bTempDevFncID,
+                                  vendor, device)) {
+                    retval = TRUE;
+                }
 
-		if(bNeedsFree)
-		{
-			FreeLibrary(hLib);
-		}
-	}
+            }
 
-	return retval;
+        }
+
+        if (bNeedsFree) {
+            FreeLibrary(hLib);
+        }
+    }
+
+    return retval;
 }
 
 /**********************************************************************/
 
-PVROSERR SetupTritonControlRegister(void)
-{
+PVROSERR SetupTritonControlRegister(void) {
 
-	/* this will only change PCI control register on 
-	** Triton aka FX chipsets
-	*/
-	static BYTE   bBusIDNum, bDevFncID, bData;
-	static BYTE   bTempBusIDNum, bTempDevFncID;
-	static BYTE   bDataMask;
-	static WORD  device_id;
-	WORD wData;
-	int    nPCIErr;
-	sgl_uint32 uData;
-	sgl_uint32 uPCIBursting, uPCIConcurrent;
+    /* this will only change PCI control register on
+    ** Triton aka FX chipsets
+    */
+    static BYTE bBusIDNum, bDevFncID, bData;
+    static BYTE bTempBusIDNum, bTempDevFncID;
+    static BYTE bDataMask;
+    static WORD device_id;
+    WORD wData;
+    int nPCIErr;
+    sgl_uint32 uData;
+    sgl_uint32 uPCIBursting, uPCIConcurrent;
 
-	nPCIErr = PCIRead16 (0, 0, 0x02, &wData);
+    nPCIErr = PCIRead16(0, 0, 0x02, &wData);
 
-	if ( nPCIErr != 0 )
-	{
-	    DPF((DBG_ERROR,"Error reading Device Id: Error %d.\n", nPCIErr ));
+    if (nPCIErr != 0) {
+        DPF((DBG_ERROR, "Error reading Device Id: Error %d.\n", nPCIErr));
 
-		return FALSE;
-	}
+        return FALSE;
+    }
 
-	DPF((DBG_MESSAGE,"Found the following Device Id: %X in Slot 0\n", wData ));
+    DPF((DBG_MESSAGE, "Found the following Device Id: %X in Slot 0\n", wData));
 
-	/* 
-		Check if it is an Intel Triton ChipSet capable of handling streaming,
-		try the standard one first 
-	*/
-    nPCIErr = PCIFindBoard (&bBusIDNum, &bDevFncID, INTEL_VENDOR_ID, 0x122D );
+    /*
+        Check if it is an Intel Triton ChipSet capable of handling streaming,
+        try the standard one first
+    */
+    nPCIErr = PCIFindBoard(&bBusIDNum, &bDevFncID, INTEL_VENDOR_ID, 0x122D);
 
-	if (nPCIErr != 0)
-	{
-		DPF((DBG_MESSAGE,"reading PCI registers containing the PCI Vendor and Device ID, returned %x\n", nPCIErr));
-		DPF((DBG_MESSAGE,"Triton Chipset not detected\n"));
+    if (nPCIErr != 0) {
+        DPF((DBG_MESSAGE, "reading PCI registers containing the PCI Vendor and Device ID, returned %x\n", nPCIErr));
+        DPF((DBG_MESSAGE, "Triton Chipset not detected\n"));
 
-		/* safe failure - it not a triton chipset */
-		return TRUE;
-	}
-	else
-	{ 	   
+        /* safe failure - it not a triton chipset */
+        return TRUE;
+    } else {
 
-		DPF((DBG_WARNING,"Triton Chipset Detected!!!\n"));
-		/* 
-		**	Read the value that is there and save it somewhere safe
-		*/
-	 	nPCIErr = PCIRead8 (bBusIDNum, bDevFncID, 0x50, &bData);
+        DPF((DBG_WARNING, "Triton Chipset Detected!!!\n"));
+        /*
+        **	Read the value that is there and save it somewhere safe
+        */
+        nPCIErr = PCIRead8(bBusIDNum, bDevFncID, 0x50, &bData);
 
-		if (nPCIErr != 0)
-		{
-			DPF ((DBG_ERROR,"reading PCI register containing the PCI Control Byte, returned %x\n", nPCIErr));
-		    return FALSE;
-		} 	   
-		else
-		{
-			SglWritePrivateProfileInt("PCIConfig","OrigPCIControlReg",bData,"sglhw.ini");
-		}
-		bOrigData = bData;
+        if (nPCIErr != 0) {
+            DPF ((DBG_ERROR, "reading PCI register containing the PCI Control Byte, returned %x\n", nPCIErr));
+            return FALSE;
+        } else {
+            SglWritePrivateProfileInt("PCIConfig", "OrigPCIControlReg", bData, "sglhw.ini");
+        }
+        bOrigData = bData;
 
-		/* set the settings to what we've got already */
-		uPCIBursting = bData & (1<<2);
-		uPCIConcurrent = bData & 1;
+        /* set the settings to what we've got already */
+        uPCIBursting = bData & (1 << 2);
+        uPCIConcurrent = bData & 1;
 
-		if (TridentConditionalGraphicsCard())
-		{
-			DPF((DBG_WARNING,"Trident Conditional Graphics Card Detected"));
-			uPCIBursting = 0;
-			uPCIConcurrent = 1;
-		}
+        if (TridentConditionalGraphicsCard()) {
+            DPF((DBG_WARNING, "Trident Conditional Graphics Card Detected"));
+            uPCIBursting = 0;
+            uPCIConcurrent = 1;
+        }
 
-		/* 
-		** Read the value to set from the ini file to set
-		*/
+        /*
+        ** Read the value to set from the ini file to set
+        */
 
-		uData = SglReadPrivateProfileInt("PCIConfig","PCIControlReg",bData,"sglhw.ini");
+        uData = SglReadPrivateProfileInt("PCIConfig", "PCIControlReg", bData, "sglhw.ini");
 
-		if(uData < 256)
-		{
-			bData = (unsigned char)uData;
-		}
-		else
-		{
-			DPF ((DBG_WARNING,"Invalid PCI register setting in ini file"));
-		}
+        if (uData < 256) {
+            bData = (unsigned char) uData;
+        } else {
+            DPF ((DBG_WARNING, "Invalid PCI register setting in ini file"));
+        }
 
-		uPCIBursting = SglReadPrivateProfileInt("PCIConfig",
-												 "PCIBursting",
-												 uPCIBursting,"sglhw.ini");
-		uPCIConcurrent = SglReadPrivateProfileInt("PCIConfig",
-												  "PCIConcurrent",
-												  uPCIConcurrent,"sglhw.ini");
+        uPCIBursting = SglReadPrivateProfileInt("PCIConfig",
+                                                "PCIBursting",
+                                                uPCIBursting, "sglhw.ini");
+        uPCIConcurrent = SglReadPrivateProfileInt("PCIConfig",
+                                                  "PCIConcurrent",
+                                                  uPCIConcurrent, "sglhw.ini");
 
-		/* treat the value read as booleans and put the flags in the right place
-		** dont trust the values in what was read
-		*/
-		bDataMask = 0xfa;
-		/* bDataMask = ( 0xff & ~(BYTE)(1<<2) & ~(BYTE)(1)); */
+        /* treat the value read as booleans and put the flags in the right place
+        ** dont trust the values in what was read
+        */
+        bDataMask = 0xfa;
+        /* bDataMask = ( 0xff & ~(BYTE)(1<<2) & ~(BYTE)(1)); */
 
-		bData &= bDataMask;
-		bData |= ((BYTE)(((uPCIBursting)?1:0)<<2) | (BYTE)((uPCIConcurrent)?1:0));
+        bData &= bDataMask;
+        bData |= ((BYTE) (((uPCIBursting) ? 1 : 0) << 2) | (BYTE) ((uPCIConcurrent) ? 1 : 0));
 
-		DPF ((DBG_WARNING,"Writing PCI cotrol register with %.0X\n", bData));
+        DPF ((DBG_WARNING, "Writing PCI cotrol register with %.0X\n", bData));
 
-	 	nPCIErr = PCIWrite8 (bBusIDNum, bDevFncID, 0x50, bData);
+        nPCIErr = PCIWrite8(bBusIDNum, bDevFncID, 0x50, bData);
 
-	    if (nPCIErr != 0)
-	    {
-			DPF ((DBG_ERROR,"writing PCI register containing the PCI Control Byte, returned %x\n", nPCIErr));
-			return FALSE;
-	    }
+        if (nPCIErr != 0) {
+            DPF ((DBG_ERROR, "writing PCI register containing the PCI Control Byte, returned %x\n", nPCIErr));
+            return FALSE;
+        }
 
-		return TRUE;
-	}
+        return TRUE;
+    }
 
 }
 
@@ -2900,106 +2677,90 @@ char sDllName[] = "PVROS: ";
 
 /**********************************************************************/
 
-BOOL WINAPI _CRT_INIT( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved );
+BOOL WINAPI _CRT_INIT(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved);
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
-{			
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
 
-   	switch (fdwReason)
-	{
-		case DLL_PROCESS_ATTACH:
-		{
-	
-			if (gnRefCount == 0)
-			{
-				if (!_CRT_INIT( hinstDLL, fdwReason, lpReserved ))
-				{
-					return(FALSE);
-				}
+    switch (fdwReason) {
+        case DLL_PROCESS_ATTACH: {
 
-				if (!MemInit ())
-				{
-					return(FALSE);
-				}
+            if (gnRefCount == 0) {
+                if (!_CRT_INIT(hinstDLL, fdwReason, lpReserved)) {
+                    return (FALSE);
+                }
+
+                if (!MemInit()) {
+                    return (FALSE);
+                }
 
 #if DEBUG
-				DebugInit(DBGPRIV_WARNING);
+                DebugInit(DBGPRIV_WARNING);
 #elif DEBUGDEV || TIMING
-				DebugInit(DBGPRIV_MESSAGE);
+                DebugInit(DBGPRIV_MESSAGE);
 #endif
-				/* Check the the system we're running on */
-				DetectPC98();
+                /* Check the the system we're running on */
+                DetectPC98();
 
-				/* Setup the PCI Control Resgister - unless it's a PC98 */
-				if (!wIsPC98)
-				{				
-					if(!SetupTritonControlRegister())
-					{
-						return(FALSE);
-					}
-				}
+                /* Setup the PCI Control Resgister - unless it's a PC98 */
+                if (!wIsPC98) {
+                    if (!SetupTritonControlRegister()) {
+                        return (FALSE);
+                    }
+                }
 
 
-			}
+            }
 
-			if (hSysProcess == 0)
-			{
-				if (PVROSCreateSystemContext (hinstDLL, fdwReason) != PVROS_GROOVY)
-				{
-					return(FALSE);
-				}
-			}
+            if (hSysProcess == 0) {
+                if (PVROSCreateSystemContext(hinstDLL, fdwReason) != PVROS_GROOVY) {
+                    return (FALSE);
+                }
+            }
 
-			DPF((DBG_MESSAGE,"PVROS DLL_PROCESS_ATTACH: Ref. Count = %d",gnRefCount));
-			gnRefCount++;
+            DPF((DBG_MESSAGE, "PVROS DLL_PROCESS_ATTACH: Ref. Count = %d", gnRefCount));
+            gnRefCount++;
 
-			return(TRUE);
-		}
+            return (TRUE);
+        }
 
-		case DLL_THREAD_ATTACH:		
-		{
-			DPF((DBG_MESSAGE,"PVROS DLL_THREAD_ATTACH"));
-			
-			return(TRUE);
-		}
+        case DLL_THREAD_ATTACH: {
+            DPF((DBG_MESSAGE, "PVROS DLL_THREAD_ATTACH"));
 
-		case DLL_PROCESS_DETACH:
-		{
-			DPF((DBG_MESSAGE,"PVROS DLL_PROCESS_DETACH: Ref. Count = %d",gnRefCount));
+            return (TRUE);
+        }
 
-			gnRefCount--;		
-	
-			if (hSysProcess == GetCurrentProcessId ())
-			{
-				if (gnRefCount != 0)
-				{
-					DPF((DBG_WARNING,"Killing off system context prematurely"));
-				}
+        case DLL_PROCESS_DETACH: {
+            DPF((DBG_MESSAGE, "PVROS DLL_PROCESS_DETACH: Ref. Count = %d", gnRefCount));
 
-				PVROSDestroySystemContext (fdwReason);			
+            gnRefCount--;
 
-				hSysProcess = 0;
-				hSystemVxD = 0;
-			}
+            if (hSysProcess == GetCurrentProcessId()) {
+                if (gnRefCount != 0) {
+                    DPF((DBG_WARNING, "Killing off system context prematurely"));
+                }
 
-			if (gnRefCount == 0)
-			{
-				ResetTritonControlRegister();
-				MemFini ();
-			}
+                PVROSDestroySystemContext(fdwReason);
 
-			return(TRUE);
-		}
-	
-		case DLL_THREAD_DETACH:
-		{
-			DPF((DBG_MESSAGE,"PVROS DLL_THREAD_DETACH"));
+                hSysProcess = 0;
+                hSystemVxD = 0;
+            }
 
-			//PVROSDestroySystemContext (fdwReason);			
-			
-			return(TRUE);
-		}
-	}
+            if (gnRefCount == 0) {
+                ResetTritonControlRegister();
+                MemFini();
+            }
+
+            return (TRUE);
+        }
+
+        case DLL_THREAD_DETACH: {
+            DPF((DBG_MESSAGE, "PVROS DLL_THREAD_DETACH"));
+
+            //PVROSDestroySystemContext (fdwReason);
+
+            return (TRUE);
+        }
+    }
 }
 
 /* end of $RCSfile: system.c,v $ */

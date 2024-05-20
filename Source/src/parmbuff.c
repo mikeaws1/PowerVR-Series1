@@ -30,25 +30,26 @@
 
  *****************************************************************************/
 #include "config.h"
+
 #define API_TYPESONLY
+
 #include <sgl.h>
 #include <pvrosapi.h>
+
 #undef API_TYPESONLY
+
 #include <parmbuff.h>
 
 
-PVR_PARAM_BUFF* GetISPParamBuff( void )
-{
-	return(&PVRParamBuffs[PVR_PARAM_TYPE_ISP]);
+PVR_PARAM_BUFF *GetISPParamBuff(void) {
+    return (&PVRParamBuffs[PVR_PARAM_TYPE_ISP]);
 }
 
-PVR_PARAM_BUFF* GetTSPParamBuff( void )
-{
-	return(&PVRParamBuffs[PVR_PARAM_TYPE_TSP]);
+PVR_PARAM_BUFF *GetTSPParamBuff(void) {
+    return (&PVRParamBuffs[PVR_PARAM_TYPE_TSP]);
 }
 
-PVR_PARAM_BUFF* GetRegionParamBuff( void )
-{
-	return(&PVRParamBuffs[PVR_PARAM_TYPE_REGION]);
+PVR_PARAM_BUFF *GetRegionParamBuff(void) {
+    return (&PVRParamBuffs[PVR_PARAM_TYPE_REGION]);
 }
 

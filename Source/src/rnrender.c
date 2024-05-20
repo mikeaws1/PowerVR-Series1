@@ -782,14 +782,15 @@
 
 #if (WIN32 || DOS32)
 
-	#define DO_FPU_PRECISION TRUE
+#define DO_FPU_PRECISION TRUE
 
-	void SetupFPU (void);
-	void RestoreFPU (void);
+void SetupFPU(void);
+
+void RestoreFPU(void);
 
 #else
 
-	#define DO_FPU_PRECISION FALSE
+#define DO_FPU_PRECISION FALSE
 
 #endif
 
@@ -799,18 +800,18 @@ SGL_GLOBAL_TIME_DEFN /* if we are timing code */
 // An alternative is that if the flag MARK is set, the actual
 // render call will NOT be included .... SJF
 */
-#define ACTUAL_RENDER_FLAG	TRUE
+#define ACTUAL_RENDER_FLAG    TRUE
 #if ACTUAL_RENDER_FLAG
 int fDoActualRender = TRUE;
 #endif
 
 #if WIN32 || DOS32 || MAC
 
-	#include <brdcfg.h>
+#include <brdcfg.h>
 
 #endif
 
-#define WAIT_FOR_FRAME	0
+#define WAIT_FOR_FRAME    0
 
 static sgl_uint32 TSPBackgroundAddress = 0;
 
@@ -821,7 +822,7 @@ extern sgl_uint32				SWRenderStartTime;
 #if PCX2 || PCX2_003
 /* PCX2 Fast fog colour value. Set by SGL or SGL-Lite.
  */
-sgl_colour	cFastFogColour = {0.0f, 0.0f, 0.0f};
+sgl_colour cFastFogColour = {0.0f, 0.0f, 0.0f};
 #endif
 
 #if DUMP_PARAMS
@@ -848,195 +849,195 @@ sgl_uint32 *curAddr;
 #define COMPRESSOR				FALSE
 
 #if TIMED_CAPTURE
-	/* Write parameters to the desktop.
-	 */
-	#define DUMP_PATH "c:\\Windows\\Desktop\\"
+    /* Write parameters to the desktop.
+     */
+#define DUMP_PATH "c:\\Windows\\Desktop\\"
 #else
-	/* Set up a mapped drive. This is used to initiate the parameter dump
-	 * and also the parameters are written here.
-	 */
-	#define DUMP_PATH "e:\\"
+    /* Set up a mapped drive. This is used to initiate the parameter dump
+     * and also the parameters are written here.
+     */
+#define DUMP_PATH "e:\\"
 #endif
 
 void DumpSabreAndTexas(long SabreRegionInfoStart,
-			PARAM_BUF_MANAGEMENT_STRUCT *pParamBlock, long camera)
+            PARAM_BUF_MANAGEMENT_STRUCT *pParamBlock, long camera)
 {
-	FILE *fp;
-	FILE *fp2;
-	sgl_uint32 Val;
-	sgl_uint32 start, i, PlanesLimit, TexasLimit, RegionLimit;
-   	char fileEnding[100]="\0", paramFile[100]="\0", InputFile[100]="\0", info[100]="\0";
-	char command[30];
-	char path[] = DUMP_PATH;
-	static int frame;
-	static int filenumber=0;
-	int captureFrame;
-	static sgl_bool  bDoneCapture = FALSE;
+    FILE *fp;
+    FILE *fp2;
+    sgl_uint32 Val;
+    sgl_uint32 start, i, PlanesLimit, TexasLimit, RegionLimit;
+       char fileEnding[100]="\0", paramFile[100]="\0", InputFile[100]="\0", info[100]="\0";
+    char command[30];
+    char path[] = DUMP_PATH;
+    static int frame;
+    static int filenumber=0;
+    int captureFrame;
+    static sgl_bool  bDoneCapture = FALSE;
 
-	frame++;
+    frame++;
 
-	captureFrame=FALSE;
+    captureFrame=FALSE;
 
 #if TIMED_CAPTURE
-	if (frame==CAPTURE_RATE)
-		captureFrame=TRUE;
+    if (frame==CAPTURE_RATE)
+        captureFrame=TRUE;
 #else
-	strcpy(InputFile, DUMP_PATH);
-	strcat(InputFile, "capstat.txt");
+    strcpy(InputFile, DUMP_PATH);
+    strcat(InputFile, "capstat.txt");
 
-	if( (fp = fopen(InputFile, "r"))==NULL);
-	else if(fgetc(fp)!=0)
-	{
-		captureFrame=TRUE;
-		fclose(fp);
-		fp = fopen(InputFile, "w");
-		fputc(0, fp);
-		fclose(fp);
-	}
-	else
-	{
-		fclose(fp);
-	}
+    if( (fp = fopen(InputFile, "r"))==NULL);
+    else if(fgetc(fp)!=0)
+    {
+        captureFrame=TRUE;
+        fclose(fp);
+        fp = fopen(InputFile, "w");
+        fputc(0, fp);
+        fclose(fp);
+    }
+    else
+    {
+        fclose(fp);
+    }
 #endif
 
-	if(captureFrame)
-	{
+    if(captureFrame)
+    {
 #if COMPRESSOR
-		/* wait until the compressor is ready */
-		fp = fopen("e:\\compstat.txt", "r");
-		while(fgetc(fp)==1)
-	  	{
-			fclose(fp);
-			PVROSDelay(PVR_DELAY_MS, 100);
-	  		fp = fopen("e:\\compstat.txt", "r");
-	 	}
-		fclose(fp);
+        /* wait until the compressor is ready */
+        fp = fopen("e:\\compstat.txt", "r");
+        while(fgetc(fp)==1)
+          {
+            fclose(fp);
+            PVROSDelay(PVR_DELAY_MS, 100);
+              fp = fopen("e:\\compstat.txt", "r");
+         }
+        fclose(fp);
 #endif
 
-		frame=0;
-		filenumber++;
+        frame=0;
+        filenumber++;
 
-		itoa(filenumber, fileEnding, 10);
-    	
-    	/* set limits */
-		TexasLimit = 1024 * 1024;	 	 	
-		PlanesLimit = SabreRegionInfoStart;
-		RegionLimit = ((sgl_uint32) curAddr ) - ( (sgl_uint32) pISPObjectData);
+        itoa(filenumber, fileEnding, 10);
 
-		/* open info file */	 
-		strcat(info, path);
-		strcat(info, "info");
-		strcat(info, fileEnding);
-		strcat(info, ".txt");
-		fp2 = fopen(info, "w");
+        /* set limits */
+        TexasLimit = 1024 * 1024;
+        PlanesLimit = SabreRegionInfoStart;
+        RegionLimit = ((sgl_uint32) curAddr ) - ( (sgl_uint32) pISPObjectData);
 
-		/* open sabre file */
-		strcat(paramFile, path);
-		strcat(paramFile, "sab");
-		strcat(paramFile, fileEnding);
-		//strcat(paramFile, ".Z");
-		fp = fopen(paramFile, "wb");
-	 
-		if( (fp!=NULL) && (fp2!=NULL) )
-		{	
-			/* dump plane data */
+        /* open info file */
+        strcat(info, path);
+        strcat(info, "info");
+        strcat(info, fileEnding);
+        strcat(info, ".txt");
+        fp2 = fopen(info, "w");
 
-			for(i = 0; i <= PlanesLimit; i++)
-			{
-				Val = pParamBlock->isp.pParamStore[i];
-		
-				#if OUTPUT_LITTLE_END
-					fputc(Val & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 24 & 0xff, fp);
-					#else
-					fputc(Val >> 24 & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val & 0xff, fp);
-				#endif		
-			}	  
+        /* open sabre file */
+        strcat(paramFile, path);
+        strcat(paramFile, "sab");
+        strcat(paramFile, fileEnding);
+        //strcat(paramFile, ".Z");
+        fp = fopen(paramFile, "wb");
 
-			/* output address of plane/tile division pointer in 32 bit words */
-			fprintf(fp2, "%d %d", i, camera);
-	
-			/* dump region data (NOTE region data is NOT in pParamBlock for PCX1) */ 
-		 
-			for(i = 0; i <= RegionLimit; i++)
-			{
-				Val = pISPObjectData[i];
-		
-				#if OUTPUT_LITTLE_END
-					fputc(Val & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 24 & 0xff, fp);
-				#else
-					fputc(Val >> 24 & 0xff, fp);
-					fputc(Val >> 16 & 0xff, fp);
-					fputc(Val >> 8  & 0xff, fp);
-					fputc(Val & 0xff, fp);
-				#endif		
-			} 
+        if( (fp!=NULL) && (fp2!=NULL) )
+        {
+            /* dump plane data */
 
-			fclose(fp);
-			fclose(fp2);
-		}
-		else
-			fprintf(stderr, "Couldn't write sabre file");
-			  
-		/* open Texas files */ 
-		strcpy(paramFile, path);
-		strcat(paramFile, "tex");
-		strcat(paramFile, fileEnding);
-		//strcat(paramFile, ".Z");
-		fp = fopen(paramFile, "wb");
-	
-		if(fp!=NULL)
-		{
-		
-		/* we may only want the texels on the first frame */
-		#if TEXPARAMS_ONLY==TRUE
-		if(filenumber!=1)
-			TexasLimit= pParamBlock->tsp.IndexLimit - pParamBlock->tsp.StartIndex;	
-		#endif
-			
-			for(i = 0; i<TexasLimit; i++)
-			{
-		
-				Val = ghTexHeap->pTextureMemory[i]; 
-  	
-			#if OUTPUT_LITTLE_END
-				fputc(Val & 0xff, fp);
-				fputc(Val >> 8  & 0xff, fp);
-				fputc(Val >> 16 & 0xff, fp);
-				fputc(Val >> 24 & 0xff, fp);
-			#else
-				fputc(Val >> 24 & 0xff, fp);
-				fputc(Val >> 16 & 0xff, fp);
-				fputc(Val >> 8  & 0xff, fp);
-				fputc(Val & 0xff, fp);
-			#endif
-			}
+            for(i = 0; i <= PlanesLimit; i++)
+            {
+                Val = pParamBlock->isp.pParamStore[i];
 
-			fclose(fp);
-		}
-		else
-		{
-			fprintf(stderr, "Couldn't write texas file");
-		}
-		fclose(fp);	 
+#if OUTPUT_LITTLE_END
+                    fputc(Val & 0xff, fp);
+                    fputc(Val >> 8  & 0xff, fp);
+                    fputc(Val >> 16 & 0xff, fp);
+                    fputc(Val >> 24 & 0xff, fp);
+#else
+                    fputc(Val >> 24 & 0xff, fp);
+                    fputc(Val >> 16 & 0xff, fp);
+                    fputc(Val >> 8  & 0xff, fp);
+                    fputc(Val & 0xff, fp);
+#endif
+            }
+
+            /* output address of plane/tile division pointer in 32 bit words */
+            fprintf(fp2, "%d %d", i, camera);
+
+            /* dump region data (NOTE region data is NOT in pParamBlock for PCX1) */
+
+            for(i = 0; i <= RegionLimit; i++)
+            {
+                Val = pISPObjectData[i];
+
+#if OUTPUT_LITTLE_END
+                    fputc(Val & 0xff, fp);
+                    fputc(Val >> 8  & 0xff, fp);
+                    fputc(Val >> 16 & 0xff, fp);
+                    fputc(Val >> 24 & 0xff, fp);
+#else
+                    fputc(Val >> 24 & 0xff, fp);
+                    fputc(Val >> 16 & 0xff, fp);
+                    fputc(Val >> 8  & 0xff, fp);
+                    fputc(Val & 0xff, fp);
+#endif
+            }
+
+            fclose(fp);
+            fclose(fp2);
+        }
+        else
+            fprintf(stderr, "Couldn't write sabre file");
+
+        /* open Texas files */
+        strcpy(paramFile, path);
+        strcat(paramFile, "tex");
+        strcat(paramFile, fileEnding);
+        //strcat(paramFile, ".Z");
+        fp = fopen(paramFile, "wb");
+
+        if(fp!=NULL)
+        {
+
+        /* we may only want the texels on the first frame */
+#if TEXPARAMS_ONLY==TRUE
+        if(filenumber!=1)
+            TexasLimit= pParamBlock->tsp.IndexLimit - pParamBlock->tsp.StartIndex;
+#endif
+
+            for(i = 0; i<TexasLimit; i++)
+            {
+
+                Val = ghTexHeap->pTextureMemory[i];
+
+#if OUTPUT_LITTLE_END
+                fputc(Val & 0xff, fp);
+                fputc(Val >> 8  & 0xff, fp);
+                fputc(Val >> 16 & 0xff, fp);
+                fputc(Val >> 24 & 0xff, fp);
+#else
+                fputc(Val >> 24 & 0xff, fp);
+                fputc(Val >> 16 & 0xff, fp);
+                fputc(Val >> 8  & 0xff, fp);
+                fputc(Val & 0xff, fp);
+#endif
+            }
+
+            fclose(fp);
+        }
+        else
+        {
+            fprintf(stderr, "Couldn't write texas file");
+        }
+        fclose(fp);
 
 #if COMPRESSOR
-		/* indicate to compressor that ready */
-		fp = fopen("e:\\compstat.txt", "w");
-		fputc(1, fp);
-		fclose(fp);
+        /* indicate to compressor that ready */
+        fp = fopen("e:\\compstat.txt", "w");
+        fputc(1, fp);
+        fclose(fp);
 
 #endif
-	  	bDoneCapture = TRUE;
-	} /* if (captureFrame) */
+          bDoneCapture = TRUE;
+    } /* if (captureFrame) */
 
 } /* DumpSabreAndTexas */
 
@@ -1057,332 +1058,318 @@ void DumpSabreAndTexas(long SabreRegionInfoStart,
  *		 and "shared" variables, which is all a bit of a nightmare.
  **************************************************************************/
 /* used when getting parameter buffers */
-extern HLDEVICE        gHLogicalDev;
+extern HLDEVICE gHLogicalDev;
 
-extern void CALL_CONV sgl_render( const  int viewport_or_device, 
-						 const  int camera_or_list, 
-						 const	sgl_bool swap_buffers)
-{
-	HDISPLAY hDisplay;
-	VIEWPORT_NODE_STRUCT * pViewportOrDevice;
-	void * pCameraOrList;
-	CAMERA_NODE_STRUCT * pCamera;
-	LIST_NODE_STRUCT   * pList;
-	PVROSERR err;
-	
-	int ItemType;
-	sgl_int32 BackGroundStart;
-	int x_dimension,y_dimension;
-	
-	static int state = 0;
-	
-	#if !WIN32
-	sgl_uint32 SabreRegionInfoStart;
-	#endif 
+extern void CALL_CONV sgl_render(const int viewport_or_device,
+                                 const int camera_or_list,
+                                 const sgl_bool swap_buffers) {
+    HDISPLAY hDisplay;
+    VIEWPORT_NODE_STRUCT *pViewportOrDevice;
+    void *pCameraOrList;
+    CAMERA_NODE_STRUCT *pCamera;
+    LIST_NODE_STRUCT *pList;
+    PVROSERR err;
 
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+    int ItemType;
+    sgl_int32 BackGroundStart;
+    int x_dimension, y_dimension;
 
-	#if ISPTSP
-	int nNumRegionsRendered;
-	#endif
-	
-	SGL_TIME_START(TOTAL_RENDER_TIME);
-	
-	DPF((DBG_MESSAGE,"Entering SGL_RENDER"));
+    static int state = 0;
 
-	#if defined(MIDAS_ARCADE)
-	SWRenderStartTime = clock();
-	#endif
-	/*
-	// Initialse the system if not already done. 
-	// Actually that would be a pretty bad thing to do, since
-	// its a bit pointless trying to render rubbish!!!
-	*/
+#if !WIN32
+    sgl_uint32 SabreRegionInfoStart;
+#endif
+
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+
+#if ISPTSP
+    int nNumRegionsRendered;
+#endif
+
+    SGL_TIME_START(TOTAL_RENDER_TIME);
+
+    DPF((DBG_MESSAGE, "Entering SGL_RENDER"));
+
+#if defined(MIDAS_ARCADE)
+    SWRenderStartTime = clock();
+#endif
+    /*
+    // Initialse the system if not already done.
+    // Actually that would be a pretty bad thing to do, since
+    // its a bit pointless trying to render rubbish!!!
+    */
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
- 		SGL_TIME_STOP(TOTAL_RENDER_TIME);
-		return;
-	}
+    {
+        SglError(sgl_err_failed_init);
+         SGL_TIME_STOP(TOTAL_RENDER_TIME);
+        return;
+    }
 #endif
-	/*
-	// Tidy up any unfinished business
-	*/
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
-	DlCompleteCurrentConvex();
+    /*
+    // Tidy up any unfinished business
+    */
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
 
-	/* Initalise texture filter setting to point sampled as default.
-	 */
-	pProjMat->eFilterType = sgl_tf_point_sample;
+    /* Initalise texture filter setting to point sampled as default.
+     */
+    pProjMat->eFilterType = sgl_tf_point_sample;
 
-	/*//////////////////////
-	// Get the viewport or device to use, and the type
-	////////////////////// */
-	pViewportOrDevice =(VIEWPORT_NODE_STRUCT *)GetNamedItem(dlUserGlobals.pNamtab, 
-									viewport_or_device);
+    /*//////////////////////
+    // Get the viewport or device to use, and the type
+    ////////////////////// */
+    pViewportOrDevice = (VIEWPORT_NODE_STRUCT *) GetNamedItem(dlUserGlobals.pNamtab,
+                                                              viewport_or_device);
 
-	ItemType =  GetNamedItemType(dlUserGlobals.pNamtab, 
-									viewport_or_device);
-	/*
-	// Check that this Ok
-	*/
-	if((pViewportOrDevice == NULL) || 
-	   ((ItemType != nt_device) && 
-	    (ItemType != nt_viewport)) )
-	{
-		DPF((DBG_WARNING, "SGL_RENDER Not a valid Viewport or device"));
-		SglError(sgl_err_bad_name);
-		SGL_TIME_STOP(TOTAL_RENDER_TIME);
-		return;
-	}
-	else if(ItemType == nt_device)
-	{
-		/*
-		// Get the  devices equivalent viewport
-		*/
-		pViewportOrDevice = 
-				&((DEVICE_NODE_STRUCT *)pViewportOrDevice)->defaultViewport;
-	}
-	else
-	{
-		ASSERT(ItemType == nt_viewport);
-	} /*end if else*/
+    ItemType = GetNamedItemType(dlUserGlobals.pNamtab,
+                                viewport_or_device);
+    /*
+    // Check that this Ok
+    */
+    if ((pViewportOrDevice == NULL) ||
+        ((ItemType != nt_device) &&
+         (ItemType != nt_viewport))) {
+        DPF((DBG_WARNING, "SGL_RENDER Not a valid Viewport or device"));
+        SglError(sgl_err_bad_name);
+        SGL_TIME_STOP(TOTAL_RENDER_TIME);
+        return;
+    } else if (ItemType == nt_device) {
+        /*
+        // Get the  devices equivalent viewport
+        */
+        pViewportOrDevice =
+                &((DEVICE_NODE_STRUCT *) pViewportOrDevice)->defaultViewport;
+    } else {
+        ASSERT(ItemType == nt_viewport);
+    } /*end if else*/
 
-	hDisplay = (HDISPLAY) ((VIEWPORT_NODE_STRUCT *) pViewportOrDevice)->pParentDevice->PhDeviceID;
+    hDisplay = (HDISPLAY) ((VIEWPORT_NODE_STRUCT *) pViewportOrDevice)->pParentDevice->PhDeviceID;
 
-	/*
-	// check if viewport is empty?
-	*/
-	if( (pViewportOrDevice->Left > pViewportOrDevice->Right) ||
-		(pViewportOrDevice->Top	 > pViewportOrDevice->Bottom))
-	{
-		DPF((DBG_WARNING, "Handling of empty viewports not complete!!"));
-	}
+    /*
+    // check if viewport is empty?
+    */
+    if ((pViewportOrDevice->Left > pViewportOrDevice->Right) ||
+        (pViewportOrDevice->Top > pViewportOrDevice->Bottom)) {
+        DPF((DBG_WARNING, "Handling of empty viewports not complete!!"));
+    }
 
-	/*//////////////////////
-	// Get the Camera Or List to use, and the type
-	// AND set up the global projection matrix values
-	////////////////////// */
-	if (camera_or_list == SGL_DEFAULT_LIST)
-	{
-		ASSERT(dlUserGlobals.pDefaultList != NULL);
-		pCameraOrList = dlUserGlobals.pDefaultList;
-		ItemType = nt_list_node;
-	}
-	else
-	{
-		pCameraOrList = GetNamedItem(dlUserGlobals.pNamtab, 
-									camera_or_list);
+    /*//////////////////////
+    // Get the Camera Or List to use, and the type
+    // AND set up the global projection matrix values
+    ////////////////////// */
+    if (camera_or_list == SGL_DEFAULT_LIST) {
+        ASSERT(dlUserGlobals.pDefaultList != NULL);
+        pCameraOrList = dlUserGlobals.pDefaultList;
+        ItemType = nt_list_node;
+    } else {
+        pCameraOrList = GetNamedItem(dlUserGlobals.pNamtab,
+                                     camera_or_list);
 
-		ItemType = GetNamedItemType(dlUserGlobals.pNamtab, 
-									camera_or_list);
-		/*
-		// Check that this Ok
-		*/
-		if((pCameraOrList == NULL) || 
-		   ((ItemType != nt_camera) && 
-		    (ItemType != nt_list_node)) )
-		{
-			DPF((DBG_WARNING, "SGL_RENDER Not a valid list or camera"));
-			SglError(sgl_err_bad_name);
-		 	SGL_TIME_STOP(TOTAL_RENDER_TIME);
-			return;
-		}
-	}
+        ItemType = GetNamedItemType(dlUserGlobals.pNamtab,
+                                    camera_or_list);
+        /*
+        // Check that this Ok
+        */
+        if ((pCameraOrList == NULL) ||
+            ((ItemType != nt_camera) &&
+             (ItemType != nt_list_node))) {
+            DPF((DBG_WARNING, "SGL_RENDER Not a valid list or camera"));
+            SglError(sgl_err_bad_name);
+            SGL_TIME_STOP(TOTAL_RENDER_TIME);
+            return;
+        }
+    }
 
-	if(ItemType == nt_list_node)
-	{
-		/*
-		// Set up the projection matrix using the default camera
-		*/
-		pCamera = GetDefaultCamera();
-		RnSetupProjectionMatrix( pCamera,
-								 pViewportOrDevice);
-		pList   = pCameraOrList;
-	}
-	/*
-	// Else use this camera
-	*/
-	else
-	{
-		ASSERT(ItemType == nt_camera);
-		RnSetupProjectionMatrix(pCameraOrList,
-								  pViewportOrDevice);
+    if (ItemType == nt_list_node) {
+        /*
+        // Set up the projection matrix using the default camera
+        */
+        pCamera = GetDefaultCamera();
+        RnSetupProjectionMatrix(pCamera,
+                                pViewportOrDevice);
+        pList = pCameraOrList;
+    }
+        /*
+        // Else use this camera
+        */
+    else {
+        ASSERT(ItemType == nt_camera);
+        RnSetupProjectionMatrix(pCameraOrList,
+                                pViewportOrDevice);
 
-		pCamera = pCameraOrList;
-		pList   = NULL;
+        pCamera = pCameraOrList;
+        pList = NULL;
 
-	} /*end if else*/
+    } /*end if else*/
 
-	/*
-	// For optimisation. Reset the region lists structures to be empty
-	*/
-	ResetRegionDataL (FALSE);
+    /*
+    // For optimisation. Reset the region lists structures to be empty
+    */
+    ResetRegionDataL(FALSE);
 
 #define CHECK_TEX_PARAM 0
 #if CHECK_TEX_PARAM
-	while(! HWFinishedRender());
+    while(! HWFinishedRender());
 #endif
 
-	
-	/*
-	// Get parameter memory, if available...
-	*/
-	
+
+    /*
+    // Get parameter memory, if available...
+    */
+
 #if WIN32
-	err = PVROSAssignVirtualBuffers(PVRParamBuffs, gHLogicalDev);
-	if(err!=PVROS_GROOVY)
-	{
-		PVROSPrintf("Unable to get buffer - skipping frame\n");
-		return;
-	}
+    err = PVROSAssignVirtualBuffers(PVRParamBuffs, gHLogicalDev);
+    if (err != PVROS_GROOVY) {
+        PVROSPrintf("Unable to get buffer - skipping frame\n");
+        return;
+    }
 #else
-	GetParameterSpace(PVRParamBuffs);
+    GetParameterSpace(PVRParamBuffs);
 #endif
 
-	/* //////////////////////////////////////////////////
-	/////////////////////////////////////////////////////
-	// Add some "special" objects direct to the parameter
-	// store. THESE SHOULD BE MOVED OUT AND SET UP ONCE ONLY
-	// DURING INTIALISATION (obviously the initial pointers would have
-	// to take account of these).
-	/////////////////////////////////////////////////////
-	////////////////////////////////////////////////// */
-	AddDummyPlanesL (FALSE);
+    /* //////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
+    // Add some "special" objects direct to the parameter
+    // store. THESE SHOULD BE MOVED OUT AND SET UP ONCE ONLY
+    // DURING INTIALISATION (obviously the initial pointers would have
+    // to take account of these).
+    /////////////////////////////////////////////////////
+    ////////////////////////////////////////////////// */
+    AddDummyPlanesL(FALSE);
 
 #if PCX2 || PCX2_003
-	/* Fast fogging. Pack a plane for fogging. Only used by PCX2
-	 * Set colour of plane to FOG COLOUR !!!!
-	 */
-	{
-		sgl_uint32		nCurrentTSPAddr;
+    /* Fast fogging. Pack a plane for fogging. Only used by PCX2
+     * Set colour of plane to FOG COLOUR !!!!
+     */
+    {
+        sgl_uint32 nCurrentTSPAddr;
 
-		/* Save current TSP index.
-		 */
-		nCurrentTSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+        /* Save current TSP index.
+         */
+        nCurrentTSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
 
-		/* Tag ID of 2 (4/2) used for fogging.
-		 */
+        /* Tag ID of 2 (4/2) used for fogging.
+         */
 
-		PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = 4;
-		
-		/* Pack a flat plane. Need to set colour to fog colour.
-		 */
-		PackTexasFlat (cFastFogColour, FALSE, FALSE);
+        PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = 4;
 
-		/* Restore the TSP index.
-		 */
-		PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = nCurrentTSPAddr;
-	}
+        /* Pack a flat plane. Need to set colour to fog colour.
+         */
+        PackTexasFlat(cFastFogColour, FALSE, FALSE);
+
+        /* Restore the TSP index.
+         */
+        PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = nCurrentTSPAddr;
+    }
 #endif
 
 
-	/* //////////////////////////////////////////////////
-	// Add the background plane - disable fogging on it
-	// jimp: disable shadows as well
-	////////////////////////////////////////////////// */
-	BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+    /* //////////////////////////////////////////////////
+    // Add the background plane - disable fogging on it
+    // jimp: disable shadows as well
+    ////////////////////////////////////////////////// */
+    BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 #if PCX2 || PCX2_003
-	PackBackgroundPlane( PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
-						0.0f);
-						/* pProjMat->f32FixedProjBackDist); */ 
+    PackBackgroundPlane(PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
+                        0.0f);
+    /* pProjMat->f32FixedProjBackDist); */
 #else
-	PackBackgroundPlane( PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
-						0);
-						/* pProjMat->n32FixedProjBackDist); */ 
+    PackBackgroundPlane( PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
+                        0);
+                        /* pProjMat->n32FixedProjBackDist); */
 #endif
 
-	/*
-	// create a flushing plane ???????
-	// Add the actual background opaque plane.
-	// This is not a flushing plane !!!
-	*/
-	AddRegionOpaqueL(&pProjMat->RegionsRect, BackGroundStart, 1);
- 	
-	BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-			   
+    /*
+    // create a flushing plane ???????
+    // Add the actual background opaque plane.
+    // This is not a flushing plane !!!
+    */
+    AddRegionOpaqueL(&pProjMat->RegionsRect, BackGroundStart, 1);
+
+    BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+
 #if PCX2 || PCX2_003
-	PackBackgroundPlane( PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
-						-1.0f);
+    PackBackgroundPlane(PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
+                        -1.0f);
 #else
-	PackBackgroundPlane( PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
-						-64);
+    PackBackgroundPlane( PackTexasFlat(pCamera->backgroundColour, FALSE, FALSE),
+                        -64);
 #endif
 
- 	/* !!!! THIS IS ONLY NEEDED FOR THE MIDAS3 (old PVR1) SIMULATOR !!!! */
-	/* Well, I'm not too sure about that (SJF)*/
-	AddFlushingPlaneL(BackGroundStart);
+    /* !!!! THIS IS ONLY NEEDED FOR THE MIDAS3 (old PVR1) SIMULATOR !!!! */
+    /* Well, I'm not too sure about that (SJF)*/
+    AddFlushingPlaneL(BackGroundStart);
 
 
-	/* Add translucent flushing plane.
-	 */
-	BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-						   
+    /* Add translucent flushing plane.
+     */
+    BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+
 #if PCX2 || PCX2_003
-	PackBackgroundPlane (PackTexasTransparent (FALSE), -1.0f);
+    PackBackgroundPlane(PackTexasTransparent(FALSE), -1.0f);
 #else
-	PackBackgroundPlane (PackTexasTransparent (FALSE), -64);
+    PackBackgroundPlane (PackTexasTransparent (FALSE), -64);
 #endif
-	AddTransFlushingPlaneL (BackGroundStart);
+    AddTransFlushingPlaneL(BackGroundStart);
 
-	/* //////////////////////////////////////////////////
-	/////////////////////////////////////////////////////
-	// Traverse the display list
-	/////////////////////////////////////////////////////
-	////////////////////////////////////////////////// */
-	DPF((DBG_MESSAGE, "Calling traverse"));
-	
-	#if DO_FPU_PRECISION
+    /* //////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
+    // Traverse the display list
+    /////////////////////////////////////////////////////
+    ////////////////////////////////////////////////// */
+    DPF((DBG_MESSAGE, "Calling traverse"));
 
-		SetupFPU ();
+#if DO_FPU_PRECISION
 
-	#endif
+    SetupFPU();
 
-	RnTraverseDisplayList(pList, pCamera);
+#endif
 
-	#if DO_FPU_PRECISION
+    RnTraverseDisplayList(pList, pCamera);
 
-		RestoreFPU ();
+#if DO_FPU_PRECISION
 
-	#endif
+    RestoreFPU();
 
-	/* //////////////////////////////////////////////////
-	// Convert the regions lists to ones understood by Sabre
-	// Remember where the pointer data begins though.
- 	////////////////////////////////////////////////// */
+#endif
 
-	#if !WIN32
-	SabreRegionInfoStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-	#endif
-
-	/*
-	// Convert our internal region lists into the hardware ones, and
-	// at the same time reset the internal region structures
-	*/
-	/* Call optimised routine.
-	 */
-	#if ISPTSP
-	nNumRegionsRendered = 
-	#endif
-	GenerateObjectPtr(&pProjMat->RegionsRect, pViewportOrDevice->regionMask);
-
-
-	/* //////////////////////////////////////////////////
-	// Set up the virtual hardware registers
- 	////////////////////////////////////////////////// */
+    /* //////////////////////////////////////////////////
+    // Convert the regions lists to ones understood by Sabre
+    // Remember where the pointer data begins though.
+     ////////////////////////////////////////////////// */
 
 #if !WIN32
-	/* Sabre pointer in windows builds set on virtual buffer allocation */
-	#if ISPTSP
-		HWSetRegionsRegister( nNumRegionsRendered );
-	#endif
-	HWSetSabPtrRegister(SabreRegionInfoStart, 0);
+    SabreRegionInfoStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+#endif
+
+    /*
+    // Convert our internal region lists into the hardware ones, and
+    // at the same time reset the internal region structures
+    */
+    /* Call optimised routine.
+     */
+#if ISPTSP
+    nNumRegionsRendered =
+#endif
+    GenerateObjectPtr(&pProjMat->RegionsRect, pViewportOrDevice->regionMask);
+
+
+    /* //////////////////////////////////////////////////
+    // Set up the virtual hardware registers
+     ////////////////////////////////////////////////// */
+
+#if !WIN32
+    /* Sabre pointer in windows builds set on virtual buffer allocation */
+#if ISPTSP
+        HWSetRegionsRegister( nNumRegionsRendered );
+#endif
+    HWSetSabPtrRegister(SabreRegionInfoStart, 0);
 #endif
 
 /*
@@ -1390,104 +1377,103 @@ extern void CALL_CONV sgl_render( const  int viewport_or_device,
 */
 
 #if PCX2 || PCX2_003
-	/* Set the texture filtering register.
-	 * Need to wait for the hardware to become available.
-	 */
-	HWSetBilinearRegister(pProjMat->eFilterType);
+    /* Set the texture filtering register.
+     * Need to wait for the hardware to become available.
+     */
+    HWSetBilinearRegister(pProjMat->eFilterType);
 #endif
 
-	/*
-	// Set the foggy would a wooing go
-	*/
-	HWSetFogRegister(pProjMat->FogShift);
-	TexasSetFogColour(pCamera->FogCol);
-	
-	/*
-	// Set the texture scale flag
-	*/
-	TexasSetCFRScale(pProjMat->n32CFRValue);
-	DPF((DBG_MESSAGE, "CFR Scale is 0x%lX", (long)pProjMat->n32CFRValue));
+    /*
+    // Set the foggy would a wooing go
+    */
+    HWSetFogRegister(pProjMat->FogShift);
+    TexasSetFogColour(pCamera->FogCol);
+
+    /*
+    // Set the texture scale flag
+    */
+    TexasSetCFRScale(pProjMat->n32CFRValue);
+    DPF((DBG_MESSAGE, "CFR Scale is 0x%lX", (long) pProjMat->n32CFRValue));
 
 
-	/*
-	// device hardwired to 0 because i don't understand what is going on
-	*/
-	DPFOO((DBG_WARNING, "Device in RN render hardwired to 0"));
-	HWGetDeviceSize(0,&x_dimension,&y_dimension);
-   	TexasSetDim(x_dimension,y_dimension);
+    /*
+    // device hardwired to 0 because i don't understand what is going on
+    */
+    DPFOO((DBG_WARNING, "Device in RN render hardwired to 0"));
+    HWGetDeviceSize(0, &x_dimension, &y_dimension);
+    TexasSetDim(x_dimension, y_dimension);
 
 
-	#if ACTUAL_RENDER_FLAG
-		/*
-			if we are speed testing on the simulator exit here without
-			doing an actual render
-		*/
-	
-		if (!fDoActualRender)
-		{
-			SGL_TIME_STOP(TOTAL_RENDER_TIME); 
-			return;
-		}
-	#endif
+#if ACTUAL_RENDER_FLAG
+    /*
+        if we are speed testing on the simulator exit here without
+        doing an actual render
+    */
 
-#ifndef MARK 
-		DPF((DBG_MESSAGE, "Calling HWStartRender"));	
+    if (!fDoActualRender) {
+        SGL_TIME_STOP(TOTAL_RENDER_TIME);
+        return;
+    }
+#endif
 
-	#if !WIN32
-		 /* If we had to use a software buffer for either sabre/texas (or both) then
-		   copy them into the correct buffer space. */
-		
-		PVROSCopyParamsIfRequired(PVRParamBuffs);
-	#endif
+#ifndef MARK
+    DPF((DBG_MESSAGE, "Calling HWStartRender"));
 
-		/************* RENDER IS STARED HERE ****************/
-		HWStartRender( swap_buffers, hDisplay, pProjMat->bDithering );
+#if !WIN32
+    /* If we had to use a software buffer for either sabre/texas (or both) then
+      copy them into the correct buffer space. */
 
-		DPF((DBG_MESSAGE, "Done HWtSartRender !!!!"));
-	#else
+   PVROSCopyParamsIfRequired(PVRParamBuffs);
+#endif
 
-		DPF((DBG_WARNING, "Pretending to Call Render......"));	
+    /************* RENDER IS STARED HERE ****************/
+    HWStartRender(swap_buffers, hDisplay, pProjMat->bDithering);
+
+    DPF((DBG_MESSAGE, "Done HWtSartRender !!!!"));
+#else
+
+    DPF((DBG_WARNING, "Pretending to Call Render......"));
 
 #endif MARK
 
-	#if DUMP_PARAMS
-		/*
-		// For Sabre/Texas Debugging, output files of the parameter
-		// store contents in little endian format
-		*/
-		if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos == 0)
-		{
-			DumpSabreAndTexas(
-			  SabreRegionInfoStart, PVRParamBuffs, pProjMat->n32CFRValue);
-		}
-	#endif
+#if DUMP_PARAMS
+    /*
+    // For Sabre/Texas Debugging, output files of the parameter
+    // store contents in little endian format
+    */
+    if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos == 0)
+    {
+        DumpSabreAndTexas(
+          SabreRegionInfoStart, PVRParamBuffs, pProjMat->n32CFRValue);
+    }
+#endif
 
-	/*
-	// Code to dump out all the hardware regsiters
-	*/
-	#define DUMP_HW_REGS 0
-	#if DUMP_HW_REGS && (WIN32 || DOS32) && DEBUG
-		{
-			FILE * outfile;
+    /*
+    // Code to dump out all the hardware regsiters
+    */
+#define DUMP_HW_REGS 0
+#if DUMP_HW_REGS && (WIN32 || DOS32) && DEBUG
+    {
+        FILE * outfile;
 
-			outfile = fopen("regdump.txt", "w");
-			
-			HWDumpRegisters(outfile);
+        outfile = fopen("regdump.txt", "w");
 
-			fclose(outfile);
-		}
-	#endif
+        HWDumpRegisters(outfile);
 
-		PVROSCallback (gHLogicalDev, CB_POST_RENDER, NULL);
+        fclose(outfile);
+    }
+#endif
+
+    PVROSCallback(gHLogicalDev, CB_POST_RENDER, NULL);
 
 
-	SGL_TIME_STOP(TOTAL_RENDER_TIME);
-	
-	/*
-	// THAT SHOULD BE ALL FOLKS.....
-	*/
+    SGL_TIME_STOP(TOTAL_RENDER_TIME);
 
-	DPF((DBG_MESSAGE,"Exiting SGL_RENDER"));
+    /*
+    // THAT SHOULD BE ALL FOLKS.....
+    */
+
+    DPF((DBG_MESSAGE, "Exiting SGL_RENDER"));
 
 }/*end of function*/
 

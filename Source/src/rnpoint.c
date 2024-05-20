@@ -78,52 +78,48 @@
  *                list node.
  *****************************************************************************/
 void RnProcessPointNode(POINT_NODE_STRUCT *pPointNode,
-  COLLISION_STATE_STRUCT *pCollisionState, TRANSFORM_STRUCT *pTransform)
-{
-	/* position of the point in world (camera-relative) coordinates: */
-	sgl_vector pointWC;
+                        COLLISION_STATE_STRUCT *pCollisionState, TRANSFORM_STRUCT *pTransform) {
+    /* position of the point in world (camera-relative) coordinates: */
+    sgl_vector pointWC;
 
-	ASSERT(pPointNode != NULL);
-	ASSERT(pCollisionState != NULL);
-	ASSERT(pTransform != NULL);
+    ASSERT(pPointNode != NULL);
+    ASSERT(pCollisionState != NULL);
+    ASSERT(pTransform != NULL);
 
-	/*
-	// ==============
-	// POINT POSITION
-	// ==============
-	*/
+    /*
+    // ==============
+    // POINT POSITION
+    // ==============
+    */
 
-	/* position in world coordinates */
-	TransformVector(pTransform, pPointNode->offset, pointWC);
+    /* position in world coordinates */
+    TransformVector(pTransform, pPointNode->offset, pointWC);
 
-	/* position in absolute coordinates */
-	TransformVector(RnGlobalGetAbsoluteCoordTransform(), 
-					pointWC, pPointNode->position);
+    /* position in absolute coordinates */
+    TransformVector(RnGlobalGetAbsoluteCoordTransform(),
+                    pointWC, pPointNode->position);
 
-	/*
-	// =========================
-	// ADD TO ACTIVE POINTS LIST
-	// =========================
-	*/
-	if ( pPointNode->collision_check &&
-	  pCollisionState->num_pnts < SGL_MAX_ACTIVE_POINTS )
-	{
-		pPointNode->bEnableCollision = TRUE;
-		pPointNode->n16Collision = FALSE;  /* not hit yet */
+    /*
+    // =========================
+    // ADD TO ACTIVE POINTS LIST
+    // =========================
+    */
+    if (pPointNode->collision_check &&
+        pCollisionState->num_pnts < SGL_MAX_ACTIVE_POINTS) {
+        pPointNode->bEnableCollision = TRUE;
+        pPointNode->n16Collision = FALSE;  /* not hit yet */
 
-		pPointNode->nCollisionStateIndex = pCollisionState->num_pnts;
+        pPointNode->nCollisionStateIndex = pCollisionState->num_pnts;
 
-		VecCopy(pointWC,
-		  pCollisionState->pnts[pCollisionState->num_pnts].pointWC);
-		pCollisionState->pnts[pCollisionState->num_pnts].p_its_node =
-		  pPointNode;
+        VecCopy(pointWC,
+                pCollisionState->pnts[pCollisionState->num_pnts].pointWC);
+        pCollisionState->pnts[pCollisionState->num_pnts].p_its_node =
+                pPointNode;
 
-		pCollisionState->num_pnts++;
-	}
-	else
-	{
-		pPointNode->nCollisionStateIndex = -1;
-	}
+        pCollisionState->num_pnts++;
+    } else {
+        pPointNode->nCollisionStateIndex = -1;
+    }
 
 } /* RnProcessPointNode */
 
@@ -152,40 +148,38 @@ void RnProcessPointNode(POINT_NODE_STRUCT *pPointNode,
  *				  transformation to determine the position in absolute
  *				  coordinates.
  *****************************************************************************/
-void RnProcessPointPosNode( POINT_POSITION_NODE_STRUCT  *pPosNode,
-							TRANSFORM_STRUCT  *pTransformState,
-							COLLISION_STATE_STRUCT  *pCollisionState )
-{
-	sgl_vector  pointWC;
-	POINT_NODE_STRUCT  *pPointNode;
+void RnProcessPointPosNode(POINT_POSITION_NODE_STRUCT *pPosNode,
+                           TRANSFORM_STRUCT *pTransformState,
+                           COLLISION_STATE_STRUCT *pCollisionState) {
+    sgl_vector pointWC;
+    POINT_NODE_STRUCT *pPointNode;
 
-	ASSERT(pPosNode != NULL);
-	ASSERT(pTransformState != NULL);
+    ASSERT(pPosNode != NULL);
+    ASSERT(pTransformState != NULL);
 
-	ASSERT( GetNamedItemType(dlUserGlobals.pNamtab, pPosNode->point_name) ==
-	  nt_point );
-	pPointNode = GetNamedItem(dlUserGlobals.pNamtab, pPosNode->point_name);
-	ASSERT(pPointNode != NULL);
+    ASSERT(GetNamedItemType(dlUserGlobals.pNamtab, pPosNode->point_name) ==
+           nt_point);
+    pPointNode = GetNamedItem(dlUserGlobals.pNamtab, pPosNode->point_name);
+    ASSERT(pPointNode != NULL);
 
-	/*
-	// Calculate the point's position in world coordinates.
-	*/
-	TransformVector(pTransformState, pPointNode->offset, pointWC);
+    /*
+    // Calculate the point's position in world coordinates.
+    */
+    TransformVector(pTransformState, pPointNode->offset, pointWC);
 
-	if (pPointNode->nCollisionStateIndex != -1)
-	{
-		ASSERT(pPointNode->nCollisionStateIndex >= 0);
-		ASSERT(pPointNode->nCollisionStateIndex < SGL_MAX_ACTIVE_POINTS);
+    if (pPointNode->nCollisionStateIndex != -1) {
+        ASSERT(pPointNode->nCollisionStateIndex >= 0);
+        ASSERT(pPointNode->nCollisionStateIndex < SGL_MAX_ACTIVE_POINTS);
 
-		VecCopy(pointWC,
-		  pCollisionState->pnts[pPointNode->nCollisionStateIndex].pointWC);
-	}
+        VecCopy(pointWC,
+                pCollisionState->pnts[pPointNode->nCollisionStateIndex].pointWC);
+    }
 
-	/*
-	// Calculate the point's position in absolute coordinates.
-	*/
-	TransformVector(RnGlobalGetAbsoluteCoordTransform(), 
-					pointWC, pPointNode->position);
+    /*
+    // Calculate the point's position in absolute coordinates.
+    */
+    TransformVector(RnGlobalGetAbsoluteCoordTransform(),
+                    pointWC, pPointNode->position);
 
 } /* RnProcessPointPosNode */
 
@@ -202,42 +196,40 @@ void RnProcessPointPosNode( POINT_POSITION_NODE_STRUCT  *pPosNode,
  *				  pSwitchNode points to a valid point switch display list node.
  *****************************************************************************/
 void RnProcessPointSwitchNode(POINT_SWITCH_NODE_STRUCT *pSwitchNode,
-  COLLISION_STATE_STRUCT *pCollisionState)
-{
-	int nEntry=0;
+                              COLLISION_STATE_STRUCT *pCollisionState) {
+    int nEntry = 0;
 
-	ASSERT(pSwitchNode != NULL);
-	ASSERT(pCollisionState != NULL);
+    ASSERT(pSwitchNode != NULL);
+    ASSERT(pCollisionState != NULL);
 
-	/*
-	// ----------------------------------------------------
-	// Look for the switch's point in the active point list
-	// ----------------------------------------------------
-	// The point will not be found if the switch is out of its scope, the point
-	// was deleted leaving the switch in place, or the point was hit during
-	// traversal of a child list that preserved the state.
-	// OPTIMISATION ? STORE THE POINT'S NAME DIRECTLY IN THE ENTRY STRUCTURE
-	*/
-	ASSERT(pSwitchNode->n16_point_name >= 0);
-	ASSERT(pSwitchNode->n16_point_name != NM_INVALID_NAME);
+    /*
+    // ----------------------------------------------------
+    // Look for the switch's point in the active point list
+    // ----------------------------------------------------
+    // The point will not be found if the switch is out of its scope, the point
+    // was deleted leaving the switch in place, or the point was hit during
+    // traversal of a child list that preserved the state.
+    // OPTIMISATION ? STORE THE POINT'S NAME DIRECTLY IN THE ENTRY STRUCTURE
+    */
+    ASSERT(pSwitchNode->n16_point_name >= 0);
+    ASSERT(pSwitchNode->n16_point_name != NM_INVALID_NAME);
 
-	while (nEntry < pCollisionState->num_pnts &&
-	  pCollisionState->pnts[nEntry].p_its_node->node_hdr.n16_name !=
-	  pSwitchNode->n16_point_name)
-	    nEntry++;
+    while (nEntry < pCollisionState->num_pnts &&
+           pCollisionState->pnts[nEntry].p_its_node->node_hdr.n16_name !=
+           pSwitchNode->n16_point_name)
+        nEntry++;
 
-	/*
-	// ------------------------------
-	// If found then switch the point
-	// ------------------------------
-	*/
-	ASSERT(nEntry <= pCollisionState->num_pnts);
+    /*
+    // ------------------------------
+    // If found then switch the point
+    // ------------------------------
+    */
+    ASSERT(nEntry <= pCollisionState->num_pnts);
 
-	if (nEntry < pCollisionState->num_pnts)
-	{
-		pCollisionState->pnts[nEntry].p_its_node->bEnableCollision =
-		  pSwitchNode->n16_enable_check;
-	}
+    if (nEntry < pCollisionState->num_pnts) {
+        pCollisionState->pnts[nEntry].p_its_node->bEnableCollision =
+                pSwitchNode->n16_enable_check;
+    }
 
 } /* RnProcessPointSwitchNode */
 
@@ -260,120 +252,110 @@ void RnProcessPointSwitchNode(POINT_SWITCH_NODE_STRUCT *pSwitchNode,
  *				  INFO) BEFORE TESTING WITH THE ACTUAL PLANES
  *****************************************************************************/
 void RnTestPointsWithTransformedPlanes(
-  const CONVEX_NODE_STRUCT *pConvexNode,
-  TRANS_PLANE_ARRAY_TYPE   pTransformedPlanes,
-  COLLISION_STATE_STRUCT   *pCollisionState,
-  sgl_bool				   *pbParentUpdatePoints)
-{
-	int	  nPoint, nPlane,nClosestPlane,
-		  nNumPlanes = pConvexNode->u16_num_planes;
-	float fDistance,fClosestDistance;
+        const CONVEX_NODE_STRUCT *pConvexNode,
+        TRANS_PLANE_ARRAY_TYPE pTransformedPlanes,
+        COLLISION_STATE_STRUCT *pCollisionState,
+        sgl_bool *pbParentUpdatePoints) {
+    int nPoint, nPlane, nClosestPlane,
+            nNumPlanes = pConvexNode->u16_num_planes;
+    float fDistance, fClosestDistance;
 
-	COLLISION_PNT_ENTRY_STRUCT *pEntry;
-	POINT_NODE_STRUCT		   *pPointNode;
+    COLLISION_PNT_ENTRY_STRUCT *pEntry;
+    POINT_NODE_STRUCT *pPointNode;
 
-	ASSERT(pTransformedPlanes != NULL);
-	ASSERT(nNumPlanes > 0);
-	ASSERT(nNumPlanes <= SGL_MAX_INTERNAL_PLANES);
-	ASSERT(pCollisionState != NULL);
-	ASSERT(pConvexNode != NULL);
-	ASSERT(pbParentUpdatePoints != NULL);
+    ASSERT(pTransformedPlanes != NULL);
+    ASSERT(nNumPlanes > 0);
+    ASSERT(nNumPlanes <= SGL_MAX_INTERNAL_PLANES);
+    ASSERT(pCollisionState != NULL);
+    ASSERT(pConvexNode != NULL);
+    ASSERT(pbParentUpdatePoints != NULL);
 
-	ASSERT(pCollisionState->num_pnts >= 0);
-	ASSERT(pCollisionState->num_pnts <= SGL_MAX_ACTIVE_POINTS);
+    ASSERT(pCollisionState->num_pnts >= 0);
+    ASSERT(pCollisionState->num_pnts <= SGL_MAX_ACTIVE_POINTS);
 
-	/*
-	// ===============
-	// TEST EACH POINT
-	// ===============
-	*/
-	for (nPoint=0; nPoint < pCollisionState->num_pnts; nPoint++)
-	{
-		pEntry = pCollisionState->pnts + nPoint;
-		
-		/*
-		// If this point is enabled for check collision
-		*/
-		if ( pEntry->p_its_node->bEnableCollision)
-		{
-			/* OPTIMISATION FOR LONG DISPLAY LISTS ? REMOVE ENTRY FROM ACTIVE
-		   	   POINTS LIST ON HIT SO WE DO NOT NEED THIS TEST */
-			/*
-			// If this point has not already hit...
-			*/
-			if (! pEntry->p_its_node->n16Collision)
-			{
-				nClosestPlane = -1;
-				fClosestDistance = -FLT_MAX;
+    /*
+    // ===============
+    // TEST EACH POINT
+    // ===============
+    */
+    for (nPoint = 0; nPoint < pCollisionState->num_pnts; nPoint++) {
+        pEntry = pCollisionState->pnts + nPoint;
 
-				/*
-				// ---------------
-				// Test each plane
-				// ---------------
-				*/
-				for (nPlane=0; nPlane < nNumPlanes; nPlane++)
-				{
-					fDistance = DotProd(pEntry->pointWC,
-					  pTransformedPlanes[nPlane].normal)
-					  - pTransformedPlanes[nPlane].d;
+        /*
+        // If this point is enabled for check collision
+        */
+        if (pEntry->p_its_node->bEnableCollision) {
+            /* OPTIMISATION FOR LONG DISPLAY LISTS ? REMOVE ENTRY FROM ACTIVE
+                  POINTS LIST ON HIT SO WE DO NOT NEED THIS TEST */
+            /*
+            // If this point has not already hit...
+            */
+            if (!pEntry->p_its_node->n16Collision) {
+                nClosestPlane = -1;
+                fClosestDistance = -FLT_MAX;
 
-					if (fDistance < 0.0f)
-					{
-						/* inside object */
-						if (fDistance > fClosestDistance)
-						{
-							fClosestDistance = fDistance;
-							nClosestPlane = nPlane;
-						}
-					}
-					else
-					{
-						/* outside object */
-						nClosestPlane = -1;
-						break;
-					}
-				}
+                /*
+                // ---------------
+                // Test each plane
+                // ---------------
+                */
+                for (nPlane = 0; nPlane < nNumPlanes; nPlane++) {
+                    fDistance = DotProd(pEntry->pointWC,
+                                        pTransformedPlanes[nPlane].normal)
+                                - pTransformedPlanes[nPlane].d;
 
-				/*
-				// ------
-				// If hit
-				// ------
-				*/
-				if (nClosestPlane != -1)
-				{
-					ASSERT(nClosestPlane >= 0);
-	
-					pPointNode = pEntry->p_its_node;
+                    if (fDistance < 0.0f) {
+                        /* inside object */
+                        if (fDistance > fClosestDistance) {
+                            fClosestDistance = fDistance;
+                            nClosestPlane = nPlane;
+                        }
+                    } else {
+                        /* outside object */
+                        nClosestPlane = -1;
+                        break;
+                    }
+                }
 
-					pPointNode->n16Collision = TRUE;
+                /*
+                // ------
+                // If hit
+                // ------
+                */
+                if (nClosestPlane != -1) {
+                    ASSERT(nClosestPlane >= 0);
 
-					/* OPTIMISATION: MAKE NM_INVALID_NAME AND SGL_ANON_OBJECT ONE
-					   AND THE SAME TO AVOID THE COMPARISON */
-	                pPointNode->n16ObjectName =
-					  pConvexNode->node_hdr.n16_name == NM_INVALID_NAME ?
-					  SGL_ANON_OBJECT : pConvexNode->node_hdr.n16_name;
-	
-					pPointNode->n16ObjectPlane = nClosestPlane;
+                    pPointNode = pEntry->p_its_node;
 
-					VecCopy(pTransformedPlanes[nClosestPlane].normal,
-					  pPointNode->normal);
+                    pPointNode->n16Collision = TRUE;
 
-					pPointNode->fD = pTransformedPlanes[nClosestPlane].d;
+                    /* OPTIMISATION: MAKE NM_INVALID_NAME AND SGL_ANON_OBJECT ONE
+                       AND THE SAME TO AVOID THE COMPARISON */
+                    pPointNode->n16ObjectName =
+                            pConvexNode->node_hdr.n16_name == NM_INVALID_NAME ?
+                            SGL_ANON_OBJECT : pConvexNode->node_hdr.n16_name;
 
-					/*
-					// UNFINISHED: Set pPointNode->pn16Path and
-					// pPointNode->n16PathLength properly.
-					*/
-					pPointNode->n16PathLength = 0;
+                    pPointNode->n16ObjectPlane = nClosestPlane;
 
-					*pbParentUpdatePoints = TRUE;
-				}
-				
-			}
-		
-		}
+                    VecCopy(pTransformedPlanes[nClosestPlane].normal,
+                            pPointNode->normal);
 
-	} /* for each point */
+                    pPointNode->fD = pTransformedPlanes[nClosestPlane].d;
+
+                    /*
+                    // UNFINISHED: Set pPointNode->pn16Path and
+                    // pPointNode->n16PathLength properly.
+                    */
+                    pPointNode->n16PathLength = 0;
+
+                    *pbParentUpdatePoints = TRUE;
+                }
+
+            }
+
+        }
+
+    } /* for each point */
 
 } /* RnTestPointsWithTransformedPlanes */
 
@@ -404,126 +386,116 @@ void RnTestPointsWithTransformedPlanes(
  *				  INFO) BEFORE TESTING WITH THE ACTUAL PLANES
  *****************************************************************************/
 void RnTestPointsWithLocalPlanes(
-  const CONVEX_NODE_STRUCT *pConvexNode,
-  TRANSFORM_STRUCT		   *pTransformState,
-  COLLISION_STATE_STRUCT   *pCollisionState,
-  sgl_bool				   *pbParentUpdatePoints)
-{
-	int		   nPoint, nPlane,nClosestPlane;
-	float	   fDistance,fClosestDistance;
-	sgl_vector pointLC,  /* current point in local coordinates */
-			   repToPoint;
+        const CONVEX_NODE_STRUCT *pConvexNode,
+        TRANSFORM_STRUCT *pTransformState,
+        COLLISION_STATE_STRUCT *pCollisionState,
+        sgl_bool *pbParentUpdatePoints) {
+    int nPoint, nPlane, nClosestPlane;
+    float fDistance, fClosestDistance;
+    sgl_vector pointLC,  /* current point in local coordinates */
+    repToPoint;
 
-	CONV_PLANE_STRUCT *pPlaneData = pConvexNode->plane_data;
-	int				  nNumPlanes = pConvexNode->u16_num_planes;
+    CONV_PLANE_STRUCT *pPlaneData = pConvexNode->plane_data;
+    int nNumPlanes = pConvexNode->u16_num_planes;
 
-	COLLISION_PNT_ENTRY_STRUCT *pEntry;
-	POINT_NODE_STRUCT		   *pPointNode;
+    COLLISION_PNT_ENTRY_STRUCT *pEntry;
+    POINT_NODE_STRUCT *pPointNode;
 
 
-	ASSERT(pConvexNode != NULL);
-	ASSERT(pPlaneData != NULL);
-	ASSERT(nNumPlanes > 0);
-	ASSERT(nNumPlanes <= SGL_MAX_INTERNAL_PLANES);
-	ASSERT(pCollisionState != NULL);
-	ASSERT(pbParentUpdatePoints != NULL);
+    ASSERT(pConvexNode != NULL);
+    ASSERT(pPlaneData != NULL);
+    ASSERT(nNumPlanes > 0);
+    ASSERT(nNumPlanes <= SGL_MAX_INTERNAL_PLANES);
+    ASSERT(pCollisionState != NULL);
+    ASSERT(pbParentUpdatePoints != NULL);
 
-	ASSERT(pCollisionState->num_pnts >= 0);
-	ASSERT(pCollisionState->num_pnts <= SGL_MAX_ACTIVE_POINTS);
+    ASSERT(pCollisionState->num_pnts >= 0);
+    ASSERT(pCollisionState->num_pnts <= SGL_MAX_ACTIVE_POINTS);
 
-	/*
-	// ===============
-	// TEST EACH POINT
-	// ===============
-	*/
-	for (nPoint=0; nPoint < pCollisionState->num_pnts; nPoint++)
-	{
-		pEntry = pCollisionState->pnts + nPoint;
-		
-		/*
-		// If this point is enabled for check collision
-		*/
-		if ( pEntry->p_its_node->bEnableCollision)
-		{
+    /*
+    // ===============
+    // TEST EACH POINT
+    // ===============
+    */
+    for (nPoint = 0; nPoint < pCollisionState->num_pnts; nPoint++) {
+        pEntry = pCollisionState->pnts + nPoint;
 
-			/* OPTIMISATION FOR LONG DISPLAY LISTS ? REMOVE ENTRY FROM ACTIVE
-		  	   POINTS LIST ON HIT SO WE DO NOT NEED THIS TEST */
-			/*
-			// If this point has not already hit...
-			*/
-			if (! pEntry->p_its_node->n16Collision)
-			{
-				InvTransformVector(pTransformState, pEntry->pointWC,pointLC);
+        /*
+        // If this point is enabled for check collision
+        */
+        if (pEntry->p_its_node->bEnableCollision) {
 
-				nClosestPlane = -1;
-				fClosestDistance = -FLT_MAX;
+            /* OPTIMISATION FOR LONG DISPLAY LISTS ? REMOVE ENTRY FROM ACTIVE
+                 POINTS LIST ON HIT SO WE DO NOT NEED THIS TEST */
+            /*
+            // If this point has not already hit...
+            */
+            if (!pEntry->p_its_node->n16Collision) {
+                InvTransformVector(pTransformState, pEntry->pointWC, pointLC);
 
-				/*
-				// ---------------
-				// Test each plane
-				// ---------------
-				*/
-				for (nPlane=0; nPlane < nNumPlanes; nPlane++)
-				{
-					VecSub(pointLC, pPlaneData[nPlane].rep_point, repToPoint);
-					fDistance = DotProd(repToPoint, pPlaneData[nPlane].normal);
-					if (fDistance < 0.0f)
-					{
-						/* inside object */
-						if (fDistance > fClosestDistance)
-						{
-							fClosestDistance = fDistance;
-							nClosestPlane = nPlane;
-						}
-					}
-					else
-					{
-						/* outside object */
-						nClosestPlane = -1;
-						break;
-					}
-				}
+                nClosestPlane = -1;
+                fClosestDistance = -FLT_MAX;
 
-				/*
-				// ------
-				// If hit
-				// ------
-				*/
-				if (nClosestPlane != -1)
-				{
-					ASSERT(nClosestPlane >= 0);
-	
-					pPointNode = pEntry->p_its_node;
+                /*
+                // ---------------
+                // Test each plane
+                // ---------------
+                */
+                for (nPlane = 0; nPlane < nNumPlanes; nPlane++) {
+                    VecSub(pointLC, pPlaneData[nPlane].rep_point, repToPoint);
+                    fDistance = DotProd(repToPoint, pPlaneData[nPlane].normal);
+                    if (fDistance < 0.0f) {
+                        /* inside object */
+                        if (fDistance > fClosestDistance) {
+                            fClosestDistance = fDistance;
+                            nClosestPlane = nPlane;
+                        }
+                    } else {
+                        /* outside object */
+                        nClosestPlane = -1;
+                        break;
+                    }
+                }
 
-					pPointNode->n16Collision = TRUE;
+                /*
+                // ------
+                // If hit
+                // ------
+                */
+                if (nClosestPlane != -1) {
+                    ASSERT(nClosestPlane >= 0);
 
-					/* OPTIMISATION: MAKE NM_INVALID_NAME AND SGL_ANON_OBJECT ONE
-					   AND THE SAME TO AVOID THE COMPARISON */
-					pPointNode->n16ObjectName =
-					  pConvexNode->node_hdr.n16_name == NM_INVALID_NAME ?
-					  SGL_ANON_OBJECT : pConvexNode->node_hdr.n16_name;
+                    pPointNode = pEntry->p_its_node;
 
-					pPointNode->n16ObjectPlane = nClosestPlane;
+                    pPointNode->n16Collision = TRUE;
 
-					VecCopy(pPlaneData[nClosestPlane].normal, pPointNode->normal);
+                    /* OPTIMISATION: MAKE NM_INVALID_NAME AND SGL_ANON_OBJECT ONE
+                       AND THE SAME TO AVOID THE COMPARISON */
+                    pPointNode->n16ObjectName =
+                            pConvexNode->node_hdr.n16_name == NM_INVALID_NAME ?
+                            SGL_ANON_OBJECT : pConvexNode->node_hdr.n16_name;
 
-					pPointNode->fD = DotProd(pPlaneData[nClosestPlane].rep_point,
-					  pPlaneData[nClosestPlane].normal);
+                    pPointNode->n16ObjectPlane = nClosestPlane;
 
-					/*
-					// UNFINISHED: Set pPointNode->pn16Path and
-					// pPointNode->n16PathLength properly.
-					*/
-					pPointNode->n16PathLength = 0;
-	
-					*pbParentUpdatePoints = TRUE;
-				}
-				
-			}
-			
-		}
+                    VecCopy(pPlaneData[nClosestPlane].normal, pPointNode->normal);
 
-	} /* for each point */
+                    pPointNode->fD = DotProd(pPlaneData[nClosestPlane].rep_point,
+                                             pPlaneData[nClosestPlane].normal);
+
+                    /*
+                    // UNFINISHED: Set pPointNode->pn16Path and
+                    // pPointNode->n16PathLength properly.
+                    */
+                    pPointNode->n16PathLength = 0;
+
+                    *pbParentUpdatePoints = TRUE;
+                }
+
+            }
+
+        }
+
+    } /* for each point */
 
 } /* RnTestPointsWithLocalPlanes */
 
@@ -546,36 +518,31 @@ void RnTestPointsWithLocalPlanes(
  *				  points (else leave it unchanged).
  *****************************************************************************/
 void RnCleanupCollisionState(COLLISION_STATE_STRUCT *pCollisionState,
-  sgl_bool *pbParentUpdatePoints)
-{
-	int nSrc,nDest=0;
+                             sgl_bool *pbParentUpdatePoints) {
+    int nSrc, nDest = 0;
 
-	ASSERT(pCollisionState != NULL);
-	ASSERT(pbParentUpdatePoints != NULL);
+    ASSERT(pCollisionState != NULL);
+    ASSERT(pbParentUpdatePoints != NULL);
 
-	ASSERT(pCollisionState->num_pnts >= 0);
-	ASSERT(pCollisionState->num_pnts <= SGL_MAX_ACTIVE_POINTS);
+    ASSERT(pCollisionState->num_pnts >= 0);
+    ASSERT(pCollisionState->num_pnts <= SGL_MAX_ACTIVE_POINTS);
 
-	for (nSrc=0; nSrc < pCollisionState->num_pnts; nSrc++)
-	{
-	  	if (pCollisionState->pnts[nSrc].p_its_node->n16Collision)
-		{
-			*pbParentUpdatePoints = TRUE;
-		}
-		else
-		{
-			/* point not hit */
+    for (nSrc = 0; nSrc < pCollisionState->num_pnts; nSrc++) {
+        if (pCollisionState->pnts[nSrc].p_its_node->n16Collision) {
+            *pbParentUpdatePoints = TRUE;
+        } else {
+            /* point not hit */
 
-			/* OPTIMISATION ? CHECK THAT nDest != nSrc FIRST ? */
-			pCollisionState->pnts[nDest] = pCollisionState->pnts[nSrc];
+            /* OPTIMISATION ? CHECK THAT nDest != nSrc FIRST ? */
+            pCollisionState->pnts[nDest] = pCollisionState->pnts[nSrc];
 
-			nDest++;
-		}
-	}
+            nDest++;
+        }
+    }
 
-	ASSERT(nDest >= 0 && nDest <= pCollisionState->num_pnts);
+    ASSERT(nDest >= 0 && nDest <= pCollisionState->num_pnts);
 
-	pCollisionState->num_pnts = nDest;  /* the number of unhit points left */
+    pCollisionState->num_pnts = nDest;  /* the number of unhit points left */
 
 } /* RnCleanupCollisionState */
 

@@ -260,7 +260,7 @@
 /*
 // define Debug Module IDs
 */
-#define MODULE_ID	MODID_RN
+#define MODULE_ID    MODID_RN
 
 
 #include "sgl_defs.h"
@@ -270,7 +270,7 @@
 #include "profile.h"
 
 #include "nm_intf.h"
-#include "dlnodes.h" 
+#include "dlnodes.h"
 
 #include "dlglobal.h"
 #include "dltransf.h"
@@ -298,7 +298,7 @@
 #include <list.h>
 #include <metrics.h>
 
-SGL_EXTERN_TIME_REF /* if we are timing code !!! */ 
+SGL_EXTERN_TIME_REF /* if we are timing code !!! */
 
 /* structure which contains shadow limiting planes */
 static SHADOW_LIM_STRUCT ShadowLimitPlanes;
@@ -319,101 +319,96 @@ static int current_trans_set_id;
  **************************************************************************/
 
 
-void InitMasterState( MASTER_STATE_STRUCT *pState)
-{
-	int i;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	/* initialise light state info to just a single grey ambient light */
-	
-	pState->pLightsState->num_lights = 0;
-	pState->pLightsState->numOnParLights = 0;
-	pState->pLightsState->numOnPntLights= 0;
-	pState->pLightsState->numOffLights= 0;
+void InitMasterState(MASTER_STATE_STRUCT *pState) {
+    int i;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    /* initialise light state info to just a single grey ambient light */
 
-	pState->pLightsState->flags = lsf_ambient_grey | 
-								  lsf_earl_grey | 
-								  lsf_dirty_smooth;
-	pState->pLightsState->ambient_colour[0] = 0.1f;
+    pState->pLightsState->num_lights = 0;
+    pState->pLightsState->numOnParLights = 0;
+    pState->pLightsState->numOnPntLights = 0;
+    pState->pLightsState->numOffLights = 0;
 
-	/*
-	// Set all the (relevant) light slots to be non shadowed
-	*/
-	for(i = 1; i < NUM_LIGHT_SLOTS; i++)
-	{
-		pState->pLightsState->light_slots[i].multi_light = FALSE;
-	}
+    pState->pLightsState->flags = lsf_ambient_grey |
+                                  lsf_earl_grey |
+                                  lsf_dirty_smooth;
+    pState->pLightsState->ambient_colour[0] = 0.1f;
 
-	/* 
-	// initialise material state to diffuse grey with no texture
-	// BUT set texture effect to affect the diffuse
-	*/
+    /*
+    // Set all the (relevant) light slots to be non shadowed
+    */
+    for (i = 1; i < NUM_LIGHT_SLOTS; i++) {
+        pState->pLightsState->light_slots[i].multi_light = FALSE;
+    }
 
-	pState->pMaterialState->diffuse[0] = 0.5f;
-	pState->pMaterialState->diffuse[1] = 0.5f;
-	pState->pMaterialState->diffuse[2] = 0.5f;
+    /*
+    // initialise material state to diffuse grey with no texture
+    // BUT set texture effect to affect the diffuse
+    */
 
-	pState->pMaterialState->specular[0] = 0.0f;
-	pState->pMaterialState->specular[1] = 0.0f;
-	pState->pMaterialState->specular[2] = 0.0f;
+    pState->pMaterialState->diffuse[0] = 0.5f;
+    pState->pMaterialState->diffuse[1] = 0.5f;
+    pState->pMaterialState->diffuse[2] = 0.5f;
 
-	pState->pMaterialState->specular_shininess = 0;
-	pState->pMaterialState->specular_shininess_float = 0.0f;
+    pState->pMaterialState->specular[0] = 0.0f;
+    pState->pMaterialState->specular[1] = 0.0f;
+    pState->pMaterialState->specular[2] = 0.0f;
 
-	pState->pMaterialState->glow[0] = 0.0f;
-	pState->pMaterialState->glow[1] = 0.0f;
-	pState->pMaterialState->glow[2] = 0.0f;
+    pState->pMaterialState->specular_shininess = 0;
+    pState->pMaterialState->specular_shininess_float = 0.0f;
 
-	pState->pMaterialState->ambient[0] = 0.5f;
-	pState->pMaterialState->ambient[1] = 0.5f;
-	pState->pMaterialState->ambient[2] = 0.5f;
+    pState->pMaterialState->glow[0] = 0.0f;
+    pState->pMaterialState->glow[1] = 0.0f;
+    pState->pMaterialState->glow[2] = 0.0f;
 
-	pState->pMaterialState->opacity = 1.0f;
+    pState->pMaterialState->ambient[0] = 0.5f;
+    pState->pMaterialState->ambient[1] = 0.5f;
+    pState->pMaterialState->ambient[2] = 0.5f;
 
-	pState->pMaterialState->texture_flags = affect_diffuse | affect_ambient;
+    pState->pMaterialState->opacity = 1.0f;
 
-	pState->pMaterialState->texas_precomp.TexAddress=0;
-	pState->pMaterialState->texas_precomp.LowWord=0;
+    pState->pMaterialState->texture_flags = affect_diffuse | affect_ambient;
 
-	/* transform state will either be an identity matrix
-	   or the inverse camera transform in the case when
-	   a camera in given in the render command */ 
-	    
-  	SetIdentityMatrix(pState->pTransformState);
+    pState->pMaterialState->texas_precomp.TexAddress = 0;
+    pState->pMaterialState->texas_precomp.LowWord = 0;
+
+    /* transform state will either be an identity matrix
+       or the inverse camera transform in the case when
+       a camera in given in the render command */
+
+    SetIdentityMatrix(pState->pTransformState);
 
 
-	/* 
-	//set quality state flags 
-	// get flags read in from sgl.ini
-	*/
-	pState->pQualityState->flags = GetDefaultQualityFlags ();
+    /*
+    //set quality state flags
+    // get flags read in from sgl.ini
+    */
+    pState->pQualityState->flags = GetDefaultQualityFlags();
 
-	/*
-	// Set the quality fog value - this is determined from the camera's
-	// setting
-	*/
-	if(pProjMat->FogOn)
-	{
-		/*
-		// By default turn on fog
-		*/
-		pState->pQualityState->flags |= qf_fog;
-	}
-	else
-	{
-		/*
-		// Else turn it off
-		*/
-		pState->pQualityState->flags &= ~qf_fog;
-	}
+    /*
+    // Set the quality fog value - this is determined from the camera's
+    // setting
+    */
+    if (pProjMat->FogOn) {
+        /*
+        // By default turn on fog
+        */
+        pState->pQualityState->flags |= qf_fog;
+    } else {
+        /*
+        // Else turn it off
+        */
+        pState->pQualityState->flags &= ~qf_fog;
+    }
 
-	/* no collision points */
+    /* no collision points */
 
-	pState->pCollisionState->num_pnts = 0;
+    pState->pCollisionState->num_pnts = 0;
 
 
-	/* initialise instance subs to zero */
+    /* initialise instance subs to zero */
 
-	pState->pInstanceSubState->num_subs=0;
+    pState->pInstanceSubState->num_subs = 0;
 
 }
 
@@ -437,36 +432,32 @@ void InitMasterState( MASTER_STATE_STRUCT *pState)
  *
  * Description    : If NECESSARY, this saves the transform state variable
  **************************************************************************/
-static INLINE void PreserveTransformState( MASTER_STATE_STRUCT *pState,
-									  int *error)
-{
-	/*
-	// Check if we need to save the transform state.
-	*/
-	if(pState->saveFlags & state_save_transform)
-	{
-		/*
-		// If there is room on the stack, copy the top of
-		// the stack, and increment the stack pointer.
-		*/
-		if(pState->pTransformState != pTransformStackLast)
-		{
-			*(pState->pTransformState + 1) = *pState->pTransformState;
-			pState->pTransformState ++;
-		}
-		/*
-		// else no room, just flag an error
-		*/
-		else if(*error == sgl_no_err)
-		{
-			*error = sgl_err_list_too_deep;
-		}
-		/*
-		// Clear the save flag regardless
-		*/
-		pState->saveFlags &= ~state_save_transform;
+static INLINE void PreserveTransformState(MASTER_STATE_STRUCT *pState,
+                                          int *error) {
+    /*
+    // Check if we need to save the transform state.
+    */
+    if (pState->saveFlags & state_save_transform) {
+        /*
+        // If there is room on the stack, copy the top of
+        // the stack, and increment the stack pointer.
+        */
+        if (pState->pTransformState != pTransformStackLast) {
+            *(pState->pTransformState + 1) = *pState->pTransformState;
+            pState->pTransformState++;
+        }
+            /*
+            // else no room, just flag an error
+            */
+        else if (*error == sgl_no_err) {
+            *error = sgl_err_list_too_deep;
+        }
+        /*
+        // Clear the save flag regardless
+        */
+        pState->saveFlags &= ~state_save_transform;
 
-	}/*end if*/
+    }/*end if*/
 }
 
 
@@ -480,36 +471,32 @@ static INLINE void PreserveTransformState( MASTER_STATE_STRUCT *pState,
  *
  * Description    : If NECESSARY, this saves the material state variable
  **************************************************************************/
-static INLINE void PreserveMaterialState( MASTER_STATE_STRUCT *pState,
-									  int *error)
-{
-	/*
-	// Check if we need to save the state.
-	*/
-	if(pState->saveFlags & state_save_material)
-	{
-		/*
-		// If there is room on the stack, copy the top of
-		// the stack, and increment the stack pointer.
-		*/
-		if(pState->pMaterialState != pMaterialStackLast)
-		{
-			*(pState->pMaterialState + 1) = *pState->pMaterialState;
-			pState->pMaterialState ++;
-		}
-		/*
-		// else no room, just flag an error
-		*/
-		else if(*error == sgl_no_err)
-		{
-			*error = sgl_err_list_too_deep;
-		}
-		/*
-		// Clear the save flag regardless
-		*/
-		pState->saveFlags &= ~state_save_material;
+static INLINE void PreserveMaterialState(MASTER_STATE_STRUCT *pState,
+                                         int *error) {
+    /*
+    // Check if we need to save the state.
+    */
+    if (pState->saveFlags & state_save_material) {
+        /*
+        // If there is room on the stack, copy the top of
+        // the stack, and increment the stack pointer.
+        */
+        if (pState->pMaterialState != pMaterialStackLast) {
+            *(pState->pMaterialState + 1) = *pState->pMaterialState;
+            pState->pMaterialState++;
+        }
+            /*
+            // else no room, just flag an error
+            */
+        else if (*error == sgl_no_err) {
+            *error = sgl_err_list_too_deep;
+        }
+        /*
+        // Clear the save flag regardless
+        */
+        pState->saveFlags &= ~state_save_material;
 
-	}/*end if*/
+    }/*end if*/
 }
 
 /**************************************************************************
@@ -522,36 +509,32 @@ static INLINE void PreserveMaterialState( MASTER_STATE_STRUCT *pState,
  *
  * Description    : If NECESSARY, this saves the lights state variable
  **************************************************************************/
-static INLINE void PreserveLightsState( MASTER_STATE_STRUCT *pState,
-									  int * error)
-{
-	/*
-	// Check if we need to save the state.
-	*/
-	if(pState->saveFlags & state_save_lights)
-	{
-		/*
-		// If there is room on the stack, copy the top of
-		// the stack, and increment the stack pointer.
-		*/
-		if(pState->pLightsState != pLightsStackLast)
-		{
-			*(pState->pLightsState + 1) = *pState->pLightsState;
-			pState->pLightsState ++;
-		}
-		/*
-		// else no room, just flag an error
-		*/
-		else if(*error == sgl_no_err)
-		{
-			*error = sgl_err_list_too_deep;
-		}
-		/*
-		// Clear the save flag regardless
-		*/
-		pState->saveFlags &= ~state_save_lights;
+static INLINE void PreserveLightsState(MASTER_STATE_STRUCT *pState,
+                                       int *error) {
+    /*
+    // Check if we need to save the state.
+    */
+    if (pState->saveFlags & state_save_lights) {
+        /*
+        // If there is room on the stack, copy the top of
+        // the stack, and increment the stack pointer.
+        */
+        if (pState->pLightsState != pLightsStackLast) {
+            *(pState->pLightsState + 1) = *pState->pLightsState;
+            pState->pLightsState++;
+        }
+            /*
+            // else no room, just flag an error
+            */
+        else if (*error == sgl_no_err) {
+            *error = sgl_err_list_too_deep;
+        }
+        /*
+        // Clear the save flag regardless
+        */
+        pState->saveFlags &= ~state_save_lights;
 
-	}/*end if*/
+    }/*end if*/
 }
 
 
@@ -565,38 +548,33 @@ static INLINE void PreserveLightsState( MASTER_STATE_STRUCT *pState,
  *
  * Description    : If NECESSARY, this saves the Quality state variable
  **************************************************************************/
-static INLINE void PreserveQualityState( MASTER_STATE_STRUCT *pState,
-									  int * error)
-{
-	/*
-	// Check if we need to save the state.
-	*/
-	if(pState->saveFlags & state_save_quality)
-	{
-		/*
-		// If there is room on the stack, copy the top of
-		// the stack, and increment the stack pointer.
-		*/
-		if(pState->pQualityState != pQualityStackLast)
-		{
-			*(pState->pQualityState + 1) = *pState->pQualityState;
-			pState->pQualityState ++;
-		}
-		/*
-		// else no room, just flag an error
-		*/
-		else if(*error == sgl_no_err)
-		{
-			*error = sgl_err_list_too_deep;
-		}
-		/*
-		// Clear the save flag regardless
-		*/
-		pState->saveFlags &= ~state_save_quality;
+static INLINE void PreserveQualityState(MASTER_STATE_STRUCT *pState,
+                                        int *error) {
+    /*
+    // Check if we need to save the state.
+    */
+    if (pState->saveFlags & state_save_quality) {
+        /*
+        // If there is room on the stack, copy the top of
+        // the stack, and increment the stack pointer.
+        */
+        if (pState->pQualityState != pQualityStackLast) {
+            *(pState->pQualityState + 1) = *pState->pQualityState;
+            pState->pQualityState++;
+        }
+            /*
+            // else no room, just flag an error
+            */
+        else if (*error == sgl_no_err) {
+            *error = sgl_err_list_too_deep;
+        }
+        /*
+        // Clear the save flag regardless
+        */
+        pState->saveFlags &= ~state_save_quality;
 
-	}/*end if*/
+    }/*end if*/
 }
-
 
 
 /**************************************************************************
@@ -609,36 +587,32 @@ static INLINE void PreserveQualityState( MASTER_STATE_STRUCT *pState,
  *
  * Description    : If NECESSARY, this saves the Collision state variable
  **************************************************************************/
-static INLINE void PreserveCollisionState( MASTER_STATE_STRUCT *pState,
-									  int * error)
-{
-	/*
-	// Check if we need to save the state.
-	*/
-	if(pState->saveFlags & state_save_collision)
-	{
-		/*
-		// If there is room on the stack, copy the top of
-		// the stack, and increment the stack pointer.
-		*/
-		if(pState->pCollisionState != pCollisionStackLast)
-		{
-			*(pState->pCollisionState + 1) = *pState->pCollisionState;
-			pState->pCollisionState ++;
-		}
-		/*
-		// else no room, just flag an error
-		*/
-		else if(*error == sgl_no_err)
-		{
-			*error = sgl_err_list_too_deep;
-		}
-		/*
-		// Clear the save flag regardless
-		*/
-		pState->saveFlags &= ~state_save_collision;
+static INLINE void PreserveCollisionState(MASTER_STATE_STRUCT *pState,
+                                          int *error) {
+    /*
+    // Check if we need to save the state.
+    */
+    if (pState->saveFlags & state_save_collision) {
+        /*
+        // If there is room on the stack, copy the top of
+        // the stack, and increment the stack pointer.
+        */
+        if (pState->pCollisionState != pCollisionStackLast) {
+            *(pState->pCollisionState + 1) = *pState->pCollisionState;
+            pState->pCollisionState++;
+        }
+            /*
+            // else no room, just flag an error
+            */
+        else if (*error == sgl_no_err) {
+            *error = sgl_err_list_too_deep;
+        }
+        /*
+        // Clear the save flag regardless
+        */
+        pState->saveFlags &= ~state_save_collision;
 
-	}/*end if*/
+    }/*end if*/
 }
 
 /**************************************************************************
@@ -651,38 +625,33 @@ static INLINE void PreserveCollisionState( MASTER_STATE_STRUCT *pState,
  *
  * Description    : If NECESSARY, this saves the Instancing  state variable
  **************************************************************************/
-static INLINE void PreserveInstanceSubState( MASTER_STATE_STRUCT *pState,
-									  int * error)
-{
-	/*
-	// Check if we need to save the state.
-	*/
-	if(pState->saveFlags & state_save_instance_subs)
-	{
-		/*
-		// If there is room on the stack, copy the top of
-		// the stack, and increment the stack pointer.
-		*/
-		if(pState->pInstanceSubState != pInstanceSubStackLast)
-		{
-			*(pState->pInstanceSubState + 1) = *pState->pInstanceSubState;
-			pState->pInstanceSubState ++;
-		}
-		/*
-		// else no room, just flag an error
-		*/
-		else if(*error == sgl_no_err)
-		{
-			*error = sgl_err_list_too_deep;
-		}
-		/*
-		// Clear the save flag regardless
-		*/
-		pState->saveFlags &= ~state_save_instance_subs;
+static INLINE void PreserveInstanceSubState(MASTER_STATE_STRUCT *pState,
+                                            int *error) {
+    /*
+    // Check if we need to save the state.
+    */
+    if (pState->saveFlags & state_save_instance_subs) {
+        /*
+        // If there is room on the stack, copy the top of
+        // the stack, and increment the stack pointer.
+        */
+        if (pState->pInstanceSubState != pInstanceSubStackLast) {
+            *(pState->pInstanceSubState + 1) = *pState->pInstanceSubState;
+            pState->pInstanceSubState++;
+        }
+            /*
+            // else no room, just flag an error
+            */
+        else if (*error == sgl_no_err) {
+            *error = sgl_err_list_too_deep;
+        }
+        /*
+        // Clear the save flag regardless
+        */
+        pState->saveFlags &= ~state_save_instance_subs;
 
-	}/*end if*/
+    }/*end if*/
 }
-
 
 
 /**************************************************************************
@@ -702,79 +671,68 @@ static INLINE void PreserveInstanceSubState( MASTER_STATE_STRUCT *pState,
  *					specified for the supplied list name.
  **************************************************************************/
 
-static LIST_NODE_STRUCT *  InstanceSubstitute(int listName, 
-				INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState)
-{
-	LIST_NODE_STRUCT * pList;
-	int				 * pSubs;
-	int i;
-	int nType;
+static LIST_NODE_STRUCT *InstanceSubstitute(int listName,
+                                            INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState) {
+    LIST_NODE_STRUCT *pList;
+    int *pSubs;
+    int i;
+    int nType;
 
-	/*
-	// handle the case if the list specified is the special NULL list.
-	// This can't be substituted.
-	*/
-	if(listName == SGL_NULL_LIST)
-	{
-		pList = NULL;
-	}
-	else
-	{
-		ASSERT(pInstanceSubState->num_subs <= SGL_MAX_INSTANCE_SUBS);
-		/*
-		// Search for a substitution
-		*/
-		pSubs = pInstanceSubState->nSubs[0];
+    /*
+    // handle the case if the list specified is the special NULL list.
+    // This can't be substituted.
+    */
+    if (listName == SGL_NULL_LIST) {
+        pList = NULL;
+    } else {
+        ASSERT(pInstanceSubState->num_subs <= SGL_MAX_INSTANCE_SUBS);
+        /*
+        // Search for a substitution
+        */
+        pSubs = pInstanceSubState->nSubs[0];
 
-		for(i = pInstanceSubState->num_subs; i !=0 ; i--, pSubs+=2)
-		{
-			/*
-			// If the list ha a replacement, make that replacement
-			// and exit the loop
-			*/
-			if(listName == pSubs[0])
-			{
-				DPF(( DBG_MESSAGE, "	Replacing List %d with %d ", 
-					   listName, pSubs[1]));
+        for (i = pInstanceSubState->num_subs; i != 0; i--, pSubs += 2) {
+            /*
+            // If the list ha a replacement, make that replacement
+            // and exit the loop
+            */
+            if (listName == pSubs[0]) {
+                DPF((DBG_MESSAGE, "	Replacing List %d with %d ",
+                        listName, pSubs[1]));
 
-				listName = pSubs[1];
-				break;
-			}
-		} /*end for*/
+                listName = pSubs[1];
+                break;
+            }
+        } /*end for*/
 
-		/*
-		// IF the found substitution (if any) is the NULL_LIST, use a NULL pointer.
-		*/
-		if(listName == SGL_NULL_LIST)
-		{
-			pList = NULL;
-		}
-		/*
-		// Else look it up in the name table. If it has been deleted, then
-		// it will return a null pointer, which is quite safe...
-		// Also check the type of the item
-		*/
-		else
-		{
-			pList= GetNamedItemAndType(dlUserGlobals.pNamtab, listName,	&nType);
+        /*
+        // IF the found substitution (if any) is the NULL_LIST, use a NULL pointer.
+        */
+        if (listName == SGL_NULL_LIST) {
+            pList = NULL;
+        }
+            /*
+            // Else look it up in the name table. If it has been deleted, then
+            // it will return a null pointer, which is quite safe...
+            // Also check the type of the item
+            */
+        else {
+            pList = GetNamedItemAndType(dlUserGlobals.pNamtab, listName, &nType);
 
-			/*
-			// if this item is NOT a list, then set the pointer to NULL
-			*/
-			if(nType != nt_list_node)
-			{
-				DPF(( DBG_MESSAGE, "The substitution is NOT a list. Skipping "));
+            /*
+            // if this item is NOT a list, then set the pointer to NULL
+            */
+            if (nType != nt_list_node) {
+                DPF((DBG_MESSAGE, "The substitution is NOT a list. Skipping "));
 
-				pList = NULL;
-			}
-		}
-		
-	}
+                pList = NULL;
+            }
+        }
 
-	return pList;
+    }
+
+    return pList;
 }
-
-
 
 
 /**************************************************************************
@@ -789,94 +747,87 @@ static LIST_NODE_STRUCT *  InstanceSubstitute(int listName,
  * Description    : Scans the substitution state to see if a replacement has been 
  *					specified for the supplied list name.
  **************************************************************************/
-static void	RnProcessInstanceSubsNode( INSTANCE_SUBS_NODE_STRUCT* pNode,
-								INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState)
+static void RnProcessInstanceSubsNode(INSTANCE_SUBS_NODE_STRUCT *pNode,
+                                      INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState) {
+    int newCount, currCount;
+    sgl_bool DidReplace;
 
-{
-	int newCount, currCount;
-	sgl_bool DidReplace;
+    /*
+    // Pointer to each of the new substitions, and a pointer to the current
+    // subs
+    */
+    sgl_int16 *pNew;
+    int *pCurr;
 
-	/*
-	// Pointer to each of the new substitions, and a pointer to the current
-	// subs
-	*/
-	sgl_int16 * pNew;
-	int * pCurr;
+    int newOrig, newReplacement;
 
-	int newOrig, newReplacement;
+    ASSERT(pNode->node_hdr.n16_node_type == nt_inst_subs);
+    ASSERT(pNode->num_subs <= SGL_MAX_INSTANCE_PARAMS);
 
-	ASSERT(pNode->node_hdr.n16_node_type == nt_inst_subs);
-	ASSERT(pNode->num_subs <= SGL_MAX_INSTANCE_PARAMS);
+    ASSERT(pInstanceSubState->num_subs <= SGL_MAX_INSTANCE_SUBS);
 
-	ASSERT(pInstanceSubState->num_subs <= SGL_MAX_INSTANCE_SUBS);
-	
-	/*
-	// Step through each of the new substitutions, applying each
-	// to all the current substitutions
-	*/
-	pNew = pNode->param_list[0];
-	for(newCount = pNode->num_subs; newCount != 0 ; newCount--, pNew+=2)
-	{
-		/*
-		// remember if we have "added" this substitution to the 
-		// the replacement state
-		*/
-		DidReplace = FALSE;
+    /*
+    // Step through each of the new substitutions, applying each
+    // to all the current substitutions
+    */
+    pNew = pNode->param_list[0];
+    for (newCount = pNode->num_subs; newCount != 0; newCount--, pNew += 2) {
+        /*
+        // remember if we have "added" this substitution to the
+        // the replacement state
+        */
+        DidReplace = FALSE;
 
-		/*
-		// Get the list and its replacement
-		*/
-		newOrig 	   = pNew[0];
-		newReplacement = pNew[1];
+        /*
+        // Get the list and its replacement
+        */
+        newOrig = pNew[0];
+        newReplacement = pNew[1];
 
-		/*
-		// Step through the replacement state
-		*/
-		pCurr = pInstanceSubState->nSubs[0];
-		for(currCount = pInstanceSubState->num_subs; currCount != 0 ; 
-													 currCount--, pCurr+=2)
-		{
-			/*
-			// LET  A->B be the current one in the state, and our new one
-			// is C->D...    if C==A, then change A->B to A->D
-			*/
-			if(newOrig == pCurr[0])
-			{
-				pCurr[1] = newReplacement;
+        /*
+        // Step through the replacement state
+        */
+        pCurr = pInstanceSubState->nSubs[0];
+        for (currCount = pInstanceSubState->num_subs; currCount != 0;
+             currCount--, pCurr += 2) {
+            /*
+            // LET  A->B be the current one in the state, and our new one
+            // is C->D...    if C==A, then change A->B to A->D
+            */
+            if (newOrig == pCurr[0]) {
+                pCurr[1] = newReplacement;
 
-				/*
-				// OK we are replacing A->B with A->C, so mark that we dont need
-				// to actually add A->C
-				*/
-				DidReplace = TRUE;
-			}
-			/*
-			// ELSE is B==C, then change A->B to A->D
-			*/
-			else if(newOrig == pCurr[1])
-			{
-				pCurr[1] = newReplacement;
-			}
+                /*
+                // OK we are replacing A->B with A->C, so mark that we dont need
+                // to actually add A->C
+                */
+                DidReplace = TRUE;
+            }
+                /*
+                // ELSE is B==C, then change A->B to A->D
+                */
+            else if (newOrig == pCurr[1]) {
+                pCurr[1] = newReplacement;
+            }
 
-		}/*end for currCount*/
+        }/*end for currCount*/
 
-		/*
-		// Have we effectively added this substitution to the state list?
-		// and if not do we have room?
-		*/
-		if( !DidReplace && (pInstanceSubState->num_subs <SGL_MAX_INSTANCE_SUBS))
-		{
-			/*
-			// Add it
-			*/
-			pCurr[0] = newOrig;
-			pCurr[1] = newReplacement;
+        /*
+        // Have we effectively added this substitution to the state list?
+        // and if not do we have room?
+        */
+        if (!DidReplace && (pInstanceSubState->num_subs < SGL_MAX_INSTANCE_SUBS)) {
+            /*
+            // Add it
+            */
+            pCurr[0] = newOrig;
+            pCurr[1] = newReplacement;
 
-			pInstanceSubState->num_subs ++;
+            pInstanceSubState->num_subs++;
 
-		}/*if add new sub to sub state */
+        }/*if add new sub to sub state */
 
-	}/*end for newsubs newCount*/
+    }/*end for newsubs newCount*/
 
 }
 
@@ -894,53 +845,48 @@ static void	RnProcessInstanceSubsNode( INSTANCE_SUBS_NODE_STRUCT* pNode,
  *					recursively descending any contianed non preserving lists.
  **************************************************************************/
 
-static void	RnConcatNPListTransforms(const LIST_NODE_STRUCT *pList,
-									TRANSFORM_STRUCT  *pTransform)
-{
-	const DL_NODE_STRUCT * pNode;
+static void RnConcatNPListTransforms(const LIST_NODE_STRUCT *pList,
+                                     TRANSFORM_STRUCT *pTransform) {
+    const DL_NODE_STRUCT *pNode;
 
-	/*
-	// Get the first element in the list
-	*/
-	pNode = pList->pfirst;
+    /*
+    // Get the first element in the list
+    */
+    pNode = pList->pfirst;
 
-	while(pNode != NULL)
-	{
-		/*
-		// If this is a transformation, then contatenate it with the
-		// one we've already got
-		*/
-		if(pNode->n16_node_type == nt_transform)
-		{
-			TransformMultiply(pTransform, 
-					&((TRANSFORM_NODE_STRUCT*)pNode)->transform,
-					pTransform);
+    while (pNode != NULL) {
+        /*
+        // If this is a transformation, then contatenate it with the
+        // one we've already got
+        */
+        if (pNode->n16_node_type == nt_transform) {
+            TransformMultiply(pTransform,
+                              &((TRANSFORM_NODE_STRUCT *) pNode)->transform,
+                              pTransform);
 
-		}
-		/*
-		// NOTE! if this node is a list  which does not preserve 
-		// state, then we should then process it  (and any of NP 
-		// decendants as well)
-		//
-		// Ignore the list if we arent to process it.
-		*/
-		else if(pNode->n16_node_type == nt_list_node)
-		{
-			LIST_NODE_STRUCT * pList2 = (LIST_NODE_STRUCT *)pNode;
+        }
+            /*
+            // NOTE! if this node is a list  which does not preserve
+            // state, then we should then process it  (and any of NP
+            // decendants as well)
+            //
+            // Ignore the list if we arent to process it.
+            */
+        else if (pNode->n16_node_type == nt_list_node) {
+            LIST_NODE_STRUCT *pList2 = (LIST_NODE_STRUCT *) pNode;
 
-			if(!(pList2->flags & lf_preserve_state) &&
-				(pList2->flags & lf_process_list))
-			{
-				RnConcatNPListTransforms(pList2, pTransform);
-			}
-		}/*end if*/
+            if (!(pList2->flags & lf_preserve_state) &&
+                (pList2->flags & lf_process_list)) {
+                RnConcatNPListTransforms(pList2, pTransform);
+            }
+        }/*end if*/
 
-		/*
-		// Move to the next one
-		*/
-		pNode = pNode->next_node;
-		
-	}/*end while*/
+        /*
+        // Move to the next one
+        */
+        pNode = pNode->next_node;
+
+    }/*end while*/
 
 }
 
@@ -964,137 +910,128 @@ static void	RnConcatNPListTransforms(const LIST_NODE_STRUCT *pList,
  *					The routine is used as part of the positioning of lights
  *					and cameras.
  **************************************************************************/
-static void	RnGetTransformToNode(const DL_NODE_STRUCT * pNode,
-								 const LIST_NODE_STRUCT * pList,
-					   TRANSFORM_STRUCT *pTransform)
+static void RnGetTransformToNode(const DL_NODE_STRUCT *pNode,
+                                 const LIST_NODE_STRUCT *pList,
+                                 TRANSFORM_STRUCT *pTransform) {
+    TRANSFORM_STRUCT LocalTransform; /*transform for current list*/
 
-{
-	TRANSFORM_STRUCT LocalTransform; /*transform for current list*/
+    /*
+    // Pointer to the node we stop at in the current list
+    */
+    const DL_NODE_STRUCT *pLastToDo;
 
-	/*
-	// Pointer to the node we stop at in the current list
-	*/
-	const DL_NODE_STRUCT * pLastToDo;
+    /*
+    // As a minor optimisation, remember if a list contains no
+    // transforms. This is also useful to keep a record of whether
+    // we have to re-initialise the local transform structure. If
+    // it didn't get used in the last pass, then there is no
+    // point in re-initialising it again!
+    */
+    sgl_bool TransformInThisList;
 
-	/*
-	// As a minor optimisation, remember if a list contains no
-	// transforms. This is also useful to keep a record of whether
-	// we have to re-initialise the local transform structure. If
-	// it didn't get used in the last pass, then there is no
-	// point in re-initialising it again!
-	*/
-	sgl_bool TransformInThisList;
+    ASSERT(pNode != NULL);
+    ASSERT(pList != NULL);
+    ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
 
-	ASSERT(pNode!=NULL);
-	ASSERT(pList!=NULL);
-	ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
+    /*
+    // Initialise the positioning transform, and
+    */
+    SetIdentityMatrix(pTransform);
 
-	/*
-	// Initialise the positioning transform, and
-	*/
-	SetIdentityMatrix(pTransform);
+    /*
+    // Force us to initialise the local transform
+    */
+    TransformInThisList = TRUE;
 
-	/*
-	// Force us to initialise the local transform
-	*/
-	TransformInThisList = TRUE;
-
-	/*
-	// set the last to do to be the passed in node.
-	*/
-	pLastToDo = pNode;
+    /*
+    // set the last to do to be the passed in node.
+    */
+    pLastToDo = pNode;
 
 
-	/*
-	// While we still have lists left
-	*/
-	while(pList != NULL)
-	{
-		/*
-		// Initialise the transformations for the local list, but
-		// if it wasn't used in the last list, then it is already
-		// intialised.
-		*/
-		if(TransformInThisList)
-		{
-			SetIdentityMatrix(&LocalTransform);
-			TransformInThisList = FALSE;
-		}
-		
-		/*
-		// Use pNode to step through the contents of the current list
-		*/
-		pNode = pList->pfirst;
-		while(pNode != pLastToDo)
-		{
-			/*
-			// Whe should NOT be able to reach the end of the list
-			*/
-			ASSERT(pNode != NULL);
+    /*
+    // While we still have lists left
+    */
+    while (pList != NULL) {
+        /*
+        // Initialise the transformations for the local list, but
+        // if it wasn't used in the last list, then it is already
+        // intialised.
+        */
+        if (TransformInThisList) {
+            SetIdentityMatrix(&LocalTransform);
+            TransformInThisList = FALSE;
+        }
 
-			/*
-			// examine the type of this node..
-			// If its a transformation, combine it with the 
-			// the current local. 
-			// Note that the order is very important.
-			*/
-			if(pNode->n16_node_type == nt_transform)
-			{
-				TransformMultiply(&LocalTransform, 
-					&((TRANSFORM_NODE_STRUCT*)pNode)->transform,
-					&LocalTransform);
+        /*
+        // Use pNode to step through the contents of the current list
+        */
+        pNode = pList->pfirst;
+        while (pNode != pLastToDo) {
+            /*
+            // Whe should NOT be able to reach the end of the list
+            */
+            ASSERT(pNode != NULL);
 
-				TransformInThisList = TRUE;
-					
-			}
-			/*
-			// NOTE! if this node is a list  which does not preserve 
-			// state, then we should then process it  (and any of NP 
-			// decendants as well)
-			// NOTE we must ignore lists that aren't to be processed.
-			*/
-			else if(pNode->n16_node_type == nt_list_node)
-			{
-				LIST_NODE_STRUCT * pList = (LIST_NODE_STRUCT *)pNode;
+            /*
+            // examine the type of this node..
+            // If its a transformation, combine it with the
+            // the current local.
+            // Note that the order is very important.
+            */
+            if (pNode->n16_node_type == nt_transform) {
+                TransformMultiply(&LocalTransform,
+                                  &((TRANSFORM_NODE_STRUCT *) pNode)->transform,
+                                  &LocalTransform);
 
-				if(!(pList->flags & lf_preserve_state) &&
-					(pList->flags & lf_process_list))
-				{
-					RnConcatNPListTransforms(pList, &LocalTransform);
-					
-					/*
-					// Assume there was a transform in this list... it
-					// won't hurt it there wasn't
-					*/
-					TransformInThisList = TRUE;
-				}
-			}/*end if*/
-			
-			/*
-			// Move to the next one
-			*/
-			pNode = pNode->next_node;
+                TransformInThisList = TRUE;
 
-		}/*end while processing current list*/
+            }
+                /*
+                // NOTE! if this node is a list  which does not preserve
+                // state, then we should then process it  (and any of NP
+                // decendants as well)
+                // NOTE we must ignore lists that aren't to be processed.
+                */
+            else if (pNode->n16_node_type == nt_list_node) {
+                LIST_NODE_STRUCT *pList = (LIST_NODE_STRUCT *) pNode;
 
-		/*
-		// combine the local transform with the overall one.
-		//
-		// Again note that the order is very important
-		*/
-		if(TransformInThisList)
-		{
-			TransformMultiply(&LocalTransform, pTransform, pTransform);
-		}
+                if (!(pList->flags & lf_preserve_state) &&
+                    (pList->flags & lf_process_list)) {
+                    RnConcatNPListTransforms(pList, &LocalTransform);
 
-		/*
-		// Go up to this lists parent, and mark that the list we were on,
-		// is the one to stop on the next pass.
-		*/
-		pLastToDo = (DL_NODE_STRUCT *)pList;
-		pList = pList->pparent;
+                    /*
+                    // Assume there was a transform in this list... it
+                    // won't hurt it there wasn't
+                    */
+                    TransformInThisList = TRUE;
+                }
+            }/*end if*/
 
-	}/*end while lists left*/
+            /*
+            // Move to the next one
+            */
+            pNode = pNode->next_node;
+
+        }/*end while processing current list*/
+
+        /*
+        // combine the local transform with the overall one.
+        //
+        // Again note that the order is very important
+        */
+        if (TransformInThisList) {
+            TransformMultiply(&LocalTransform, pTransform, pTransform);
+        }
+
+        /*
+        // Go up to this lists parent, and mark that the list we were on,
+        // is the one to stop on the next pass.
+        */
+        pLastToDo = (DL_NODE_STRUCT *) pList;
+        pList = pList->pparent;
+
+    }/*end while lists left*/
 
 }/*end function*/
 
@@ -1112,41 +1049,40 @@ static void	RnGetTransformToNode(const DL_NODE_STRUCT * pNode,
  *					that the scene can be rendered relative to the camera's
  *					viewpoint.
  **************************************************************************/
-static void	RnGetCameraTransform(const CAMERA_NODE_STRUCT * pCamera,
-								   TRANSFORM_STRUCT *pTransform)
-{
-	/*
-	// pointer to the cameras parent list
-	*/
-	LIST_NODE_STRUCT * pList;
+static void RnGetCameraTransform(const CAMERA_NODE_STRUCT *pCamera,
+                                 TRANSFORM_STRUCT *pTransform) {
+    /*
+    // pointer to the cameras parent list
+    */
+    LIST_NODE_STRUCT *pList;
 
-	ASSERT(pCamera->node_hdr.n16_node_type == nt_camera);
-	
-	/*
-	//Get the cameras parent
-	*/	
-	pList = pCamera->pparent;
+    ASSERT(pCamera->node_hdr.n16_node_type == nt_camera);
 
-	ASSERT(pList!=NULL);
-	ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
+    /*
+    //Get the cameras parent
+    */
+    pList = pCamera->pparent;
 
-	/*
-	// Get the cameras position etc
-	*/
-	RnGetTransformToNode( (DL_NODE_STRUCT *) pCamera,  pList,  pTransform);
-	RnGlobalSetAbsoluteCoordTransform (pTransform);
+    ASSERT(pList != NULL);
+    ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
 
-	/*
-	// Descale and invert the matrix
-	*/
-	TransformDescale(pTransform);
-	TransformInvert(pTransform);
+    /*
+    // Get the cameras position etc
+    */
+    RnGetTransformToNode((DL_NODE_STRUCT *) pCamera, pList, pTransform);
+    RnGlobalSetAbsoluteCoordTransform(pTransform);
+
+    /*
+    // Descale and invert the matrix
+    */
+    TransformDescale(pTransform);
+    TransformInvert(pTransform);
 
 
 } /* end for */
 
 
-	   
+
 /**************************************************************************
  * Function Name  : RnGetLightTransform   --LOCAL ONLY ---
  * Inputs         : pLightPosNode  - pointer to the lights position node.
@@ -1159,32 +1095,31 @@ static void	RnGetCameraTransform(const CAMERA_NODE_STRUCT * pCamera,
  * Description    : Computes the positioning info for a light based on
  *					its position node.
  **************************************************************************/
-static void	RnGetLightTransform(const LIGHT_POS_NODE_STRUCT * pLightPosNode,
-									  TRANSFORM_STRUCT *pLightTransform)
-{
-	/*
-	// pointer to the  parent list
-	*/
-	LIST_NODE_STRUCT * pList;
+static void RnGetLightTransform(const LIGHT_POS_NODE_STRUCT *pLightPosNode,
+                                TRANSFORM_STRUCT *pLightTransform) {
+    /*
+    // pointer to the  parent list
+    */
+    LIST_NODE_STRUCT *pList;
 
-	ASSERT(pLightPosNode->node_hdr.n16_node_type == nt_light_pos);
-	
-	/*
-	//Get the position nodes parent
-	*/	
-	pList = pLightPosNode->pparent_list;
+    ASSERT(pLightPosNode->node_hdr.n16_node_type == nt_light_pos);
 
-	ASSERT(pList!=NULL);
-	ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
+    /*
+    //Get the position nodes parent
+    */
+    pList = pLightPosNode->pparent_list;
 
-	/*
-	// Get the position etc
-	*/
-	RnGetTransformToNode( (DL_NODE_STRUCT *) pLightPosNode,  pList,  
-						  pLightTransform);
+    ASSERT(pList != NULL);
+    ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
+
+    /*
+    // Get the position etc
+    */
+    RnGetTransformToNode((DL_NODE_STRUCT *) pLightPosNode, pList,
+                         pLightTransform);
 
 } /* end for */
-	   
+
 
 /**************************************************************************
  * Function Name  : RnGetPointTransform   --LOCAL ONLY ---
@@ -1200,30 +1135,29 @@ static void	RnGetLightTransform(const LIGHT_POS_NODE_STRUCT * pLightPosNode,
  *					This is identical to RnGetLightTransform, but for position/
  *					collision points instead of lights.
  **************************************************************************/
-static void	RnGetPointTransform(
-  const POINT_POSITION_NODE_STRUCT *pPointPosNode,
-  TRANSFORM_STRUCT				   *pPointTransform)
-{
-	/*
-	// pointer to the parent list
-	*/
-	LIST_NODE_STRUCT *pList;
+static void RnGetPointTransform(
+        const POINT_POSITION_NODE_STRUCT *pPointPosNode,
+        TRANSFORM_STRUCT *pPointTransform) {
+    /*
+    // pointer to the parent list
+    */
+    LIST_NODE_STRUCT *pList;
 
-	ASSERT(pPointPosNode->node_hdr.n16_node_type == nt_point_pos);
-	
-	/*
-	//Get the position nodes parent
-	*/	
-	pList = pPointPosNode->pparent_list;
+    ASSERT(pPointPosNode->node_hdr.n16_node_type == nt_point_pos);
 
-	ASSERT(pList != NULL);
-	ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
+    /*
+    //Get the position nodes parent
+    */
+    pList = pPointPosNode->pparent_list;
 
-	/*
-	// Get the position etc
-	*/
-	RnGetTransformToNode( (DL_NODE_STRUCT *) pPointPosNode, pList,
-						  pPointTransform);
+    ASSERT(pList != NULL);
+    ASSERT(pList->node_hdr.n16_node_type == nt_list_node);
+
+    /*
+    // Get the position etc
+    */
+    RnGetTransformToNode((DL_NODE_STRUCT *) pPointPosNode, pList,
+                         pPointTransform);
 }
 
 
@@ -1242,383 +1176,358 @@ static void	RnGetPointTransform(
  *					works out what cached textures are required.
  * 
  **************************************************************************/
-static void RnTextureCacheTraverse(const  LIST_NODE_STRUCT * pList, 
-									void ** ppCachedTexture,
-									MASTER_STATE_STRUCT *pState,
-									 int depthRemaining)
-{
-	/*
-	// node pointer used to traverse the list
-	*/
-	DL_NODE_STRUCT * pNode;
+static void RnTextureCacheTraverse(const LIST_NODE_STRUCT *pList,
+                                   void **ppCachedTexture,
+                                   MASTER_STATE_STRUCT *pState,
+                                   int depthRemaining) {
+    /*
+    // node pointer used to traverse the list
+    */
+    DL_NODE_STRUCT *pNode;
 
-	/*
-	// So that we can preserve the state when entering
-	// child lists, we need to be able to copy the state
-	// variable pointers
-	*/
-	MASTER_STATE_STRUCT localState;
+    /*
+    // So that we can preserve the state when entering
+    // child lists, we need to be able to copy the state
+    // variable pointers
+    */
+    MASTER_STATE_STRUCT localState;
 
-	/*
-	// The current cached texture being used
-	*/
-	void * pLocalCachedTexture;
+    /*
+    // The current cached texture being used
+    */
+    void *pLocalCachedTexture;
 
-	/*
-	// check recursion depth param
-	*/
-	ASSERT((depthRemaining >= 0)&&(depthRemaining < 1000))
+    /*
+    // check recursion depth param
+    */
+    ASSERT((depthRemaining >= 0) && (depthRemaining < 1000))
 
-	/*
-	// step through the contents of the list
-	*/
-	pNode = pList->pfirst;
-	while(pNode!= NULL)
-	{
-		ASSERT(pNode->n16_node_type >= 0)
-		ASSERT(pNode->n16_node_type < nt_node_limit)
+    /*
+    // step through the contents of the list
+    */
+    pNode = pList->pfirst;
+    while (pNode != NULL) {
+        ASSERT(pNode->n16_node_type >= 0)
+        ASSERT(pNode->n16_node_type < nt_node_limit)
 
-		/*
-		// determine what type of node this is, and
-		// process accordingly
-		*/
-		switch(pNode->n16_node_type)
-		{
+        /*
+        // determine what type of node this is, and
+        // process accordingly
+        */
+        switch (pNode->n16_node_type) {
 
-			/* /////////////
-			// Handle List, Instance, LOD Nodes...
-			///////////// */
-			case nt_list_node:
-			case nt_instance:
-			case nt_lod:
-			{
-				LIST_NODE_STRUCT *pChildList= NULL;
-				int	childName;
-				
-				DPF((DBG_MESSAGE,"Found list, instance, or LOD node"));
+            /* /////////////
+            // Handle List, Instance, LOD Nodes...
+            ///////////// */
+            case nt_list_node:
+            case nt_instance:
+            case nt_lod: {
+                LIST_NODE_STRUCT *pChildList = NULL;
+                int childName;
 
-				/*
-				// get the pointer to the list node we want, depending
-				// on the type of this node
-				*/
-				switch(pNode->n16_node_type)
-				{
-					/*////////
-					// If a list node, simply get the pointer to the
-					// child list
-					//////// */
-					case nt_list_node:
-					{
-						pChildList = (LIST_NODE_STRUCT *)pNode;
-						break;
-					}
+                DPF((DBG_MESSAGE, "Found list, instance, or LOD node"));
 
-					/*////////
-					// For the instance node, get the name of the instance,
-					// and perform a substitution.
-					//////// */
-					case nt_instance:
-					{
-						childName = ((INSTANCE_NODE_STRUCT*)pNode)->referenced_list;
+                /*
+                // get the pointer to the list node we want, depending
+                // on the type of this node
+                */
+                switch (pNode->n16_node_type) {
+                    /*////////
+                    // If a list node, simply get the pointer to the
+                    // child list
+                    //////// */
+                    case nt_list_node: {
+                        pChildList = (LIST_NODE_STRUCT *) pNode;
+                        break;
+                    }
 
-						/*
-						// Perform an instance substitution
-						*/
-						pChildList = InstanceSubstitute(childName, 
-											pState->pInstanceSubState);
+                        /*////////
+                        // For the instance node, get the name of the instance,
+                        // and perform a substitution.
+                        //////// */
+                    case nt_instance: {
+                        childName = ((INSTANCE_NODE_STRUCT *) pNode)->referenced_list;
 
-						break;
-					}
+                        /*
+                        // Perform an instance substitution
+                        */
+                        pChildList = InstanceSubstitute(childName,
+                                                        pState->pInstanceSubState);
 
-					/*////
-					//Level Of Detail Node
-					//// */
-					case nt_lod:
-					{
-						/*
-						// Get the name of the Level of Detail List to
-						// to use
-						*/
-						childName = RnProcessLodNode((LOD_NODE_STRUCT*)pNode,
-													pState->pTransformState);
+                        break;
+                    }
 
-						/*
-						// Perform an instance substitution
-						*/
-						pChildList = InstanceSubstitute(childName, 
-											pState->pInstanceSubState);
+                        /*////
+                        //Level Of Detail Node
+                        //// */
+                    case nt_lod: {
+                        /*
+                        // Get the name of the Level of Detail List to
+                        // to use
+                        */
+                        childName = RnProcessLodNode((LOD_NODE_STRUCT *) pNode,
+                                                     pState->pTransformState);
 
-						break;
-					}
+                        /*
+                        // Perform an instance substitution
+                        */
+                        pChildList = InstanceSubstitute(childName,
+                                                        pState->pInstanceSubState);
 
-					/* ////
-					//Something to remove warnings of unitialised pChildList
-					//// */
-					default:
-					{
-						ASSERT(FALSE);
-						break;
-					}
-				}/*end switch*/
+                        break;
+                    }
+
+                        /* ////
+                        //Something to remove warnings of unitialised pChildList
+                        //// */
+                    default: {
+                        ASSERT(FALSE);
+                        break;
+                    }
+                }/*end switch*/
 
 
-				/*
-				// If we have been given the "Null list" (eg in the level of
-				// detail etc) OR, we are to skip this list, then do nothing.
-				*/
-				if((pChildList == NULL)|| !(pChildList->flags & lf_process_list))
-				{
-					/* DO NOTHING*/
-				}
-				/*
-				// else flag a "too deep" error if we are at the max depth allowed
-				*/
-				else if(depthRemaining == 0)
-				{
-					/* DO NOTHING*/
-				}
-				/*
-				// Else allow the recursion - choose either the
-				// state preserving path, or not...
-				//
-				// if Save State, copy the existing state var, and update
-				// flags that all must be saved.
-				*/
-				else if(pChildList->flags & lf_preserve_state)
-				{
-					localState = *pState;
-					localState.saveFlags = ALL_STATE_SAVE_FLAGS;
+                /*
+                // If we have been given the "Null list" (eg in the level of
+                // detail etc) OR, we are to skip this list, then do nothing.
+                */
+                if ((pChildList == NULL) || !(pChildList->flags & lf_process_list)) {
+                    /* DO NOTHING*/
+                }
+                    /*
+                    // else flag a "too deep" error if we are at the max depth allowed
+                    */
+                else if (depthRemaining == 0) {
+                    /* DO NOTHING*/
+                }
+                    /*
+                    // Else allow the recursion - choose either the
+                    // state preserving path, or not...
+                    //
+                    // if Save State, copy the existing state var, and update
+                    // flags that all must be saved.
+                    */
+                else if (pChildList->flags & lf_preserve_state) {
+                    localState = *pState;
+                    localState.saveFlags = ALL_STATE_SAVE_FLAGS;
 
-					/*
-					// Make a copy of the current cached texture
-					// pointer. It MAY get modified
-					*/
-					pLocalCachedTexture  = *ppCachedTexture;
+                    /*
+                    // Make a copy of the current cached texture
+                    // pointer. It MAY get modified
+                    */
+                    pLocalCachedTexture = *ppCachedTexture;
 
-					/*
-					// We dont need to set the scoping
-					//
-					//localState.pScopingList = pChildList;
-					*/
+                    /*
+                    // We dont need to set the scoping
+                    //
+                    //localState.pScopingList = pChildList;
+                    */
 
-					/*
-					// recurse into this list
-					*/
-					RnTextureCacheTraverse(pChildList,
-										&pLocalCachedTexture,
-										&localState,
-										depthRemaining - 1);
+                    /*
+                    // recurse into this list
+                    */
+                    RnTextureCacheTraverse(pChildList,
+                                           &pLocalCachedTexture,
+                                           &localState,
+                                           depthRemaining - 1);
 
-				}
-				/*
-				// Else DONT save the state
-				*/
-				else
-				{
-					RnTextureCacheTraverse(pChildList,
-										   ppCachedTexture,
-										   pState,
-										   depthRemaining - 1);
+                }
+                    /*
+                    // Else DONT save the state
+                    */
+                else {
+                    RnTextureCacheTraverse(pChildList,
+                                           ppCachedTexture,
+                                           pState,
+                                           depthRemaining - 1);
 
-				} /*end else*/
+                } /*end else*/
 
-				
-				break;
-			}
+
+                break;
+            }
 
 
 
 
-			/* /////////////
-			// Handle the Instance Substitution Node.
-			///////////// */
-			case nt_inst_subs:
-			{
-				int error;
-				PreserveInstanceSubState(pState, &error);
+                /* /////////////
+                // Handle the Instance Substitution Node.
+                ///////////// */
+            case nt_inst_subs: {
+                int error;
+                PreserveInstanceSubState(pState, &error);
 
-				RnProcessInstanceSubsNode((INSTANCE_SUBS_NODE_STRUCT*)pNode,
-								pState->pInstanceSubState);
-				break;
-			}
-
-
-			/* /////////////
-			// Handle Transformations
-			///////////// */
-			case nt_transform:
-			{
-				int error;
-				DPF((DBG_MESSAGE,"Found Transform node"));
-				
-				/*
-				// First preserve the transform state if necessary
-				*/
-				PreserveTransformState(pState, &error);
-
-				/*
-				// Update the transformation (it is assumed this
-				// clears the local projection matrix valid flag)
-				*/
-				RnProcessTransformNode((TRANSFORM_NODE_STRUCT *)pNode,
-									pState->pTransformState);
-					
-				/*
-				// No need for the following
-				*/
-				/* we need to set the lights' dirty position flag */
-				/*pState->pLightsState->flags |= lsf_dirty_position;*/
-				
-				break;
-			}/*end transform case*/
+                RnProcessInstanceSubsNode((INSTANCE_SUBS_NODE_STRUCT *) pNode,
+                                          pState->pInstanceSubState);
+                break;
+            }
 
 
-			/* /////////////
-			// Handle the primitive types.
-			///////////// */
-			case nt_convex:
-			{
-				CONVEX_NODE_STRUCT * pConvex = (CONVEX_NODE_STRUCT *)pNode;
+                /* /////////////
+                // Handle Transformations
+                ///////////// */
+            case nt_transform: {
+                int error;
+                DPF((DBG_MESSAGE, "Found Transform node"));
 
-				DPF((DBG_MESSAGE,"Found Convex  node"));
-				/*
-				// Pass the convex node pointer and entire state pointers in
-				// cause we need virtually the lot anyway.
-				//
-				// The value of parentUpdatePoints is set TRUE if a collision
-				// occurs with this object.  This value is passed back to the
-				// parent list which may have to remove the hit point from its
-				// list of active points.
-				*/
-				RnCTPreProcessConvexNode(pConvex, pState, *ppCachedTexture);
-				
-				break;
-			}
+                /*
+                // First preserve the transform state if necessary
+                */
+                PreserveTransformState(pState, &error);
 
-			case nt_mesh:
-			{
-				DPF ((DBG_VERBOSE,"Found mesh node"));
-				RnCTPreProcessMeshNode ((const MESH_NODE_STRUCT *) pNode, pState,
-											   *ppCachedTexture);
-				break;
-			}
+                /*
+                // Update the transformation (it is assumed this
+                // clears the local projection matrix valid flag)
+                */
+                RnProcessTransformNode((TRANSFORM_NODE_STRUCT *) pNode,
+                                       pState->pTransformState);
+
+                /*
+                // No need for the following
+                */
+                /* we need to set the lights' dirty position flag */
+                /*pState->pLightsState->flags |= lsf_dirty_position;*/
+
+                break;
+            }/*end transform case*/
 
 
-			/* /////////////
-			// Material defs...
-			///////////// */
-			case nt_material:
-			{
-				DPF((DBG_MESSAGE,"Found Material node"));
+                /* /////////////
+                // Handle the primitive types.
+                ///////////// */
+            case nt_convex: {
+                CONVEX_NODE_STRUCT *pConvex = (CONVEX_NODE_STRUCT *) pNode;
+
+                DPF((DBG_MESSAGE, "Found Convex  node"));
+                /*
+                // Pass the convex node pointer and entire state pointers in
+                // cause we need virtually the lot anyway.
+                //
+                // The value of parentUpdatePoints is set TRUE if a collision
+                // occurs with this object.  This value is passed back to the
+                // parent list which may have to remove the hit point from its
+                // list of active points.
+                */
+                RnCTPreProcessConvexNode(pConvex, pState, *ppCachedTexture);
+
+                break;
+            }
+
+            case nt_mesh: {
+                DPF ((DBG_VERBOSE, "Found mesh node"));
+                RnCTPreProcessMeshNode((const MESH_NODE_STRUCT *) pNode, pState,
+                                       *ppCachedTexture);
+                break;
+            }
 
 
-				/*
-				// Update our cached texture
-				*/
-				RnCTPreprocessMaterialNode((MATERIAL_NODE_STRUCT*)pNode,
-							pState,
-							ppCachedTexture);
-
-				break;
-			}
+                /* /////////////
+                // Material defs...
+                ///////////// */
+            case nt_material: {
+                DPF((DBG_MESSAGE, "Found Material node"));
 
 
-			/* /////////////
-			// the Light Nodes
-			//
-			//  We do nothing in this pass
-			///////////// */
-			case nt_light:
-			case nt_light_switch:
-			case nt_light_pos:
-			case nt_multi_shadow:
-			{
-				break;
-			}
+                /*
+                // Update our cached texture
+                */
+                RnCTPreprocessMaterialNode((MATERIAL_NODE_STRUCT *) pNode,
+                                           pState,
+                                           ppCachedTexture);
+
+                break;
+            }
 
 
-			/* /////////////
-			// Camera Node
-			///////////// */
-			case nt_camera:
-			{
-				DPF((DBG_MESSAGE,"Found camera node"));
-				/*
-				// Nothing needs to be done when we encounter a camera
-				// node during traversal
-				*/
-				break;
-			}
-
-			/* /////////////
-			// (Collision) Point Nodes. - We do nothing
-			///////////// */
-			case nt_point:
-			case nt_point_pos:
-			case nt_point_switch:
-			{
-				break;
-			}
-
-			/* /////////////
-			// Quality Point Nodes.
-			///////////// */
-			case nt_quality:
-			{
-				int error;
-
-				DPF((DBG_MESSAGE,"Found quality node"));
-
-				PreserveQualityState(pState, &error);
-				RnProcessQualityNode((QUALITY_NODE_STRUCT*) pNode,
-											 pState->pQualityState);
-				break;
-			}
-			
-
-			/*
-			// Do nothing
-			*/
-			case nt_newtran:
-			{
-				break;
-			}
-	
-			/*
-			// Do nothing
-			*/
-			case nt_shadow_limit:
-			{
-				break;
-			}
-	
-			/*
-			// Was this a deleted item? If so skip it
-			*/
-			case nt_dummy:
-			{
-				DPF((DBG_MESSAGE,"Skipping dummy node"));
-				break;
-			}
+                /* /////////////
+                // the Light Nodes
+                //
+                //  We do nothing in this pass
+                ///////////// */
+            case nt_light:
+            case nt_light_switch:
+            case nt_light_pos:
+            case nt_multi_shadow: {
+                break;
+            }
 
 
-			/*
-			// If an invalid case, then there's been a programming
-			// error !!!!
-			*/
-			default:
-				ASSERT(FALSE)
-				break;
+                /* /////////////
+                // Camera Node
+                ///////////// */
+            case nt_camera: {
+                DPF((DBG_MESSAGE, "Found camera node"));
+                /*
+                // Nothing needs to be done when we encounter a camera
+                // node during traversal
+                */
+                break;
+            }
 
-		}/*end switch*/
-		
+                /* /////////////
+                // (Collision) Point Nodes. - We do nothing
+                ///////////// */
+            case nt_point:
+            case nt_point_pos:
+            case nt_point_switch: {
+                break;
+            }
 
-		/*
-		// move to the next list node
-		*/
-		pNode = pNode->next_node;
-	
-	} /*end while*/	
+                /* /////////////
+                // Quality Point Nodes.
+                ///////////// */
+            case nt_quality: {
+                int error;
+
+                DPF((DBG_MESSAGE, "Found quality node"));
+
+                PreserveQualityState(pState, &error);
+                RnProcessQualityNode((QUALITY_NODE_STRUCT *) pNode,
+                                     pState->pQualityState);
+                break;
+            }
+
+
+                /*
+                // Do nothing
+                */
+            case nt_newtran: {
+                break;
+            }
+
+                /*
+                // Do nothing
+                */
+            case nt_shadow_limit: {
+                break;
+            }
+
+                /*
+                // Was this a deleted item? If so skip it
+                */
+            case nt_dummy: {
+                DPF((DBG_MESSAGE, "Skipping dummy node"));
+                break;
+            }
+
+
+                /*
+                // If an invalid case, then there's been a programming
+                // error !!!!
+                */
+            default:
+                ASSERT(FALSE)
+                break;
+
+        }/*end switch*/
+
+
+        /*
+        // move to the next list node
+        */
+        pNode = pNode->next_node;
+
+    } /*end while*/
 
 }
 /**************************************************************************
@@ -1649,659 +1558,616 @@ static void RnTextureCacheTraverse(const  LIST_NODE_STRUCT * pList,
 #if DEBUG
 static sgl_bool CompareFunction (void *item, sgl_uint32 s)
 {
-	return (*((sgl_uint32 *) item) == s);
+    return (*((sgl_uint32 *) item) == s);
 }
 #endif
 
-static int RnRecursiveTraverse(const  LIST_NODE_STRUCT  *pList, 
-							   MASTER_STATE_STRUCT  *pState,
-							   int depthRemaining,
-							   sgl_bool *parentUpdatePoints)
-{
-	/*
-	// error values
-	*/
-	int error, localErr;
-	int nLocalLimPlanes;	
-	/*
-	// node pointer used to traverse the list
-	*/
-	DL_NODE_STRUCT * pNode;
-	LOCAL_PROJECTION_STRUCT *pLocalProjMat = NULL;
+static int RnRecursiveTraverse(const LIST_NODE_STRUCT *pList,
+                               MASTER_STATE_STRUCT *pState,
+                               int depthRemaining,
+                               sgl_bool *parentUpdatePoints) {
+    /*
+    // error values
+    */
+    int error, localErr;
+    int nLocalLimPlanes;
+    /*
+    // node pointer used to traverse the list
+    */
+    DL_NODE_STRUCT *pNode;
+    LOCAL_PROJECTION_STRUCT *pLocalProjMat = NULL;
 
-	/*
-	// So that we can preserve the state when entering
-	// child lists, we need to be able to copy the state
-	// variable pointers
-	*/
-	MASTER_STATE_STRUCT localState;
+    /*
+    // So that we can preserve the state when entering
+    // child lists, we need to be able to copy the state
+    // variable pointers
+    */
+    MASTER_STATE_STRUCT localState;
 
-	/*
-	// The following is used in recursive calls to determine if we need to
-	// clean up the collision point data.
-	*/
-	sgl_bool localUpdatePoints;
+    /*
+    // The following is used in recursive calls to determine if we need to
+    // clean up the collision point data.
+    */
+    sgl_bool localUpdatePoints;
 
-	/*
-	// initialise the error state
-	*/
-	error = sgl_no_err;
+    /*
+    // initialise the error state
+    */
+    error = sgl_no_err;
 
-	/*
-	// check recursion depth param
-	*/
-	ASSERT((depthRemaining >= 0)&&(depthRemaining < 1000))
-
-
-	pLocalProjMat = RnGlobalGetLocalProjMat();
-	ASSERT(pLocalProjMat);
-	/*
-	// step through the contents of the list
-	*/
-	pNode = pList->pfirst;
-	while(pNode!= NULL)
-	{
-		ASSERT(pNode->n16_node_type >= 0)
-		ASSERT(pNode->n16_node_type < nt_node_limit)
-
-		/*
-		// determine what type of node this is, and
-		// process accordingly
-		*/
-		switch(pNode->n16_node_type)
-		{
-
-			/* /////////////
-			// Handle List, Instance, LOD Nodes...
-			///////////// */
-			case nt_list_node:
-			case nt_instance:
-			case nt_lod:
-			{
-				LIST_NODE_STRUCT *pChildList= NULL;
-				int	childName;
-				
-				DPF((DBG_MESSAGE,"Found list, instance, or LOD node"));
-
-				nLocalLimPlanes = ShadowLimitPlanes.nNumShadLimPlanes;
-
-				/*
-				// get the pointer to the list node we want, depending
-				// on the type of this node
-				*/
-				switch(pNode->n16_node_type)
-				{
-					/*////////
-					// If a list node, simply get the pointer to the
-					// child list
-					//////// */
-					case nt_list_node:
-					{
-						pChildList = (LIST_NODE_STRUCT *)pNode;
-						break;
-					}
-
-					/*////////
-					// For the instance node, get the name of the instance,
-					// and perform a substitution.
-					//////// */
-					case nt_instance:
-					{
-						childName = ((INSTANCE_NODE_STRUCT*)pNode)->referenced_list;
-
-						/*
-						// Perform an instance substitution
-						*/
-						pChildList = InstanceSubstitute(childName, 
-											pState->pInstanceSubState);
-
-						break;
-					}
-
-					/*////
-					//Level Of Detail Node
-					//// */
-					case nt_lod:
-					{
-						/*
-						// Get the name of the Level of Detail List to
-						// to use
-						*/
-						childName = RnProcessLodNode((LOD_NODE_STRUCT*)pNode,
-													pState->pTransformState);
-
-						/*
-						// Perform an instance substitution
-						*/
-						pChildList = InstanceSubstitute(childName, 
-											pState->pInstanceSubState);
-
-						break;
-					}
-
-					/* ////
-					//Something to remove warnings of unitialised pChildList
-					//// */
-					default:
-					{
-						ASSERT(FALSE);
-						break;
-					}
-				}/*end switch*/
+    /*
+    // check recursion depth param
+    */
+    ASSERT((depthRemaining >= 0) && (depthRemaining < 1000))
 
 
-				localErr = sgl_no_err;
+    pLocalProjMat = RnGlobalGetLocalProjMat();
+    ASSERT(pLocalProjMat);
+    /*
+    // step through the contents of the list
+    */
+    pNode = pList->pfirst;
+    while (pNode != NULL) {
+        ASSERT(pNode->n16_node_type >= 0)
+        ASSERT(pNode->n16_node_type < nt_node_limit)
 
-				/*
-				// If we have been given the "Null list" (eg in the level of
-				// detail etc) OR, we are to skip this list, then do nothing.
-				*/
-				if((pChildList == NULL)|| !(pChildList->flags & lf_process_list))
-				{
-					/* DO NOTHING*/
-				}
-				/*
-				// else flag a "too deep" error if we are at the max depth allowed
-				*/
-				else if(depthRemaining == 0)
-				{
-					localErr = sgl_err_list_too_deep;
-				}
-				/*
-				// Else allow the recursion - choose either the
-				// state preserving path, or not...
-				//
-				// if Save State, copy the existing state var, and update
-				// flags that all must be saved.
-				*/
-				else if(pChildList->flags & lf_preserve_state)
-				{
-					localState = *pState;
-					localState.saveFlags = ALL_STATE_SAVE_FLAGS;
-					localState.pScopingList = pChildList;
+        /*
+        // determine what type of node this is, and
+        // process accordingly
+        */
+        switch (pNode->n16_node_type) {
 
-					localUpdatePoints = FALSE;
+            /* /////////////
+            // Handle List, Instance, LOD Nodes...
+            ///////////// */
+            case nt_list_node:
+            case nt_instance:
+            case nt_lod: {
+                LIST_NODE_STRUCT *pChildList = NULL;
+                int childName;
 
-					localErr = RnRecursiveTraverse(pChildList,
-										& localState,
-									 depthRemaining - 1,
-									 & localUpdatePoints);
-					
-					/*
-					// Do we need to clean up the collision detection
-					// points because a collision WAS detected?
-					*/
-					if(localUpdatePoints)
-					{
-						RnCleanupCollisionState(pState->pCollisionState,
-											parentUpdatePoints);
-					}
+                DPF((DBG_MESSAGE, "Found list, instance, or LOD node"));
 
-					/*
-					// Check if the transform state was altered during the child
-					//  list because this PROBABLY means the local to projection 
-					// matrix is out of date.
-					//
-					// Similarly, the light state may be  invalid for the same reason
-					// (Note: I was originally going to only set the "dirty position"
-					// flag if the light state hadn't been preserved, (for efficiency
-					// reasons) but this won't work. If in a preserving child list the
-					// transformation changes, a smooth shaded object is encountered
-					// and THEN the light state changes, we won't correctly realise the
-					// the lights have moved in local space
-					*/
-					if(localState.pTransformState != pState->pTransformState)
-					{
-						pLocalProjMat->valid = FALSE;
+                nLocalLimPlanes = ShadowLimitPlanes.nNumShadLimPlanes;
 
-						pState->pLightsState->flags |= lsf_dirty_position;
-					}
+                /*
+                // get the pointer to the list node we want, depending
+                // on the type of this node
+                */
+                switch (pNode->n16_node_type) {
+                    /*////////
+                    // If a list node, simply get the pointer to the
+                    // child list
+                    //////// */
+                    case nt_list_node: {
+                        pChildList = (LIST_NODE_STRUCT *) pNode;
+                        break;
+                    }
 
-				}
-				/*
-				// Else DONT save the state
-				*/
-				else
-				{
-					RnRecursiveTraverse(pChildList, pState,
-										 depthRemaining - 1,
-									     parentUpdatePoints);
-				} /*end else*/
+                        /*////////
+                        // For the instance node, get the name of the instance,
+                        // and perform a substitution.
+                        //////// */
+                    case nt_instance: {
+                        childName = ((INSTANCE_NODE_STRUCT *) pNode)->referenced_list;
 
-				
-				/*
-				// Update any error
-				*/
-				if(error != sgl_no_err)
-				{
-					error = localErr;
-				}
+                        /*
+                        // Perform an instance substitution
+                        */
+                        pChildList = InstanceSubstitute(childName,
+                                                        pState->pInstanceSubState);
 
-				/* reinstate the number of shadow limit planes */
-				ShadowLimitPlanes.nNumShadLimPlanes =  nLocalLimPlanes;
-				break;
-			}
+                        break;
+                    }
+
+                        /*////
+                        //Level Of Detail Node
+                        //// */
+                    case nt_lod: {
+                        /*
+                        // Get the name of the Level of Detail List to
+                        // to use
+                        */
+                        childName = RnProcessLodNode((LOD_NODE_STRUCT *) pNode,
+                                                     pState->pTransformState);
+
+                        /*
+                        // Perform an instance substitution
+                        */
+                        pChildList = InstanceSubstitute(childName,
+                                                        pState->pInstanceSubState);
+
+                        break;
+                    }
+
+                        /* ////
+                        //Something to remove warnings of unitialised pChildList
+                        //// */
+                    default: {
+                        ASSERT(FALSE);
+                        break;
+                    }
+                }/*end switch*/
+
+
+                localErr = sgl_no_err;
+
+                /*
+                // If we have been given the "Null list" (eg in the level of
+                // detail etc) OR, we are to skip this list, then do nothing.
+                */
+                if ((pChildList == NULL) || !(pChildList->flags & lf_process_list)) {
+                    /* DO NOTHING*/
+                }
+                    /*
+                    // else flag a "too deep" error if we are at the max depth allowed
+                    */
+                else if (depthRemaining == 0) {
+                    localErr = sgl_err_list_too_deep;
+                }
+                    /*
+                    // Else allow the recursion - choose either the
+                    // state preserving path, or not...
+                    //
+                    // if Save State, copy the existing state var, and update
+                    // flags that all must be saved.
+                    */
+                else if (pChildList->flags & lf_preserve_state) {
+                    localState = *pState;
+                    localState.saveFlags = ALL_STATE_SAVE_FLAGS;
+                    localState.pScopingList = pChildList;
+
+                    localUpdatePoints = FALSE;
+
+                    localErr = RnRecursiveTraverse(pChildList,
+                                                   &localState,
+                                                   depthRemaining - 1,
+                                                   &localUpdatePoints);
+
+                    /*
+                    // Do we need to clean up the collision detection
+                    // points because a collision WAS detected?
+                    */
+                    if (localUpdatePoints) {
+                        RnCleanupCollisionState(pState->pCollisionState,
+                                                parentUpdatePoints);
+                    }
+
+                    /*
+                    // Check if the transform state was altered during the child
+                    //  list because this PROBABLY means the local to projection
+                    // matrix is out of date.
+                    //
+                    // Similarly, the light state may be  invalid for the same reason
+                    // (Note: I was originally going to only set the "dirty position"
+                    // flag if the light state hadn't been preserved, (for efficiency
+                    // reasons) but this won't work. If in a preserving child list the
+                    // transformation changes, a smooth shaded object is encountered
+                    // and THEN the light state changes, we won't correctly realise the
+                    // the lights have moved in local space
+                    */
+                    if (localState.pTransformState != pState->pTransformState) {
+                        pLocalProjMat->valid = FALSE;
+
+                        pState->pLightsState->flags |= lsf_dirty_position;
+                    }
+
+                }
+                    /*
+                    // Else DONT save the state
+                    */
+                else {
+                    RnRecursiveTraverse(pChildList, pState,
+                                        depthRemaining - 1,
+                                        parentUpdatePoints);
+                } /*end else*/
+
+
+                /*
+                // Update any error
+                */
+                if (error != sgl_no_err) {
+                    error = localErr;
+                }
+
+                /* reinstate the number of shadow limit planes */
+                ShadowLimitPlanes.nNumShadLimPlanes = nLocalLimPlanes;
+                break;
+            }
 
 
 
 
-			/* /////////////
-			// Handle the Instance Substitution Node.
-			///////////// */
-			case nt_inst_subs:
-			{
-				PreserveInstanceSubState(pState, &error);
+                /* /////////////
+                // Handle the Instance Substitution Node.
+                ///////////// */
+            case nt_inst_subs: {
+                PreserveInstanceSubState(pState, &error);
 
-				RnProcessInstanceSubsNode((INSTANCE_SUBS_NODE_STRUCT*)pNode,
-								pState->pInstanceSubState);
-				break;
-			}
-
-
-			/* /////////////
-			// Handle Transformations
-			///////////// */
-			case nt_transform:
-			{
-				DPF((DBG_MESSAGE,"Found Transform node"));
-				
-				/*
-				// First preserve the transform state if necessary
-				*/
-				PreserveTransformState(pState, &error);
-
-				/*
-				// Update the transformation (it is assumed this
-				// clears the local projection matrix valid flag)
-				*/
-				RnProcessTransformNode((TRANSFORM_NODE_STRUCT *)pNode,
-									pState->pTransformState);
-					
-				/*
-				// we need to set the lights' dirty position flag.
-				// NOTE: Since we are changing the lights state, we
-				// should really preserve it. However, the number of
-				// times we change the transformations is fairly high
-				// compared to the normal light state changes.  What we
-				// will do instead  is reset the flag when we exit state
-				// preserving lists.
-				*/
-				pState->pLightsState->flags |= lsf_dirty_position;
-				
-				break;
-			}/*end transform case*/
+                RnProcessInstanceSubsNode((INSTANCE_SUBS_NODE_STRUCT *) pNode,
+                                          pState->pInstanceSubState);
+                break;
+            }
 
 
-			/* /////////////
-			// Handle the primitive types.
-			///////////// */
-			case nt_convex:
-			{
-				CONVEX_NODE_STRUCT * pConvex = (CONVEX_NODE_STRUCT *)pNode;
+                /* /////////////
+                // Handle Transformations
+                ///////////// */
+            case nt_transform: {
+                DPF((DBG_MESSAGE, "Found Transform node"));
 
-				DPF((DBG_MESSAGE,"Found Convex  node"));
-				/*
-				// Pass the convex node pointer and entire state pointers in
-				// cause we need virtually the lot anyway.
-				//
-				// The value of parentUpdatePoints is set TRUE if a collision
-				// occurs with this object.  This value is passed back to the
-				// parent list which may have to remove the hit point from its
-				// list of active points.
-				*/
-	SGL_TIME_SUSPEND(DATABASE_TRAVERSAL_TIME)
+                /*
+                // First preserve the transform state if necessary
+                */
+                PreserveTransformState(pState, &error);
 
-				RnProcessConvexNode(pConvex,
-									pState,
-									&ShadowLimitPlanes,
-									parentUpdatePoints, 
-									current_trans_set_id);
-	SGL_TIME_RESUME(DATABASE_TRAVERSAL_TIME)
-				
-				break;
-			}
+                /*
+                // Update the transformation (it is assumed this
+                // clears the local projection matrix valid flag)
+                */
+                RnProcessTransformNode((TRANSFORM_NODE_STRUCT *) pNode,
+                                       pState->pTransformState);
 
-			case nt_mesh:
-			{
+                /*
+                // we need to set the lights' dirty position flag.
+                // NOTE: Since we are changing the lights state, we
+                // should really preserve it. However, the number of
+                // times we change the transformations is fairly high
+                // compared to the normal light state changes.  What we
+                // will do instead  is reset the flag when we exit state
+                // preserving lists.
+                */
+                pState->pLightsState->flags |= lsf_dirty_position;
+
+                break;
+            }/*end transform case*/
+
+
+                /* /////////////
+                // Handle the primitive types.
+                ///////////// */
+            case nt_convex: {
+                CONVEX_NODE_STRUCT *pConvex = (CONVEX_NODE_STRUCT *) pNode;
+
+                DPF((DBG_MESSAGE, "Found Convex  node"));
+                /*
+                // Pass the convex node pointer and entire state pointers in
+                // cause we need virtually the lot anyway.
+                //
+                // The value of parentUpdatePoints is set TRUE if a collision
+                // occurs with this object.  This value is passed back to the
+                // parent list which may have to remove the hit point from its
+                // list of active points.
+                */
+                SGL_TIME_SUSPEND(DATABASE_TRAVERSAL_TIME)
+
+                RnProcessConvexNode(pConvex,
+                                    pState,
+                                    &ShadowLimitPlanes,
+                                    parentUpdatePoints,
+                                    current_trans_set_id);
+                SGL_TIME_RESUME(DATABASE_TRAVERSAL_TIME)
+
+                break;
+            }
+
+            case nt_mesh: {
 #if DEBUG
-				static PLIST L;
-				static int init = 1, pick = 0;
-				sgl_uint32 *puListItem;
-				int ID;
-				static int Lo, Hi;
+                static PLIST L;
+                static int init = 1, pick = 0;
+                sgl_uint32 *puListItem;
+                int ID;
+                static int Lo, Hi;
 
-				if (init)
-				{
-					init = 0;
-					ListInitialiseList (&L, sizeof (sgl_uint32), 32, NULL);
-					Lo = SglReadPrivateProfileInt ("Mesh", "LoLimitID", 0, "sgl.ini");
-					Hi = SglReadPrivateProfileInt ("Mesh", "HiLimitID", 0x7FFFFFFF, "sgl.ini");
-					pick = SglReadPrivateProfileInt ("Mesh", "Pick", 0, "sgl.ini");
-				}
-				else if (pick)
-				{
-					Lo = SglReadPrivateProfileInt ("Mesh", "LoLimitID", 0, "sgl.ini");
-					Hi = SglReadPrivateProfileInt ("Mesh", "HiLimitID", 0x7FFFFFFF, "sgl.ini");
-				}
-				
-				puListItem = ListFindItem (L, CompareFunction, (sgl_uint32) pNode);
-				
-				if (!puListItem)
-				{
-					puListItem = ListAddItem (L);
-					
-					if (puListItem)
-					{
-						*puListItem = (sgl_uint32) pNode;
-					}
-				}
-				
-				ID = ListGetItemID (L, puListItem);
-				
-				if (ID < Lo || ID > Hi)
-				{
-					break;
-				}
+                if (init)
+                {
+                    init = 0;
+                    ListInitialiseList (&L, sizeof (sgl_uint32), 32, NULL);
+                    Lo = SglReadPrivateProfileInt ("Mesh", "LoLimitID", 0, "sgl.ini");
+                    Hi = SglReadPrivateProfileInt ("Mesh", "HiLimitID", 0x7FFFFFFF, "sgl.ini");
+                    pick = SglReadPrivateProfileInt ("Mesh", "Pick", 0, "sgl.ini");
+                }
+                else if (pick)
+                {
+                    Lo = SglReadPrivateProfileInt ("Mesh", "LoLimitID", 0, "sgl.ini");
+                    Hi = SglReadPrivateProfileInt ("Mesh", "HiLimitID", 0x7FFFFFFF, "sgl.ini");
+                }
+
+                puListItem = ListFindItem (L, CompareFunction, (sgl_uint32) pNode);
+
+                if (!puListItem)
+                {
+                    puListItem = ListAddItem (L);
+
+                    if (puListItem)
+                    {
+                        *puListItem = (sgl_uint32) pNode;
+                    }
+                }
+
+                ID = ListGetItemID (L, puListItem);
+
+                if (ID < Lo || ID > Hi)
+                {
+                    break;
+                }
 #endif
-					
-				
-				DPF ((DBG_VERBOSE,"Found mesh node"));
-				SGL_TIME_SUSPEND(DATABASE_TRAVERSAL_TIME)
-				RnProcessMeshNode ((const MESH_NODE_STRUCT *) pNode, 
-								   pState,current_trans_set_id);
-				SGL_TIME_RESUME(DATABASE_TRAVERSAL_TIME)
-				break;
-			}
 
 
-			/* /////////////
-			// Material defs...
-			///////////// */
-			case nt_material:
-			{
-				DPF((DBG_MESSAGE,"Found Material node"));
-
-				/*
-				// First preserve the material state if necessary
-				*/
-				PreserveMaterialState(pState, &error);
-				RnProcessMaterialNode((MATERIAL_NODE_STRUCT*)pNode,  
-											pState->pMaterialState,
-											pState);
+                DPF ((DBG_VERBOSE, "Found mesh node"));
+                SGL_TIME_SUSPEND(DATABASE_TRAVERSAL_TIME)
+                RnProcessMeshNode((const MESH_NODE_STRUCT *) pNode,
+                                  pState, current_trans_set_id);
+                SGL_TIME_RESUME(DATABASE_TRAVERSAL_TIME)
+                break;
+            }
 
 
-				break;
-			}
+                /* /////////////
+                // Material defs...
+                ///////////// */
+            case nt_material: {
+                DPF((DBG_MESSAGE, "Found Material node"));
 
-			/* /////////////
-			// the Light Nodes
-			///////////// */
-			case nt_light:
-			{
-				TRANSFORM_STRUCT *pLightTransform;
-				TRANSFORM_STRUCT LightTrans;
-				LIGHT_NODE_STRUCT * pLightNode;
-
-				DPF((DBG_MESSAGE,"Found Light node"));
-				
-				pLightNode = (LIGHT_NODE_STRUCT*) pNode;
-
-				/*
-				// First preserve the lights state if necessary
-				*/
-				PreserveLightsState(pState, &error);
-
-				/*
-				// Decide if this light has position node, if so
-				// use that to position the light, otherwise use the
-				// local transform state.
-				*/
-				if(pLightNode->plight_position != NULL)
-				{
-					pLightTransform = &LightTrans;
-					RnGetLightTransform(pLightNode->plight_position,
-									  	pLightTransform);
-					/*
-					// Combine the transformation from this position to
-					// its positioning node with the current transform state
-					*/
-					TransformMultiply(pState->pTransformState,
-										pLightTransform,
-										pLightTransform);
-				}
-				else
-				{
-					pLightTransform = pState->pTransformState;
-				}
-
-				RnProcessLightNode(pLightNode,
-								pLightTransform,  
-								pState->pLightsState);
-
-				break;
-			}
-
-			case nt_light_switch:
-			{
-				DPF((DBG_MESSAGE,"Found light switch node"));
-				/*
-				// First preserve the lights state if necessary
-				*/
-				PreserveLightsState(pState, &error);
-				RnProcessLightSwitchNode((LIGHT_SWITCH_NODE_STRUCT*)pNode,  
-										pState->pLightsState);
-				break;
-			}
-
-			case nt_light_pos:
-			{
-				DPF((DBG_MESSAGE,"Found light pos node"));
-				/*
-				// Nothing needs to be done when we encounter a light pos
-				// node during traversal
-				*/
-				break;
-			}
-
-			case nt_multi_shadow:
-			{
-				DPF((DBG_MESSAGE,"Found Multi Shadow node"));
-				RnProcessMultiShadowNode((MULTI_SHADOW_NODE_STRUCT*)pNode,  
-										pState->pLightsState);
-				
-				break;
-			}
-
-			/* /////////////
-			// Camera Node
-			///////////// */
-			case nt_camera:
-			{
-				DPF((DBG_MESSAGE,"Found camera node"));
-				/*
-				// Nothing needs to be done when we encounter a camera
-				// node during traversal
-				*/
-				break;
-			}
-
-			/* /////////////
-			// (Collision) Point Nodes.
-			///////////// */
-			case nt_point:
-			{
-				static TRANSFORM_STRUCT pointPosTransform;
-
-				DPF((DBG_MESSAGE,"Found point node"));
-				
-				/*
-				// ------------------------
-				// Preserve collision state
-				// ------------------------
-				// Only bother to save the state if this is a collision
-				// detection point. Points used just for position feedback are
-				// quite benign, so we may as well save a little bit of time.
-				*/
-				if ( ((POINT_NODE_STRUCT*)pNode)->collision_check )
-				{
-					PreserveCollisionState(pState, &error);
-				}
-
-				/*
-				// --------------------------------
-				// Find correct transform for point
-				// --------------------------------
-				*/
-
-				/* If we have a position node... */
-				if ( ((POINT_NODE_STRUCT*)pNode)->ppoint_position != NULL )
-				{
-					if ( ((POINT_NODE_STRUCT*)pNode)->collision_check )
-					{
-						/* calculate transform from position node */
-
-						RnGetPointTransform(
-						  ((POINT_NODE_STRUCT*)pNode)->ppoint_position,
-						  &pointPosTransform );
-
-						RnProcessPointNode((POINT_NODE_STRUCT*)pNode,
-						  pState->pCollisionState, &pointPosTransform);
-
-					}
-					/*
-					// else do nothing (wait until we reach the position node
-					// to find the position of the position-only point).
-					*/
-				}
-				else
-				{
-					/* use the current transform */
-
-					RnProcessPointNode((POINT_NODE_STRUCT*)pNode,
-					  pState->pCollisionState, pState->pTransformState);
-				}
-
-				break;
-			}
+                /*
+                // First preserve the material state if necessary
+                */
+                PreserveMaterialState(pState, &error);
+                RnProcessMaterialNode((MATERIAL_NODE_STRUCT *) pNode,
+                                      pState->pMaterialState,
+                                      pState);
 
 
-			case nt_point_pos:
-			{
-				/*
-				// get more convenient access to the node
-				*/
-				POINT_POSITION_NODE_STRUCT * pPosNode;
-				pPosNode = (POINT_POSITION_NODE_STRUCT *)pNode;
+                break;
+            }
 
-				/*
-				// Check if this position node is actually in use..
-				//
-				// Note that this routine only needs to handle the positioning
-				// of points which AREN'T involved in collision detection. This 
-				// test COULD be moved here later as an optimisation.....
-				*/
-				if( pPosNode->point_name != NM_INVALID_NAME )
-				{
-					RnProcessPointPosNode(pPosNode, pState->pTransformState,
-					  pState->pCollisionState);
-				}
-					
-				break;
-			}
+                /* /////////////
+                // the Light Nodes
+                ///////////// */
+            case nt_light: {
+                TRANSFORM_STRUCT *pLightTransform;
+                TRANSFORM_STRUCT LightTrans;
+                LIGHT_NODE_STRUCT *pLightNode;
+
+                DPF((DBG_MESSAGE, "Found Light node"));
+
+                pLightNode = (LIGHT_NODE_STRUCT *) pNode;
+
+                /*
+                // First preserve the lights state if necessary
+                */
+                PreserveLightsState(pState, &error);
+
+                /*
+                // Decide if this light has position node, if so
+                // use that to position the light, otherwise use the
+                // local transform state.
+                */
+                if (pLightNode->plight_position != NULL) {
+                    pLightTransform = &LightTrans;
+                    RnGetLightTransform(pLightNode->plight_position,
+                                        pLightTransform);
+                    /*
+                    // Combine the transformation from this position to
+                    // its positioning node with the current transform state
+                    */
+                    TransformMultiply(pState->pTransformState,
+                                      pLightTransform,
+                                      pLightTransform);
+                } else {
+                    pLightTransform = pState->pTransformState;
+                }
+
+                RnProcessLightNode(pLightNode,
+                                   pLightTransform,
+                                   pState->pLightsState);
+
+                break;
+            }
+
+            case nt_light_switch: {
+                DPF((DBG_MESSAGE, "Found light switch node"));
+                /*
+                // First preserve the lights state if necessary
+                */
+                PreserveLightsState(pState, &error);
+                RnProcessLightSwitchNode((LIGHT_SWITCH_NODE_STRUCT *) pNode,
+                                         pState->pLightsState);
+                break;
+            }
+
+            case nt_light_pos: {
+                DPF((DBG_MESSAGE, "Found light pos node"));
+                /*
+                // Nothing needs to be done when we encounter a light pos
+                // node during traversal
+                */
+                break;
+            }
+
+            case nt_multi_shadow: {
+                DPF((DBG_MESSAGE, "Found Multi Shadow node"));
+                RnProcessMultiShadowNode((MULTI_SHADOW_NODE_STRUCT *) pNode,
+                                         pState->pLightsState);
+
+                break;
+            }
+
+                /* /////////////
+                // Camera Node
+                ///////////// */
+            case nt_camera: {
+                DPF((DBG_MESSAGE, "Found camera node"));
+                /*
+                // Nothing needs to be done when we encounter a camera
+                // node during traversal
+                */
+                break;
+            }
+
+                /* /////////////
+                // (Collision) Point Nodes.
+                ///////////// */
+            case nt_point: {
+                static TRANSFORM_STRUCT pointPosTransform;
+
+                DPF((DBG_MESSAGE, "Found point node"));
+
+                /*
+                // ------------------------
+                // Preserve collision state
+                // ------------------------
+                // Only bother to save the state if this is a collision
+                // detection point. Points used just for position feedback are
+                // quite benign, so we may as well save a little bit of time.
+                */
+                if (((POINT_NODE_STRUCT *) pNode)->collision_check) {
+                    PreserveCollisionState(pState, &error);
+                }
+
+                /*
+                // --------------------------------
+                // Find correct transform for point
+                // --------------------------------
+                */
+
+                /* If we have a position node... */
+                if (((POINT_NODE_STRUCT *) pNode)->ppoint_position != NULL) {
+                    if (((POINT_NODE_STRUCT *) pNode)->collision_check) {
+                        /* calculate transform from position node */
+
+                        RnGetPointTransform(
+                                ((POINT_NODE_STRUCT *) pNode)->ppoint_position,
+                                &pointPosTransform);
+
+                        RnProcessPointNode((POINT_NODE_STRUCT *) pNode,
+                                           pState->pCollisionState, &pointPosTransform);
+
+                    }
+                    /*
+                    // else do nothing (wait until we reach the position node
+                    // to find the position of the position-only point).
+                    */
+                } else {
+                    /* use the current transform */
+
+                    RnProcessPointNode((POINT_NODE_STRUCT *) pNode,
+                                       pState->pCollisionState, pState->pTransformState);
+                }
+
+                break;
+            }
 
 
-			case nt_point_switch:
-			{
-				/*
-				// get more convenient access to the node
-				*/
-				POINT_SWITCH_NODE_STRUCT * pSwitchNode;
-				pSwitchNode = (POINT_SWITCH_NODE_STRUCT *)pNode;
+            case nt_point_pos: {
+                /*
+                // get more convenient access to the node
+                */
+                POINT_POSITION_NODE_STRUCT *pPosNode;
+                pPosNode = (POINT_POSITION_NODE_STRUCT *) pNode;
 
-				DPF((DBG_MESSAGE,"Found point switch node"));
+                /*
+                // Check if this position node is actually in use..
+                //
+                // Note that this routine only needs to handle the positioning
+                // of points which AREN'T involved in collision detection. This
+                // test COULD be moved here later as an optimisation.....
+                */
+                if (pPosNode->point_name != NM_INVALID_NAME) {
+                    RnProcessPointPosNode(pPosNode, pState->pTransformState,
+                                          pState->pCollisionState);
+                }
 
-				RnProcessPointSwitchNode(pSwitchNode, pState->pCollisionState);
-
-				break;
-			}
-
-
-			/* /////////////
-			// Quality Point Nodes.
-			///////////// */
-			case nt_quality:
-			{
-				DPF((DBG_MESSAGE,"Found quality node"));
-
-				PreserveQualityState(pState, &error);
-				RnProcessQualityNode((QUALITY_NODE_STRUCT*) pNode,
-											 pState->pQualityState);
-				break;
-			}
+                break;
+            }
 
 
-			case nt_newtran:
-			{
-				DPF((DBG_MESSAGE,"Found new translucent node"));
+            case nt_point_switch: {
+                /*
+                // get more convenient access to the node
+                */
+                POINT_SWITCH_NODE_STRUCT *pSwitchNode;
+                pSwitchNode = (POINT_SWITCH_NODE_STRUCT *) pNode;
 
-				current_trans_set_id++;				
+                DPF((DBG_MESSAGE, "Found point switch node"));
 
-				break;
-			}
-	
-		    case nt_shadow_limit:
-		    {
-			    SHAD_LIM_NODE_STRUCT *pShadNode;
-				DPF((DBG_MESSAGE,"Found shadow limit plane node"));
-				/* if the max shadow limit planes reached - silently skip */
-				if(	ShadowLimitPlanes.nNumShadLimPlanes < SGL_MAX_SHAD_LIM_PLANES)
-				{
-				  pShadNode = (SHAD_LIM_NODE_STRUCT *)pNode;
-				  /* transform plane and store in array */
-				  RnTransformBasicPlanes(&(pShadNode->plane_data),
-					 1,
-					 pState->pTransformState, 
-					 &(ShadowLimitPlanes.TransShadLimPlanes[ShadowLimitPlanes.nNumShadLimPlanes]));
+                RnProcessPointSwitchNode(pSwitchNode, pState->pCollisionState);
 
-				  /* increment count */
-				  ShadowLimitPlanes.nNumShadLimPlanes++;
-				}
-
-				break;
-		    }
+                break;
+            }
 
 
-			/*
-			// Was this a deleted item? If so skip it
-			*/
-			case nt_dummy:
-			{
-				DPF((DBG_MESSAGE,"Skipping dummy node"));
-				break;
-			}
+                /* /////////////
+                // Quality Point Nodes.
+                ///////////// */
+            case nt_quality: {
+                DPF((DBG_MESSAGE, "Found quality node"));
+
+                PreserveQualityState(pState, &error);
+                RnProcessQualityNode((QUALITY_NODE_STRUCT *) pNode,
+                                     pState->pQualityState);
+                break;
+            }
 
 
-			/*
-			// If an invalid case, then there's been a programming
-			// error !!!!
-			*/
-			default:
-				ASSERT(FALSE)
-				break;
+            case nt_newtran: {
+                DPF((DBG_MESSAGE, "Found new translucent node"));
 
-		}/*end switch*/
-		
-		
+                current_trans_set_id++;
 
-		/*
-		// move to the next list node
-		*/
-		pNode = pNode->next_node;
-	
-	} /*end while*/	
+                break;
+            }
+
+            case nt_shadow_limit: {
+                SHAD_LIM_NODE_STRUCT *pShadNode;
+                DPF((DBG_MESSAGE, "Found shadow limit plane node"));
+                /* if the max shadow limit planes reached - silently skip */
+                if (ShadowLimitPlanes.nNumShadLimPlanes < SGL_MAX_SHAD_LIM_PLANES) {
+                    pShadNode = (SHAD_LIM_NODE_STRUCT *) pNode;
+                    /* transform plane and store in array */
+                    RnTransformBasicPlanes(&(pShadNode->plane_data),
+                                           1,
+                                           pState->pTransformState,
+                                           &(ShadowLimitPlanes.TransShadLimPlanes[ShadowLimitPlanes.nNumShadLimPlanes]));
+
+                    /* increment count */
+                    ShadowLimitPlanes.nNumShadLimPlanes++;
+                }
+
+                break;
+            }
 
 
-	return error;
+                /*
+                // Was this a deleted item? If so skip it
+                */
+            case nt_dummy: {
+                DPF((DBG_MESSAGE, "Skipping dummy node"));
+                break;
+            }
+
+
+                /*
+                // If an invalid case, then there's been a programming
+                // error !!!!
+                */
+            default:
+                ASSERT(FALSE)
+                break;
+
+        }/*end switch*/
+
+
+
+        /*
+        // move to the next list node
+        */
+        pNode = pNode->next_node;
+
+    } /*end while*/
+
+
+    return error;
 }
 
 
@@ -2327,150 +2193,145 @@ static int RnRecursiveTraverse(const  LIST_NODE_STRUCT  *pList,
  *					It returns the first "error /warning" encountered
  **************************************************************************/
 
-int RnTraverseDisplayList( const LIST_NODE_STRUCT   *pList, 
-						   const CAMERA_NODE_STRUCT *pCamera)
-{
-	/*
-	// Declare the first stack frame
-	*/
-	MASTER_STATE_STRUCT	FirstState;
-	LOCAL_PROJECTION_STRUCT *pLocalProjMat;	
-	/*
-	// Error result
-	*/
-	int error;
+int RnTraverseDisplayList(const LIST_NODE_STRUCT *pList,
+                          const CAMERA_NODE_STRUCT *pCamera) {
+    /*
+    // Declare the first stack frame
+    */
+    MASTER_STATE_STRUCT FirstState;
+    LOCAL_PROJECTION_STRUCT *pLocalProjMat;
+    /*
+    // Error result
+    */
+    int error;
 
-	
-	sgl_bool DummyBool;
 
-	SGL_TIME_START(DATABASE_TRAVERSAL_TIME)
-	/*
-	// Initialise the states
-	// Note: Initialise the save flags so that we dont bother saving the
-	// state on the first pass.
-	*/
-	DPF((DBG_MESSAGE,"Initialising State Stacks"));
-	FirstState.pMaterialState  	= pMaterialStackBase;
-	FirstState.pTransformState	= pTransformStackBase;
-	FirstState.pLightsState		= pLightsStackBase;
-	FirstState.pQualityState	= pQualityStackBase;
-	FirstState.pCollisionState	= pCollisionStackBase;
-	FirstState.pInstanceSubState= pInstanceSubStackBase;
+    sgl_bool DummyBool;
 
-	FirstState.saveFlags		= 0;
-	InitMasterState(&FirstState);
+    SGL_TIME_START(DATABASE_TRAVERSAL_TIME)
+    /*
+    // Initialise the states
+    // Note: Initialise the save flags so that we dont bother saving the
+    // state on the first pass.
+    */
+    DPF((DBG_MESSAGE, "Initialising State Stacks"));
+    FirstState.pMaterialState = pMaterialStackBase;
+    FirstState.pTransformState = pTransformStackBase;
+    FirstState.pLightsState = pLightsStackBase;
+    FirstState.pQualityState = pQualityStackBase;
+    FirstState.pCollisionState = pCollisionStackBase;
+    FirstState.pInstanceSubState = pInstanceSubStackBase;
 
-	/*
-	// Initialise other rendering globals
-	*/
-	RnGlobalSetCurrentLightSlot(0);
-	/* set to 1 to differentiate from 0.
-	 */
-	current_trans_set_id = 1;
+    FirstState.saveFlags = 0;
+    InitMasterState(&FirstState);
 
-	/* initialise shadow limiting planes - this is a global */
-	ShadowLimitPlanes.nNumShadLimPlanes = 0;
+    /*
+    // Initialise other rendering globals
+    */
+    RnGlobalSetCurrentLightSlot(0);
+    /* set to 1 to differentiate from 0.
+     */
+    current_trans_set_id = 1;
 
-	/*
-	// The current projection matrix is invalid
-	// Also take a guess at what size texture to set up for.
-	*/
-	pLocalProjMat = RnGlobalGetLocalProjMat();
-	pLocalProjMat->valid = FALSE;
-	pLocalProjMat->LastTextureSize = 128;
+    /* initialise shadow limiting planes - this is a global */
+    ShadowLimitPlanes.nNumShadLimPlanes = 0;
 
-	/*
-	// We aint seen a light volume yet...
-	*/
-	doneALightVol = FALSE;
+    /*
+    // The current projection matrix is invalid
+    // Also take a guess at what size texture to set up for.
+    */
+    pLocalProjMat = RnGlobalGetLocalProjMat();
+    pLocalProjMat->valid = FALSE;
+    pLocalProjMat->LastTextureSize = 128;
 
-	/*
-	// If there isn't a LIST then we are rendering with a camera.
-	*/
-	if(pList == NULL)
-	{
-		DPF((DBG_MESSAGE, "USING Position of Camera..."));
-		ASSERT(pCamera->node_hdr.n16_node_type == nt_camera);
+    /*
+    // We aint seen a light volume yet...
+    */
+    doneALightVol = FALSE;
 
-		/*
-		// First determine the initial transform from the camera's
-		// viewpoint
-		*/
-		RnGetCameraTransform(pCamera, FirstState.pTransformState);
+    /*
+    // If there isn't a LIST then we are rendering with a camera.
+    */
+    if (pList == NULL) {
+        DPF((DBG_MESSAGE, "USING Position of Camera..."));
+        ASSERT(pCamera->node_hdr.n16_node_type == nt_camera);
 
-		/*
-		// Now go to the top of the display list
-		*/
-		pList = pCamera->pparent;
-		while(pList->pparent !=NULL )
-		{
-			DPF((DBG_MESSAGE, "Going up to parent...."));
-			pList = pList->pparent;
-		}/*end while*/
-	}/*end if*/
-	else
-	{
-		SetIdentityMatrix(RnGlobalGetAbsoluteCoordTransform());
-	}
+        /*
+        // First determine the initial transform from the camera's
+        // viewpoint
+        */
+        RnGetCameraTransform(pCamera, FirstState.pTransformState);
+
+        /*
+        // Now go to the top of the display list
+        */
+        pList = pCamera->pparent;
+        while (pList->pparent != NULL) {
+            DPF((DBG_MESSAGE, "Going up to parent...."));
+            pList = pList->pparent;
+        }/*end while*/
+    }/*end if*/
+    else {
+        SetIdentityMatrix(RnGlobalGetAbsoluteCoordTransform());
+    }
 
 
 
-	/*
-	// If we have any cached textures, then we need to make a preliminary pass
-	// of the display list
-	*/
-	if(nCachedTextures)
-	{
-		void * pCachedTexture;
+    /*
+    // If we have any cached textures, then we need to make a preliminary pass
+    // of the display list
+    */
+    if (nCachedTextures) {
+        void *pCachedTexture;
 
 
-		/*
-		// Because we need to return the global state to the way it was, we'll
-		// set the save flags to preserve everything
-		*/
-		FirstState.saveFlags = ALL_STATE_SAVE_FLAGS;
+        /*
+        // Because we need to return the global state to the way it was, we'll
+        // set the save flags to preserve everything
+        */
+        FirstState.saveFlags = ALL_STATE_SAVE_FLAGS;
 
-		/*
-		// Reset the usage on the cached textures
-		*/
-		ResetCachedTextureUsage();
+        /*
+        // Reset the usage on the cached textures
+        */
+        ResetCachedTextureUsage();
 
-		/*
-		// traverse the display list and work out what is needed
-		//
-		// Pass NULL in as the pointer to the active 
-		*/
-		pCachedTexture = NULL;
-		RnTextureCacheTraverse( pList,
-								&pCachedTexture,
-								&FirstState,
-								MAX_DEPTH_OF_TRAVERSAL);
+        /*
+        // traverse the display list and work out what is needed
+        //
+        // Pass NULL in as the pointer to the active
+        */
+        pCachedTexture = NULL;
+        RnTextureCacheTraverse(pList,
+                               &pCachedTexture,
+                               &FirstState,
+                               MAX_DEPTH_OF_TRAVERSAL);
 
-		/*
-		// Report which ones are used by the display list to the user, and
-		// let them sort out what to do
-		*/
-		ReportCachedTexturesToUser();
+        /*
+        // Report which ones are used by the display list to the user, and
+        // let them sort out what to do
+        */
+        ReportCachedTexturesToUser();
 
 
-		/*
-		// reset the save flags to zero again
-		*/
-		FirstState.saveFlags = 0;
-		
-	}
+        /*
+        // reset the save flags to zero again
+        */
+        FirstState.saveFlags = 0;
+
+    }
 
 
 
 
-	/*
-	// Traverse the database
-	*/
-	error = RnRecursiveTraverse( pList, &FirstState, MAX_DEPTH_OF_TRAVERSAL,
-									&DummyBool);
+    /*
+    // Traverse the database
+    */
+    error = RnRecursiveTraverse(pList, &FirstState, MAX_DEPTH_OF_TRAVERSAL,
+                                &DummyBool);
 
-	SGL_TIME_STOP(DATABASE_TRAVERSAL_TIME)
-	return error;
+    SGL_TIME_STOP(DATABASE_TRAVERSAL_TIME)
+    return error;
 
 }
 

@@ -333,9 +333,11 @@
 
 
 #if WIN32 || DOS32
-    #include <version.h>
-	#include <hwregs.h> /* For get_texture_memory_size */
-	#include <brdcfg.h>
+
+#include <version.h>
+#include <hwregs.h> /* For get_texture_memory_size */
+#include <brdcfg.h>
+
 #endif
 
 #if ISPTSP
@@ -372,141 +374,136 @@ sgl_bool CALL_CONV InitEnvironment(void);
  *					routines.
  **************************************************************************/
 
-int CALL_CONV SglInitialise(void)
-{
-	int result;
+int CALL_CONV SglInitialise(void) {
+    int result;
 
-	/*
-	// Assume success until proven otherwise
-	*/
-	result = 0;
+    /*
+    // Assume success until proven otherwise
+    */
+    result = 0;
 
-	/*
-	// If we havent initialised the system, do so
-	*/
-	if(sglSystemInitialised == 0)
-	{
-		PVROSPrintf("Initialising SGL Ver:%s\n", VER_LIB_TXT);
+    /*
+    // If we havent initialised the system, do so
+    */
+    if (sglSystemInitialised == 0) {
+        PVROSPrintf("Initialising SGL Ver:%s\n", VER_LIB_TXT);
 
-		#if WIN32 || DOS32
-		
-			if (!InitEnvironment ())
-			{
-				exit (1);
-			}
+#if WIN32 || DOS32
 
-		#endif
+        if (!InitEnvironment()) {
+            exit(1);
+        }
 
-		#if DEBUG 
+#endif
 
-			DebugInit (DBGPRIV_WARNING);
+#if DEBUG
 
-		#endif
+        DebugInit (DBGPRIV_WARNING);
 
-		#if DEBUGDEV || TIMING
+#endif
 
-			DebugInit (DBGPRIV_MESSAGE);
+#if DEBUGDEV || TIMING
 
-		#endif
+        DebugInit (DBGPRIV_MESSAGE);
 
+#endif
 
-		#if !WIN32
-			/* get the render timeout in tenths of a second */
-			nTimeOutTenths = HWRdValFile( "RenderTimeout", 2);
-
-			HWReset(); /* this is a full on reset*/
-
-			#if ISPTSP
-				HWSetupBunchOfBRIDGERegs();
-			#endif
-		
-			HWSetupBunchOfISPRegs();
-
-			HWSetupBunchOfTSPRegs();
-
-		#endif
-
-		/*
-		// Initialise the display list editing globals etc
-		*/
-		result = InitDisplayLists();
-
-		/*
-		// Initialise the rendering variables
-		*/
-
-		/*
-		** initialise the default camera - used to be called from within
-		** RnInitialise
-		*/
-		RnSetupDefaultCamera(GetDefaultCamera());
-
-		if(result == 0)
-		{
-			InitRegionDataL(); /* Previously in a RnInitialise funcion */
-			result = InitStateStacks();
-		}
 
 #if !WIN32
-		if(result == 0)
-		{
-		  /* read the size for the texture parameter space in 4k pages */
-		    TexParamSize = 1024*HWRdValFile( "TSPParamSize", (TEX_PARAM_SIZE/1024));
-			result = HWInitParamMem();
-		}
+        /* get the render timeout in tenths of a second */
+        nTimeOutTenths = HWRdValFile( "RenderTimeout", 2);
+
+        HWReset(); /* this is a full on reset*/
+
+#if ISPTSP
+            HWSetupBunchOfBRIDGERegs();
 #endif
-		/* Initialise the bit twiddling table IF SIMULATOR*/
-	#if SIMULATOR
-		InitTwiddle();
-	#endif
-		
-		/* Initialise the texture memory manager*/
+
+        HWSetupBunchOfISPRegs();
+
+        HWSetupBunchOfTSPRegs();
+
+#endif
+
+        /*
+        // Initialise the display list editing globals etc
+        */
+        result = InitDisplayLists();
+
+        /*
+        // Initialise the rendering variables
+        */
+
+        /*
+        ** initialise the default camera - used to be called from within
+        ** RnInitialise
+        */
+        RnSetupDefaultCamera(GetDefaultCamera());
+
+        if (result == 0) {
+            InitRegionDataL(); /* Previously in a RnInitialise funcion */
+            result = InitStateStacks();
+        }
+
+#if !WIN32
+        if(result == 0)
+        {
+          /* read the size for the texture parameter space in 4k pages */
+            TexParamSize = 1024*HWRdValFile( "TSPParamSize", (TEX_PARAM_SIZE/1024));
+            result = HWInitParamMem();
+        }
+#endif
+        /* Initialise the bit twiddling table IF SIMULATOR*/
+#if SIMULATOR
+        InitTwiddle();
+#endif
+
+        /* Initialise the texture memory manager*/
 
 #if DOS32
-		InitTextureMemory( 4*1024*1024, ghTexHeap );
+        InitTextureMemory( 4*1024*1024, ghTexHeap );
 #elif !WIN32
-		InitTextureMemory(TEXTURE_MEMORY_SIZE*2, ghTexHeap);
+        InitTextureMemory(TEXTURE_MEMORY_SIZE*2, ghTexHeap);
 #endif
 
-		/*
-		// Initialse the texture cache control structure
-		*/
-		InitCachedTextures();
+        /*
+        // Initialse the texture cache control structure
+        */
+        InitCachedTextures();
 #if !WIN32
 
-		/* this allocates the overflow area for sabre parameters.
-		** It HAS to be done in this position/
-		*/
+        /* this allocates the overflow area for sabre parameters.
+        ** It HAS to be done in this position/
+        */
 
-		SetupOverflowArea(TexParamSize);
+        SetupOverflowArea(TexParamSize);
 
-		/*	the translucent pixel HAS to be set up after the
-			texture memory */
-	
-		TranslucentControlWord=SetupTransPixel();
+        /*	the translucent pixel HAS to be set up after the
+            texture memory */
+
+        TranslucentControlWord=SetupTransPixel();
 #endif
 
-		/* Initialise some mesh rendering globals */
+        /* Initialise some mesh rendering globals */
 
-		RnMeshOnSglInitialise ();
+        RnMeshOnSglInitialise();
 
-		/* init fast inverse sqrt lookup table */
+        /* init fast inverse sqrt lookup table */
 
-		MakeInvSqrtLookupTable ();
-		
-		if(result == 0)
-		{
-			sglSystemInitialised = 1;
-		}
+        MakeInvSqrtLookupTable();
 
-		/* read default quality flags from ini file */
-		
-		InitDefaultQualityFlags ();
+        if (result == 0) {
+            sglSystemInitialised = 1;
+        }
 
-		
-	}/*End if system not initialised*/
+        /* read default quality flags from ini file */
 
-	return result;
+        InitDefaultQualityFlags();
+
+
+    }/*End if system not initialised*/
+
+    return result;
 }
 
 
@@ -520,14 +517,13 @@ int CALL_CONV SglInitialise(void)
  *
  * Description  : See SGL API document
  *****************************************************************************/
-sgl_versions * CALL_CONV sgl_get_versions()
-{
-	static sgl_versions  versions;
+sgl_versions *CALL_CONV sgl_get_versions() {
+    static sgl_versions versions;
 
-	versions.library = VER_LIB_TXT;
-	versions.required_header = SGL_HEADER_VERSION;
+    versions.library = VER_LIB_TXT;
+    versions.required_header = SGL_HEADER_VERSION;
 
-	return &versions;
+    return &versions;
 }
 
 /***********************************************************************
@@ -540,48 +536,40 @@ sgl_versions * CALL_CONV sgl_get_versions()
 ***********************************************************************/
 
 
-sgl_bool CALL_CONV sgl_get_ini_string(char *ReturnData, int ReturnSize, 
-								  char *DefaultDataValue, 
-								  char *Section, char *Entry)
-{
-	sgl_bool bResult = FALSE;
+sgl_bool CALL_CONV sgl_get_ini_string(char *ReturnData, int ReturnSize,
+                                      char *DefaultDataValue,
+                                      char *Section, char *Entry) {
+    sgl_bool bResult = FALSE;
 
-	if(ReturnData==NULL || Section==NULL || Entry==NULL ||
-	   DefaultDataValue==NULL || ReturnSize==0)
-	{
+    if (ReturnData == NULL || Section == NULL || Entry == NULL ||
+        DefaultDataValue == NULL || ReturnSize == 0) {
 
-		SglError(sgl_err_bad_parameter);
-		return FALSE;
+        SglError(sgl_err_bad_parameter);
+        return FALSE;
 
-	}
-	else
-	{
+    } else {
 
-		strncpy(ReturnData, DefaultDataValue, ReturnSize); 
-		bResult = HWRdValFileString (Entry, ReturnData, ReturnSize);
-		SglError(sgl_no_err);
-		return bResult;
-	}
+        strncpy(ReturnData, DefaultDataValue, ReturnSize);
+        bResult = HWRdValFileString(Entry, ReturnData, ReturnSize);
+        SglError(sgl_no_err);
+        return bResult;
+    }
 }
 
 sgl_bool CALL_CONV sgl_get_ini_int(sgl_int32 *ReturnData,
-									sgl_int32 DefaultValue, 
-									char *Section, char *Entry)
-{
+                                   sgl_int32 DefaultValue,
+                                   char *Section, char *Entry) {
 
-	if(ReturnData==NULL || Section==NULL || Entry==NULL)
-	{
+    if (ReturnData == NULL || Section == NULL || Entry == NULL) {
 
-		SglError(sgl_err_bad_parameter);
-		return FALSE;
+        SglError(sgl_err_bad_parameter);
+        return FALSE;
 
-	}
-	else
-	{
-		*ReturnData = (sgl_uint32) HWRdValFileInt (Entry, DefaultValue); 
-		SglError(sgl_no_err);
-		return TRUE;
-	}
+    } else {
+        *ReturnData = (sgl_uint32) HWRdValFileInt(Entry, DefaultValue);
+        SglError(sgl_no_err);
+        return TRUE;
+    }
 }
 /*
 //  Thats all Folks....

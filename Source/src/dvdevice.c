@@ -201,7 +201,7 @@
 
 
 
-#define MODULE_ID MODID_DVDEVICE 
+#define MODULE_ID MODID_DVDEVICE
 
 
 #include <stdio.h>
@@ -218,7 +218,7 @@
 #include <pmsabre.h>
 #include <dvdevice.h>
 #include <hwinterf.h>
-#include <dregion.h>	/* JWF added to fix missing prototypes */
+#include <dregion.h>    /* JWF added to fix missing prototypes */
 
 
 #ifdef DLL_METRIC
@@ -232,59 +232,61 @@ extern void OutputTotalMetric(void);
 
 static void OutputStats( void )
 {
-	FILE *fp;
-	int YReg;
+    FILE *fp;
+    int YReg;
 
-	/* End recorded time */
-	SGL_TIME_STOP(TOTAL_APP_TIME)
+    /* End recorded time */
+    SGL_TIME_STOP(TOTAL_APP_TIME)
 
 #if ! defined (MIDAS_ARCADE) /* No file system on an arcade machine */
-	fp = fopen("metrics.csv","wt");
+    fp = fopen("metrics.csv","wt");
 #endif
 
-	/* Dump out the data */
-	for ( YReg = 0; YReg < NUM_TIMERS; YReg++ )
-	{
-		if ( Times[YReg].Count != 0 )
-		{
+    /* Dump out the data */
+    for ( YReg = 0; YReg < NUM_TIMERS; YReg++ )
+    {
+        if ( Times[YReg].Count != 0 )
+        {
 #if defined (MIDAS_ARCADE)
-			fprintf(stderr, "%s, %d, %d, %d\n", timer_names[YReg].name,
-								(int)Times[YReg].Count, (int)Times[YReg].Total, (int)Times[YReg].Max);
+            fprintf(stderr, "%s, %d, %d, %d\n", timer_names[YReg].name,
+                                (int)Times[YReg].Count, (int)Times[YReg].Total, (int)Times[YReg].Max);
 #else
-			PVROSPrintf("%s, %d, %d, %d\n", timer_names[YReg].name,
-						 Times[YReg].Count, Times[YReg].Total, Times[YReg].Max);
+            PVROSPrintf("%s, %d, %d, %d\n", timer_names[YReg].name,
+                         Times[YReg].Count, Times[YReg].Total, Times[YReg].Max);
 #endif
-		}
-	}
+        }
+    }
 
 #if ! defined (MIDAS_ARCADE)
-	fclose(fp);
+    fclose(fp);
 #endif
 }
 
 void InResetRegionData( void )
 {
-   	SGL_TIME_STOP(SGLTRI_STARTOFFRAME1_TIME)
-#if 0	
-	if ( ++nRendersRecorded == 0 )
-	{
-		/* Set it to zero after the first few frames */
-		memset( &Times, 0, NUM_TIMERS*sizeof(Temporal_Data) );
+       SGL_TIME_STOP(SGLTRI_STARTOFFRAME1_TIME)
+#if 0
+    if ( ++nRendersRecorded == 0 )
+    {
+        /* Set it to zero after the first few frames */
+        memset( &Times, 0, NUM_TIMERS*sizeof(Temporal_Data) );
 
-		/* Start recorded time */
-	   	SGL_TIME_START(TOTAL_APP_TIME)
-	}
-	else
+        /* Start recorded time */
+           SGL_TIME_START(TOTAL_APP_TIME)
+    }
+    else
 #endif
-	{
-		/* Monitor each frame period as the top level call */
-	  	SGL_TIME_STOP(TOTAL_APP_TIME)
-		SGL_TIME_START(TOTAL_APP_TIME)	
-	}
-	SGL_TIME_START(SGLTRI_STARTOFFRAME2_TIME)
+    {
+        /* Monitor each frame period as the top level call */
+          SGL_TIME_STOP(TOTAL_APP_TIME)
+        SGL_TIME_START(TOTAL_APP_TIME)
+    }
+    SGL_TIME_START(SGLTRI_STARTOFFRAME2_TIME)
 }
 #else
-#include "metrics.h"	
+
+#include "metrics.h"
+
 #endif
 
 extern void SaveDeviceName(int name);
@@ -305,226 +307,214 @@ extern void SaveDeviceName(int name);
  **************************************************************************/
 
 
-int	CALL_CONV sgl_create_screen_device ( int device_number, 
-						 				 int x_dimension, int y_dimension,
-										 sgl_device_colour_types device_mode, 
-										 sgl_bool double_buffer)
-{
-	int error = sgl_no_err;
-	int name  = NM_INVALID_NAME;
-	int y;
-	DEVICE_NODE_STRUCT * pNode;
-	float XCentre,YCentre;
-	sgl_int32 Mech2 = 0;
+int CALL_CONV sgl_create_screen_device(int device_number,
+                                       int x_dimension, int y_dimension,
+                                       sgl_device_colour_types device_mode,
+                                       sgl_bool double_buffer) {
+    int error = sgl_no_err;
+    int name = NM_INVALID_NAME;
+    int y;
+    DEVICE_NODE_STRUCT *pNode;
+    float XCentre, YCentre;
+    sgl_int32 Mech2 = 0;
 #if ISPTSP
-	DEVICE_REGION_INFO_STRUCT RegionInfo;
+    DEVICE_REGION_INFO_STRUCT RegionInfo;
 #endif
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		error = sgl_err_failed_init;
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        error = sgl_err_failed_init;
 
-		SglError(error);
-		return error;
-	}
+        SglError(error);
+        return error;
+    }
 #endif
 
-	/* old apps didn't set their double buffering correctly as they 
-	** always got double buffering - allow override potentially
-	*/
-	double_buffer = (sgl_bool)HWRdValFileUInt("DisplayDoubleBuffer", double_buffer);
+    /* old apps didn't set their double buffering correctly as they
+    ** always got double buffering - allow override potentially
+    */
+    double_buffer = (sgl_bool) HWRdValFileUInt("DisplayDoubleBuffer", double_buffer);
 
-	/* Fix for Mech2 etc to make the screen the correct size */
-	Mech2 = HWRdValFileInt("IncScreenXYby1", Mech2);
+    /* Fix for Mech2 etc to make the screen the correct size */
+    Mech2 = HWRdValFileInt("IncScreenXYby1", Mech2);
 
-	if (Mech2)
-	{
-		x_dimension++;  
-		y_dimension++;
-	}
+    if (Mech2) {
+        x_dimension++;
+        y_dimension++;
+    }
 
-	if ( HWCreateDevice( &device_number, 
-						 &x_dimension, &y_dimension, 
-						 &device_mode, &double_buffer) !=0 )
-	{
-		/*
-		//	We failed to create_device
-		*/
+    if (HWCreateDevice(&device_number,
+                       &x_dimension, &y_dimension,
+                       &device_mode, &double_buffer) != 0) {
+        /*
+        //	We failed to create_device
+        */
 
-		error = sgl_err_bad_device;
+        error = sgl_err_bad_device;
 
-		SglError(error);
-		return error;
-	} 
+        SglError(error);
+        return error;
+    }
 
-	/*
-	// Set the region size once the device has been created.  This function
-	// name needs changing sometime (It used to be called before each render).
-	*/
-	/*RnMeshAtListTraversal(); -- guts of function now here instead of call */
-	{
-		int RegXSize, RegYSize;
-		PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+    /*
+    // Set the region size once the device has been created.  This function
+    // name needs changing sometime (It used to be called before each render).
+    */
+    /*RnMeshAtListTraversal(); -- guts of function now here instead of call */
+    {
+        int RegXSize, RegYSize;
+        PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-		HWGetRegionSize (&RegXSize, &RegYSize);
+        HWGetRegionSize(&RegXSize, &RegYSize);
 
-		pProjMat->fRegionXScale = 1.0f / (float) RegXSize;
-	
-		/* For optimisation absolute Y co-ordinates required.
-		 */
-		pProjMat->fRegionYScale = 1.0f;
-	}
+        pProjMat->fRegionXScale = 1.0f / (float) RegXSize;
 
-	/* 
-	//	Create a new device structure 
-	*/
+        /* For optimisation absolute Y co-ordinates required.
+         */
+        pProjMat->fRegionYScale = 1.0f;
+    }
 
-	pNode = NEW(DEVICE_NODE_STRUCT);
+    /*
+    //	Create a new device structure
+    */
 
-	if(pNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		error = sgl_err_no_mem;
+    pNode = NEW(DEVICE_NODE_STRUCT);
 
-		SglError(error);
-		return error;
-	} 
+    if (pNode == NULL) {
+        /*
+            Abort
+        */
+        error = sgl_err_no_mem;
+
+        SglError(error);
+        return error;
+    }
 
 
-	/*
- 		we need to generate a name, and add the device to
-		the name table 
-	*/
-	name = AddNamedItem(dlUserGlobals.pNamtab,
-   		   				pNode,
-	   					nt_device);
+    /*
+         we need to generate a name, and add the device to
+        the name table
+    */
+    name = AddNamedItem(dlUserGlobals.pNamtab,
+                        pNode,
+                        nt_device);
 
-	/*
-	  	If there were no free spaces, then the name will
-	  	contain an error value (i.e.negative)
-		
-	  	In this situation TIDY UP and ABORT.
-	*/
+    /*
+          If there were no free spaces, then the name will
+          contain an error value (i.e.negative)
 
-   	if(name < 0)
-	{
-   		error = name;
-	   	name = NM_INVALID_NAME;
+          In this situation TIDY UP and ABORT.
+    */
 
-	   	SGLFree(pNode);
+    if (name < 0) {
+        error = name;
+        name = NM_INVALID_NAME;
 
-	   	SglError(error);
+        SGLFree(pNode);
 
-	   	return error;
-	}
+        SglError(error);
+
+        return error;
+    }
 
 
-	/* set fields in device node to the values set by the hardware device routine */
+    /* set fields in device node to the values set by the hardware device routine */
 
-	
-	pNode->node_hdr.n16_node_type = (sgl_int16) nt_device;
-	pNode->node_hdr.n16_name	  = (sgl_int16) name;
-	pNode->node_hdr.next_node	  = NULL;
 
-	pNode->pLastViewport = NULL; 
-	pNode->PhDeviceID = device_number;
-	pNode->xDim = x_dimension;
-	pNode->yDim = y_dimension;
-	pNode->DeviceMode = device_mode;
-	pNode->DoubleBuffer = double_buffer;
+    pNode->node_hdr.n16_node_type = (sgl_int16) nt_device;
+    pNode->node_hdr.n16_name = (sgl_int16) name;
+    pNode->node_hdr.next_node = NULL;
+
+    pNode->pLastViewport = NULL;
+    pNode->PhDeviceID = device_number;
+    pNode->xDim = x_dimension;
+    pNode->yDim = y_dimension;
+    pNode->DeviceMode = device_mode;
+    pNode->DoubleBuffer = double_buffer;
 
 
 
-	/*
-	// Set up the viewport as well
-	*/
-	pNode->defaultViewport.Left = 0;
-	pNode->defaultViewport.Top = 0;
-	pNode->defaultViewport.Right = x_dimension -1;
-	pNode->defaultViewport.Bottom = y_dimension -1;
+    /*
+    // Set up the viewport as well
+    */
+    pNode->defaultViewport.Left = 0;
+    pNode->defaultViewport.Top = 0;
+    pNode->defaultViewport.Right = x_dimension - 1;
+    pNode->defaultViewport.Bottom = y_dimension - 1;
 
 
 
 
-	/*
-	// Set the region mask so that all regions are included
-	*/
-	for(y = 0; y < MAX_Y_REGIONS; y++)
-	{
-		pNode->defaultViewport.regionMask[y] = 0xFFFFFFFF;
-	}
+    /*
+    // Set the region mask so that all regions are included
+    */
+    for (y = 0; y < MAX_Y_REGIONS; y++) {
+        pNode->defaultViewport.regionMask[y] = 0xFFFFFFFF;
+    }
 
-	/*
-	// Also actually set the number of regions covered. This is needed for
-	// Midas3.
-	//
-	// NOTE We need to allow for partial regions, hence the addition of
-	/ the region size -1
-	*/
+    /*
+    // Also actually set the number of regions covered. This is needed for
+    // Midas3.
+    //
+    // NOTE We need to allow for partial regions, hence the addition of
+    / the region size -1
+    */
 #if ISPTSP
-	HWGetRegionInfo(device_number, &RegionInfo);
-	pNode->defaultViewport.numRegions = 
-				((x_dimension + RegionInfo.XSize -1) / RegionInfo.XSize) *
-				((y_dimension + RegionInfo.YSize -1) / RegionInfo.YSize);
+    HWGetRegionInfo(device_number, &RegionInfo);
+    pNode->defaultViewport.numRegions =
+                ((x_dimension + RegionInfo.XSize -1) / RegionInfo.XSize) *
+                ((y_dimension + RegionInfo.YSize -1) / RegionInfo.YSize);
 #endif
 
- /* just is case some wierdo wants tall thin device (ooh err!) */
-	if (x_dimension >= y_dimension)
-	{			
-		XCentre = ((float)(x_dimension - 2))* 0.5f; 
-		YCentre = ((float) y_dimension)		* 0.5f;
-		
-		pNode->defaultViewport.fCamLeft = XCentre-YCentre;
-		pNode->defaultViewport.fCamTop = 0.0f;
-		pNode->defaultViewport.fCamRight = XCentre+YCentre;
-		pNode->defaultViewport.fCamBottom = (float) (y_dimension - 1);
-	}
-	else
-	{
-		XCentre = ((float)(x_dimension))	* 0.5f; 
-		YCentre = ((float)(y_dimension - 2))* 0.5f; 
+    /* just is case some wierdo wants tall thin device (ooh err!) */
+    if (x_dimension >= y_dimension) {
+        XCentre = ((float) (x_dimension - 2)) * 0.5f;
+        YCentre = ((float) y_dimension) * 0.5f;
 
-		pNode->defaultViewport.fCamLeft = 0.0f;
-		pNode->defaultViewport.fCamTop = XCentre-YCentre;
-		pNode->defaultViewport.fCamRight = (float) (x_dimension - 1);
-		pNode->defaultViewport.fCamBottom = XCentre+YCentre;
-	}
+        pNode->defaultViewport.fCamLeft = XCentre - YCentre;
+        pNode->defaultViewport.fCamTop = 0.0f;
+        pNode->defaultViewport.fCamRight = XCentre + YCentre;
+        pNode->defaultViewport.fCamBottom = (float) (y_dimension - 1);
+    } else {
+        XCentre = ((float) (x_dimension)) * 0.5f;
+        YCentre = ((float) (y_dimension - 2)) * 0.5f;
 
-	DPF((DBG_MESSAGE, 
-		"******** VLEFT:   %7.02f ********",pNode->defaultViewport.fCamLeft));
-	DPF((DBG_MESSAGE, 
-		"******** VTOP:    %7.02f ********",pNode->defaultViewport.fCamTop));
-	DPF((DBG_MESSAGE, 
-		"******** VRIGHT:  %7.02f ********",pNode->defaultViewport.fCamRight));
-	DPF((DBG_MESSAGE, 
-		"******** VBOTTOM: %7.02f ********",pNode->defaultViewport.fCamBottom));
+        pNode->defaultViewport.fCamLeft = 0.0f;
+        pNode->defaultViewport.fCamTop = XCentre - YCentre;
+        pNode->defaultViewport.fCamRight = (float) (x_dimension - 1);
+        pNode->defaultViewport.fCamBottom = XCentre + YCentre;
+    }
 
-	pNode->defaultViewport.pParentDevice = pNode;
+    DPF((DBG_MESSAGE,
+            "******** VLEFT:   %7.02f ********", pNode->defaultViewport.fCamLeft));
+    DPF((DBG_MESSAGE,
+            "******** VTOP:    %7.02f ********", pNode->defaultViewport.fCamTop));
+    DPF((DBG_MESSAGE,
+            "******** VRIGHT:  %7.02f ********", pNode->defaultViewport.fCamRight));
+    DPF((DBG_MESSAGE,
+            "******** VBOTTOM: %7.02f ********", pNode->defaultViewport.fCamBottom));
 
-	/* Force the regions to be cleared and created at this point, in case 
+    pNode->defaultViewport.pParentDevice = pNode;
+
+    /* Force the regions to be cleared and created at this point, in case
      * the application has changed screen mode between renders.
      */
 
-	ResetRegionDataL(TRUE);
-	
-	SaveDeviceName(name);
+    ResetRegionDataL(TRUE);
 
-	SglError(error);
+    SaveDeviceName(name);
 
-	return name;
+    SglError(error);
+
+    return name;
 }
-
-
-  
 
 
 /**************************************************************************
@@ -542,59 +532,52 @@ int	CALL_CONV sgl_create_screen_device ( int device_number,
  *
  **************************************************************************/
 
-int	CALL_CONV sgl_get_device ( int device_name, int *device_number, 
-							   int *x_dimension, int *y_dimension,
-							   sgl_device_colour_types	* device_mode, 
-							   sgl_bool *double_buffer )
-{
-	DEVICE_NODE_STRUCT * pNode;
+int CALL_CONV sgl_get_device(int device_name, int *device_number,
+                             int *x_dimension, int *y_dimension,
+                             sgl_device_colour_types *device_mode,
+                             sgl_bool *double_buffer) {
+    DEVICE_NODE_STRUCT *pNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return(sgl_err_failed_init);
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return(sgl_err_failed_init);
+    }
 #endif
 
-	/* Make sure that given name is the name of a device */
+    /* Make sure that given name is the name of a device */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, device_name) != nt_device )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, device_name) != nt_device) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return(sgl_err_bad_name); 
-	}
+        SglError(sgl_err_bad_name);
+        return (sgl_err_bad_name);
+    }
 
 
-	/*	get reference to device from the name table */
+    /*	get reference to device from the name table */
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, device_name);
 
 
-	*device_number = pNode->PhDeviceID;
-	*x_dimension = pNode->xDim;
-	*y_dimension = pNode->yDim;
-	*device_mode = pNode->DeviceMode;
-	*double_buffer = pNode->DoubleBuffer;
+    *device_number = pNode->PhDeviceID;
+    *x_dimension = pNode->xDim;
+    *y_dimension = pNode->yDim;
+    *device_mode = pNode->DeviceMode;
+    *double_buffer = pNode->DoubleBuffer;
 
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 
-	return(sgl_no_err);
+    return (sgl_no_err);
 }
-
-
-
- 
- 
 
 
 /**************************************************************************
@@ -609,76 +592,70 @@ int	CALL_CONV sgl_get_device ( int device_name, int *device_number,
  **************************************************************************/
 
 
-void CALL_CONV sgl_delete_device( int device )
-{
+void CALL_CONV sgl_delete_device(int device) {
 
-	DEVICE_NODE_STRUCT * dNode;
-	VIEWPORT_NODE_STRUCT *vNode;
-	DL_NODE_STRUCT	*nextNode;
+    DEVICE_NODE_STRUCT *dNode;
+    VIEWPORT_NODE_STRUCT *vNode;
+    DL_NODE_STRUCT *nextNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
 
-		SglError(sgl_err_failed_init);
-		return;
-	}
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
-	/* Make sure that given name is the name of a device */
+    /* Make sure that given name is the name of a device */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, device) != nt_device )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, device) != nt_device) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return; 
+        SglError(sgl_err_bad_name);
+        return;
 
-	}
+    }
 
 
-	/*	get reference to device from the name table */
+    /*	get reference to device from the name table */
 
     dNode = GetNamedItem(dlUserGlobals.pNamtab, device);
 
 
-   	nextNode = (DL_NODE_STRUCT*) dNode->node_hdr.next_node;
+    nextNode = (DL_NODE_STRUCT *) dNode->node_hdr.next_node;
 
-  	/* delete all the viewports */
+    /* delete all the viewports */
 
-	while (nextNode!=NULL)
-	{
-		vNode = (VIEWPORT_NODE_STRUCT*) nextNode;
+    while (nextNode != NULL) {
+        vNode = (VIEWPORT_NODE_STRUCT *) nextNode;
 
-	   	nextNode = nextNode->next_node;
+        nextNode = nextNode->next_node;
 
-	    DeleteNamedItem(dlUserGlobals.pNamtab,vNode->node_hdr.n16_name);
+        DeleteNamedItem(dlUserGlobals.pNamtab, vNode->node_hdr.n16_name);
 
-		SGLFree(vNode);
-	}
+        SGLFree(vNode);
+    }
 
-	/*
-		Remove from the name table
-	*/
+    /*
+        Remove from the name table
+    */
 
-    DeleteNamedItem(dlUserGlobals.pNamtab,device);
+    DeleteNamedItem(dlUserGlobals.pNamtab, device);
 
-	HWDeleteDevice(dNode->PhDeviceID);
+    HWDeleteDevice(dNode->PhDeviceID);
 #ifdef DLL_METRIC
-	OutputTotalMetric();
+    OutputTotalMetric();
    /*	OutputStats();*/
 #endif
 
-	SGLFree(dNode);
+    SGLFree(dNode);
 }
-
-
-
 
 
 /**************************************************************************
@@ -696,204 +673,192 @@ void CALL_CONV sgl_delete_device( int device )
  *
  **************************************************************************/
 
-int CALL_CONV sgl_create_viewport( int parent_device, 
-								   int left, int top, 
-								   int right, int bottom, 
-								   float cam_rect_left, float cam_rect_top,	
-								   float cam_rect_right, float cam_rect_bottom )
-{
-	int error = sgl_no_err;
-	DEVICE_NODE_STRUCT * dNode;
-	VIEWPORT_NODE_STRUCT * vNode;
-	int name  = NM_INVALID_NAME;
-	int y;
-	sgl_uint32 XRegionBits;
-	DEVICE_REGION_INFO_STRUCT RegionInfo;
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+int CALL_CONV sgl_create_viewport(int parent_device,
+                                  int left, int top,
+                                  int right, int bottom,
+                                  float cam_rect_left, float cam_rect_top,
+                                  float cam_rect_right, float cam_rect_bottom) {
+    int error = sgl_no_err;
+    DEVICE_NODE_STRUCT *dNode;
+    VIEWPORT_NODE_STRUCT *vNode;
+    int name = NM_INVALID_NAME;
+    int y;
+    sgl_uint32 XRegionBits;
+    DEVICE_REGION_INFO_STRUCT RegionInfo;
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return(sgl_err_failed_init);
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return(sgl_err_failed_init);
+    }
 #endif
 
-	/* Make sure that given device name is the name of a device */
+    /* Make sure that given device name is the name of a device */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, parent_device) != nt_device )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, parent_device) != nt_device) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return(sgl_err_bad_name); 
-	}
+        SglError(sgl_err_bad_name);
+        return (sgl_err_bad_name);
+    }
 
 
-	/*	get reference to device from the name table */
+    /*	get reference to device from the name table */
 
     dNode = GetNamedItem(dlUserGlobals.pNamtab, parent_device);
 
 
-	/* 
-	//	Create a new viewport structure 
-	*/
+    /*
+    //	Create a new viewport structure
+    */
 
-	vNode = NEW(VIEWPORT_NODE_STRUCT);
+    vNode = NEW(VIEWPORT_NODE_STRUCT);
 
-	if(vNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		error = sgl_err_no_mem;
+    if (vNode == NULL) {
+        /*
+            Abort
+        */
+        error = sgl_err_no_mem;
 
-		SglError(error);
-		return (error);
-	} 
+        SglError(error);
+        return (error);
+    }
 
 
-	/*
- 	//	we need to generate a name for the viewport
-	*/
-	name = AddNamedItem(dlUserGlobals.pNamtab,
-   		   				vNode,
-	   					nt_viewport);
+    /*
+     //	we need to generate a name for the viewport
+    */
+    name = AddNamedItem(dlUserGlobals.pNamtab,
+                        vNode,
+                        nt_viewport);
 
-	/*
-	//  	If there were no free spaces, then the name will
-	//  	contain an error value (i.e.negative)
-	//
-	*/
+    /*
+    //  	If there were no free spaces, then the name will
+    //  	contain an error value (i.e.negative)
+    //
+    */
 
-   	if(name < 0)
-	{
-   		error = name;
-	   	name = NM_INVALID_NAME;
+    if (name < 0) {
+        error = name;
+        name = NM_INVALID_NAME;
 
-	   	SGLFree(vNode);
+        SGLFree(vNode);
 
-	   	SglError(error);
+        SglError(error);
 
-	   	return (error);
-	}
+        return (error);
+    }
 
 
 
-	/* if viewport size isnt available for device, viewport coordinates
-	   are changed to ones that are in hardware routine */
+    /* if viewport size isnt available for device, viewport coordinates
+       are changed to ones that are in hardware routine */
 
-	HWSetViewport(dNode->PhDeviceID, &left,&top,&right,&bottom);
-
-
-	vNode->node_hdr.n16_node_type = (sgl_int16) nt_viewport;
-	vNode->node_hdr.n16_name	  = (sgl_int16) name;
-	vNode->node_hdr.next_node	  = NULL;
-
-	vNode->Left = left;
-	vNode->Top = top;
-	vNode->Right = right;
-	vNode->Bottom = bottom;
-
-	vNode->fCamLeft = cam_rect_left;
-	vNode->fCamTop = cam_rect_top;
-	vNode->fCamRight = cam_rect_right;
-	vNode->fCamBottom = cam_rect_bottom;
-
-	vNode->pParentDevice = dNode;
+    HWSetViewport(dNode->PhDeviceID, &left, &top, &right, &bottom);
 
 
-	/* ///////////////////////////
-	// Set the region mask so that all regions within this viewport are
-	// included, but no others.
-	/////////////////////////// */
-	HWGetRegionInfo(dNode->PhDeviceID, &RegionInfo);
+    vNode->node_hdr.n16_node_type = (sgl_int16) nt_viewport;
+    vNode->node_hdr.n16_name = (sgl_int16) name;
+    vNode->node_hdr.next_node = NULL;
 
-	/*
-	// First clear out the structure
-	*/
-	for(y = 0; y < MAX_Y_REGIONS; y++)
-	{
-		vNode->regionMask[y] = 0;
-	}
+    vNode->Left = left;
+    vNode->Top = top;
+    vNode->Right = right;
+    vNode->Bottom = bottom;
 
-	/*
-	// Calc the bits for the x dimension. First set them all, then clear off the
-	// lower ones, then the upper ones
-	*/
-	XRegionBits = 0xFFFFFFFFUL;
-	XRegionBits = XRegionBits >> (left / RegionInfo.XSize);
-	XRegionBits = XRegionBits << (left / RegionInfo.XSize + 
-								  (31 - right / RegionInfo.XSize));
+    vNode->fCamLeft = cam_rect_left;
+    vNode->fCamTop = cam_rect_top;
+    vNode->fCamRight = cam_rect_right;
+    vNode->fCamBottom = cam_rect_bottom;
 
-	XRegionBits = XRegionBits >> (31 - right / RegionInfo.XSize);
+    vNode->pParentDevice = dNode;
 
-	/*
-	// Also actually set the number of regions covered. This is needed for
-	// Midas3
-	*/
+
+    /* ///////////////////////////
+    // Set the region mask so that all regions within this viewport are
+    // included, but no others.
+    /////////////////////////// */
+    HWGetRegionInfo(dNode->PhDeviceID, &RegionInfo);
+
+    /*
+    // First clear out the structure
+    */
+    for (y = 0; y < MAX_Y_REGIONS; y++) {
+        vNode->regionMask[y] = 0;
+    }
+
+    /*
+    // Calc the bits for the x dimension. First set them all, then clear off the
+    // lower ones, then the upper ones
+    */
+    XRegionBits = 0xFFFFFFFFUL;
+    XRegionBits = XRegionBits >> (left / RegionInfo.XSize);
+    XRegionBits = XRegionBits << (left / RegionInfo.XSize +
+                                  (31 - right / RegionInfo.XSize));
+
+    XRegionBits = XRegionBits >> (31 - right / RegionInfo.XSize);
+
+    /*
+    // Also actually set the number of regions covered. This is needed for
+    // Midas3
+    */
 #if ISPTSP
-	vNode->numRegions = ((right / RegionInfo.XSize) - 
-						(left / RegionInfo.XSize) + 1) * 
+    vNode->numRegions = ((right / RegionInfo.XSize) -
+                        (left / RegionInfo.XSize) + 1) *
 
-						((bottom / RegionInfo.YSize) - 
-						 (top / RegionInfo.YSize) + 1);
+                        ((bottom / RegionInfo.YSize) -
+                         (top / RegionInfo.YSize) + 1);
 #endif
 
-	/*
-	// Now put this in all the rows. Note that bottom is set to the last
-	// pixel of the last row of regions, and hence the comparison must
-	// be "<="
-	*/
-	
-	for(y = (top / RegionInfo.YSize); y <= (bottom / RegionInfo.YSize); y++)
-	{
-		vNode->regionMask[y] = 	XRegionBits;
+    /*
+    // Now put this in all the rows. Note that bottom is set to the last
+    // pixel of the last row of regions, and hence the comparison must
+    // be "<="
+    */
 
-	}/*end for y*/
+    for (y = (top / RegionInfo.YSize); y <= (bottom / RegionInfo.YSize); y++) {
+        vNode->regionMask[y] = XRegionBits;
 
+    }/*end for y*/
 
 
 
-	/* ///////////////////////////
-	// Add the viewport to its parent device
-	/////////////////////////// */
 
-	if (dNode->node_hdr.next_node == NULL)
-	{
-		/* no viewports have been defined yet */
+    /* ///////////////////////////
+    // Add the viewport to its parent device
+    /////////////////////////// */
 
-		/* the previous node is the device node */
+    if (dNode->node_hdr.next_node == NULL) {
+        /* no viewports have been defined yet */
 
-		vNode->pPrevNode = (DL_NODE_STRUCT*) dNode;  
+        /* the previous node is the device node */
 
-		dNode->node_hdr.next_node = (DL_NODE_STRUCT*) vNode; 
+        vNode->pPrevNode = (DL_NODE_STRUCT *) dNode;
 
-	}
-	else
-	{
-		vNode->pPrevNode = dNode->pLastViewport; 		
+        dNode->node_hdr.next_node = (DL_NODE_STRUCT *) vNode;
 
-		dNode->pLastViewport->next_node = (DL_NODE_STRUCT*) vNode; 
-	}
+    } else {
+        vNode->pPrevNode = dNode->pLastViewport;
+
+        dNode->pLastViewport->next_node = (DL_NODE_STRUCT *) vNode;
+    }
 
 
- 	dNode->pLastViewport=(DL_NODE_STRUCT*) vNode;
+    dNode->pLastViewport = (DL_NODE_STRUCT *) vNode;
 
 
-	SglError(error);
+    SglError(error);
 
-	return (name);
+    return (name);
 
 }
-
-
-
 
 
 /**************************************************************************
@@ -911,69 +876,64 @@ int CALL_CONV sgl_create_viewport( int parent_device,
  **************************************************************************/
 
 
-int CALL_CONV sgl_get_viewport( int viewport, 
-								int * left, int * top,
-								int *right, int *bottom,
-								float *cam_rect_left, float *cam_rect_top, 
-								float *cam_rect_right, float *cam_rect_bottom )
-{
-	int error = sgl_no_err;
+int CALL_CONV sgl_get_viewport(int viewport,
+                               int *left, int *top,
+                               int *right, int *bottom,
+                               float *cam_rect_left, float *cam_rect_top,
+                               float *cam_rect_right, float *cam_rect_bottom) {
+    int error = sgl_no_err;
 
-    VIEWPORT_NODE_STRUCT * vNode;
+    VIEWPORT_NODE_STRUCT *vNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		error = sgl_err_failed_init;
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        error = sgl_err_failed_init;
 
-		SglError(error);
+        SglError(error);
 
-		return error;
-	}
+        return error;
+    }
 #endif
 
-	/* Make sure that given name is the name of a device */
+    /* Make sure that given name is the name of a device */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport) {
+        /* the given name is invalid */
 
-		error = sgl_err_bad_name;
+        error = sgl_err_bad_name;
 
-    	SglError(error);
-		return error; 
-	}
+        SglError(error);
+        return error;
+    }
 
 
-	/*	get reference to viewport from the name table */
+    /*	get reference to viewport from the name table */
 
     vNode = GetNamedItem(dlUserGlobals.pNamtab, viewport);
 
 
-	*left = vNode->Left;
-	*top = vNode->Top;
-	*right = vNode->Right;
-	*bottom = vNode->Bottom;
+    *left = vNode->Left;
+    *top = vNode->Top;
+    *right = vNode->Right;
+    *bottom = vNode->Bottom;
 
-	*cam_rect_left = vNode->fCamLeft;
-	*cam_rect_top = vNode->fCamTop;
-	*cam_rect_right = vNode->fCamRight;
-	*cam_rect_bottom = vNode->fCamBottom;
+    *cam_rect_left = vNode->fCamLeft;
+    *cam_rect_top = vNode->fCamTop;
+    *cam_rect_right = vNode->fCamRight;
+    *cam_rect_bottom = vNode->fCamBottom;
 
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 
-	return (sgl_no_err);
+    return (sgl_no_err);
 }
-
-
-
 
 
 /**************************************************************************
@@ -991,117 +951,113 @@ int CALL_CONV sgl_get_viewport( int viewport,
  *
  **************************************************************************/
 
-int	CALL_CONV sgl_set_viewport( int viewport,
-								int left, int top,
-								int right, int bottom,
-								float cam_rect_left, float cam_rect_top,
-								float cam_rect_right, float cam_rect_bottom )
-{
+int CALL_CONV sgl_set_viewport(int viewport,
+                               int left, int top,
+                               int right, int bottom,
+                               float cam_rect_left, float cam_rect_top,
+                               float cam_rect_right, float cam_rect_bottom) {
 
-    VIEWPORT_NODE_STRUCT * vNode;
-	int		DeviceID;
+    VIEWPORT_NODE_STRUCT *vNode;
+    int DeviceID;
 
-	int y;
-	sgl_uint32 XRegionBits;
-	DEVICE_REGION_INFO_STRUCT RegionInfo;
+    int y;
+    sgl_uint32 XRegionBits;
+    DEVICE_REGION_INFO_STRUCT RegionInfo;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return(sgl_err_failed_init);
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return(sgl_err_failed_init);
+    }
 #endif
 
-	/* Make sure that given name is the name of a viewport */
+    /* Make sure that given name is the name of a viewport */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return(sgl_err_bad_name); 
-	}
+        SglError(sgl_err_bad_name);
+        return (sgl_err_bad_name);
+    }
 
 
-	/*	get reference to viewport from the name table */
+    /*	get reference to viewport from the name table */
 
     vNode = GetNamedItem(dlUserGlobals.pNamtab, viewport);
 
 
-	/* need to know viewports parent device before we can set it */
+    /* need to know viewports parent device before we can set it */
 
-	DeviceID = vNode->pParentDevice->PhDeviceID;
+    DeviceID = vNode->pParentDevice->PhDeviceID;
 
-	HWSetViewport(DeviceID,&left,&top,&right,&bottom);
+    HWSetViewport(DeviceID, &left, &top, &right, &bottom);
 
-	vNode->Left = left;
-	vNode->Top = top;
-	vNode->Right = right;
-	vNode->Bottom = bottom;
+    vNode->Left = left;
+    vNode->Top = top;
+    vNode->Right = right;
+    vNode->Bottom = bottom;
 
-	vNode->fCamLeft = cam_rect_left;
-	vNode->fCamTop = cam_rect_top;
-	vNode->fCamRight = cam_rect_right;
-	vNode->fCamBottom = cam_rect_bottom;
+    vNode->fCamLeft = cam_rect_left;
+    vNode->fCamTop = cam_rect_top;
+    vNode->fCamRight = cam_rect_right;
+    vNode->fCamBottom = cam_rect_bottom;
 
 
-	/* ///////////////////////////
-	// Set the region mask so that all regions within this viewport are
-	// included, but no others.
-	/////////////////////////// */
-	HWGetRegionInfo(DeviceID, &RegionInfo);
+    /* ///////////////////////////
+    // Set the region mask so that all regions within this viewport are
+    // included, but no others.
+    /////////////////////////// */
+    HWGetRegionInfo(DeviceID, &RegionInfo);
 
-	/*
-	// First clear out the structure
-	*/
-	for(y = 0; y < MAX_Y_REGIONS; y++)
-	{
-		vNode->regionMask[y] = 0;
-	}
+    /*
+    // First clear out the structure
+    */
+    for (y = 0; y < MAX_Y_REGIONS; y++) {
+        vNode->regionMask[y] = 0;
+    }
 
-	/*
-	// Calc the bits for the x dimension. First set them all, then clear off the
-	// lower ones, then the upper ones
-	*/
-	XRegionBits = 0xFFFFFFFFUL;
-	XRegionBits = XRegionBits >> (left / RegionInfo.XSize);
-	XRegionBits = XRegionBits << (left / RegionInfo.XSize + 
-								  (31 - right / RegionInfo.XSize));
+    /*
+    // Calc the bits for the x dimension. First set them all, then clear off the
+    // lower ones, then the upper ones
+    */
+    XRegionBits = 0xFFFFFFFFUL;
+    XRegionBits = XRegionBits >> (left / RegionInfo.XSize);
+    XRegionBits = XRegionBits << (left / RegionInfo.XSize +
+                                  (31 - right / RegionInfo.XSize));
 
-	XRegionBits = XRegionBits >> (31 - right / RegionInfo.XSize);
+    XRegionBits = XRegionBits >> (31 - right / RegionInfo.XSize);
 
-	/*
-	// Also actually set the number of regions covered. This is needed for
-	// Midas3
-	*/
+    /*
+    // Also actually set the number of regions covered. This is needed for
+    // Midas3
+    */
 #if ISTSP
-	vNode->numRegions = ((right / RegionInfo.XSize) - 
-						(left / RegionInfo.XSize) + 1) * 
+    vNode->numRegions = ((right / RegionInfo.XSize) -
+                        (left / RegionInfo.XSize) + 1) *
 
-						((bottom / RegionInfo.YSize) - 
-						 (top / RegionInfo.YSize) + 1);
+                        ((bottom / RegionInfo.YSize) -
+                         (top / RegionInfo.YSize) + 1);
 
 #endif
-	/*
-	// Now put this in all the rows.
-	*/
-	for(y = (top / RegionInfo.YSize); y <= (bottom / RegionInfo.YSize); y++)
-	{
-		vNode->regionMask[y] = 	XRegionBits;
+    /*
+    // Now put this in all the rows.
+    */
+    for (y = (top / RegionInfo.YSize); y <= (bottom / RegionInfo.YSize); y++) {
+        vNode->regionMask[y] = XRegionBits;
 
-	}/*end for y*/
+    }/*end for y*/
 
 
-	SglError(sgl_no_err);
-	
-	return(sgl_no_err);
+    SglError(sgl_no_err);
+
+    return (sgl_no_err);
 }
 
 
@@ -1120,97 +1076,90 @@ int	CALL_CONV sgl_set_viewport( int viewport,
  *
  **************************************************************************/
 
-void CALL_CONV sgl_subtract_viewport( int viewport, 
-									  int removed_viewport )
-{
+void CALL_CONV sgl_subtract_viewport(int viewport,
+                                     int removed_viewport) {
 
-    VIEWPORT_NODE_STRUCT * vNode, *vRemovedNode;
-	int y;
+    VIEWPORT_NODE_STRUCT *vNode, *vRemovedNode;
+    int y;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+    }
 #endif
 
-	/* Make sure that given names are the name of viewports */
+    /* Make sure that given names are the name of viewports */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-	}
+        SglError(sgl_err_bad_name);
+    }
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, removed_viewport) != nt_viewport )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, removed_viewport) != nt_viewport) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-	}
+        SglError(sgl_err_bad_name);
+    }
 
 
-	/*	get reference to viewport from the name table */
+    /*	get reference to viewport from the name table */
 
-    vNode		= GetNamedItem(dlUserGlobals.pNamtab, viewport);
-    vRemovedNode= GetNamedItem(dlUserGlobals.pNamtab, removed_viewport);
+    vNode = GetNamedItem(dlUserGlobals.pNamtab, viewport);
+    vRemovedNode = GetNamedItem(dlUserGlobals.pNamtab, removed_viewport);
 
 
-	/*
-	// Check that they both belong to the same device
-	*/
-	if(vNode->pParentDevice != vRemovedNode->pParentDevice)
-	{
-    	SglError(sgl_err_bad_parameter);
-	}
+    /*
+    // Check that they both belong to the same device
+    */
+    if (vNode->pParentDevice != vRemovedNode->pParentDevice) {
+        SglError(sgl_err_bad_parameter);
+    }
 
 
 #if ISPTSP
-	/*
-	// Also actually set the number of regions covered. This is needed for
-	// Midas3. I think the simplest way is just to count the number of bits
-	// set.
-	*/
-	vNode->numRegions = 0;
+    /*
+    // Also actually set the number of regions covered. This is needed for
+    // Midas3. I think the simplest way is just to count the number of bits
+    // set.
+    */
+    vNode->numRegions = 0;
 #endif
 
-	/*
-	// Ok, now subtract any region that is in both the viewports
-	*/
-	for(y = 0; y < MAX_Y_REGIONS; y++)
-	{
-	
-		vNode->regionMask[y] &= ~ vRemovedNode->regionMask[y];
+    /*
+    // Ok, now subtract any region that is in both the viewports
+    */
+    for (y = 0; y < MAX_Y_REGIONS; y++) {
+
+        vNode->regionMask[y] &= ~vRemovedNode->regionMask[y];
 
 #if ISPTSP
-	{
-		int x;
-		/*
-		// Add the number of bits set
-		*/
-		for(x=0; x < MAX_X_REGIONS; x++)
-		{
-			vNode->numRegions += (vNode->regionMask[y] >> x) & 1;
-		}/*end for x*/
-	}
+        {
+            int x;
+            /*
+            // Add the number of bits set
+            */
+            for(x=0; x < MAX_X_REGIONS; x++)
+            {
+                vNode->numRegions += (vNode->regionMask[y] >> x) & 1;
+            }/*end for x*/
+        }
 #endif
-		
-
-	}/*end for y*/
 
 
-	SglError(sgl_no_err);
-	
+    }/*end for y*/
+
+
+    SglError(sgl_no_err);
+
 }
-
-
 
 
 /**************************************************************************
@@ -1225,100 +1174,92 @@ void CALL_CONV sgl_subtract_viewport( int viewport,
  **************************************************************************/
 
 
-void CALL_CONV sgl_delete_viewport( int viewport )
-{
+void CALL_CONV sgl_delete_viewport(int viewport) {
 
-	VIEWPORT_NODE_STRUCT	* pNext;
-    VIEWPORT_NODE_STRUCT 	* vNode;
-    DEVICE_NODE_STRUCT 		* dNode;
-	DL_NODE_STRUCT			* pPrevious;
+    VIEWPORT_NODE_STRUCT *pNext;
+    VIEWPORT_NODE_STRUCT *vNode;
+    DEVICE_NODE_STRUCT *dNode;
+    DL_NODE_STRUCT *pPrevious;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	/* Make sure that given name is the name of a device */
+    /* Make sure that given name is the name of a device */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, viewport) != nt_viewport) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
 
-	/*	get reference to viewport from the name table */
+    /*	get reference to viewport from the name table */
 
     vNode = GetNamedItem(dlUserGlobals.pNamtab, viewport);
 
-	pNext = (VIEWPORT_NODE_STRUCT*) vNode->node_hdr.next_node;
+    pNext = (VIEWPORT_NODE_STRUCT *) vNode->node_hdr.next_node;
 
-	pPrevious = vNode->pPrevNode;
+    pPrevious = vNode->pPrevNode;
 
 
-	if (pNext!=NULL)
-	{
-		/* node is in middle of list */
+    if (pNext != NULL) {
+        /* node is in middle of list */
 
-		/* need to connect the next node to previous */
+        /* need to connect the next node to previous */
 
-		pNext->pPrevNode = vNode->pPrevNode;
+        pNext->pPrevNode = vNode->pPrevNode;
 
-		/* and previous node to the next */
+        /* and previous node to the next */
 
-		pPrevious->next_node = vNode->node_hdr.next_node;
+        pPrevious->next_node = vNode->node_hdr.next_node;
 
-	}
-	else
-	{
-		/* node is at end of list */
+    } else {
+        /* node is at end of list */
 
-		/* previous node becomes NULL */		
+        /* previous node becomes NULL */
 
-		pPrevious->next_node = NULL;
-		
-		if (vNode->pPrevNode->n16_node_type==nt_device)
-		{
-			/* viewport was the only one defined so the previous node is a device */		
+        pPrevious->next_node = NULL;
 
-		    dNode = vNode->pParentDevice;
+        if (vNode->pPrevNode->n16_node_type == nt_device) {
+            /* viewport was the only one defined so the previous node is a device */
 
-			ASSERT(dNode->node_hdr.n16_node_type==nt_device);
+            dNode = vNode->pParentDevice;
 
-			dNode->pLastViewport = NULL;  
+            ASSERT(dNode->node_hdr.n16_node_type == nt_device);
 
-		}	
-		else
-		{		
-			/* need to make the device node reference the previous node as the last viewport */
+            dNode->pLastViewport = NULL;
 
-		    dNode = vNode->pParentDevice;
+        } else {
+            /* need to make the device node reference the previous node as the last viewport */
 
-			ASSERT(dNode->node_hdr.n16_node_type==nt_device);
+            dNode = vNode->pParentDevice;
 
-			dNode->pLastViewport = pPrevious;  
+            ASSERT(dNode->node_hdr.n16_node_type == nt_device);
 
-		}		
-	}
+            dNode->pLastViewport = pPrevious;
 
-	/* set the node free */
+        }
+    }
 
-    DeleteNamedItem(dlUserGlobals.pNamtab,vNode->node_hdr.n16_name);
+    /* set the node free */
 
-	SGLFree(vNode);
+    DeleteNamedItem(dlUserGlobals.pNamtab, vNode->node_hdr.n16_name);
 
-	SglError(sgl_no_err);
+    SGLFree(vNode);
+
+    SglError(sgl_no_err);
 
 }
 

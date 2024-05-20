@@ -473,7 +473,7 @@
 #include <rnconvst.h>
 #include <hwinterf.h>
 #include <pkisp.h>
-#include <pktsp.h>	/* for PackTexasTransparent */
+#include <pktsp.h>    /* for PackTexasTransparent */
 #include <rnmesh.h>
 
 #include <debug.h>
@@ -503,21 +503,23 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 #else
 
 #define DEBUG_CLIP_PLANE_TAG 0x000000UL
-#define DEBUG_INVIS_FP_TAG	 0x000000UL
-#define DEBUG_INVIS_RP_TAG	 0x000000UL
-#define DEBUG_PERP_TAG		 0x000000UL
-#define DEBUG_DUMMY_F_TAG	 0x000000UL
-#define DEBUG_DUMMY_R_TAG	 0x000000UL
+#define DEBUG_INVIS_FP_TAG     0x000000UL
+#define DEBUG_INVIS_RP_TAG     0x000000UL
+#define DEBUG_PERP_TAG         0x000000UL
+#define DEBUG_DUMMY_F_TAG     0x000000UL
+#define DEBUG_DUMMY_R_TAG     0x000000UL
 
 #endif
 
-#define UPPER_6_OF_TAG		0x3F000UL
+#define UPPER_6_OF_TAG        0x3F000UL
 
 /*
 // INCLUDE Pack to 20 Bit routines, such that it isn't inlined
 */
 #define INLINE_P20
+
 #include "pto20b.h"
+
 #undef  INLINE_P20
 
 /**************************************************************************
@@ -533,90 +535,87 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
  *					Packs to the 3 word per plane format for PCX1
  **************************************************************************/
 
-static INLINE void PackPlane(sgl_uint32 * pPlaneMem,
-			  const TRANSFORMED_PLANE_STRUCT  * pPlane,
-			  const sgl_uint32 Instr,
-			  const	sgl_uint32 Tag)
-{
-	/*
-	// Temporary variables in a (possibly vain) hope to get better
-	// overlap of memory operations
-	*/
+static INLINE void PackPlane(sgl_uint32 *pPlaneMem,
+                             const TRANSFORMED_PLANE_STRUCT *pPlane,
+                             const sgl_uint32 Instr,
+                             const sgl_uint32 Tag) {
+    /*
+    // Temporary variables in a (possibly vain) hope to get better
+    // overlap of memory operations
+    */
 #if PCX2 || PCX2_003
-	float	tmp0, tmp1;
+    float tmp0, tmp1;
 #else
-	sgl_uint32	tmp0, tmp1;
+    sgl_uint32	tmp0, tmp1;
 #endif
 
-	SGL_TIME_START(PACK_PLANE_TIME)
+    SGL_TIME_START(PACK_PLANE_TIME)
 
-	#if ISPTSP
-		/*
-		// Use temp variables here so the compiler "knows" that
-		// the assignments can be done in any order. (The compiler thinks they
-		//  might overlap in memory otherwise.)
-		*/
-		tmp0 = pPlane->n32A; 
-		tmp1 = pPlane->n32B;
-		pPlaneMem[0] = tmp0;
-		pPlaneMem[1] = tmp1;
-		pPlaneMem[2] = pPlane->n32C;
-		pPlaneMem[3] = (Instr | (Tag << 4));
+#if ISPTSP
+    /*
+    // Use temp variables here so the compiler "knows" that
+    // the assignments can be done in any order. (The compiler thinks they
+    //  might overlap in memory otherwise.)
+    */
+    tmp0 = pPlane->n32A;
+    tmp1 = pPlane->n32B;
+    pPlaneMem[0] = tmp0;
+    pPlaneMem[1] = tmp1;
+    pPlaneMem[2] = pPlane->n32C;
+    pPlaneMem[3] = (Instr | (Tag << 4));
 
-	#elif PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+#elif PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
 
-		/*
-		// Word Zero has Instruction, Tag Upper Bits, and A
-		*/
-		tmp0 = Instr | 
-					   ((UPPER_6_OF_TAG & Tag) << (20 - 12)) | 
-					   pPlane->n32A;
+    /*
+    // Word Zero has Instruction, Tag Upper Bits, and A
+    */
+    tmp0 = Instr |
+                   ((UPPER_6_OF_TAG & Tag) << (20 - 12)) |
+                   pPlane->n32A;
 
-		/*
-		// Word 1 has Lower Bits of Tag, and B
-		// (note we assume that the upper 6 bits of the tag are shifted
-		// off the top)
-		*/
-		tmp1 = (Tag << 20) | pPlane->n32B;
+    /*
+    // Word 1 has Lower Bits of Tag, and B
+    // (note we assume that the upper 6 bits of the tag are shifted
+    // off the top)
+    */
+    tmp1 = (Tag << 20) | pPlane->n32B;
 
-		pPlaneMem[0] = tmp0;
-		pPlaneMem[1] = tmp1;
+    pPlaneMem[0] = tmp0;
+    pPlaneMem[1] = tmp1;
 
-		/*
-		// While word 2 is just C
-		*/
-		pPlaneMem[2] = pPlane->n32C;
+    /*
+    // While word 2 is just C
+    */
+    pPlaneMem[2] = pPlane->n32C;
 
-	#elif PCX2 || PCX2_003
-		/*
-		// Use temp variables here so the compiler "knows" that
-		// the assignments can be done in any order. (The compiler thinks they
-		//  might overlap in memory otherwise.)
-		*/
-		tmp0 = pPlane->f32A; 
-		tmp1 = pPlane->f32B;
-		FW( pPlaneMem, 0, tmp0);
-		FW( pPlaneMem, 1, tmp1);
+#elif PCX2 || PCX2_003
+    /*
+    // Use temp variables here so the compiler "knows" that
+    // the assignments can be done in any order. (The compiler thinks they
+    //  might overlap in memory otherwise.)
+    */
+    tmp0 = pPlane->f32A;
+    tmp1 = pPlane->f32B;
+    FW(pPlaneMem, 0, tmp0);
+    FW(pPlaneMem, 1, tmp1);
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
-	#if PCX2		
-		if (sfabs(pPlane->f32C) <= MAGIC_FLOAT_FIX)
-		{	/* If problem set C to 0. */
-			IW( pPlaneMem, 2, 0);
-		}
-		else /* continue as normal */
-	#endif /* PCX2 */
-		{
-			FW( pPlaneMem, 2, (pPlane->f32C));
-		}
-		IW( pPlaneMem, 3, (Instr | (Tag << 4)));
+    /* Check C value. PCX2 hardware has problems converting a number in
+     * the range -9.313e-10 to 0. If C is in this range set to 0.
+     */
+#if PCX2
+    if (sfabs(pPlane->f32C) <= MAGIC_FLOAT_FIX) {    /* If problem set C to 0. */
+        IW(pPlaneMem, 2, 0);
+    } else /* continue as normal */
+#endif /* PCX2 */
+    {
+        FW(pPlaneMem, 2, (pPlane->f32C));
+    }
+    IW(pPlaneMem, 3, (Instr | (Tag << 4)));
 
-	#else
-	#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
-	#endif
-	SGL_TIME_STOP(PACK_PLANE_TIME)
+#else
+#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
+#endif
+    SGL_TIME_STOP(PACK_PLANE_TIME)
 }
 
 
@@ -633,69 +632,68 @@ static INLINE void PackPlane(sgl_uint32 * pPlaneMem,
  *					Packs to the 3 word per plane format for PCX1
  **************************************************************************/
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-static INLINE void PackFlatOnPlane(sgl_uint32 * pPlaneMem,
-			  float distance,
-			  const sgl_uint32 Instr,
-			  const	sgl_uint32 Tag)
+
+static INLINE void PackFlatOnPlane(sgl_uint32 *pPlaneMem,
+                                   float distance,
+                                   const sgl_uint32 Instr,
+                                   const sgl_uint32 Tag)
 #else
 static INLINE void PackFlatOnPlane(sgl_uint32 * pPlaneMem,
-			  sgl_int32 distance,
-			  const sgl_uint32 Instr,
-			  const	sgl_uint32 Tag)
+              sgl_int32 distance,
+              const sgl_uint32 Instr,
+              const	sgl_uint32 Tag)
 #endif
 
 {
-	#if ISPTSP
+#if ISPTSP
 
-   		pPlaneMem[0] = 0;
-   		pPlaneMem[1] = 0;
-  	   	pPlaneMem[2] = distance;
-   	  	pPlaneMem[3] = (Instr | (Tag << 4));
+    pPlaneMem[0] = 0;
+    pPlaneMem[1] = 0;
+      pPlaneMem[2] = distance;
+      pPlaneMem[3] = (Instr | (Tag << 4));
 
-	#elif PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+#elif PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
 
-		/*
-		// Word Zero has Instruction, Tag Upper Bits, and A = 0
-		*/
-		pPlaneMem[0] = (Instr) |
-					   ((UPPER_6_OF_TAG & Tag) << (20 - 12));
+    /*
+    // Word Zero has Instruction, Tag Upper Bits, and A = 0
+    */
+    pPlaneMem[0] = (Instr) |
+                   ((UPPER_6_OF_TAG & Tag) << (20 - 12));
 
-		/*
-		// Word 1 has Lower Bits of Tag, and B = 0
-		// (note we assume that the upper 6 bits of the tag are shifted
-		// off the top)
-		*/
-		pPlaneMem[1] = (Tag << 20);
+    /*
+    // Word 1 has Lower Bits of Tag, and B = 0
+    // (note we assume that the upper 6 bits of the tag are shifted
+    // off the top)
+    */
+    pPlaneMem[1] = (Tag << 20);
 
-		/*
-		// While word 2 is just distance
-		*/
-		pPlaneMem[2] = distance;
+    /*
+    // While word 2 is just distance
+    */
+    pPlaneMem[2] = distance;
 
-	#elif PCX2 || PCX2_003
+#elif PCX2 || PCX2_003
 
-   		IW( pPlaneMem, 0, 0); 
-   		IW( pPlaneMem, 1, 0);
+    IW(pPlaneMem, 0, 0);
+    IW(pPlaneMem, 1, 0);
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
-	#if PCX2
-		if (sfabs(distance) <= MAGIC_FLOAT_FIX)
-		{	/* If problem set C to 0. */
-			IW( pPlaneMem, 2, 0);
-		}
-		else /* continue as normal */
-	#endif /* PCX2 */
-		{
-			FW( pPlaneMem, 2, distance);
-		}
+    /* Check C value. PCX2 hardware has problems converting a number in
+     * the range -9.313e-10 to 0. If C is in this range set to 0.
+     */
+#if PCX2
+    if (sfabs(distance) <= MAGIC_FLOAT_FIX) {    /* If problem set C to 0. */
+        IW(pPlaneMem, 2, 0);
+    } else /* continue as normal */
+#endif /* PCX2 */
+    {
+        FW(pPlaneMem, 2, distance);
+    }
 
-   	  	IW( pPlaneMem, 3, (Instr | (Tag << 4)));
+    IW(pPlaneMem, 3, (Instr | (Tag << 4)));
 
-	#else
-	#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
-	#endif
+#else
+#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
+#endif
 }
 
 
@@ -709,60 +707,57 @@ static INLINE void PackFlatOnPlane(sgl_uint32 * pPlaneMem,
  * Description    : Similar to pack plane, but takes the "edge" structure
  *					format of the meshes
  **************************************************************************/
-static INLINE void PackEdge(sgl_uint32 * pPlaneMem,  const PTRANSEDGE pEdge)
-{
-	#if ISPTSP
+static INLINE void PackEdge(sgl_uint32 *pPlaneMem, const PTRANSEDGE pEdge) {
+#if ISPTSP
 
-		pPlaneMem[0] = pEdge->n32A;
-		pPlaneMem[1] = pEdge->n32B;
-		pPlaneMem[2] = pEdge->n32C;
-		pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
+    pPlaneMem[0] = pEdge->n32A;
+    pPlaneMem[1] = pEdge->n32B;
+    pPlaneMem[2] = pEdge->n32C;
+    pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
 
-	#elif PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+#elif PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
 
-		/*
-		// Word Zero has Instruction, Tag Upper Bits, and A
-		*/
-		pPlaneMem[0] = (forw_perp) |
-					   ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-					   pEdge->n32A;
+    /*
+    // Word Zero has Instruction, Tag Upper Bits, and A
+    */
+    pPlaneMem[0] = (forw_perp) |
+                   ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                   pEdge->n32A;
 
-		/*
-		// Word 1 has Lower Bits of Tag, and B
-		// (note we assume that the upper 6 bits of the tag are shifted
-		// off the top)
-		*/
-		pPlaneMem[1] = (DEBUG_PERP_TAG << 20) | pEdge->n32B;
+    /*
+    // Word 1 has Lower Bits of Tag, and B
+    // (note we assume that the upper 6 bits of the tag are shifted
+    // off the top)
+    */
+    pPlaneMem[1] = (DEBUG_PERP_TAG << 20) | pEdge->n32B;
 
-		/*
-		// While word 2 is just C
-		*/
-		pPlaneMem[2] = pEdge->n32C;
+    /*
+    // While word 2 is just C
+    */
+    pPlaneMem[2] = pEdge->n32C;
 
-	#elif PCX2 || PCX2_003
+#elif PCX2 || PCX2_003
 
-		FW( pPlaneMem, 0, (pEdge->f32A));
-		FW( pPlaneMem, 1, (pEdge->f32B));
+    FW(pPlaneMem, 0, (pEdge->f32A));
+    FW(pPlaneMem, 1, (pEdge->f32B));
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
-	#if PCX2
-		if (sfabs(pEdge->f32C) <= MAGIC_FLOAT_FIX)
-		{	/* If problem set C to 0. */
-			IW( pPlaneMem, 2, 0);
-		}
-		else /* continue as normal */
-	#endif /* PCX2 */
-		{
-			FW( pPlaneMem, 2, (pEdge->f32C));
-		}
+    /* Check C value. PCX2 hardware has problems converting a number in
+     * the range -9.313e-10 to 0. If C is in this range set to 0.
+     */
+#if PCX2
+    if (sfabs(pEdge->f32C) <= MAGIC_FLOAT_FIX) {    /* If problem set C to 0. */
+        IW(pPlaneMem, 2, 0);
+    } else /* continue as normal */
+#endif /* PCX2 */
+    {
+        FW(pPlaneMem, 2, (pEdge->f32C));
+    }
 
-		IW( pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
+    IW(pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-	#else
-	#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
-	#endif
+#else
+#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
+#endif
 }
 
 
@@ -775,72 +770,69 @@ static INLINE void PackEdge(sgl_uint32 * pPlaneMem,  const PTRANSEDGE pEdge)
  * Global Used    :
  * Description    : Similar to pack edge, but swaps the orientation...
  **************************************************************************/
-static INLINE void PackNegatedEdge(sgl_uint32 * pPlaneMem,  const PTRANSEDGE pEdge)
-{
-	#if ISPTSP
+static INLINE void PackNegatedEdge(sgl_uint32 *pPlaneMem, const PTRANSEDGE pEdge) {
+#if ISPTSP
 
-		pPlaneMem[0] = NegatePacked20Bit(pEdge->n32A);
-		pPlaneMem[1] = NegatePacked20Bit(pEdge->n32B);
-		pPlaneMem[2] = -pEdge->n32C;
-		pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
+    pPlaneMem[0] = NegatePacked20Bit(pEdge->n32A);
+    pPlaneMem[1] = NegatePacked20Bit(pEdge->n32B);
+    pPlaneMem[2] = -pEdge->n32C;
+    pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
 
-	#elif PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+#elif PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
 
-		/*
-		// Word Zero has Instruction, Tag Upper Bits, and A
-		*/
-		pPlaneMem[0] = (forw_perp) |
-					   ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-					   NegatePacked20Bit(pEdge->n32A);
+    /*
+    // Word Zero has Instruction, Tag Upper Bits, and A
+    */
+    pPlaneMem[0] = (forw_perp) |
+                   ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                   NegatePacked20Bit(pEdge->n32A);
 
-		/*
-		// Word 1 has Lower Bits of Tag, and B
-		// (note we assume that the upper 6 bits of the tag are shifted
-		// off the top)
-		*/
-		pPlaneMem[1] = (DEBUG_PERP_TAG << 20) | NegatePacked20Bit(pEdge->n32B);
+    /*
+    // Word 1 has Lower Bits of Tag, and B
+    // (note we assume that the upper 6 bits of the tag are shifted
+    // off the top)
+    */
+    pPlaneMem[1] = (DEBUG_PERP_TAG << 20) | NegatePacked20Bit(pEdge->n32B);
 
-		/*
-		// While word 2 is just C
-		*/
-		pPlaneMem[2] = -pEdge->n32C;
-		
-	#elif PCX2 || PCX2_003
-		/* Negate parameters.
-		 */
-		{
-		float	tmp0, tmp1;
-		
-		
-		tmp0 = -pEdge->f32A;
-		tmp1 = -pEdge->f32B;
-		FW( pPlaneMem, 0, tmp0);
-		FW( pPlaneMem, 1, tmp1);
-		}
-		
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
-		#if PCX2
-			if (sfabs(pEdge->f32C) <= MAGIC_FLOAT_FIX)
-			{	/* If problem set C to 0. */
-				IW( pPlaneMem, 2, 0);
-			}
-			else /* continue as normal */
-		#endif /* PCX2 */
-			{
-				float	tmp0;
-				
-				
-				tmp0 = -pEdge->f32C;
-				FW( pPlaneMem, 2, tmp0);
-			}
+    /*
+    // While word 2 is just C
+    */
+    pPlaneMem[2] = -pEdge->n32C;
 
-		IW( pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
+#elif PCX2 || PCX2_003
+    /* Negate parameters.
+     */
+    {
+        float tmp0, tmp1;
 
-	#else
-	#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
-	#endif
+
+        tmp0 = -pEdge->f32A;
+        tmp1 = -pEdge->f32B;
+        FW(pPlaneMem, 0, tmp0);
+        FW(pPlaneMem, 1, tmp1);
+    }
+
+    /* Check C value. PCX2 hardware has problems converting a number in
+     * the range -9.313e-10 to 0. If C is in this range set to 0.
+     */
+#if PCX2
+    if (sfabs(pEdge->f32C) <= MAGIC_FLOAT_FIX) {    /* If problem set C to 0. */
+        IW(pPlaneMem, 2, 0);
+    } else /* continue as normal */
+#endif /* PCX2 */
+    {
+        float tmp0;
+
+
+        tmp0 = -pEdge->f32C;
+        FW(pPlaneMem, 2, tmp0);
+    }
+
+    IW(pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
+
+#else
+#pragma message ("ISPTSP, PCX1, PCX2 or PCX2_003 must be defined");
+#endif
 }
 
 /**************************************************************************
@@ -857,438 +849,409 @@ static INLINE void PackNegatedEdge(sgl_uint32 * pPlaneMem,  const PTRANSEDGE pEd
  *				
  **************************************************************************/
 
-int	PackOpaqueParams( const PLANE_CATEGORIES_STRUCT * pPlaneLists,
-					  const sgl_bool AddClipPlane,
-					  const sgl_bool RepeatReverse)
-{
-	sgl_bool	AddDummyForward = FALSE;
+int PackOpaqueParams(const PLANE_CATEGORIES_STRUCT *pPlaneLists,
+                     const sgl_bool AddClipPlane,
+                     const sgl_bool RepeatReverse) {
+    sgl_bool AddDummyForward = FALSE;
 
-	int	numForward, numReverse, numPlanes;
-	int i;
-	sgl_uint32 * pPlaneMem;
+    int numForward, numReverse, numPlanes;
+    int i;
+    sgl_uint32 *pPlaneMem;
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	float f32FixedClipDist = RnGlobalGetFixedClipDist();
+    float f32FixedClipDist = RnGlobalGetFixedClipDist();
 #else
-	sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
+    sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
 #endif
 
-	/*
-	// Keep a pointer into the various plane pointer lists,
-	// as well as a pointer to the plane data itself
-	*/
-	TRANSFORMED_PLANE_STRUCT  * const * ppPlane;
-	const TRANSFORMED_PLANE_STRUCT  *  pPlane;
-	sgl_uint32 CurrentLimit;
+    /*
+    // Keep a pointer into the various plane pointer lists,
+    // as well as a pointer to the plane data itself
+    */
+    TRANSFORMED_PLANE_STRUCT *const *ppPlane;
+    const TRANSFORMED_PLANE_STRUCT *pPlane;
+    sgl_uint32 CurrentLimit;
 
-	SGL_TIME_START(PACK_OPAQUE_TIME)
+    SGL_TIME_START(PACK_OPAQUE_TIME)
 
-	numForward = pPlaneLists->NumFV + pPlaneLists->NumFI;
-	numReverse = pPlaneLists->NumRV + pPlaneLists->NumRI;
+    numForward = pPlaneLists->NumFV + pPlaneLists->NumFI;
+    numReverse = pPlaneLists->NumRV + pPlaneLists->NumRI;
 
-	/*
-	// To make life simple, we always have a forward plane. This
-	// is set to be the foreground clipping plane, and is invisible.
-	// Note that we can then ignore the "add clip plane" as this is
-	// already covered by the dummy forward.
-	*/
-	if (numForward == 0)
-	{
-		AddDummyForward = TRUE;	
-		numForward = 1;	
-	}
-	/*
-	// Do we need a clipping plane?
-	*/
-	else if (AddClipPlane)
-	{
-		numForward++;
-	}
+    /*
+    // To make life simple, we always have a forward plane. This
+    // is set to be the foreground clipping plane, and is invisible.
+    // Note that we can then ignore the "add clip plane" as this is
+    // already covered by the dummy forward.
+    */
+    if (numForward == 0) {
+        AddDummyForward = TRUE;
+        numForward = 1;
+    }
+        /*
+        // Do we need a clipping plane?
+        */
+    else if (AddClipPlane) {
+        numForward++;
+    }
 
 
-	/* need to check to see if we have enough space in the parameter memory */
+    /* need to check to see if we have enough space in the parameter memory */
 
-	if (RepeatReverse)
-		numReverse<<=1;
+    if (RepeatReverse)
+        numReverse <<= 1;
 
-	numPlanes = numForward + numReverse + pPlaneLists->NumPE;
+    numPlanes = numForward + numReverse + pPlaneLists->NumPE;
 
 
 #define CHECK_LIMITS 1
 #if CHECK_LIMITS
-	CurrentLimit = GetSabreLimit (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos);
-	
-	if (CurrentLimit == 0)
-	{
- 		/* this isnt enough space */
-		DPFDEV ((DBG_WARNING, "PackOpaqueParams: Out of sabre memory pages !"));
-		
-		SGL_TIME_STOP(PACK_OPAQUE_TIME)
-		return(0);
-	}
+    CurrentLimit = GetSabreLimit(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos);
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + 
-		 (numPlanes * WORDS_PER_PLANE )) > CurrentLimit)
-	{
-		CurrentLimit = GetSabreLimit (CurrentLimit++);
-		
-		if (CurrentLimit == 0)
-		{
-			/* this isnt enough space */
-			DPFDEV ((DBG_WARNING, "PackOpaqueParams: Out of sabre memory pages !"));
-	
-			SGL_TIME_STOP(PACK_OPAQUE_TIME)
-			return 0;
-		}
+    if (CurrentLimit == 0) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_WARNING, "PackOpaqueParams: Out of sabre memory pages !"));
 
-		PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = 
-			GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, 
-							  (numPlanes * WORDS_PER_PLANE ));
-		
-		if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + 
-			 (numPlanes * WORDS_PER_PLANE )) > CurrentLimit)
-		{
-			/* this isnt enough space */
-			DPFDEV ((DBG_WARNING, "PackOpaqueParams: Out of sabre memory! %d planes in object ", numPlanes));
-				
-			SGL_TIME_STOP(PACK_OPAQUE_TIME)
-			return 0;
-		}
+        SGL_TIME_STOP(PACK_OPAQUE_TIME)
+        return (0);
+    }
 
-	}
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +
+         (numPlanes * WORDS_PER_PLANE)) > CurrentLimit) {
+        CurrentLimit = GetSabreLimit(CurrentLimit++);
+
+        if (CurrentLimit == 0) {
+            /* this isnt enough space */
+            DPFDEV ((DBG_WARNING, "PackOpaqueParams: Out of sabre memory pages !"));
+
+            SGL_TIME_STOP(PACK_OPAQUE_TIME)
+            return 0;
+        }
+
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos =
+                GetStartOfObject(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos,
+                                 (numPlanes * WORDS_PER_PLANE));
+
+        if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +
+             (numPlanes * WORDS_PER_PLANE)) > CurrentLimit) {
+            /* this isnt enough space */
+            DPFDEV ((DBG_WARNING, "PackOpaqueParams: Out of sabre memory! %d planes in object ", numPlanes));
+
+            SGL_TIME_STOP(PACK_OPAQUE_TIME)
+            return 0;
+        }
+
+    }
 #endif
 
-	/* Get where we Add the object to the plane parameter memory */
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    /* Get where we Add the object to the plane parameter memory */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
-	/*
-	// Up the index by the number of planes weve added, "times" the
-	// size of each plane in sgl_uint32.
-	*/
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += numPlanes * WORDS_PER_PLANE;
-
-
-	/*************************************************************/
-	/******************* Add the forward planes ******************/
-	/*************************************************************/
-	if(!AddDummyForward)
-  	{
-		/*/////////////////////
-		// Determine if we have any visible forward planes.
-		// If we do, then the first one has a special instruction.
-		// (otherwise, put the special instruction on the invisible planes)
-		//
-		// Note this does the First Invisible forward plane.
-		///////////////////// */
-		if(pPlaneLists->NumFV !=0)
-		{
-			/*
-			// get pointer to the first forward Vis entry in the list
-			*/
-			ppPlane = pPlaneLists->FVPlanes;
-
-			/*
-			// Do the first forward plane
-			*/
-			pPlane = *ppPlane;
-
-			PackPlane(pPlaneMem, pPlane, forw_visib_fp, pPlane->u32TexasTag);
-
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane++;
-
-			/*
-			// Do the remaining forward planes
-			*/
-			for (i =(pPlaneLists->NumFV - 1); i > 0; i--)			
-			{
-				/*
-				// Get pointer to this plane
-				*/
-				pPlane = *ppPlane;
-
-				PackPlane(pPlaneMem, pPlane, forw_visib, pPlane->u32TexasTag);
-
-				pPlaneMem+=WORDS_PER_PLANE;
-				ppPlane++;
-
-	   		}/*end for forward visibles*/
-
-			/*
-			// Do the very first Invisible Forward (if there is one)
-			*/
-			if(pPlaneLists->NumFI != 0)
-			{
-				/*
-				// get pointer to the first entry in the list,
-				// and a pointer to the first plane
-				*/
-				ppPlane = pPlaneLists->FIPlanes;
-				pPlane  = *ppPlane;
-
-				/*
-				// Store the plane values. The instruction is for
-				// a standard invisible plane
-				*/
-				PackPlane(pPlaneMem, pPlane, forw_invis, DEBUG_INVIS_FP_TAG);
-
-				/*
-				// Move on to the next plane
-				*/
-				pPlaneMem+=WORDS_PER_PLANE;
-				ppPlane++;
-
-			}/*end if FI planes*/
-		}/*end if FV planes*/
-
-		/*/////////////////////
-		// ELSE we must therefore have a forward Invisible plane
-		// which must be the first forward plane
-		///////////////////// */
-		else
-		{
-			ASSERT(pPlaneLists->NumFI != 0);
-
-			/*
-			// get pointer to the first entry in the list,
-			// and a pointer to the first plane
-			*/
-			ppPlane = pPlaneLists->FIPlanes;
-			pPlane  = *ppPlane;
-
-			/*
-			// Store the plane values - the instruction is for
-			// the FIRST invisible plane
-			*/
-			PackPlane(pPlaneMem, pPlane, forw_invis_fp, DEBUG_INVIS_FP_TAG);
-
-			/*
-			// Move on to the next plane
-			*/
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane++;
-
-		}/*end if then else*/
-
-		/*/////////////////////
-		// Do the remaining forward invisible planes.
-		// NOTE that ppPlane is already pointing to the second
-		// invisible plane (if any)
-		///////////////////// */
-		for (i = (pPlaneLists->NumFI - 1); i > 0; i--)			
-		{
-			pPlane = *ppPlane;
-				
-			PackPlane(pPlaneMem, pPlane, forw_invis, DEBUG_INVIS_FP_TAG);
-
-			/*
-			// Move on to the next plane
-			*/
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane++;
-		}/*end for forward invisible*/
+    /*
+    // Up the index by the number of planes weve added, "times" the
+    // size of each plane in sgl_uint32.
+    */
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += numPlanes * WORDS_PER_PLANE;
 
 
-		/* /////////////////////
-		// Do we need to add a clipping plane?
-		///////////////////// */
-		if (AddClipPlane)
-		{
-   			/* add a  forward clip plane */
+    /*************************************************************/
+    /******************* Add the forward planes ******************/
+    /*************************************************************/
+    if (!AddDummyForward) {
+        /*/////////////////////
+        // Determine if we have any visible forward planes.
+        // If we do, then the first one has a special instruction.
+        // (otherwise, put the special instruction on the invisible planes)
+        //
+        // Note this does the First Invisible forward plane.
+        ///////////////////// */
+        if (pPlaneLists->NumFV != 0) {
+            /*
+            // get pointer to the first forward Vis entry in the list
+            */
+            ppPlane = pPlaneLists->FVPlanes;
+
+            /*
+            // Do the first forward plane
+            */
+            pPlane = *ppPlane;
+
+            PackPlane(pPlaneMem, pPlane, forw_visib_fp, pPlane->u32TexasTag);
+
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
+
+            /*
+            // Do the remaining forward planes
+            */
+            for (i = (pPlaneLists->NumFV - 1); i > 0; i--) {
+                /*
+                // Get pointer to this plane
+                */
+                pPlane = *ppPlane;
+
+                PackPlane(pPlaneMem, pPlane, forw_visib, pPlane->u32TexasTag);
+
+                pPlaneMem += WORDS_PER_PLANE;
+                ppPlane++;
+
+            }/*end for forward visibles*/
+
+            /*
+            // Do the very first Invisible Forward (if there is one)
+            */
+            if (pPlaneLists->NumFI != 0) {
+                /*
+                // get pointer to the first entry in the list,
+                // and a pointer to the first plane
+                */
+                ppPlane = pPlaneLists->FIPlanes;
+                pPlane = *ppPlane;
+
+                /*
+                // Store the plane values. The instruction is for
+                // a standard invisible plane
+                */
+                PackPlane(pPlaneMem, pPlane, forw_invis, DEBUG_INVIS_FP_TAG);
+
+                /*
+                // Move on to the next plane
+                */
+                pPlaneMem += WORDS_PER_PLANE;
+                ppPlane++;
+
+            }/*end if FI planes*/
+        }/*end if FV planes*/
+
+            /*/////////////////////
+            // ELSE we must therefore have a forward Invisible plane
+            // which must be the first forward plane
+            ///////////////////// */
+        else {
+            ASSERT(pPlaneLists->NumFI != 0);
+
+            /*
+            // get pointer to the first entry in the list,
+            // and a pointer to the first plane
+            */
+            ppPlane = pPlaneLists->FIPlanes;
+            pPlane = *ppPlane;
+
+            /*
+            // Store the plane values - the instruction is for
+            // the FIRST invisible plane
+            */
+            PackPlane(pPlaneMem, pPlane, forw_invis_fp, DEBUG_INVIS_FP_TAG);
+
+            /*
+            // Move on to the next plane
+            */
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
+
+        }/*end if then else*/
+
+        /*/////////////////////
+        // Do the remaining forward invisible planes.
+        // NOTE that ppPlane is already pointing to the second
+        // invisible plane (if any)
+        ///////////////////// */
+        for (i = (pPlaneLists->NumFI - 1); i > 0; i--) {
+            pPlane = *ppPlane;
+
+            PackPlane(pPlaneMem, pPlane, forw_invis, DEBUG_INVIS_FP_TAG);
+
+            /*
+            // Move on to the next plane
+            */
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
+        }/*end for forward invisible*/
+
+
+        /* /////////////////////
+        // Do we need to add a clipping plane?
+        ///////////////////// */
+        if (AddClipPlane) {
+            /* add a  forward clip plane */
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
-							forw_invis, DEBUG_CLIP_PLANE_TAG);
+            PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
+                            forw_invis, DEBUG_CLIP_PLANE_TAG);
 #else
-			PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
-							forw_invis, DEBUG_CLIP_PLANE_TAG);
+            PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
+                            forw_invis, DEBUG_CLIP_PLANE_TAG);
 #endif
-			pPlaneMem+=WORDS_PER_PLANE;
- 	
-  		}/*end if add clip plane*/
+            pPlaneMem += WORDS_PER_PLANE;
+
+        }/*end if add clip plane*/
 
 
-	}  /* no dummy plane*/
+    }  /* no dummy plane*/
 
-	/*
-	// Else add a dummy forward plane
-	*/
-   	else
-   	{
-   	   /* add a single dummy forward plane */
+        /*
+        // Else add a dummy forward plane
+        */
+    else {
+        /* add a single dummy forward plane */
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
-						forw_invis_fp, DEBUG_DUMMY_F_TAG);
+        PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
+                        forw_invis_fp, DEBUG_DUMMY_F_TAG);
 #else
-		PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
-						forw_invis_fp, DEBUG_DUMMY_F_TAG);
+        PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
+                        forw_invis_fp, DEBUG_DUMMY_F_TAG);
 #endif
 
-   		pPlaneMem+=WORDS_PER_PLANE;
+        pPlaneMem += WORDS_PER_PLANE;
 
-   	}/*end if then else*/
-
-
-	/*************************************************************/
-	/************* Add the perpendicular planes ******************/
-	/*************************************************************/
-
-	ppPlane = pPlaneLists->PEPlanes;
-
-	for (i = pPlaneLists->NumPE; i > 0; i--)			
-	{
-		/*
-		// Get easy access to this plane
-		*/
-		pPlane = *ppPlane;
-
-	   	/* add the perps */
-
-		PackPlane(pPlaneMem, pPlane, forw_perp, DEBUG_PERP_TAG);
-
-		pPlaneMem+=WORDS_PER_PLANE;
-		ppPlane++;
-   	}
+    }/*end if then else*/
 
 
+    /*************************************************************/
+    /************* Add the perpendicular planes ******************/
+    /*************************************************************/
 
-	/*************************************************************/
-	/******************* Add the reverse planes ******************/
-	/*************************************************************/
+    ppPlane = pPlaneLists->PEPlanes;
 
-	ppPlane = pPlaneLists->RVPlanes;
+    for (i = pPlaneLists->NumPE; i > 0; i--) {
+        /*
+        // Get easy access to this plane
+        */
+        pPlane = *ppPlane;
 
-	/*
-	// Do ALL but the last reverse visible plane. It MAY need a different
-	// instruction (NOTE these aren't to be seen yet, so actually use
-	// an invisible instruction)
-	*/
-   	for (i = (pPlaneLists->NumRV - 1); i > 0; i--)			
-	{
-		/*
-		// Get easy access to this plane
-		*/
-		pPlane = *ppPlane;
+        /* add the perps */
 
-	 	/* add the Reverse visible */
-		PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
+        PackPlane(pPlaneMem, pPlane, forw_perp, DEBUG_PERP_TAG);
 
-		pPlaneMem+=WORDS_PER_PLANE;
-		ppPlane++;
-   	}
-
-	/*
-	// Do the last visible reverse
-	*/
-   	if(pPlaneLists->NumRV != 0)			
-	{
-		/*
-		// Get easy access to this plane
-		*/
-		pPlane = *ppPlane;
-
-		 /* last reverse must have special instruction */
-	  	if (RepeatReverse && (pPlaneLists->NumRI==0))
-		{
-			PackPlane(pPlaneMem, pPlane, rev_replace_if, DEBUG_INVIS_RP_TAG);
-		}
-	   	else
-		{
-			PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
-		}
-
-		pPlaneMem+=WORDS_PER_PLANE;
-   	}
-
-	/*
-	// Do the Rev INVIS planes.
-	//
-	// Again, do all but the last one
-	*/
-	ppPlane = pPlaneLists->RIPlanes;
-
-   	for (i= (pPlaneLists->NumRI -1); i > 0; i--)			
-   	{
-		/*
-		// Get easy access to this plane
-		*/
-		pPlane = *ppPlane;
-
-   		/* add the Reverse invisible */
-
-		PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
-
-		pPlaneMem+=WORDS_PER_PLANE;
-		ppPlane ++;
-	}
-
-	/*
-	// Do the last one
-	*/
-	if(pPlaneLists->NumRI != 0)
-	{
-		/*
-		// Get easy access to this plane
-		*/
-		pPlane = *ppPlane;
-
-   		/* add the Reverse invisible */
-		/*
-		// last reverse must have special instruction for
-		// objects with invisible plane
-		*/
-   		if (RepeatReverse)
-		{
-			PackPlane(pPlaneMem, pPlane, rev_replace_if, DEBUG_INVIS_RP_TAG);
-		}
-   		else
-		{
-			PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
-		}
-		pPlaneMem+=WORDS_PER_PLANE;
-	}
+        pPlaneMem += WORDS_PER_PLANE;
+        ppPlane++;
+    }
 
 
-	/*************************************************************/
-	/****** Add the reverse planes AGAIN (if needed )*************/
-	/*************************************************************/	
-   	if (RepeatReverse)
-   	{
-		ppPlane = pPlaneLists->RVPlanes;
 
-   	   	for (i = pPlaneLists->NumRV; i>0; i--)			
-   	   	{
-			/*
-			// Get easy access to this plane
-			*/
-			pPlane = *ppPlane;
+    /*************************************************************/
+    /******************* Add the reverse planes ******************/
+    /*************************************************************/
 
-	 		/* add the Reverse visible */
+    ppPlane = pPlaneLists->RVPlanes;
 
-			PackPlane(pPlaneMem, pPlane, rev_visib, pPlane->u32TexasTag);
+    /*
+    // Do ALL but the last reverse visible plane. It MAY need a different
+    // instruction (NOTE these aren't to be seen yet, so actually use
+    // an invisible instruction)
+    */
+    for (i = (pPlaneLists->NumRV - 1); i > 0; i--) {
+        /*
+        // Get easy access to this plane
+        */
+        pPlane = *ppPlane;
 
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane ++;
-   	   	}
+        /* add the Reverse visible */
+        PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
 
-		ppPlane = pPlaneLists->RIPlanes;
-		
-	   	for (i = pPlaneLists->NumRI; i>0; i--)			
-	  	{
-			/*
-			// Get easy access to this plane
-			*/
-			pPlane = *ppPlane;
+        pPlaneMem += WORDS_PER_PLANE;
+        ppPlane++;
+    }
 
-    	  	/* add the Reverse invisible */
-			PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
+    /*
+    // Do the last visible reverse
+    */
+    if (pPlaneLists->NumRV != 0) {
+        /*
+        // Get easy access to this plane
+        */
+        pPlane = *ppPlane;
 
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane ++;
-	  	}
-   	}/*end if repeat reverse*/
+        /* last reverse must have special instruction */
+        if (RepeatReverse && (pPlaneLists->NumRI == 0)) {
+            PackPlane(pPlaneMem, pPlane, rev_replace_if, DEBUG_INVIS_RP_TAG);
+        } else {
+            PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
+        }
+
+        pPlaneMem += WORDS_PER_PLANE;
+    }
+
+    /*
+    // Do the Rev INVIS planes.
+    //
+    // Again, do all but the last one
+    */
+    ppPlane = pPlaneLists->RIPlanes;
+
+    for (i = (pPlaneLists->NumRI - 1); i > 0; i--) {
+        /*
+        // Get easy access to this plane
+        */
+        pPlane = *ppPlane;
+
+        /* add the Reverse invisible */
+
+        PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
+
+        pPlaneMem += WORDS_PER_PLANE;
+        ppPlane++;
+    }
+
+    /*
+    // Do the last one
+    */
+    if (pPlaneLists->NumRI != 0) {
+        /*
+        // Get easy access to this plane
+        */
+        pPlane = *ppPlane;
+
+        /* add the Reverse invisible */
+        /*
+        // last reverse must have special instruction for
+        // objects with invisible plane
+        */
+        if (RepeatReverse) {
+            PackPlane(pPlaneMem, pPlane, rev_replace_if, DEBUG_INVIS_RP_TAG);
+        } else {
+            PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
+        }
+        pPlaneMem += WORDS_PER_PLANE;
+    }
 
 
-	SGL_TIME_STOP(PACK_OPAQUE_TIME)
-	return	numPlanes;
+    /*************************************************************/
+    /****** Add the reverse planes AGAIN (if needed )*************/
+    /*************************************************************/
+    if (RepeatReverse) {
+        ppPlane = pPlaneLists->RVPlanes;
+
+        for (i = pPlaneLists->NumRV; i > 0; i--) {
+            /*
+            // Get easy access to this plane
+            */
+            pPlane = *ppPlane;
+
+            /* add the Reverse visible */
+
+            PackPlane(pPlaneMem, pPlane, rev_visib, pPlane->u32TexasTag);
+
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
+        }
+
+        ppPlane = pPlaneLists->RIPlanes;
+
+        for (i = pPlaneLists->NumRI; i > 0; i--) {
+            /*
+            // Get easy access to this plane
+            */
+            pPlane = *ppPlane;
+
+            /* add the Reverse invisible */
+            PackPlane(pPlaneMem, pPlane, rev_invis, DEBUG_INVIS_RP_TAG);
+
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
+        }
+    }/*end if repeat reverse*/
+
+
+    SGL_TIME_STOP(PACK_OPAQUE_TIME)
+    return numPlanes;
 
 }
 
@@ -1306,377 +1269,341 @@ int	PackOpaqueParams( const PLANE_CATEGORIES_STRUCT * pPlaneLists,
  *				
  **************************************************************************/
 
-int	PackLightShadVolParams( const PLANE_CATEGORIES_STRUCT * pPlaneLists,
-							const sgl_bool IsShadowVol)
-{
-	sgl_bool	AddDummyForward;
-	sgl_bool	AddDummyReverse;
+int PackLightShadVolParams(const PLANE_CATEGORIES_STRUCT *pPlaneLists,
+                           const sgl_bool IsShadowVol) {
+    sgl_bool AddDummyForward;
+    sgl_bool AddDummyReverse;
 
-	int	numForward, numReverse, numPlanes;
-	int i;
+    int numForward, numReverse, numPlanes;
+    int i;
 
-	sgl_uint32 * pPlaneMem;
+    sgl_uint32 *pPlaneMem;
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	float f32FixedClipDist = RnGlobalGetFixedClipDist();
+    float f32FixedClipDist = RnGlobalGetFixedClipDist();
 #else
-	sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
+    sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
 #endif
-	/*
-	// Keep a pointer into the various plane pointer lists,
-	// as well as a pointer to the plane data itself
-	*/
-	TRANSFORMED_PLANE_STRUCT  * const * ppPlane;
-	const TRANSFORMED_PLANE_STRUCT  *  pPlane;
-	sgl_uint32 CurrentLimit;
+    /*
+    // Keep a pointer into the various plane pointer lists,
+    // as well as a pointer to the plane data itself
+    */
+    TRANSFORMED_PLANE_STRUCT *const *ppPlane;
+    const TRANSFORMED_PLANE_STRUCT *pPlane;
+    sgl_uint32 CurrentLimit;
 
-	ASSERT(pPlaneLists->NumFI == 0);
-	ASSERT(pPlaneLists->NumRI == 0);
+    ASSERT(pPlaneLists->NumFI == 0);
+    ASSERT(pPlaneLists->NumRI == 0);
 
-	SGL_TIME_START(PACK_LIGHTSHADVOL_TIME)
+    SGL_TIME_START(PACK_LIGHTSHADVOL_TIME)
 
-	numForward = pPlaneLists->NumFV;
-	numReverse = pPlaneLists->NumRV;
+    numForward = pPlaneLists->NumFV;
+    numReverse = pPlaneLists->NumRV;
 
-	/*
-	// The hardware ALWAYS requires a forward (or perp plane) and a reverse
-	// plane. To make life simple always have a forward plane.
-	*/
-	if (numForward == 0)
-	{
-		AddDummyForward = TRUE;	
-		numForward = 1;	
-	}
-	else
-	{
-		AddDummyForward = FALSE;	
-	}
-		
+    /*
+    // The hardware ALWAYS requires a forward (or perp plane) and a reverse
+    // plane. To make life simple always have a forward plane.
+    */
+    if (numForward == 0) {
+        AddDummyForward = TRUE;
+        numForward = 1;
+    } else {
+        AddDummyForward = FALSE;
+    }
 
-	if (numReverse == 0)
-	{
-		AddDummyReverse = TRUE;	
-		numReverse = 1;	
-	}
-	else
-	{
-		AddDummyReverse = FALSE;	
-	}
 
-	/*
-	// how many planes are going in the hardware? and is there room?
-	*/
-	numPlanes = numForward + numReverse + pPlaneLists->NumPE;
+    if (numReverse == 0) {
+        AddDummyReverse = TRUE;
+        numReverse = 1;
+    } else {
+        AddDummyReverse = FALSE;
+    }
+
+    /*
+    // how many planes are going in the hardware? and is there room?
+    */
+    numPlanes = numForward + numReverse + pPlaneLists->NumPE;
 
 #define CHECK_LIMITS 1
 #if CHECK_LIMITS
-	CurrentLimit = GetSabreLimit (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos);
-	
-	if (CurrentLimit == 0)
-	{
- 		/* this isnt enough space */
-		DPFDEV ((DBG_WARNING, "PackLightShadVolParams: Out of sabre memory pages !"));
-			
-		SGL_TIME_STOP(PACK_OPAQUE_TIME)
-		return(0);
-	}
+    CurrentLimit = GetSabreLimit(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos);
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + 
-		 (numPlanes * WORDS_PER_PLANE )) > CurrentLimit)
-	{
-		CurrentLimit = GetSabreLimit (CurrentLimit++);
-		
-		if (CurrentLimit == 0)
-		{
-			/* this isnt enough space */
-			DPFDEV ((DBG_WARNING, "PackLightShadVolParams: Out of sabre memory pages !"));
-			
-			SGL_TIME_STOP(PACK_OPAQUE_TIME)
-			return 0;
-		}
+    if (CurrentLimit == 0) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_WARNING, "PackLightShadVolParams: Out of sabre memory pages !"));
 
-		PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = 
-			GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, 
-							  (numPlanes * WORDS_PER_PLANE ));
-		
-		if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + 
-			 (numPlanes * WORDS_PER_PLANE )) > CurrentLimit)
-		{
-			/* this isnt enough space */
-			DPFDEV ((DBG_WARNING, "PackLightShadVolParams: Out of sabre memory! %d planes in object ", numPlanes));
-			
-			SGL_TIME_STOP(PACK_OPAQUE_TIME)
-			return 0;
-		}
+        SGL_TIME_STOP(PACK_OPAQUE_TIME)
+        return (0);
+    }
 
-	}
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +
+         (numPlanes * WORDS_PER_PLANE)) > CurrentLimit) {
+        CurrentLimit = GetSabreLimit(CurrentLimit++);
+
+        if (CurrentLimit == 0) {
+            /* this isnt enough space */
+            DPFDEV ((DBG_WARNING, "PackLightShadVolParams: Out of sabre memory pages !"));
+
+            SGL_TIME_STOP(PACK_OPAQUE_TIME)
+            return 0;
+        }
+
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos =
+                GetStartOfObject(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos,
+                                 (numPlanes * WORDS_PER_PLANE));
+
+        if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +
+             (numPlanes * WORDS_PER_PLANE)) > CurrentLimit) {
+            /* this isnt enough space */
+            DPFDEV ((DBG_WARNING, "PackLightShadVolParams: Out of sabre memory! %d planes in object ", numPlanes));
+
+            SGL_TIME_STOP(PACK_OPAQUE_TIME)
+            return 0;
+        }
+
+    }
 #endif
 
 
-	/* Get where we Add the object to the plane parameter memory */
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    /* Get where we Add the object to the plane parameter memory */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
-	/*
-	// Up the index by the number of planes we've added, times the
-	// size of each plane in sgl_uint32.
-	*/
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE * numPlanes;
+    /*
+    // Up the index by the number of planes we've added, times the
+    // size of each plane in sgl_uint32.
+    */
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE * numPlanes;
 
-	/*************************************************************/
-	/******************* Add the forward planes ******************/
-	/*************************************************************/
+    /*************************************************************/
+    /******************* Add the forward planes ******************/
+    /*************************************************************/
 
-	/*///////////////////////
-	// If there weren't any forward planes
-	/////////////////////// */
-	if(AddDummyForward)
-  	{
-		/*
-		// If there are no perps, then use First and Test
-		*/
-		if(pPlaneLists->NumPE == 0)
-		{
+    /*///////////////////////
+    // If there weren't any forward planes
+    /////////////////////// */
+    if (AddDummyForward) {
+        /*
+        // If there are no perps, then use First and Test
+        */
+        if (pPlaneLists->NumPE == 0) {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
-							test_shad_forw_fp, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
+                            test_shad_forw_fp, DEBUG_DUMMY_F_TAG);
 #else
-			PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
-							test_shad_forw_fp, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
+                            test_shad_forw_fp, DEBUG_DUMMY_F_TAG);
 #endif
-		}
-		/*
-		// Else use First plane - the test will be done in the perps
-		*/
-		else
-		{
+        }
+            /*
+            // Else use First plane - the test will be done in the perps
+            */
+        else {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
-							forw_visib_fp, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
+                            forw_visib_fp, DEBUG_DUMMY_F_TAG);
 #else
-			PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
-							forw_visib_fp, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
+                            forw_visib_fp, DEBUG_DUMMY_F_TAG);
 #endif
-		}
+        }
 
-   		pPlaneMem+=WORDS_PER_PLANE;
-	}
-	/* ///////////////////////
-	// ELSE If there is only ONE (original) forward plane
-	/////////////////////// */
-	else if(numForward == 1)
-	{
-		/*
-		// get pointer to the first forward plane
-		*/
-		pPlane = *(pPlaneLists->FVPlanes);
+        pPlaneMem += WORDS_PER_PLANE;
+    }
+        /* ///////////////////////
+        // ELSE If there is only ONE (original) forward plane
+        /////////////////////// */
+    else if (numForward == 1) {
+        /*
+        // get pointer to the first forward plane
+        */
+        pPlane = *(pPlaneLists->FVPlanes);
 
-		/*
-		// If there are no perps, then use First and Test
-		*/
-		if(pPlaneLists->NumPE == 0)
-		{
-			PackPlane(pPlaneMem, pPlane, test_shad_forw_fp, DEBUG_DUMMY_F_TAG);
-		}
-		/*
-		// Else use First plane - the test will be done in the perps
-		*/
-		else
-		{
-			PackPlane(pPlaneMem, pPlane, forw_visib_fp, DEBUG_DUMMY_F_TAG);
-		}
+        /*
+        // If there are no perps, then use First and Test
+        */
+        if (pPlaneLists->NumPE == 0) {
+            PackPlane(pPlaneMem, pPlane, test_shad_forw_fp, DEBUG_DUMMY_F_TAG);
+        }
+            /*
+            // Else use First plane - the test will be done in the perps
+            */
+        else {
+            PackPlane(pPlaneMem, pPlane, forw_visib_fp, DEBUG_DUMMY_F_TAG);
+        }
 
-		pPlaneMem+=WORDS_PER_PLANE;
-	}
-	/*///////////////////////
-	// Else there is more than one forward plane..
-	/////////////////////// */
-	else
-	{
-		/*
-		// get pointer to the first forward Vis entry in the list
-		*/
-		ppPlane = pPlaneLists->FVPlanes;
+        pPlaneMem += WORDS_PER_PLANE;
+    }
+        /*///////////////////////
+        // Else there is more than one forward plane..
+        /////////////////////// */
+    else {
+        /*
+        // get pointer to the first forward Vis entry in the list
+        */
+        ppPlane = pPlaneLists->FVPlanes;
 
-		/*
-		// Do the first forward plane. NOTE we KNOW there is more
-		// than 1 forward plane
-		*/
-		pPlane = *ppPlane;
+        /*
+        // Do the first forward plane. NOTE we KNOW there is more
+        // than 1 forward plane
+        */
+        pPlane = *ppPlane;
 
-		PackPlane(pPlaneMem, pPlane, forw_visib_fp, DEBUG_DUMMY_F_TAG);
-		
-		pPlaneMem+=WORDS_PER_PLANE;
-		ppPlane++;
+        PackPlane(pPlaneMem, pPlane, forw_visib_fp, DEBUG_DUMMY_F_TAG);
 
-		/*
-		// do all the remaining BUT  the last forward plane
-		*/
-		for (i = (numForward - 2); i > 0; i--)			
-		{
-			/*
-			// Get pointer to this plane
-			*/
-			pPlane = *ppPlane;
+        pPlaneMem += WORDS_PER_PLANE;
+        ppPlane++;
 
-			PackPlane(pPlaneMem, pPlane, forw_visib, DEBUG_DUMMY_F_TAG);
+        /*
+        // do all the remaining BUT  the last forward plane
+        */
+        for (i = (numForward - 2); i > 0; i--) {
+            /*
+            // Get pointer to this plane
+            */
+            pPlane = *ppPlane;
 
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane++;
+            PackPlane(pPlaneMem, pPlane, forw_visib, DEBUG_DUMMY_F_TAG);
 
-	   	}/*end for forward visibles*/
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
 
-		/*
-		// Do the last forward visible. If there aren't any perp
-		// planes, then use the test fp instruction, else the test
-		// will be done in the perps
-		*/
-		pPlane = *ppPlane;
+        }/*end for forward visibles*/
 
-		if(pPlaneLists->NumPE == 0)
-		{
-			PackPlane(pPlaneMem, pPlane, test_shad_forw, DEBUG_DUMMY_F_TAG);
-		}
-		else
-		{
-			PackPlane(pPlaneMem, pPlane, forw_visib, DEBUG_DUMMY_F_TAG);
-		}
+        /*
+        // Do the last forward visible. If there aren't any perp
+        // planes, then use the test fp instruction, else the test
+        // will be done in the perps
+        */
+        pPlane = *ppPlane;
 
-		pPlaneMem+=WORDS_PER_PLANE;
+        if (pPlaneLists->NumPE == 0) {
+            PackPlane(pPlaneMem, pPlane, test_shad_forw, DEBUG_DUMMY_F_TAG);
+        } else {
+            PackPlane(pPlaneMem, pPlane, forw_visib, DEBUG_DUMMY_F_TAG);
+        }
 
-   	}/*end if then else*/
+        pPlaneMem += WORDS_PER_PLANE;
+
+    }/*end if then else*/
 
 
-	/*************************************************************/
-	/************* Add the perpendicular planes ******************/
-	/*************************************************************/
-	if(pPlaneLists->NumPE > 0)
-	{
-		/*
-		// Get access to the first pointer in the array
-		*/
-		ppPlane = pPlaneLists->PEPlanes;
-		
-		/*
-		// Do all but the last one.. the last one gets the test
-		// instruction
-		*/
-		for (i = (pPlaneLists->NumPE - 1); i > 0; i --)
-		{
-			/*
-			// Get easy access to this plane
-			*/
-			pPlane = *ppPlane;
+    /*************************************************************/
+    /************* Add the perpendicular planes ******************/
+    /*************************************************************/
+    if (pPlaneLists->NumPE > 0) {
+        /*
+        // Get access to the first pointer in the array
+        */
+        ppPlane = pPlaneLists->PEPlanes;
 
-			/* add the perp */
-			PackPlane(pPlaneMem, pPlane, forw_perp, DEBUG_PERP_TAG);
+        /*
+        // Do all but the last one.. the last one gets the test
+        // instruction
+        */
+        for (i = (pPlaneLists->NumPE - 1); i > 0; i--) {
+            /*
+            // Get easy access to this plane
+            */
+            pPlane = *ppPlane;
 
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane++;
+            /* add the perp */
+            PackPlane(pPlaneMem, pPlane, forw_perp, DEBUG_PERP_TAG);
 
-		} /*end for all but last perp*/
-		
-		/*
-		// The last one gets the test instruction (the lucky
-		// devil)
-		*/
-		pPlane = *ppPlane;
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
 
-		/* add the perp */
-		PackPlane(pPlaneMem, pPlane, test_shad_perp, DEBUG_PERP_TAG);
+        } /*end for all but last perp*/
 
-		pPlaneMem+=WORDS_PER_PLANE;
+        /*
+        // The last one gets the test instruction (the lucky
+        // devil)
+        */
+        pPlane = *ppPlane;
 
-	}/*end if some perp planes*/
+        /* add the perp */
+        PackPlane(pPlaneMem, pPlane, test_shad_perp, DEBUG_PERP_TAG);
 
-	/*************************************************************/
-	/******************* Add the reverse planes ******************/
-	/*************************************************************/
+        pPlaneMem += WORDS_PER_PLANE;
 
-	/*///////////////////////
-	// If there weren't any Reverse planes
-	/////////////////////// */
-	if(AddDummyReverse)
-	{
-		/*
-		// The command we store depends on whether we are doing a
-		// light volome or a shadow volume
-		*/
-		if(IsShadowVol)
-		{
+    }/*end if some perp planes*/
+
+    /*************************************************************/
+    /******************* Add the reverse planes ******************/
+    /*************************************************************/
+
+    /*///////////////////////
+    // If there weren't any Reverse planes
+    /////////////////////// */
+    if (AddDummyReverse) {
+        /*
+        // The command we store depends on whether we are doing a
+        // light volome or a shadow volume
+        */
+        if (IsShadowVol) {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, 0.0f,
-							test_shadow_rev, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, 0.0f,
+                            test_shadow_rev, DEBUG_DUMMY_F_TAG);
 #else
-			PackFlatOnPlane(pPlaneMem, 0,
-							test_shadow_rev, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, 0,
+                            test_shadow_rev, DEBUG_DUMMY_F_TAG);
 #endif
 
-		}
-		else
-		{
+        } else {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, 0.0f,
-							test_light_rev, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, 0.0f,
+                            test_light_rev, DEBUG_DUMMY_F_TAG);
 #else
-			PackFlatOnPlane(pPlaneMem, 0,
-							test_light_rev, DEBUG_DUMMY_F_TAG);
+            PackFlatOnPlane(pPlaneMem, 0,
+                            test_light_rev, DEBUG_DUMMY_F_TAG);
 #endif
 
-		}
-	}
-	/*///////////////////////
-	// Else there are more than one forward plane..
-	/////////////////////// */
-	else
-	{
-		/*
-		// get easy access to the list of pointers
-		*/
-		ppPlane = pPlaneLists->RVPlanes;
-		
-		/*
-		// Do all but the last one
-		*/
-		for (i = (pPlaneLists->NumRV - 1); i > 0; i-- )
-		{
-			/*
-			// Get easy access to this plane
-			*/
-			pPlane = *ppPlane;
+        }
+    }
+        /*///////////////////////
+        // Else there are more than one forward plane..
+        /////////////////////// */
+    else {
+        /*
+        // get easy access to the list of pointers
+        */
+        ppPlane = pPlaneLists->RVPlanes;
 
-			/* add the Reverse */
-			PackPlane(pPlaneMem, pPlane, rev_visib, DEBUG_DUMMY_R_TAG);
+        /*
+        // Do all but the last one
+        */
+        for (i = (pPlaneLists->NumRV - 1); i > 0; i--) {
+            /*
+            // Get easy access to this plane
+            */
+            pPlane = *ppPlane;
 
-			pPlaneMem+=WORDS_PER_PLANE;
-			ppPlane++;
-		}/*end for all but last one*/
+            /* add the Reverse */
+            PackPlane(pPlaneMem, pPlane, rev_visib, DEBUG_DUMMY_R_TAG);
+
+            pPlaneMem += WORDS_PER_PLANE;
+            ppPlane++;
+        }/*end for all but last one*/
 
 
-		/*
-		// on the very last, but the test command - the command depends on
-		// what we are packing
-		*/
-		pPlane = *ppPlane;
+        /*
+        // on the very last, but the test command - the command depends on
+        // what we are packing
+        */
+        pPlane = *ppPlane;
 
-		if(IsShadowVol)
-		{
-			PackPlane(pPlaneMem, pPlane, test_shadow_rev, DEBUG_DUMMY_R_TAG);
-		}
-		else
-		{
-			PackPlane(pPlaneMem, pPlane, test_light_rev, DEBUG_DUMMY_R_TAG);
-		}
+        if (IsShadowVol) {
+            PackPlane(pPlaneMem, pPlane, test_shadow_rev, DEBUG_DUMMY_R_TAG);
+        } else {
+            PackPlane(pPlaneMem, pPlane, test_light_rev, DEBUG_DUMMY_R_TAG);
+        }
 
-	}/*end if else on reverse planes*/
+    }/*end if else on reverse planes*/
 
-	SGL_TIME_STOP(PACK_LIGHTSHADVOL_TIME)
+    SGL_TIME_STOP(PACK_LIGHTSHADVOL_TIME)
 
-	return	numPlanes;
+    return numPlanes;
 
 }
-
-
-
 
 
 /**************************************************************************
@@ -1690,223 +1617,200 @@ int	PackLightShadVolParams( const PLANE_CATEGORIES_STRUCT * pPlaneLists,
  * Description    : Packs a mesh polygon into sabre memory
  **************************************************************************/
 
-int PackMeshParamsOrdered ( const TRANSFORMED_PLANE_STRUCT Planes[],
-						  XMESHEXTRA Extras[],
-						  sgl_int32 *Order,
-						  const int nNumPlanes)
-{
-	int	  nPlane,  nEdges, nSabrePlanes, nTotalPlanes = 0;
-	const TRANSFORMED_PLANE_STRUCT 	*pPlane;
-	PTRANSEDGE					pEdge;
-	PXMESHEXTRA					pExtra;
-   	sgl_uint32						*pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+int PackMeshParamsOrdered(const TRANSFORMED_PLANE_STRUCT Planes[],
+                          XMESHEXTRA Extras[],
+                          sgl_int32 *Order,
+                          const int nNumPlanes) {
+    int nPlane, nEdges, nSabrePlanes, nTotalPlanes = 0;
+    const TRANSFORMED_PLANE_STRUCT *pPlane;
+    PTRANSEDGE pEdge;
+    PXMESHEXTRA pExtra;
+    sgl_uint32 *pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	float f32FixedClipDist = RnGlobalGetFixedClipDist();
+    float f32FixedClipDist = RnGlobalGetFixedClipDist();
 #else
-	sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
-#endif
-	
-	/* need to check to see if we have enough space in the parameter memory */
-	SGL_TIME_START(PACK_MESH_ORDERED_TIME)
-
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + ((6*WORDS_PER_PLANE) * nNumPlanes)) > PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_WARNING, "PackMeshParamsOrdered: Out of sabre memory!"));
-
-	    SGL_TIME_STOP(PACK_MESH_ORDERED_TIME)
-		return (0);
-	}
-
-	for (nPlane = 0; nPlane < nNumPlanes; ++nPlane)
-	{
-		int nOrderedPlane = Order[nPlane];
-		pPlane = Planes + nOrderedPlane;
-		pExtra = Extras + nOrderedPlane;
-		nEdges = pExtra->nEdges;
-		
-		/* add the visible polygon plane */
-	
-		PackPlane(pPlaneMem, pPlane, forw_visib_fp, pPlane->u32TexasTag);
-		pPlaneMem += WORDS_PER_PLANE;
-		
-		nSabrePlanes = 1;
-
-				
-		/*
-		// add the edges
-		//
-		// We have either 3 or 4 edges. Note that it doesnt matter what
-		// order we are doing things in.
-		*/
-		ASSERT((nEdges == 4) || (nEdges == 3));
-
-		if(nEdges == 4)
-		{
-			#define EDGE_OFF 3
-
-			pEdge = pExtra->pE[EDGE_OFF];
-				
-			if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-			{
-				/* we need to reverse the sense of the edge */
-
-				PackEdge(pPlaneMem, pEdge);
-			}
-			else
-			{
-				/* edge is oriented correctly */
-
-				PackNegatedEdge(pPlaneMem, pEdge);
-			}
-	
-			pPlaneMem += WORDS_PER_PLANE;
-			++nSabrePlanes;
-
-			#undef EDGE_OFF
-		}/*end if 4 */
-
-		/*
-		// Do the remaining edges
-		*/
-		#define EDGE_OFF 2
-
-		pEdge = pExtra->pE[EDGE_OFF];
-
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
-
-			PackNegatedEdge(pPlaneMem, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-
-			PackEdge(pPlaneMem, pEdge);
-		}
-	
-		pPlaneMem += WORDS_PER_PLANE;
-		++nSabrePlanes;
-
-		#undef EDGE_OFF
-
-
-
-		#define EDGE_OFF 1
-
-		pEdge = pExtra->pE[EDGE_OFF];
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
-
-			PackNegatedEdge(pPlaneMem, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-
-			PackEdge(pPlaneMem, pEdge);
-		}
-	
-		pPlaneMem += WORDS_PER_PLANE;
-		++nSabrePlanes;
-
-		#undef EDGE_OFF
-
-		#define EDGE_OFF 2
-
-		pEdge = pExtra->pE[EDGE_OFF];
-
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
-
-			PackNegatedEdge(pPlaneMem, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-
-			PackEdge(pPlaneMem, pEdge);
-		}
-	
-		pPlaneMem += WORDS_PER_PLANE;
-		++nSabrePlanes;
-
-		#undef EDGE_OFF
-
-
-		#define EDGE_OFF 1
-
-		pEdge = pExtra->pE[EDGE_OFF];
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
-
-			PackNegatedEdge(pPlaneMem, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-
-			PackEdge(pPlaneMem, pEdge);
-		}
-	
-		pPlaneMem += WORDS_PER_PLANE;
-		++nSabrePlanes;
-
-		#undef EDGE_OFF
-
-		#define EDGE_OFF 0
-
-		pEdge = pExtra->pE[EDGE_OFF];
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
-
-			PackNegatedEdge(pPlaneMem, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-
-			PackEdge(pPlaneMem, pEdge);
-		}
-	
-		pPlaneMem += WORDS_PER_PLANE;
-		++nSabrePlanes;
-
-		#undef EDGE_OFF
-
-
-
-
-		/* add clip plane if necessary */
-		
-		if (pExtra->ZClipped)
-		{
-			/* add a  forward clip plane */
-#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
-							forw_invis, DEBUG_CLIP_PLANE_TAG);
-#else
-			PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
-							forw_invis, DEBUG_CLIP_PLANE_TAG);
+    sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
 #endif
 
-			pPlaneMem += WORDS_PER_PLANE;
-			++nSabrePlanes;
-		}
+    /* need to check to see if we have enough space in the parameter memory */
+    SGL_TIME_START(PACK_MESH_ORDERED_TIME)
 
-		pExtra->u32SabreIndex = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-		pExtra->nSabrePlanes =  nSabrePlanes;
-		PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE * nSabrePlanes;
-		nTotalPlanes += nSabrePlanes;
-	}	
-	
-	SGL_TIME_STOP(PACK_MESH_ORDERED_TIME)
-	return (nTotalPlanes);
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + ((6 * WORDS_PER_PLANE) * nNumPlanes)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_WARNING, "PackMeshParamsOrdered: Out of sabre memory!"));
+
+        SGL_TIME_STOP(PACK_MESH_ORDERED_TIME)
+        return (0);
+    }
+
+    for (nPlane = 0; nPlane < nNumPlanes; ++nPlane) {
+        int nOrderedPlane = Order[nPlane];
+        pPlane = Planes + nOrderedPlane;
+        pExtra = Extras + nOrderedPlane;
+        nEdges = pExtra->nEdges;
+
+        /* add the visible polygon plane */
+
+        PackPlane(pPlaneMem, pPlane, forw_visib_fp, pPlane->u32TexasTag);
+        pPlaneMem += WORDS_PER_PLANE;
+
+        nSabrePlanes = 1;
+
+
+        /*
+        // add the edges
+        //
+        // We have either 3 or 4 edges. Note that it doesnt matter what
+        // order we are doing things in.
+        */
+        ASSERT((nEdges == 4) || (nEdges == 3));
+
+        if (nEdges == 4) {
+#define EDGE_OFF 3
+
+            pEdge = pExtra->pE[EDGE_OFF];
+
+            if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+                /* we need to reverse the sense of the edge */
+
+                PackEdge(pPlaneMem, pEdge);
+            } else {
+                /* edge is oriented correctly */
+
+                PackNegatedEdge(pPlaneMem, pEdge);
+            }
+
+            pPlaneMem += WORDS_PER_PLANE;
+            ++nSabrePlanes;
+
+#undef EDGE_OFF
+        }/*end if 4 */
+
+        /*
+        // Do the remaining edges
+        */
+#define EDGE_OFF 2
+
+        pEdge = pExtra->pE[EDGE_OFF];
+
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
+
+            PackNegatedEdge(pPlaneMem, pEdge);
+        } else {
+            /* edge is oriented correctly */
+
+            PackEdge(pPlaneMem, pEdge);
+        }
+
+        pPlaneMem += WORDS_PER_PLANE;
+        ++nSabrePlanes;
+
+#undef EDGE_OFF
+
+
+#define EDGE_OFF 1
+
+        pEdge = pExtra->pE[EDGE_OFF];
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
+
+            PackNegatedEdge(pPlaneMem, pEdge);
+        } else {
+            /* edge is oriented correctly */
+
+            PackEdge(pPlaneMem, pEdge);
+        }
+
+        pPlaneMem += WORDS_PER_PLANE;
+        ++nSabrePlanes;
+
+#undef EDGE_OFF
+
+#define EDGE_OFF 2
+
+        pEdge = pExtra->pE[EDGE_OFF];
+
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
+
+            PackNegatedEdge(pPlaneMem, pEdge);
+        } else {
+            /* edge is oriented correctly */
+
+            PackEdge(pPlaneMem, pEdge);
+        }
+
+        pPlaneMem += WORDS_PER_PLANE;
+        ++nSabrePlanes;
+
+#undef EDGE_OFF
+
+
+#define EDGE_OFF 1
+
+        pEdge = pExtra->pE[EDGE_OFF];
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
+
+            PackNegatedEdge(pPlaneMem, pEdge);
+        } else {
+            /* edge is oriented correctly */
+
+            PackEdge(pPlaneMem, pEdge);
+        }
+
+        pPlaneMem += WORDS_PER_PLANE;
+        ++nSabrePlanes;
+
+#undef EDGE_OFF
+
+#define EDGE_OFF 0
+
+        pEdge = pExtra->pE[EDGE_OFF];
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
+
+            PackNegatedEdge(pPlaneMem, pEdge);
+        } else {
+            /* edge is oriented correctly */
+
+            PackEdge(pPlaneMem, pEdge);
+        }
+
+        pPlaneMem += WORDS_PER_PLANE;
+        ++nSabrePlanes;
+
+#undef EDGE_OFF
+
+
+
+
+        /* add clip plane if necessary */
+
+        if (pExtra->ZClipped) {
+            /* add a  forward clip plane */
+#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
+            PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
+                            forw_invis, DEBUG_CLIP_PLANE_TAG);
+#else
+            PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
+                            forw_invis, DEBUG_CLIP_PLANE_TAG);
+#endif
+
+            pPlaneMem += WORDS_PER_PLANE;
+            ++nSabrePlanes;
+        }
+
+        pExtra->u32SabreIndex = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+        pExtra->nSabrePlanes = nSabrePlanes;
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE * nSabrePlanes;
+        nTotalPlanes += nSabrePlanes;
+    }
+
+    SGL_TIME_STOP(PACK_MESH_ORDERED_TIME)
+    return (nTotalPlanes);
 }
 
 
@@ -1921,191 +1825,168 @@ int PackMeshParamsOrdered ( const TRANSFORMED_PLANE_STRUCT Planes[],
  * Description    : Packs a mesh polygon into sabre memory
  **************************************************************************/
 
-int PackMeshParams( const TRANSFORMED_PLANE_STRUCT *pPlane,
-					XMESHEXTRA *pExtra,
-					const int nNumPlanes )
-{
-	int	  nEdges, nCounter, nSabrePlanes, nTotalPlanes = 0;
-	PTRANSEDGE					pEdge;
-   	sgl_uint32						*pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
-	sgl_uint32						CurrentLimit;
+int PackMeshParams(const TRANSFORMED_PLANE_STRUCT *pPlane,
+                   XMESHEXTRA *pExtra,
+                   const int nNumPlanes) {
+    int nEdges, nCounter, nSabrePlanes, nTotalPlanes = 0;
+    PTRANSEDGE pEdge;
+    sgl_uint32 *pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    sgl_uint32 CurrentLimit;
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	float f32FixedClipDist = RnGlobalGetFixedClipDist();
+    float f32FixedClipDist = RnGlobalGetFixedClipDist();
 #else
-	sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
+    sgl_uint32 n32FixedClipDist	= RnGlobalGetFixedClipDist();
 #endif
 
-	/* need to check to see if we have enough space in the parameter memory */
+    /* need to check to see if we have enough space in the parameter memory */
 
-	SGL_TIME_START(PACK_MESH_TIME)
+    SGL_TIME_START(PACK_MESH_TIME)
 
-	CurrentLimit = GetSabreLimit (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos);
+    CurrentLimit = GetSabreLimit(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos);
 
-	if (CurrentLimit == 0)
-	{
-		return(0); /* nTotalPlanes */
-	}
+    if (CurrentLimit == 0) {
+        return (0); /* nTotalPlanes */
+    }
 
-	for ( nCounter = nNumPlanes; nCounter!=0 ;nCounter--, pPlane++, pExtra++)
-	{
-		nEdges = pExtra->nEdges;
-		
-		if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (6 * WORDS_PER_PLANE) >= CurrentLimit)
-		{
-			CurrentLimit = GetSabreLimit (CurrentLimit);
-			
-			if (CurrentLimit == 0)
-			{
-				return(nTotalPlanes);
-			}
+    for (nCounter = nNumPlanes; nCounter != 0; nCounter--, pPlane++, pExtra++) {
+        nEdges = pExtra->nEdges;
 
-			PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, (6 * WORDS_PER_PLANE));
+        if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (6 * WORDS_PER_PLANE) >= CurrentLimit) {
+            CurrentLimit = GetSabreLimit(CurrentLimit);
 
-			if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (6 * WORDS_PER_PLANE) >= CurrentLimit)
-			{
-				DPFDEV ((DBG_WARNING, "PackMeshParams: Out of ISP buffer space"));
-			
-				break;
-			}
-			else
-			{
-				pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
-			}
-		}
+            if (CurrentLimit == 0) {
+                return (nTotalPlanes);
+            }
 
-		/* add the visible polygon plane */
-	
-		PackPlane(pPlaneMem, pPlane, forw_visib_fp, pPlane->u32TexasTag);
-		pPlaneMem += WORDS_PER_PLANE;
+            PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = GetStartOfObject(
+                    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, (6 * WORDS_PER_PLANE));
 
-		/*
-		// add the edges
-		//
-		// We have at most 4 edges, so rather than do a loop, do a switch.
-		// which drops into the right place and then through the remaining
-		// ones. Note that it doesn't matter which order we do the edges.
-		*/
-		ASSERT((nEdges == 4)|| (nEdges == 3));
+            if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (6 * WORDS_PER_PLANE) >= CurrentLimit) {
+                DPFDEV ((DBG_WARNING, "PackMeshParams: Out of ISP buffer space"));
 
-		if(nEdges == 4)
-		{
-			nSabrePlanes = 5;
-			
-			#define EDGE_OFF 3
+                break;
+            } else {
+                pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+            }
+        }
 
-			pEdge = pExtra->pE[EDGE_OFF];
-				
-			if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-			{
-				/* we need to reverse the sense of the edge */
-	
-				PackNegatedEdge(pPlaneMem, pEdge);
-			}
-			else
-			{
-				/* edge is oriented correctly */
+        /* add the visible polygon plane */
 
-				PackEdge(pPlaneMem, pEdge);
-			}
-	
-			pPlaneMem += WORDS_PER_PLANE;
+        PackPlane(pPlaneMem, pPlane, forw_visib_fp, pPlane->u32TexasTag);
+        pPlaneMem += WORDS_PER_PLANE;
 
-			#undef EDGE_OFF
-		}
-		/*
-		// Else only 3 edges
-		*/
-		else
-		{
-			nSabrePlanes = 4;
-		}
+        /*
+        // add the edges
+        //
+        // We have at most 4 edges, so rather than do a loop, do a switch.
+        // which drops into the right place and then through the remaining
+        // ones. Note that it doesn't matter which order we do the edges.
+        */
+        ASSERT((nEdges == 4) || (nEdges == 3));
 
-		/*
-		// the other edges
-		*/
-		#define EDGE_OFF 2
+        if (nEdges == 4) {
+            nSabrePlanes = 5;
 
-		pEdge = pExtra->pE[EDGE_OFF];
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
+#define EDGE_OFF 3
 
-			PackNegatedEdge(pPlaneMem, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-			PackEdge(pPlaneMem, pEdge);
-		}
-	
-		#undef EDGE_OFF
+            pEdge = pExtra->pE[EDGE_OFF];
+
+            if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+                /* we need to reverse the sense of the edge */
+
+                PackNegatedEdge(pPlaneMem, pEdge);
+            } else {
+                /* edge is oriented correctly */
+
+                PackEdge(pPlaneMem, pEdge);
+            }
+
+            pPlaneMem += WORDS_PER_PLANE;
+
+#undef EDGE_OFF
+        }
+            /*
+            // Else only 3 edges
+            */
+        else {
+            nSabrePlanes = 4;
+        }
+
+        /*
+        // the other edges
+        */
+#define EDGE_OFF 2
+
+        pEdge = pExtra->pE[EDGE_OFF];
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
+
+            PackNegatedEdge(pPlaneMem, pEdge);
+        } else {
+            /* edge is oriented correctly */
+            PackEdge(pPlaneMem, pEdge);
+        }
+
+#undef EDGE_OFF
 
 
-		#define EDGE_OFF 1
+#define EDGE_OFF 1
 
-		pEdge = pExtra->pE[EDGE_OFF];
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
+        pEdge = pExtra->pE[EDGE_OFF];
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
 
-			PackNegatedEdge(pPlaneMem + WORDS_PER_PLANE, pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-			PackEdge(pPlaneMem + WORDS_PER_PLANE, pEdge);
-		}
-	
-		#undef EDGE_OFF
+            PackNegatedEdge(pPlaneMem + WORDS_PER_PLANE, pEdge);
+        } else {
+            /* edge is oriented correctly */
+            PackEdge(pPlaneMem + WORDS_PER_PLANE, pEdge);
+        }
+
+#undef EDGE_OFF
 
 
+#define EDGE_OFF 0
 
-		#define EDGE_OFF 0
+        pEdge = pExtra->pE[EDGE_OFF];
+        if (pExtra->u32EdgeFlags & (1 << EDGE_OFF)) {
+            /* we need to reverse the sense of the edge */
 
-		pEdge = pExtra->pE[EDGE_OFF];
-		if (pExtra->u32EdgeFlags & (1 << EDGE_OFF))
-		{
-			/* we need to reverse the sense of the edge */
+            PackNegatedEdge(pPlaneMem + (2 * WORDS_PER_PLANE), pEdge);
+        } else {
+            /* edge is oriented correctly */
+            PackEdge(pPlaneMem + (2 * WORDS_PER_PLANE), pEdge);
+        }
 
-			PackNegatedEdge(pPlaneMem + (2*WORDS_PER_PLANE), pEdge);
-		}
-		else
-		{
-			/* edge is oriented correctly */
-			PackEdge(pPlaneMem + (2*WORDS_PER_PLANE), pEdge);
-		}
-	
-		pPlaneMem += 3 * WORDS_PER_PLANE;
+        pPlaneMem += 3 * WORDS_PER_PLANE;
 
-		#undef EDGE_OFF
+#undef EDGE_OFF
 
 
-		
 
-		/* add clip plane if necessary */
-		
-		if (pExtra->ZClipped)
-		{
-			/* add a  forward clip plane */
+
+        /* add clip plane if necessary */
+
+        if (pExtra->ZClipped) {
+            /* add a  forward clip plane */
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
-							forw_invis, DEBUG_CLIP_PLANE_TAG);
+            PackFlatOnPlane(pPlaneMem, f32FixedClipDist,
+                            forw_invis, DEBUG_CLIP_PLANE_TAG);
 #else
-			PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
-							forw_invis, DEBUG_CLIP_PLANE_TAG);
+            PackFlatOnPlane(pPlaneMem, n32FixedClipDist,
+                            forw_invis, DEBUG_CLIP_PLANE_TAG);
 #endif
-			pPlaneMem += WORDS_PER_PLANE;
-			++nSabrePlanes;
-		}
+            pPlaneMem += WORDS_PER_PLANE;
+            ++nSabrePlanes;
+        }
 
-		pExtra->u32SabreIndex = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-		pExtra->nSabrePlanes =  nSabrePlanes;
-		PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE * nSabrePlanes;
-		nTotalPlanes += nSabrePlanes;
-	}	
-	
-	SGL_TIME_STOP(PACK_MESH_TIME)
-	return (nTotalPlanes);
+        pExtra->u32SabreIndex = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+        pExtra->nSabrePlanes = nSabrePlanes;
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE * nSabrePlanes;
+        nTotalPlanes += nSabrePlanes;
+    }
+
+    SGL_TIME_STOP(PACK_MESH_TIME)
+    return (nTotalPlanes);
 }
 
 
@@ -2121,34 +2002,35 @@ int PackMeshParams( const TRANSFORMED_PLANE_STRUCT *pPlane,
  **************************************************************************/
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-void PackBackgroundPlane (const sgl_uint32 u32TexasTag,
-						 const float  BackgroundDistance)
+
+void PackBackgroundPlane(const sgl_uint32 u32TexasTag,
+                         const float BackgroundDistance)
 #else
 void PackBackgroundPlane (const sgl_uint32 u32TexasTag,
-						 const sgl_int32  BackgroundDistance)
+                         const sgl_int32  BackgroundDistance)
 #endif
 {
-	sgl_uint32 * pPlaneMem;
+    sgl_uint32 *pPlaneMem;
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos+(1*WORDS_PER_PLANE))>PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_FATAL, "PackBackgroundPlane: Out of sabre memory for background!"));
-	
-		DPF ((DBG_FATAL, "This shouldnt happen!"));
-		ASSERT(FALSE);
-		return ;
-	}
-	/*
-	// Get a pointer to it
-	*/
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (1 * WORDS_PER_PLANE)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_FATAL, "PackBackgroundPlane: Out of sabre memory for background!"));
 
-	PackFlatOnPlane(pPlaneMem, BackgroundDistance,
-					forw_visib_fp, u32TexasTag);
+        DPF ((DBG_FATAL, "This shouldnt happen!"));
+        ASSERT(FALSE);
+        return;
+    }
+    /*
+    // Get a pointer to it
+    */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
-	
+    PackFlatOnPlane(pPlaneMem, BackgroundDistance,
+                    forw_visib_fp, u32TexasTag);
+
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
+
 }
 
 
@@ -2163,55 +2045,54 @@ void PackBackgroundPlane (const sgl_uint32 u32TexasTag,
  * Description    : Puts a dummy translucent object into the sabre parameter space.
  **************************************************************************/
 
-void PackOpaqueDummy()
-{
-	sgl_uint32 * pPlaneMem;
-	int Plane;
+void PackOpaqueDummy() {
+    sgl_uint32 *pPlaneMem;
+    int Plane;
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos+(NUM_DUMMY_OBJECT_PLANES*WORDS_PER_PLANE))>PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_FATAL, "PackOpaqueDummy: Out of sabre memory for opaque dummy!"));
-		
-		DPF ((DBG_FATAL, "This shouldnt happen!"));
-		ASSERT(FALSE);
-		return ;
-	}
-	/*
-	// Get a pointer to it
-	*/
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (NUM_DUMMY_OBJECT_PLANES * WORDS_PER_PLANE)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_FATAL, "PackOpaqueDummy: Out of sabre memory for opaque dummy!"));
+
+        DPF ((DBG_FATAL, "This shouldnt happen!"));
+        ASSERT(FALSE);
+        return;
+    }
+    /*
+    // Get a pointer to it
+    */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	PackFlatOnPlane(pPlaneMem, -1.0f,
-					forw_visib_fp, 0xBBFFFAB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, -1.0f,
+                    forw_visib_fp, 0xBBFFFAB0UL >> 4);
 #else
-	PackFlatOnPlane(pPlaneMem, -128,
-					forw_visib_fp, 0xBBFFFAB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, -128,
+                    forw_visib_fp, 0xBBFFFAB0UL>>4);
 #endif
 
-  	pPlaneMem+=WORDS_PER_PLANE;
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+    pPlaneMem += WORDS_PER_PLANE;
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	for (Plane=0; Plane < NUM_DUMMY_OBJECT_PLANES-1 ; Plane++)			
-   	{
+    for (Plane = 0; Plane < NUM_DUMMY_OBJECT_PLANES - 1; Plane++) {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackFlatOnPlane(pPlaneMem, -1.0f,
-						rev_invis, 0xBBFFFBB0UL>>4);
+        PackFlatOnPlane(pPlaneMem, -1.0f,
+                        rev_invis, 0xBBFFFBB0UL >> 4);
 #else
-		PackFlatOnPlane(pPlaneMem, -128,
-						rev_invis, 0xBBFFFBB0UL>>4);
+        PackFlatOnPlane(pPlaneMem, -128,
+                        rev_invis, 0xBBFFFBB0UL>>4);
 #endif
 
-   		pPlaneMem+=WORDS_PER_PLANE;
-	   	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+        pPlaneMem += WORDS_PER_PLANE;
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	}/*end for forward visibles*/
-	
+    }/*end for forward visibles*/
+
 }
 
 
 #if VIGNETTE_FIX
+
 /**************************************************************************
  * Function Name  : PackOpaqueDummyLarge
  * Inputs         : NONE
@@ -2224,51 +2105,50 @@ void PackOpaqueDummy()
  *					space. May be required for the vignetting fix.
  **************************************************************************/
 
-void PackOpaqueDummyLarge()
-{
-	sgl_uint32 * pPlaneMem;
-	int Plane;
+void PackOpaqueDummyLarge() {
+    sgl_uint32 *pPlaneMem;
+    int Plane;
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos+(NUM_DUMMY_OBJECT_PLANES_LARGE*WORDS_PER_PLANE))>PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_FATAL, " PackOpaqueDummyLarge: Out of sabre memory for opaque dummy!"));
-	
-		DPF ((DBG_FATAL, "This shouldnt happen!"));
-		ASSERT(FALSE);
-		return ;
-	}
-	/*
-	// Get a pointer to it
-	*/
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (NUM_DUMMY_OBJECT_PLANES_LARGE * WORDS_PER_PLANE)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_FATAL, " PackOpaqueDummyLarge: Out of sabre memory for opaque dummy!"));
+
+        DPF ((DBG_FATAL, "This shouldnt happen!"));
+        ASSERT(FALSE);
+        return;
+    }
+    /*
+    // Get a pointer to it
+    */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	PackFlatOnPlane(pPlaneMem, -1.0f,
-					forw_visib_fp, 0xBBFFFAB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, -1.0f,
+                    forw_visib_fp, 0xBBFFFAB0UL >> 4);
 #else
-	PackFlatOnPlane(pPlaneMem, -128,
-					forw_visib_fp, 0xBBFFFAB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, -128,
+                    forw_visib_fp, 0xBBFFFAB0UL>>4);
 #endif
 
-  	pPlaneMem+=WORDS_PER_PLANE;
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+    pPlaneMem += WORDS_PER_PLANE;
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	for (Plane=0; Plane < NUM_DUMMY_OBJECT_PLANES_LARGE-1 ; Plane++)
-   	{
+    for (Plane = 0; Plane < NUM_DUMMY_OBJECT_PLANES_LARGE - 1; Plane++) {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackFlatOnPlane(pPlaneMem, -1.0f,
-						rev_invis, 0xBBFFFBB0UL>>4);
+        PackFlatOnPlane(pPlaneMem, -1.0f,
+                        rev_invis, 0xBBFFFBB0UL >> 4);
 #else
-		PackFlatOnPlane(pPlaneMem, -128,
-						rev_invis, 0xBBFFFBB0UL>>4);
+        PackFlatOnPlane(pPlaneMem, -128,
+                        rev_invis, 0xBBFFFBB0UL>>4);
 #endif
 
-   		pPlaneMem+=WORDS_PER_PLANE;
-	   	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+        pPlaneMem += WORDS_PER_PLANE;
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	}/*end for forward visibles*/
+    }/*end for forward visibles*/
 }
+
 #endif
 
 
@@ -2284,51 +2164,50 @@ void PackOpaqueDummyLarge()
  *					is needed so light volumes can work.
  **************************************************************************/
 
-void PackCompleteShadow()
-{
-	sgl_uint32 * pPlaneMem;
-	const int PlanesNeeded = 2;
+void PackCompleteShadow() {
+    sgl_uint32 *pPlaneMem;
+    const int PlanesNeeded = 2;
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos+(PlanesNeeded*WORDS_PER_PLANE))>PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_FATAL, "PackCompleteShadow: Out of sabre memory for shadow!"));
-		DPF ((DBG_FATAL, "This shouldnt happen!"));
-		ASSERT(FALSE);
-		return ;
-	}
-	/*
-	// Get a pointer to it
-	*/
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (PlanesNeeded * WORDS_PER_PLANE)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_FATAL, "PackCompleteShadow: Out of sabre memory for shadow!"));
+        DPF ((DBG_FATAL, "This shouldnt happen!"));
+        ASSERT(FALSE);
+        return;
+    }
+    /*
+    // Get a pointer to it
+    */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
 
-	/*
-	// Put in the Forward plane
-	*/
+    /*
+    // Put in the Forward plane
+    */
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	PackFlatOnPlane(pPlaneMem, RnGlobalGetFixedClipDist(),
-					test_shad_forw_fp, 0xBBFFFAB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, RnGlobalGetFixedClipDist(),
+                    test_shad_forw_fp, 0xBBFFFAB0UL >> 4);
 #else
-	PackFlatOnPlane(pPlaneMem, RnGlobalGetFixedClipDist(),
-					test_shad_forw_fp, 0xBBFFFAB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, RnGlobalGetFixedClipDist(),
+                    test_shad_forw_fp, 0xBBFFFAB0UL>>4);
 #endif
 
-  	pPlaneMem+=WORDS_PER_PLANE;
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+    pPlaneMem += WORDS_PER_PLANE;
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-	/*
-	// Put in the Reverse plane
-	*/
+    /*
+    // Put in the Reverse plane
+    */
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	PackFlatOnPlane(pPlaneMem, 0.0f,
-					test_shadow_rev, 0xBBFFFBB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, 0.0f,
+                    test_shadow_rev, 0xBBFFFBB0UL >> 4);
 #else
-	PackFlatOnPlane(pPlaneMem, 0,
-					test_shadow_rev, 0xBBFFFBB0UL>>4);
+    PackFlatOnPlane(pPlaneMem, 0,
+                    test_shadow_rev, 0xBBFFFBB0UL>>4);
 #endif
 
-   	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
 }
 
@@ -2345,60 +2224,58 @@ void PackCompleteShadow()
  *					Used to indicate the start of a translucent pass.
  **************************************************************************/
 
-void PackTranslucentBeginDummy(sgl_uint32 u32TSPTag)
-{
-	sgl_uint32 * pPlaneMem;
-	int Plane;
+void PackTranslucentBeginDummy(sgl_uint32 u32TSPTag) {
+    sgl_uint32 *pPlaneMem;
+    int Plane;
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (NUM_TRANS_PASS_START_PLANES * WORDS_PER_PLANE))>PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_FATAL, "Out of sabre memory for translucent dummy!"));
-	
-		DPF ((DBG_FATAL, "This shouldnt happen!"));
-		ASSERT(FALSE);
-		return ;
-	}
-	/*
-	// Get a pointer to it
-	*/
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (NUM_TRANS_PASS_START_PLANES * WORDS_PER_PLANE)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_FATAL, "Out of sabre memory for translucent dummy!"));
+
+        DPF ((DBG_FATAL, "This shouldnt happen!"));
+        ASSERT(FALSE);
+        return;
+    }
+    /*
+    // Get a pointer to it
+    */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-	PackFlatOnPlane(pPlaneMem, -1.0f,
-					begin_trans, u32TSPTag);
+    PackFlatOnPlane(pPlaneMem, -1.0f,
+                    begin_trans, u32TSPTag);
 #else
-	PackFlatOnPlane(pPlaneMem, -128,
-					begin_trans, 0xAAFFFAA0UL>>4);
+    PackFlatOnPlane(pPlaneMem, -128,
+                    begin_trans, 0xAAFFFAA0UL>>4);
 #endif
 
-  	pPlaneMem+=WORDS_PER_PLANE;
-	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+    pPlaneMem += WORDS_PER_PLANE;
+    PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	for (Plane=0; Plane<NUM_TRANS_PASS_START_PLANES-1; Plane++)			
-   	{
+    for (Plane = 0; Plane < NUM_TRANS_PASS_START_PLANES - 1; Plane++) {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackFlatOnPlane(pPlaneMem, -1.0f,
-						rev_invis, u32TSPTag);
+        PackFlatOnPlane(pPlaneMem, -1.0f,
+                        rev_invis, u32TSPTag);
 #else
-		PackFlatOnPlane(pPlaneMem, -128,
-						rev_invis, u32TSPTag);
+        PackFlatOnPlane(pPlaneMem, -128,
+                        rev_invis, u32TSPTag);
 #endif
 
-   		pPlaneMem+=WORDS_PER_PLANE;
-	   	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+        pPlaneMem += WORDS_PER_PLANE;
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	}/*end for forward visibles*/
+    }/*end for forward visibles*/
 
-	/*
-		place in a transparent background plane for
-		trans/shadow/smoothshading fix
-	*/
+    /*
+        place in a transparent background plane for
+        trans/shadow/smoothshading fix
+    */
 #if PCX1 || ISPTSP
-	PackFlatOnPlane (pPlaneMem, 0x7FFFFFFF, forw_visib_fp, u32TSPTag);
+    PackFlatOnPlane (pPlaneMem, 0x7FFFFFFF, forw_visib_fp, u32TSPTag);
 
-	pPlaneMem+=WORDS_PER_PLANE;
-   	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+    pPlaneMem+=WORDS_PER_PLANE;
+       PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
 #endif
 
 }
@@ -2414,39 +2291,37 @@ void PackTranslucentBeginDummy(sgl_uint32 u32TSPTag)
  * Description    : Puts a dummy translucent object into the sabre parameter space.
  **************************************************************************/
 
-void PackTranslucentDummy(sgl_uint32 u32TSPTag)
-{
-	sgl_uint32 * pPlaneMem;
-	int Plane;
+void PackTranslucentDummy(sgl_uint32 u32TSPTag) {
+    sgl_uint32 *pPlaneMem;
+    int Plane;
 
-	if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (NUM_TRANS_PASS_START_PLANES * WORDS_PER_PLANE))>PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-	{
-		/* this isnt enough space */
-		DPFDEV ((DBG_FATAL, "Out of sabre memory for translucent dummy!"));
-		
-		DPF ((DBG_FATAL, "This shouldnt happen!"));
-		ASSERT(FALSE);
-		return ;
-	}
-	/*
-	// Get a pointer to it
-	*/
-   	pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+    if ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos + (NUM_TRANS_PASS_START_PLANES * WORDS_PER_PLANE)) >
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+        /* this isnt enough space */
+        DPFDEV ((DBG_FATAL, "Out of sabre memory for translucent dummy!"));
 
-   	for (Plane=0; Plane<NUM_DUMMY_OBJECT_PLANES; Plane++)			
-   	{
+        DPF ((DBG_FATAL, "This shouldnt happen!"));
+        ASSERT(FALSE);
+        return;
+    }
+    /*
+    // Get a pointer to it
+    */
+    pPlaneMem = &PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos];
+
+    for (Plane = 0; Plane < NUM_DUMMY_OBJECT_PLANES; Plane++) {
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		PackFlatOnPlane(pPlaneMem, -1.0f,
-						rev_invis, u32TSPTag);
+        PackFlatOnPlane(pPlaneMem, -1.0f,
+                        rev_invis, u32TSPTag);
 #else
-		PackFlatOnPlane(pPlaneMem, -128,
-						rev_invis, u32TSPTag);
+        PackFlatOnPlane(pPlaneMem, -128,
+                        rev_invis, u32TSPTag);
 #endif
 
-   		pPlaneMem+=WORDS_PER_PLANE;
-	   	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos +=WORDS_PER_PLANE;
+        pPlaneMem += WORDS_PER_PLANE;
+        PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos += WORDS_PER_PLANE;
 
-   	}/*end for forward visibles*/
+    }/*end for forward visibles*/
 
 }
 
@@ -2466,39 +2341,38 @@ void PackTranslucentDummy(sgl_uint32 u32TSPTag)
  *
  **************************************************************************/
 
-void AddDummyPlanesL(sgl_bool fShadowsOn)
-{
-	sgl_int32 DummyStart;
-	
-	/* Add begin translucent dummy plane */ 
-	DummyStart = (PVRParamBuffs[PVR_PARAM_TYPE_ISP]).uBufferPos;
-	PackTranslucentBeginDummy(PackTexasTransparent (fShadowsOn));
-	AddRegionBeginTransDummyL(DummyStart);
+void AddDummyPlanesL(sgl_bool fShadowsOn) {
+    sgl_int32 DummyStart;
+
+    /* Add begin translucent dummy plane */
+    DummyStart = (PVRParamBuffs[PVR_PARAM_TYPE_ISP]).uBufferPos;
+    PackTranslucentBeginDummy(PackTexasTransparent(fShadowsOn));
+    AddRegionBeginTransDummyL(DummyStart);
 
 
-	/* Add NUM_DUMMY_OBJECT_PLANES plane translucent dummy objects to plane data */ 
-	DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-	PackTranslucentDummy(PackTexasTransparent (FALSE));
-	AddRegionTransDummyL(DummyStart);
+    /* Add NUM_DUMMY_OBJECT_PLANES plane translucent dummy objects to plane data */
+    DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+    PackTranslucentDummy(PackTexasTransparent(FALSE));
+    AddRegionTransDummyL(DummyStart);
 
-	/* Same with opaque */
-	DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-	PackOpaqueDummy();
-	AddRegionOpaqueDummyL(DummyStart);
+    /* Same with opaque */
+    DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+    PackOpaqueDummy();
+    AddRegionOpaqueDummyL(DummyStart);
 
 #if VIGNETTE_FIX
-	/* Create large dummy object which may be required for the
-	 * vignette fix. Contains NUM_DUMMY_OBJECT_PLANES planes.
-	 */
-	DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-	PackOpaqueDummyLarge();
-	AddRegionOpaqueDummyLargeL(DummyStart);
+    /* Create large dummy object which may be required for the
+     * vignette fix. Contains NUM_DUMMY_OBJECT_PLANES planes.
+     */
+    DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+    PackOpaqueDummyLarge();
+    AddRegionOpaqueDummyLargeL(DummyStart);
 #endif
 
-	/* And again with complete shadow object */
-	DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-	PackCompleteShadow();
-	AddCompleteShadowDummyL(DummyStart);
+    /* And again with complete shadow object */
+    DummyStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+    PackCompleteShadow();
+    AddCompleteShadowDummyL(DummyStart);
 }
 
 /*------------------------------ End of File --------------------------------*/

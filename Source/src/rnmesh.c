@@ -760,7 +760,7 @@
 #include <math.h>
 #include <stdio.h>
 
-#define MODULE_ID	MODID_RNMESH
+#define MODULE_ID    MODID_RNMESH
 
 #include <sgl.h>
 #include <sgl_defs.h>
@@ -794,11 +794,11 @@
 /* Needed for optimised object packing routines in dregion.c. */
 #include <dregion.h>
 
-#define PRE_CULL	0
+#define PRE_CULL    0
 
 SGL_EXTERN_TIME_REF /* if we are timing code !!! */
 
-#define DEBUG_REGIONS		FALSE
+#define DEBUG_REGIONS        FALSE
 /*
 // Cull mode for the current mesh
 */
@@ -811,43 +811,43 @@ static sgl_uint32	CullMode;
 
 
 #if DEBUG_REGIONS
-	
-	static int gnRegionHistogram[32][24];
+
+                                                                                                                        static int gnRegionHistogram[32][24];
 	static int gnRegionSections;
-	
+
 #endif
 
 /*
 // These only define the INITIAL Max vertices and edges. They are automatically
 // expanded for larger meshes.
 */
-#define MAX_XVERTICES	100
-#define MAX_XEDGES		300
+#define MAX_XVERTICES    100
+#define MAX_XEDGES        300
 
 /*
 // These are the transformed vertices and edge, PLUS how big the structures are.
 // As stated, they are automatically expanded as required
 */
-static	int							gnXVertices = 0;
-static	PTRANSVERTEX 				gpXVertices = NULL;
-static	int							gnXEdges = 0;
-static	PTRANSEDGE	 				gpXEdges = NULL;
+static int gnXVertices = 0;
+static PTRANSVERTEX gpXVertices = NULL;
+static int gnXEdges = 0;
+static PTRANSEDGE gpXEdges = NULL;
 
 #if PRE_CULL
-static	sgl_uint8		 				*gpXEdgeIndex = NULL;
+                                                                                                                        static	sgl_uint8		 				*gpXEdgeIndex = NULL;
 static	sgl_uint8		 				*gpXVertexIndex = NULL;
 #endif
 
-static	TRANSFORMED_PLANE_STRUCT	*gXPlaneList[SGL_MAX_INTERNAL_PLANES];
-static	CONV_POINTS_STRUCT			gPointsData[SGL_MAX_INTERNAL_PLANES];
-static	XMESHEXTRA 					gXExtras[SGL_MAX_INTERNAL_PLANES];
-static	SMOOTHPARAMS				gSP;
+static TRANSFORMED_PLANE_STRUCT *gXPlaneList[SGL_MAX_INTERNAL_PLANES];
+static CONV_POINTS_STRUCT gPointsData[SGL_MAX_INTERNAL_PLANES];
+static XMESHEXTRA gXExtras[SGL_MAX_INTERNAL_PLANES];
+static SMOOTHPARAMS gSP;
 
 /*
 // for translucent mesh handling. Ideally this SHOULD be a local, passed,
 // variable, but What the hey.
 */
-static	BBOX_MINMAX_STRUCT BBoxMinmax;
+static BBOX_MINMAX_STRUCT BBoxMinmax;
 
 /********************************************************************/
 /********************************************************************/
@@ -860,7 +860,7 @@ static	BBOX_MINMAX_STRUCT BBoxMinmax;
 
 #if USE_INTERNAL_REGION_HANDLING
 
-#define X_REGIONS	32
+                                                                                                                        #define X_REGIONS	32
 #define Y_REGIONS	24
 #define PLANES_IN_BLOCK	40
 
@@ -956,8 +956,8 @@ static int OutputRegionPlanes (TRANSFORMED_PLANE_STRUCT *Planes, XMESHEXTRA *Ext
 				*/
 				u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
-				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-					 pRegion->RevPlaneIndices, 
+				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+					 pRegion->RevPlaneIndices,
 					 pRegion->NumRevPlanes);
 
 				AddRegionOpaqueSingle (nXr, nYr, u32StartOfSection, nSabrePlanes);
@@ -981,11 +981,11 @@ static int OutputRegionPlanes (TRANSFORMED_PLANE_STRUCT *Planes, XMESHEXTRA *Ext
 				// Add it to the hardware param buffer etc
 				*/
 				u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-					 pRegion->ForPlaneIndices, 
+				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+					 pRegion->ForPlaneIndices,
 					 pRegion->NumForPlanes);
 
-				AddRegionOpaqueSingle (nXr, nYr, 
+				AddRegionOpaqueSingle (nXr, nYr,
 						  u32StartOfSection, nSabrePlanes);
 
 				nTotalPlanes += nSabrePlanes;
@@ -1051,8 +1051,8 @@ static int OutputRegionTranPlanes (TRANSFORMED_PLANE_STRUCT *Planes, XMESHEXTRA 
 				*/
 				u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
-				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-					 pRegion->RevPlaneIndices, 
+				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+					 pRegion->RevPlaneIndices,
 					 pRegion->NumRevPlanes);
 
 				AddRegionTranslucentSingle (nXr, nYr, u32StartOfSection, nSabrePlanes,NearZ);
@@ -1075,11 +1075,11 @@ static int OutputRegionTranPlanes (TRANSFORMED_PLANE_STRUCT *Planes, XMESHEXTRA 
 				// Add it to the hardware param buffer etc
 				*/
 				u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-					 pRegion->ForPlaneIndices, 
+				nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+					 pRegion->ForPlaneIndices,
 					 pRegion->NumForPlanes);
 
-				AddRegionTranslucentSingle (nXr, nYr, 
+				AddRegionTranslucentSingle (nXr, nYr,
 						  u32StartOfSection, nSabrePlanes,NearZ);
 
 				nTotalPlanes += nSabrePlanes;
@@ -1106,44 +1106,41 @@ static int OutputRegionTranPlanes (TRANSFORMED_PLANE_STRUCT *Planes, XMESHEXTRA 
 #endif USE_INTERNAL_REGION_HANDLING
 
 
-int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes, 
-						XMESHEXTRA *Extras, 
-						sgl_uint32 nPlanes)
-{
-	#if ! USE_INTERNAL_REGION_HANDLING
+int PutPlanesInRegions(TRANSFORMED_PLANE_STRUCT *Planes,
+                       XMESHEXTRA *Extras,
+                       sgl_uint32 nPlanes) {
+#if !USE_INTERNAL_REGION_HANDLING
 
-	sgl_uint32 nTotalPlanes, k;
-	PXMESHEXTRA   pExtra = Extras;
-	
-	nTotalPlanes = PackMeshParams (Planes, Extras, nPlanes);
+    sgl_uint32 nTotalPlanes, k;
+    PXMESHEXTRA pExtra = Extras;
 
-	if (nTotalPlanes > 0) 
-	{
+    nTotalPlanes = PackMeshParams(Planes, Extras, nPlanes);
 
-		/* Add objects, while we've still got enough ISP space */
-		for (k = nPlanes; (k !=0) && (pExtra->u32SabreIndex < 
-			 ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos)-pExtra->nSabrePlanes)); 
-			 k--, ++pExtra)
-		{ 
-			sgl_uint32 XYData;
-			/* Formulate region data and type of object. */
-			XYData =	ENCODE_OBJXYDATA(	PACKED_TYPE_OPAQUE,
-											pExtra->RegionsRect.FirstXRegion,
-											pExtra->RegionsRect.FirstYRegion,
-											pExtra->RegionsRect.LastXRegion,
-											pExtra->RegionsRect.LastYRegion );
+    if (nTotalPlanes > 0) {
 
-			/* Use the add single opaque object function
+        /* Add objects, while we've still got enough ISP space */
+        for (k = nPlanes; (k != 0) && (pExtra->u32SabreIndex <
+                                       ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos) - pExtra->nSabrePlanes));
+             k--, ++pExtra) {
+            sgl_uint32 XYData;
+            /* Formulate region data and type of object. */
+            XYData = ENCODE_OBJXYDATA(PACKED_TYPE_OPAQUE,
+                                      pExtra->RegionsRect.FirstXRegion,
+                                      pExtra->RegionsRect.FirstYRegion,
+                                      pExtra->RegionsRect.LastXRegion,
+                                      pExtra->RegionsRect.LastYRegion);
+
+            /* Use the add single opaque object function
 			 */
-			AddRegionSolid( XYData, pExtra->nSabrePlanes, pExtra->u32SabreIndex);
-		}
-	}
+            AddRegionSolid(XYData, pExtra->nSabrePlanes, pExtra->u32SabreIndex);
+        }
+    }
 
-	return (nTotalPlanes);
-	
-	#else
+    return (nTotalPlanes);
 
-	sgl_uint32 nPlane, nTotalPlanes = 0;
+#else
+
+                                                                                                                            sgl_uint32 nPlane, nTotalPlanes = 0;
 	PXMESHEXTRA   pExtra;
 
 	ASSERT (nPlanes > 0);
@@ -1157,14 +1154,14 @@ int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 		sgl_int32 nXMax = pExtra->n32MaxX;
 		sgl_int32 nYMin = pExtra->n32MinY;
 		sgl_int32 nYMax = pExtra->n32MaxY;
-		
+
 		/* sanity check ... */
-	
+
 		ASSERT ((nXMin >= 0) && (nXMin < X_REGIONS));
 		ASSERT ((nXMax >= 0) && (nXMax < X_REGIONS));
 		ASSERT ((nYMin >= 0) && (nYMin < Y_REGIONS));
 		ASSERT ((nYMax >= 0) && (nYMax < Y_REGIONS));
-		
+
 		ASSERT (nXMin <= nXMax);
 		ASSERT (nYMin <= nYMax);
 
@@ -1206,12 +1203,12 @@ int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 					// Add it to the hardware param buffer etc
 					*/
     			    SGL_TIME_SUSPEND(PUT_PLANES_REGION_TIME)
-					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-								 pRegion->RevPlaneIndices, 
+					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+								 pRegion->RevPlaneIndices,
 								 pRegion->NumRevPlanes);
     			    SGL_TIME_RESUME(PUT_PLANES_REGION_TIME)
 
-					AddRegionOpaqueSingle (nXMin, nYMin, 
+					AddRegionOpaqueSingle (nXMin, nYMin,
 										  u32StartOfSection, nSabrePlanes);
 
 					nTotalPlanes += nSabrePlanes;
@@ -1248,12 +1245,12 @@ int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 					*/
 					u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
     			    SGL_TIME_SUSPEND(PUT_PLANES_REGION_TIME)
-					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-								 pRegion->ForPlaneIndices, 
+					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+								 pRegion->ForPlaneIndices,
 								 pRegion->NumForPlanes);
     			    SGL_TIME_RESUME(PUT_PLANES_REGION_TIME)
 
-					AddRegionOpaqueSingle (nXMin, nYMin, 
+					AddRegionOpaqueSingle (nXMin, nYMin,
 										  u32StartOfSection, nSabrePlanes);
 
 					nTotalPlanes += nSabrePlanes;
@@ -1281,10 +1278,10 @@ int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 		else
 		{
 			sgl_int32 index;
-			
+
 			REGIONS_RECT_STRUCT TheRegions;
 			sgl_uint32 nSabrePlanes;
-			sgl_uint32 u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;			
+			sgl_uint32 u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 			TheRegions.FirstXRegion = nXMin;
 			TheRegions.LastXRegion  = nXMax;
@@ -1294,7 +1291,7 @@ int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 
 			index = nPlane;
 			SGL_TIME_SUSPEND(PUT_PLANES_REGION_TIME)
-			nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
+			nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
 								 &index,  1);
 
 			AddRegionOpaque(&TheRegions, u32StartOfSection, nSabrePlanes);
@@ -1311,59 +1308,56 @@ int PutPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 
 	return (nTotalPlanes);
 
-	#endif
+#endif
 }
 
 /********************************************************************/
 
-static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes, 
-								   XMESHEXTRA *Extras, 
-								   sgl_uint32 nPlanes,
-								   int nCurrTransSetID)
-{
-	#if ! USE_INTERNAL_REGION_HANDLING
+static int PutTranPlanesInRegions(TRANSFORMED_PLANE_STRUCT *Planes,
+                                  XMESHEXTRA *Extras,
+                                  sgl_uint32 nPlanes,
+                                  int nCurrTransSetID) {
+#if !USE_INTERNAL_REGION_HANDLING
 
-	sgl_uint32 nTotalPlanes, k;
-	PXMESHEXTRA   pExtra = Extras;
-	
-	nTotalPlanes = PackMeshParams (Planes, Extras, nPlanes);
+    sgl_uint32 nTotalPlanes, k;
+    PXMESHEXTRA pExtra = Extras;
 
-	if (nTotalPlanes > 0)
-	{
-		sgl_uint32 XYData;
-		TRANS_REGION_DEPTHS_STRUCT	Trans;
-		const TRANS_REGION_DEPTHS_STRUCT *pTrans;
+    nTotalPlanes = PackMeshParams(Planes, Extras, nPlanes);
 
-		for (k = nPlanes; k !=0 ; k--, ++pExtra)
-		{
-			/* Optimisation uses AddRegionSeeThru() routine.
+    if (nTotalPlanes > 0) {
+        sgl_uint32 XYData;
+        TRANS_REGION_DEPTHS_STRUCT Trans;
+        const TRANS_REGION_DEPTHS_STRUCT *pTrans;
+
+        for (k = nPlanes; k != 0; k--, ++pExtra) {
+            /* Optimisation uses AddRegionSeeThru() routine.
 			 * Pack description for routine.
 			 */
-			XYData = ENCODE_OBJXYDATA(	PACKED_TYPE_TRANSLUCENT,
-										pExtra->RegionsRect.FirstXRegion,
-										pExtra->RegionsRect.FirstYRegion,
-										pExtra->RegionsRect.LastXRegion,
-										pExtra->RegionsRect.LastYRegion);
+            XYData = ENCODE_OBJXYDATA(PACKED_TYPE_TRANSLUCENT,
+                                      pExtra->RegionsRect.FirstXRegion,
+                                      pExtra->RegionsRect.FirstYRegion,
+                                      pExtra->RegionsRect.LastXRegion,
+                                      pExtra->RegionsRect.LastYRegion);
 
-			/* Use the NearZ direct, allow for inversion
+            /* Use the NearZ direct, allow for inversion
 			 */
-			Trans.BaseDepth = pExtra->NearZ;
-			Trans.DepthDx	= 0.0f;
-			Trans.DepthDy	= 0.0f;
-			pTrans = (const TRANS_REGION_DEPTHS_STRUCT *) &Trans;
+            Trans.BaseDepth = pExtra->NearZ;
+            Trans.DepthDx = 0.0f;
+            Trans.DepthDy = 0.0f;
+            pTrans = (const TRANS_REGION_DEPTHS_STRUCT *) &Trans;
 
-			/* Use the add single translucent object function
+            /* Use the add single translucent object function
 			 */
-			AddRegionSeeThru( XYData, nCurrTransSetID, 
-							  pExtra->nSabrePlanes, pExtra->u32SabreIndex, pTrans);
-		}
-	}
+            AddRegionSeeThru(XYData, nCurrTransSetID,
+                             pExtra->nSabrePlanes, pExtra->u32SabreIndex, pTrans);
+        }
+    }
 
-	return (nTotalPlanes);
-	
-	#else
-	
-	sgl_uint32 nPlane, nTotalPlanes = 0;
+    return (nTotalPlanes);
+
+#else
+
+                                                                                                                            sgl_uint32 nPlane, nTotalPlanes = 0;
 	PXMESHEXTRA   pExtra;
 
 	ASSERT (nPlanes > 0);
@@ -1375,14 +1369,14 @@ static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 		sgl_int32 nXMax = pExtra->n32MaxX;
 		sgl_int32 nYMin = pExtra->n32MinY;
 		sgl_int32 nYMax = pExtra->n32MaxY;
-		
+
 		/* sanity check ... */
-	
+
 		ASSERT ((nXMin >= 0) && (nXMin < X_REGIONS));
 		ASSERT ((nXMax >= 0) && (nXMax < X_REGIONS));
 		ASSERT ((nYMin >= 0) && (nYMin < Y_REGIONS));
 		ASSERT ((nYMax >= 0) && (nYMax < Y_REGIONS));
-		
+
 		ASSERT (nXMin <= nXMax);
 		ASSERT (nYMin <= nYMax);
 
@@ -1424,11 +1418,11 @@ static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 					/*
 					// Add it to the hardware param buffer etc
 					*/
-					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-								 pRegion->RevPlaneIndices, 
+					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+								 pRegion->RevPlaneIndices,
 								 pRegion->NumRevPlanes);
 
-					AddRegionTranslucentSingle (nXMin, nYMin, 
+					AddRegionTranslucentSingle (nXMin, nYMin,
 										  u32StartOfSection, nSabrePlanes,NearZ);
 
 					nTotalPlanes += nSabrePlanes;
@@ -1464,11 +1458,11 @@ static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 					// Add it to the hardware param buffer etc
 					*/
 					u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
-								 pRegion->ForPlaneIndices, 
+					nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
+								 pRegion->ForPlaneIndices,
 								 pRegion->NumForPlanes);
 
-					AddRegionTranslucentSingle (nXMin, nYMin, 
+					AddRegionTranslucentSingle (nXMin, nYMin,
 										  u32StartOfSection, nSabrePlanes,NearZ);
 
 					nTotalPlanes += nSabrePlanes;
@@ -1496,7 +1490,7 @@ static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 		else
 		{
 			sgl_int32 index;
-			
+
 			REGIONS_RECT_STRUCT TheRegions;
 			sgl_uint32 nSabrePlanes;
 			sgl_uint32 u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
@@ -1508,7 +1502,7 @@ static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 
 
 			index = nPlane;
-			nSabrePlanes = PackMeshParamsOrdered (Planes, Extras, 
+			nSabrePlanes = PackMeshParamsOrdered (Planes, Extras,
 								 &index,  1);
 
 			AddRegionTranslucent(&TheRegions, u32StartOfSection, nSabrePlanes,NearZ);
@@ -1521,39 +1515,37 @@ static int PutTranPlanesInRegions( TRANSFORMED_PLANE_STRUCT *Planes,
 	nTotalPlanes += OutputRegionTranPlanes (Planes, Extras, NearZ);
 
 	return (nTotalPlanes);
-	#endif
+#endif
 }
 
 /********************************************************************/
 
-void RnMeshOnSglInitialise ()
-{
-	int k;
-																		 
-	for (k = 0; k < SGL_MAX_INTERNAL_PLANES; ++k)
-	{
-		gXPlaneList[k] = &GlobalTransformedPlanes[k];
-	}
+void RnMeshOnSglInitialise() {
+    int k;
+
+    for (k = 0; k < SGL_MAX_INTERNAL_PLANES; ++k) {
+        gXPlaneList[k] = &GlobalTransformedPlanes[k];
+    }
 #if USE_INTERNAL_REGION_HANDLING
-	InitRegionBuffers ();
+    InitRegionBuffers ();
 #endif
-	
-	gnXEdges = SglReadPrivateProfileInt ("Mesh", "MaxEdges", MAX_XEDGES, "sgl.ini");
 
-	gpXEdges = SGLMalloc (sizeof (TRANSEDGE) * gnXEdges);
+    gnXEdges = SglReadPrivateProfileInt("Mesh", "MaxEdges", MAX_XEDGES, "sgl.ini");
 
-	ASSERT (gpXEdges);
+    gpXEdges = SGLMalloc (sizeof(TRANSEDGE) * gnXEdges);
 
-	gnXVertices = SglReadPrivateProfileInt ("Mesh", "MaxVertices", MAX_XVERTICES,
-													 "sgl.ini");
-	
-	gpXVertices = SGLMalloc (sizeof (TRANSVERTEX) * gnXVertices);
+    ASSERT (gpXEdges);
 
-	ASSERT (gpXVertices);
+    gnXVertices = SglReadPrivateProfileInt("Mesh", "MaxVertices", MAX_XVERTICES,
+                                           "sgl.ini");
+
+    gpXVertices = SGLMalloc (sizeof(TRANSVERTEX) * gnXVertices);
+
+    ASSERT (gpXVertices);
 
 #if PRE_CULL
 
-	gpXVertexIndex = SGLMalloc (sizeof (sgl_uint8) * gnXVertices);
+                                                                                                                            gpXVertexIndex = SGLMalloc (sizeof (sgl_uint8) * gnXVertices);
 	gpXEdgeIndex = SGLMalloc (sizeof (sgl_uint8) * gnXEdges);
 
 	ASSERT (gpXVertexIndex);
@@ -1565,526 +1557,477 @@ void RnMeshOnSglInitialise ()
 
 /**************************************************************************
  * Function Name  : DoPlaneStuff  (LOCAL FUNCTION)
- *	
+ *
  **************************************************************************/
 
 
-static int DoPlaneStuff (const MESH_NODE_STRUCT *pMesh,
-						 int nPlanes,
-						 MASTER_STATE_STRUCT *pState,
-						 MATERIAL_STATE_STRUCT *pMaterial,
-						 int nCurrTransSetID)
-{
-	int	     k;
-	sgl_bool bShadowLights;
-	sgl_bool bFogOn;
+static int DoPlaneStuff(const MESH_NODE_STRUCT *pMesh,
+                        int nPlanes,
+                        MASTER_STATE_STRUCT *pState,
+                        MATERIAL_STATE_STRUCT *pMaterial,
+                        int nCurrTransSetID) {
+    int k;
+    sgl_bool bShadowLights;
+    sgl_bool bFogOn;
     sgl_bool HasTranslucent;
 
-	int ORedFlags, ANDedFlags, FlagsMask;
+    int ORedFlags, ANDedFlags, FlagsMask;
 
 
-	SGL_TIME_START(PLANE_STUFF_TIME)
+    SGL_TIME_START(PLANE_STUFF_TIME)
 
-	bShadowLights = pState->pLightsState->flags & lsf_shadows;
+    bShadowLights = pState->pLightsState->flags & lsf_shadows;
 
-	ORedFlags  = pMesh->ORedPlaneFlags;
-	ANDedFlags = pMesh->ANDedPlaneFlags;
-	FlagsMask  = ~(0);
+    ORedFlags = pMesh->ORedPlaneFlags;
+    ANDedFlags = pMesh->ANDedPlaneFlags;
+    FlagsMask = ~(0);
 
-	HasTranslucent = (pMaterial->texas_precomp.LowWord & MASK_TRANS);
-	/* 
-	//check quality state 
+    HasTranslucent = (pMaterial->texas_precomp.LowWord & MASK_TRANS);
+    /*
+	//check quality state
 	//
 	// If there is no smooth shading, then disable it
 	*/
-#if 0 
-/*
+#if 0
+                                                                                                                            /*
 //if we have both translucency and smooth shading, turn the smooth
-//shading off instead of the translucency 
+//shading off instead of the translucency
 */
 	if (!(pState->pQualityState->flags & qf_smooth_shading)||
 	      HasTranslucent)
 #else
-	if (!(pState->pQualityState->flags & qf_smooth_shading))
+    if (!(pState->pQualityState->flags & qf_smooth_shading))
 #endif
-	{
-		/* 
-		// switch off smooth shading 
+    {
+        /*
+		// switch off smooth shading
 		*/
-		ORedFlags  &= ~pf_smooth_shad;
-		ANDedFlags &= ~pf_smooth_shad;
+        ORedFlags &= ~pf_smooth_shad;
+        ANDedFlags &= ~pf_smooth_shad;
 
-		/*
+        /*
 		// This is only needed when we are doing a mixture of shading types
 		*/
-		FlagsMask  &= ~pf_smooth_shad;
-	}
+        FlagsMask &= ~pf_smooth_shad;
+    }
 
 
-	/*
+    /*
 	// if texturing is turned off OR there is no texture in the current material
 	*/
-	if (!(pState->pQualityState->flags & qf_textures) || 
-		!(pMaterial->texture_flags & MASK_TEXTURE))
-	{
-		/*
+    if (!(pState->pQualityState->flags & qf_textures) ||
+        !(pMaterial->texture_flags & MASK_TEXTURE)) {
+        /*
 		// switch off texturing
 		*/
-		ORedFlags  &= ~pf_textured;
-		ANDedFlags &= ~pf_textured;
+        ORedFlags &= ~pf_textured;
+        ANDedFlags &= ~pf_textured;
 
-		/*
+        /*
 		// This is only needed when we are doing a mixture of shading types
 		*/
-		FlagsMask  &= ~pf_textured;
-		
-		/*HasTranslucent = FALSE;*/
-	}
-	/*
+        FlagsMask &= ~pf_textured;
+
+        /*HasTranslucent = FALSE;*/
+    }
+        /*
 	// Else we are either texture wrapping or direct texturing, so set up
 	// the texture projection matrix accordingly
 	*/
-	else 		
-	{
-		int ThisTextureSize = TexasGetTextureDimension (&pMaterial->texas_precomp);
+    else {
+        int ThisTextureSize = TexasGetTextureDimension(&pMaterial->texas_precomp);
 
-		/*
+        /*
 		// Do we need change the texture projection bit of the
 		// local projection matrix for a different sized texture?
 		*/
-		if(!RnGlobalLocalProjMatTextureIsValid(ThisTextureSize))
-		{
-			RnRescaleLocalProjectionTexture(ThisTextureSize, 
-											pState->pTransformState);
-		}
+        if (!RnGlobalLocalProjMatTextureIsValid(ThisTextureSize)) {
+            RnRescaleLocalProjectionTexture(ThisTextureSize,
+                                            pState->pTransformState);
+        }
 
-		/*
+        /*
 		// Since we have texturing, make sure we turn it on
 		*/
-		ORedFlags  |= pf_textured;
-		ANDedFlags |= pf_textured;
-		
-		/*HasTranslucent = (pMaterial->texas_precomp.LowWord & MASK_TRANS);*/
+        ORedFlags |= pf_textured;
+        ANDedFlags |= pf_textured;
 
-	}/*if textured */
+        /*HasTranslucent = (pMaterial->texas_precomp.LowWord & MASK_TRANS);*/
+
+    }/*if textured */
 
 #if 0  /*fix by simon, shoes by cardin, hair by ...*/
-if(HasTranslucent)
+                                                                                                                            if(HasTranslucent)
 {
 	return;
 }
 #endif
 
-	/*
-	// OK Smooth shading and translucency is OUT! on Midas3, possibly PCX1 and 
+    /*
+	// OK Smooth shading and translucency is OUT! on Midas3, possibly PCX1 and
 	// possibly PCX2 as well.
 	// (we'll need to check the latter case)
 	*/
 
-	/* And, I'm guessing PCX2_003 doesn't do it either ! - MJG */
+    /* And, I'm guessing PCX2_003 doesn't do it either ! - MJG */
 
 #if ISPTSP || PCX1 || PCX2 || PCX2_003
-	if(HasTranslucent)
-	{
-		/* 
-		// switch off smooth shading 
+    if (HasTranslucent) {
+        /*
+		// switch off smooth shading
 		*/
-		ORedFlags  &= ~pf_smooth_shad;
-		ANDedFlags &= ~pf_smooth_shad;
+        ORedFlags &= ~pf_smooth_shad;
+        ANDedFlags &= ~pf_smooth_shad;
 
-		/*
+        /*
 		// This is only needed when we are doing a mixture of shading types
 		*/
-		FlagsMask  &= ~pf_smooth_shad;
+        FlagsMask &= ~pf_smooth_shad;
 
-		#if PCX1 || PCX2 || PCX2_003
-			DPF((DBG_MESSAGE, "Disabling smooth translucent. IS this Needed?"));
-		#endif
-	}
+#if PCX1 || PCX2 || PCX2_003
+        DPF((DBG_MESSAGE, "Disabling smooth translucent. IS this Needed?"));
+#endif
+    }
 #endif
 
 
-	/*
+    /*
 	// if all the surfaces in the objects are to be textured/shaded in the same
 	// manner ...
 	*/
-	if(ORedFlags == ANDedFlags)
-	{
-		
-		bFogOn = pState->pQualityState->flags & qf_fog;
-		
-		/*
+    if (ORedFlags == ANDedFlags) {
+
+        bFogOn = pState->pQualityState->flags & qf_fog;
+
+        /*
 		// turn off texture wrapping if it is not enabled in the material
 		// (IE texture on amd premapped off)
 		*/
-		if((ANDedFlags & (pf_pre_mapped|pf_textured))== pf_textured)
-		{
-			/*
+        if ((ANDedFlags & (pf_pre_mapped | pf_textured)) == pf_textured) {
+            /*
 			// If wrapping impossible, switch it off
 			*/
-			if(! (pMaterial->texture_flags & wrapping_on))
-			{
-				ANDedFlags &= ~pf_textured;
-			}
-		}
+            if (!(pMaterial->texture_flags & wrapping_on)) {
+                ANDedFlags &= ~pf_textured;
+            }
+        }
 
-		SGL_TIME_SUSPEND(PLANE_STUFF_TIME)
+        SGL_TIME_SUSPEND(PLANE_STUFF_TIME)
 
-		switch (ANDedFlags & ~(pf_pre_mapped))
-		{
-			case pf_textured:
-			{
-				if (ANDedFlags & pf_pre_mapped)
-				{
-					DoTextureMappingFast (nPlanes, 
-						(const TRANSFORMED_PLANE_STRUCT *const*) gXPlaneList, 
-						pState->pTransformState, pMaterial, 
-						GlobalTextureResults);
+        switch (ANDedFlags & ~(pf_pre_mapped)) {
+            case pf_textured: {
+                if (ANDedFlags & pf_pre_mapped) {
+                    DoTextureMappingFast(nPlanes,
+                                         (const TRANSFORMED_PLANE_STRUCT *const *) gXPlaneList,
+                                         pState->pTransformState, pMaterial,
+                                         GlobalTextureResults);
 
-				}
-				/*
+                }
+                    /*
 				// Else texture wrap it
 				*/
-				else
-				{
-					DoTextureWrapping (nPlanes, gXPlaneList, 
-									  pState->pTransformState, pMaterial,
-									  GlobalTextureResults);
-				}
+                else {
+                    DoTextureWrapping(nPlanes, gXPlaneList,
+                                      pState->pTransformState, pMaterial,
+                                      GlobalTextureResults);
+                }
 
 
-				DoFlatTextureShading (FALSE, nPlanes, gXPlaneList, 
-									 pState->pTransformState, 
-									 pMaterial, pState->pLightsState,
-									 GlobalShadingResults);
+                DoFlatTextureShading(FALSE, nPlanes, gXPlaneList,
+                                     pState->pTransformState,
+                                     pMaterial, pState->pLightsState,
+                                     GlobalShadingResults);
 
-				PackTexasParamsFlatTextured(nPlanes, GlobalTextureResults, 
-								GlobalShadingResults, bShadowLights,
-								bFogOn, gXPlaneList, pMaterial);
+                PackTexasParamsFlatTextured(nPlanes, GlobalTextureResults,
+                                            GlobalShadingResults, bShadowLights,
+                                            bFogOn, gXPlaneList, pMaterial);
 
-				break;
-			}
+                break;
+            }
 
 
-			case pf_textured | pf_smooth_shad:
-			{
-				if (ANDedFlags & pf_pre_mapped)
-				{
-					DoTextureMappingFast (nPlanes, 
-						(const TRANSFORMED_PLANE_STRUCT *const*) gXPlaneList, 
-						pState->pTransformState, pMaterial,
-						GlobalTextureResults);
-				}
-				else
-				{
-					DoTextureWrapping (nPlanes, gXPlaneList, 
-									  pState->pTransformState, pMaterial,
-									   GlobalTextureResults);
-				}
-				GetSmoothShadingParametersAdjoint (nPlanes, gXPlaneList, 
-										   pState->pTransformState, 
-										   pMaterial, 
-										   pState->pLightsState, 
-										   GlobalShadingResults, &gSP);
+            case pf_textured | pf_smooth_shad: {
+                if (ANDedFlags & pf_pre_mapped) {
+                    DoTextureMappingFast(nPlanes,
+                                         (const TRANSFORMED_PLANE_STRUCT *const *) gXPlaneList,
+                                         pState->pTransformState, pMaterial,
+                                         GlobalTextureResults);
+                } else {
+                    DoTextureWrapping(nPlanes, gXPlaneList,
+                                      pState->pTransformState, pMaterial,
+                                      GlobalTextureResults);
+                }
+                GetSmoothShadingParametersAdjoint(nPlanes, gXPlaneList,
+                                                  pState->pTransformState,
+                                                  pMaterial,
+                                                  pState->pLightsState,
+                                                  GlobalShadingResults, &gSP);
 
-				PackTexasParamsSmoothTextured(nPlanes, GlobalTextureResults, 
-										  GlobalShadingResults,  
-										  bShadowLights, bFogOn, 
-										  gXPlaneList, pMaterial);
+                PackTexasParamsSmoothTextured(nPlanes, GlobalTextureResults,
+                                              GlobalShadingResults,
+                                              bShadowLights, bFogOn,
+                                              gXPlaneList, pMaterial);
 
-				break;
-			}
+                break;
+            }
 
-			case pf_smooth_shad:
-			{
-				/*
+            case pf_smooth_shad: {
+                /*
 				// Also turn off translucency if no texture - this is not a
 				// good way of working around the hardware, but will do for
 				// now at least.
 				*/
 
-				#if 0 
-					/*
+#if 0
+                                                                                                                                        /*
 					//if we have both translucency and smooth shading, turn the smooth
-					//shading off instead of the translucency 
+					//shading off instead of the translucency
 					*/
 					/*HasTranslucent = FALSE;*/
-				#else
-					HasTranslucent = FALSE;
-				#endif
+#else
+                HasTranslucent = FALSE;
+#endif
 
-				GetSmoothShadingParametersAdjoint (nPlanes, gXPlaneList, 
-										   pState->pTransformState, 
-										   pMaterial, pState->pLightsState, 
-										   GlobalShadingResults, &gSP);
+                GetSmoothShadingParametersAdjoint(nPlanes, gXPlaneList,
+                                                  pState->pTransformState,
+                                                  pMaterial, pState->pLightsState,
+                                                  GlobalShadingResults, &gSP);
 
-				if(bShadowLights)
-				{
-					PackTexasParamsSmoothNonTexturedShad (nPlanes, 
-													  GlobalShadingResults, 
-													  bFogOn, 
-													  gXPlaneList);
-				}
-				else
-				{
-					PackTexasParamsSmoothNonTextured (nPlanes, 
-													  GlobalShadingResults, 
-													  bFogOn, 
-													  gXPlaneList);
-				}
-				break;
-			}
+                if (bShadowLights) {
+                    PackTexasParamsSmoothNonTexturedShad(nPlanes,
+                                                         GlobalShadingResults,
+                                                         bFogOn,
+                                                         gXPlaneList);
+                } else {
+                    PackTexasParamsSmoothNonTextured(nPlanes,
+                                                     GlobalShadingResults,
+                                                     bFogOn,
+                                                     gXPlaneList);
+                }
+                break;
+            }
 
- 			default:
-			{
-				/*
+            default: {
+                /*
 				// Also turn off translucency if no texture - this is not a
 				// good way of working around the hardware, but will do for
 				// now at least.
 				*/
-				/*HasTranslucent = FALSE;*/
+                /*HasTranslucent = FALSE;*/
 
-				DoFlatShading (FALSE, nPlanes, gXPlaneList, 
-							  pState->pTransformState, pMaterial,
-							  pState->pLightsState, GlobalShadingResults);
+                DoFlatShading(FALSE, nPlanes, gXPlaneList,
+                              pState->pTransformState, pMaterial,
+                              pState->pLightsState, GlobalShadingResults);
 
-				if(HasTranslucent)
-				{
-					PackTexasParamsFlatNonTexturedTrans(nPlanes, 
-												   GlobalShadingResults,
-												   bShadowLights,
-												   bFogOn,
-												   pMaterial->translucent_int,
-												   gXPlaneList);
-				}
-				else
-				{
-					PackTexasParamsFlatNonTextured(nPlanes, 
-												   GlobalShadingResults,
-												   bShadowLights,
-												   bFogOn,
-												   gXPlaneList);
-				}												   
-			   
-				break;
-			}
-		}
+                if (HasTranslucent) {
+                    PackTexasParamsFlatNonTexturedTrans(nPlanes,
+                                                        GlobalShadingResults,
+                                                        bShadowLights,
+                                                        bFogOn,
+                                                        pMaterial->translucent_int,
+                                                        gXPlaneList);
+                } else {
+                    PackTexasParamsFlatNonTextured(nPlanes,
+                                                   GlobalShadingResults,
+                                                   bShadowLights,
+                                                   bFogOn,
+                                                   gXPlaneList);
+                }
 
-		SGL_TIME_RESUME(PLANE_STUFF_TIME)
+                break;
+            }
+        }
 
-	}
-	/*
+        SGL_TIME_RESUME(PLANE_STUFF_TIME)
+
+    }
+        /*
 	// Else we have a variety of shading operations to apply
 	*/
-	else
-	{
-		static	TRANSFORMED_PLANE_STRUCT	*gXVisible[SGL_MAX_INTERNAL_PLANES];
-		static	TRANSFORMED_PLANE_STRUCT	*gXTextured[SGL_MAX_INTERNAL_PLANES];
-		static	TRANSFORMED_PLANE_STRUCT	*gXTexWrap[SGL_MAX_INTERNAL_PLANES];
-		static	TRANSFORMED_PLANE_STRUCT	*gXShaded[SGL_MAX_INTERNAL_PLANES];
-		static	TRANSFORMED_PLANE_STRUCT	*gXTexShad[SGL_MAX_INTERNAL_PLANES];
-		static	TRANSFORMED_PLANE_STRUCT	*gXTexWrapShad[SGL_MAX_INTERNAL_PLANES];
-		int nVisible = 0;
-		int nTextured = 0;
-		int nTexWrap = 0;
-		int nShaded = 0;
-		int nTexShad = 0;
-		int nTexWrapShad = 0;
-		int FaceFlag;
+    else {
+        static TRANSFORMED_PLANE_STRUCT *gXVisible[SGL_MAX_INTERNAL_PLANES];
+        static TRANSFORMED_PLANE_STRUCT *gXTextured[SGL_MAX_INTERNAL_PLANES];
+        static TRANSFORMED_PLANE_STRUCT *gXTexWrap[SGL_MAX_INTERNAL_PLANES];
+        static TRANSFORMED_PLANE_STRUCT *gXShaded[SGL_MAX_INTERNAL_PLANES];
+        static TRANSFORMED_PLANE_STRUCT *gXTexShad[SGL_MAX_INTERNAL_PLANES];
+        static TRANSFORMED_PLANE_STRUCT *gXTexWrapShad[SGL_MAX_INTERNAL_PLANES];
+        int nVisible = 0;
+        int nTextured = 0;
+        int nTexWrap = 0;
+        int nShaded = 0;
+        int nTexShad = 0;
+        int nTexWrapShad = 0;
+        int FaceFlag;
 
 
-		/*
+        /*
 		// The following code could be made a LOT faster...
 		*/
 
-		/*
+        /*
 		// Clear off unneeded flags
 		*/
-		FlagsMask  &= ~(pf_pre_mapped | pf_reversed);
+        FlagsMask &= ~(pf_pre_mapped | pf_reversed);
 
-		/* faces have different material properties */
+        /* faces have different material properties */
 
-		for (k = 0; k < nPlanes; ++k)
-		{
-			FaceFlag = GlobalTransformedPlanes[k].flags;
+        for (k = 0; k < nPlanes; ++k) {
+            FaceFlag = GlobalTransformedPlanes[k].flags;
 
 
-			/*
+            /*
 			// turn off texture wrapping if it is not enabled in the material
 			*/
-			if((FaceFlag & (pf_pre_mapped | pf_textured))== pf_textured)
-			{
-				/*
+            if ((FaceFlag & (pf_pre_mapped | pf_textured)) == pf_textured) {
+                /*
 				// If wrapping impossible, switch it off
 				*/
-				if(! (pMaterial->texture_flags & wrapping_on))
-				{
-					FaceFlag &= ~pf_textured;
-				}
-			}
+                if (!(pMaterial->texture_flags & wrapping_on)) {
+                    FaceFlag &= ~pf_textured;
+                }
+            }
 
 
-			/*
+            /*
 			// Also turn off translucency. THIS IS NOT a proper fix - but
 			// we cant have non-textured translucency! What we should do
 			// is individually put planes in with either translucent or
 			// non translucent routines (see below) but I haven't time to
 			// sort out that sort of nonsense now.    SJF
 			*/
-			if(!(FaceFlag & pf_textured))
-			{
-				HasTranslucent = FALSE;
-			}
+            if (!(FaceFlag & pf_textured)) {
+                HasTranslucent = FALSE;
+            }
 
-			switch (FaceFlag & FlagsMask)
-			{
-				case pf_textured:
-				{
-					if (FaceFlag & pf_pre_mapped)
-					{
-						gXTextured[nTextured++] = &GlobalTransformedPlanes[k];
-					}
-					else
-					{
-						gXTexWrap[nTexWrap++] = &GlobalTransformedPlanes[k];
-					}
-					break;
-				}
-	
-				case pf_textured | pf_smooth_shad:
-				{
-					if (FaceFlag & pf_pre_mapped)
-					{
-						gXTexShad[nTexShad++] = &GlobalTransformedPlanes[k];
-					}
-					else
-					{
-						gXTexWrapShad[nTexWrapShad++] = &GlobalTransformedPlanes[k];
-					}
-					break;
-				}
-	
-				case pf_smooth_shad:
-				{
-					gXShaded[nShaded++] = &GlobalTransformedPlanes[k];
-					break;
-				}
-	
-				default:
-				{
-					gXVisible[nVisible++] = &GlobalTransformedPlanes[k];
-					break;
-				}
-			}/*end switch*/
-		}
+            switch (FaceFlag & FlagsMask) {
+                case pf_textured: {
+                    if (FaceFlag & pf_pre_mapped) {
+                        gXTextured[nTextured++] = &GlobalTransformedPlanes[k];
+                    } else {
+                        gXTexWrap[nTexWrap++] = &GlobalTransformedPlanes[k];
+                    }
+                    break;
+                }
+
+                case pf_textured | pf_smooth_shad: {
+                    if (FaceFlag & pf_pre_mapped) {
+                        gXTexShad[nTexShad++] = &GlobalTransformedPlanes[k];
+                    } else {
+                        gXTexWrapShad[nTexWrapShad++] = &GlobalTransformedPlanes[k];
+                    }
+                    break;
+                }
+
+                case pf_smooth_shad: {
+                    gXShaded[nShaded++] = &GlobalTransformedPlanes[k];
+                    break;
+                }
+
+                default: {
+                    gXVisible[nVisible++] = &GlobalTransformedPlanes[k];
+                    break;
+                }
+            }/*end switch*/
+        }
 
 
-		bFogOn = pState->pQualityState->flags & qf_fog;
+        bFogOn = pState->pQualityState->flags & qf_fog;
 
-	    SGL_TIME_SUSPEND(PLANE_STUFF_TIME)
+        SGL_TIME_SUSPEND(PLANE_STUFF_TIME)
 
-		if (nTexShad)
-		{
-			GetSmoothShadingParametersAdjoint (nTexShad, 
-				(TRANSFORMED_PLANE_STRUCT **) gXTexShad, 
-			    pState->pTransformState, pMaterial,
-			    pState->pLightsState, GlobalShadingResults, &gSP);
+        if (nTexShad) {
+            GetSmoothShadingParametersAdjoint(nTexShad,
+                                              (TRANSFORMED_PLANE_STRUCT **) gXTexShad,
+                                              pState->pTransformState, pMaterial,
+                                              pState->pLightsState, GlobalShadingResults, &gSP);
 
-			DoTextureMappingFast (nTexShad, 
-				(const TRANSFORMED_PLANE_STRUCT * const*) gXTexShad, 
-				pState->pTransformState, pMaterial, GlobalTextureResults);
+            DoTextureMappingFast(nTexShad,
+                                 (const TRANSFORMED_PLANE_STRUCT *const *) gXTexShad,
+                                 pState->pTransformState, pMaterial, GlobalTextureResults);
 
-			PackTexasParamsSmoothTextured (nTexShad, GlobalTextureResults, 
-									GlobalShadingResults, 	
-									bShadowLights,
-									   bFogOn, gXTexShad, pMaterial);
+            PackTexasParamsSmoothTextured(nTexShad, GlobalTextureResults,
+                                          GlobalShadingResults,
+                                          bShadowLights,
+                                          bFogOn, gXTexShad, pMaterial);
 
-		}
+        }
 
-		if (nTexWrapShad)
-		{
-			GetSmoothShadingParametersAdjoint (nTexWrapShad, gXTexWrapShad,
-									   pState->pTransformState, 
-									   pMaterial, 
-									   pState->pLightsState, GlobalShadingResults, 
-									   &gSP);
+        if (nTexWrapShad) {
+            GetSmoothShadingParametersAdjoint(nTexWrapShad, gXTexWrapShad,
+                                              pState->pTransformState,
+                                              pMaterial,
+                                              pState->pLightsState, GlobalShadingResults,
+                                              &gSP);
 
-			DoTextureWrapping (nTexWrapShad, gXTexWrapShad, 
-							pState->pTransformState, pMaterial,
-							GlobalTextureResults);
+            DoTextureWrapping(nTexWrapShad, gXTexWrapShad,
+                              pState->pTransformState, pMaterial,
+                              GlobalTextureResults);
 
-			PackTexasParamsSmoothTextured (nTexWrapShad, GlobalTextureResults, 
-										   GlobalShadingResults, 
-										   bShadowLights, bFogOn, 
-										   gXTexWrapShad, pMaterial);
-		}
+            PackTexasParamsSmoothTextured(nTexWrapShad, GlobalTextureResults,
+                                          GlobalShadingResults,
+                                          bShadowLights, bFogOn,
+                                          gXTexWrapShad, pMaterial);
+        }
 
-		if (nTextured)
-		{
-			DoTextureMappingFast (nTextured, 
-				(const TRANSFORMED_PLANE_STRUCT *const*) gXTextured, 
-				pState->pTransformState, pMaterial, GlobalTextureResults);
+        if (nTextured) {
+            DoTextureMappingFast(nTextured,
+                                 (const TRANSFORMED_PLANE_STRUCT *const *) gXTextured,
+                                 pState->pTransformState, pMaterial, GlobalTextureResults);
 
-			DoFlatTextureShading (FALSE, nTextured, gXTextured,  
-								 pState->pTransformState,
-								 pMaterial, pState->pLightsState,
-								 GlobalShadingResults);
+            DoFlatTextureShading(FALSE, nTextured, gXTextured,
+                                 pState->pTransformState,
+                                 pMaterial, pState->pLightsState,
+                                 GlobalShadingResults);
 
-			PackTexasParamsFlatTextured (nTextured, GlobalTextureResults, 
-							GlobalShadingResults,bShadowLights, bFogOn, 
-							 gXTextured, pMaterial);
-		}
+            PackTexasParamsFlatTextured(nTextured, GlobalTextureResults,
+                                        GlobalShadingResults, bShadowLights, bFogOn,
+                                        gXTextured, pMaterial);
+        }
 
-		if (nTexWrap)
-		{
-			DoTextureWrapping (nTexWrap, gXTexWrap, pState->pTransformState, 
-							  pMaterial, GlobalTextureResults);
+        if (nTexWrap) {
+            DoTextureWrapping(nTexWrap, gXTexWrap, pState->pTransformState,
+                              pMaterial, GlobalTextureResults);
 
-			DoFlatTextureShading (FALSE, nTexWrap, gXTexWrap,
-								 pState->pTransformState, 
-								 pMaterial,pState->pLightsState,
-								 GlobalShadingResults);
+            DoFlatTextureShading(FALSE, nTexWrap, gXTexWrap,
+                                 pState->pTransformState,
+                                 pMaterial, pState->pLightsState,
+                                 GlobalShadingResults);
 
-			PackTexasParamsFlatTextured(nTexWrap, GlobalTextureResults, 
-							GlobalShadingResults, bShadowLights,
-							 bFogOn, gXTexWrap, pMaterial);
-		}
+            PackTexasParamsFlatTextured(nTexWrap, GlobalTextureResults,
+                                        GlobalShadingResults, bShadowLights,
+                                        bFogOn, gXTexWrap, pMaterial);
+        }
 
-		if (nShaded)
-		{
-			GetSmoothShadingParametersAdjoint (nShaded, gXShaded, 
-									   pState->pTransformState, pMaterial,
-									   pState->pLightsState, 
-									   GlobalShadingResults, &gSP);
+        if (nShaded) {
+            GetSmoothShadingParametersAdjoint(nShaded, gXShaded,
+                                              pState->pTransformState, pMaterial,
+                                              pState->pLightsState,
+                                              GlobalShadingResults, &gSP);
 
-			PackTexasParamsNonTextured(nShaded,GlobalShadingResults, 
-							TRUE, bShadowLights, bFogOn, gXShaded);
-		}
+            PackTexasParamsNonTextured(nShaded, GlobalShadingResults,
+                                       TRUE, bShadowLights, bFogOn, gXShaded);
+        }
 
-		if (nVisible)
-		{
-			DoFlatShading (FALSE, nVisible, gXVisible, pState->pTransformState, 
-						  pMaterial, pState->pLightsState, GlobalShadingResults);
+        if (nVisible) {
+            DoFlatShading(FALSE, nVisible, gXVisible, pState->pTransformState,
+                          pMaterial, pState->pLightsState, GlobalShadingResults);
 
-			PackTexasParamsNonTextured(nVisible, GlobalShadingResults, 
-							FALSE, bShadowLights, bFogOn, gXVisible);
-		}
+            PackTexasParamsNonTextured(nVisible, GlobalShadingResults,
+                                       FALSE, bShadowLights, bFogOn, gXVisible);
+        }
 
-	    SGL_TIME_RESUME(PLANE_STUFF_TIME)
+        SGL_TIME_RESUME(PLANE_STUFF_TIME)
 
-	}/*end else*/
+    }/*end else*/
 
-	SGL_TIME_STOP(PLANE_STUFF_TIME)
+    SGL_TIME_STOP(PLANE_STUFF_TIME)
 
-	if (HasTranslucent)
-	{
-		return (PutTranPlanesInRegions (GlobalTransformedPlanes, gXExtras, 
-										nPlanes, nCurrTransSetID));
-	}	
-	else
-	{
-		return (PutPlanesInRegions (GlobalTransformedPlanes, gXExtras, nPlanes));
-	}
+    if (HasTranslucent) {
+        return (PutTranPlanesInRegions(GlobalTransformedPlanes, gXExtras,
+                                       nPlanes, nCurrTransSetID));
+    } else {
+        return (PutPlanesInRegions(GlobalTransformedPlanes, gXExtras, nPlanes));
+    }
 }
 
 
@@ -2093,7 +2036,7 @@ if(HasTranslucent)
  * Function Name  : ProcessVerticesAllVisible  (LOCAL FUNCTION)
  * Inputs         : pVertices     - pointer to start of an array of vertex data
  *					nVertices	  - the number of vertices to process
- *	
+ *
  *
  * NOTE: There is a problem I (sjf) had to work around concerning the region
  *		 calculation of vertices and the Edge ABC parameter generation. IF a
@@ -2108,323 +2051,296 @@ if(HasTranslucent)
  *
  *		 I guess we could potentially have the reverse situation, (because of
  *		 this "rounding" up) but the value  seems to be small enough that
- *		 I haven't seen it occur. 
+ *		 I haven't seen it occur.
  **************************************************************************/
 
 #define FIX_ROUNDING_PROBLEM (0.001f)
 
-static void ProcessVerticesAllVisible( 	 PVERTEX pVertex, 
-											 int nVertices, 
-						const TRANSFORM_STRUCT	 *pTransform)
-{
-	PTRANSVERTEX pXVertex;
+static void ProcessVerticesAllVisible(PVERTEX pVertex,
+                                      int nVertices,
+                                      const TRANSFORM_STRUCT *pTransform) {
+    PTRANSVERTEX pXVertex;
 
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-	float	fRegionXScale = pProjMat->fRegionXScale;
-	float	SxDash = pProjMat->SxDash;
-	float	SyDash = pProjMat->SyDash;
-	float	OxDash = pProjMat->OxDash;
-	float	OyDash = pProjMat->OyDash;
-	register float f1OverZ;
-	float	fXws, fYws, fZws;
-	float	fXss, fYss;
+    float fRegionXScale = pProjMat->fRegionXScale;
+    float SxDash = pProjMat->SxDash;
+    float SyDash = pProjMat->SyDash;
+    float OxDash = pProjMat->OxDash;
+    float OyDash = pProjMat->OyDash;
+    register float f1OverZ;
+    float fXws, fYws, fZws;
+    float fXss, fYss;
 #if PRE_CULL
-	sgl_uint8	*p = gpXVertexIndex;
+    sgl_uint8	*p = gpXVertexIndex;
 #endif
 
-	SGL_TIME_START(TRANSFORM_VERTICES_ALL_TIME)
-	
-	pXVertex = gpXVertices;
+    SGL_TIME_START(TRANSFORM_VERTICES_ALL_TIME)
 
-	for (/*None*/; nVertices != 0; --nVertices, ++pVertex, ++pXVertex)
-	{
+    pXVertex = gpXVertices;
+
+    for (/*None*/; nVertices != 0; --nVertices, ++pVertex, ++pXVertex) {
 #if PRE_CULL
-		if (*p)
+                                                                                                                                if (*p)
 		{
 #endif
-			pXVertex->pvVertex = pVertex->vVertex;
-			
-			/*
+        pXVertex->pvVertex = pVertex->vVertex;
+
+        /*
 			// For brevity define v, and m as shortcuts into the vector and
 			// matrix
 			*/
-			#define v pVertex->vVertex
-			#define m pTransform->mat
+#define v pVertex->vVertex
+#define m pTransform->mat
 
-			fXws = v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2] + m[0][3];
-			fYws = v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2] + m[1][3];
-			fZws = v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2] + m[2][3];
+        fXws = v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2] + m[0][3];
+        fYws = v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2] + m[1][3];
+        fZws = v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2] + m[2][3];
 
-			pXVertex->vWorldSpace[0] = fXws;
-			pXVertex->vWorldSpace[1] = fYws;
-			pXVertex->vWorldSpace[2] = fZws;
-			#undef v
-			#undef m
+        pXVertex->vWorldSpace[0] = fXws;
+        pXVertex->vWorldSpace[1] = fYws;
+        pXVertex->vWorldSpace[2] = fZws;
+#undef v
+#undef m
 
 
-			f1OverZ = 1.0f / fZws;
+        f1OverZ = 1.0f / fZws;
 
-			fXss = (SxDash * fXws * f1OverZ) + OxDash;
-			fYss = (SyDash * fYws * f1OverZ) + OyDash;
-			pXVertex->vScreenSpace[0] = fXss;
-			pXVertex->vScreenSpace[1] = fYss;
-			
-			/* Work out which region it falls in */
-			pXVertex->nRegion[0] = (sgl_int32) (fXss * fRegionXScale + 
-												   FIX_ROUNDING_PROBLEM);
+        fXss = (SxDash * fXws * f1OverZ) + OxDash;
+        fYss = (SyDash * fYws * f1OverZ) + OyDash;
+        pXVertex->vScreenSpace[0] = fXss;
+        pXVertex->vScreenSpace[1] = fYss;
 
-			/* For optimisation exact Y co-ordinates required.
+        /* Work out which region it falls in */
+        pXVertex->nRegion[0] = (sgl_int32) (fXss * fRegionXScale +
+                                            FIX_ROUNDING_PROBLEM);
+
+        /* For optimisation exact Y co-ordinates required.
 			 */
-			pXVertex->nRegion[1] = (sgl_int32) fYss;
+        pXVertex->nRegion[1] = (sgl_int32) fYss;
 
-			ASSERT(RnGlobalProjMatRegionOnScreen(pXVertex->nRegion[0], 
-												 pXVertex->nRegion[1]));
+        ASSERT(RnGlobalProjMatRegionOnScreen(pXVertex->nRegion[0],
+                                             pXVertex->nRegion[1]));
 
 #if PRE_CULL
-		}
+                                                                                                                                }
 		++p;
 #endif
-	}
+    }
 
-	SGL_TIME_STOP(TRANSFORM_VERTICES_ALL_TIME)
+    SGL_TIME_STOP(TRANSFORM_VERTICES_ALL_TIME)
 }
 
 /**************************************************************************
  * Function Name  : ProcessVerticesPartlyVisible  (LOCAL FUNCTION)
  * Inputs         : pVertices     - pointer to start of an array of vertex data
  *					nVertices	  - the number of vertices to process
- *	
+ *
  **************************************************************************/
 
-static TEST_BOX_ENUM ProcessVerticesPartlyVisible (PVERTEX pVertex, 
-												   int	  nVertices, 
-											  const TRANSFORM_STRUCT *pTransform)
-{
-	PTRANSVERTEX pXVertex;
+static TEST_BOX_ENUM ProcessVerticesPartlyVisible(PVERTEX pVertex,
+                                                  int nVertices,
+                                                  const TRANSFORM_STRUCT *pTransform) {
+    PTRANSVERTEX pXVertex;
 
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-	float	SxDash = pProjMat->SxDash;
-	float	SyDash = pProjMat->SyDash;
-	float	OxDash = pProjMat->OxDash;
-	float	OyDash = pProjMat->OyDash;
-	register float f1OverZ;
-	float	fXws, fYws, fZws;
-	float	fXss, fYss;
-	float FirstYRegionExact, LastYRegionExact;
-	float foregroundDistance, fRegionXScale, FirstXRegion, LastXRegion;
-	float fViewportMinX, fViewportMaxX, fViewportMinY, fViewportMaxY;
-	/*
+    float SxDash = pProjMat->SxDash;
+    float SyDash = pProjMat->SyDash;
+    float OxDash = pProjMat->OxDash;
+    float OyDash = pProjMat->OyDash;
+    register float f1OverZ;
+    float fXws, fYws, fZws;
+    float fXss, fYss;
+    float FirstYRegionExact, LastYRegionExact;
+    float foregroundDistance, fRegionXScale, FirstXRegion, LastXRegion;
+    float fViewportMinX, fViewportMaxX, fViewportMinY, fViewportMaxY;
+    /*
 	// These are used to determine if the mesh is entirely
 	// on screen, or possibly entirely offscreen, or partly on screen.
 	*/
-	sgl_bool AnyClipping;
-	int		 AndFlags;
+    sgl_bool AnyClipping;
+    int AndFlags;
 
-	SGL_TIME_START(TRANSFORM_VERTICES_PARTLY_TIME)
+    SGL_TIME_START(TRANSFORM_VERTICES_PARTLY_TIME)
 
-	FirstYRegionExact = (float)pProjMat->FirstYRegionExact;
-	LastYRegionExact = (float)pProjMat->LastYRegionExact;
-	foregroundDistance = pProjMat->foregroundDistance;
-	fRegionXScale = pProjMat->fRegionXScale;
-	FirstXRegion = (float)pProjMat->FirstXRegion;
-	LastXRegion = (float)pProjMat->LastXRegion;
-	fViewportMinX = pProjMat->fViewportMinX;
-	fViewportMaxX = pProjMat->fViewportMaxX;
-	fViewportMinY = pProjMat->fViewportMinY;
-	fViewportMaxY = pProjMat->fViewportMaxY;
+    FirstYRegionExact = (float) pProjMat->FirstYRegionExact;
+    LastYRegionExact = (float) pProjMat->LastYRegionExact;
+    foregroundDistance = pProjMat->foregroundDistance;
+    fRegionXScale = pProjMat->fRegionXScale;
+    FirstXRegion = (float) pProjMat->FirstXRegion;
+    LastXRegion = (float) pProjMat->LastXRegion;
+    fViewportMinX = pProjMat->fViewportMinX;
+    fViewportMaxX = pProjMat->fViewportMaxX;
+    fViewportMinY = pProjMat->fViewportMinY;
+    fViewportMaxY = pProjMat->fViewportMaxY;
 
 #if PRE_CULL
-	sgl_uint8	*p = gpXVertexIndex;
+    sgl_uint8	*p = gpXVertexIndex;
 #endif
 
-	AnyClipping  = FALSE;
-	AndFlags =~0;
+    AnyClipping = FALSE;
+    AndFlags = ~0;
 
-	pXVertex = gpXVertices;
+    pXVertex = gpXVertices;
 
-	for (/*None*/; nVertices != 0; --nVertices, ++pVertex, ++pXVertex)
-	{
+    for (/*None*/; nVertices != 0; --nVertices, ++pVertex, ++pXVertex) {
 #if PRE_CULL
-		if (*p)
+                                                                                                                                if (*p)
 		{
 #endif
-			pXVertex->pvVertex = pVertex->vVertex;
-			
-			/*
+        pXVertex->pvVertex = pVertex->vVertex;
+
+        /*
 			// For brevity define v, and m as shortcuts into the vector and
 			// matrix
 			*/
-			#define v pVertex->vVertex
-			#define m pTransform->mat
-			
-			fXws = v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2] + m[0][3];
-			fYws = v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2] + m[1][3];
-			fZws = v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2] + m[2][3];
+#define v pVertex->vVertex
+#define m pTransform->mat
+
+        fXws = v[0] * m[0][0] + v[1] * m[0][1] + v[2] * m[0][2] + m[0][3];
+        fYws = v[0] * m[1][0] + v[1] * m[1][1] + v[2] * m[1][2] + m[1][3];
+        fZws = v[0] * m[2][0] + v[1] * m[2][1] + v[2] * m[2][2] + m[2][3];
 
 
-			pXVertex->vWorldSpace[0] = fXws;
-			pXVertex->vWorldSpace[1] = fYws;
-			pXVertex->vWorldSpace[2] = fZws;
-			#undef v
-			#undef m
+        pXVertex->vWorldSpace[0] = fXws;
+        pXVertex->vWorldSpace[1] = fYws;
+        pXVertex->vWorldSpace[2] = fZws;
+#undef v
+#undef m
 
-			/*
+        /*
 			// Check first if it is on the wrong side of the foreground
 			// clipping plane.
 			*/
-			if (fZws < foregroundDistance)
-			{
-				int   Flags;
-				AnyClipping = TRUE;
+        if (fZws < foregroundDistance) {
+            int Flags;
+            AnyClipping = TRUE;
 
-				Flags =  CLIPPED_Z;
-				/*
+            Flags = CLIPPED_Z;
+            /*
 				// Test the other viewing fustrum boundaries as well
 				//
 				// Test against Min X
 				*/
-				if(fXws < fViewportMinX * fZws)
-				{
-					Flags |= CLIPPED_MINUS_X;
-				}
+            if (fXws < fViewportMinX * fZws) {
+                Flags |= CLIPPED_MINUS_X;
+            }
 
-				/*
+            /*
 				// Test against Max X. Note that min and max x clipping
 				// is not mutually exclusive with a negative Z.
 				*/
-				if(fXws > fViewportMaxX * fZws)
-				{
-					Flags |= CLIPPED_PLUS_X;
-				}
-				/*
+            if (fXws > fViewportMaxX * fZws) {
+                Flags |= CLIPPED_PLUS_X;
+            }
+            /*
 				// Test against Min Y.
 				*/
-				if(fYws < fViewportMinY * fZws)
-				{
-					Flags |= CLIPPED_MINUS_Y;
-				}
+            if (fYws < fViewportMinY * fZws) {
+                Flags |= CLIPPED_MINUS_Y;
+            }
 
-				/*
+            /*
 				// Test against Max Y.
 				*/
-				if(fYws > fViewportMaxY * fZws)
-				{
-					Flags |= CLIPPED_PLUS_Y;
-				}
-				pXVertex->Flags = Flags;
- 				AndFlags &= Flags;
-			}
-			else
-			{
-				sgl_int32 Region;
-				int   Flags;
+            if (fYws > fViewportMaxY * fZws) {
+                Flags |= CLIPPED_PLUS_Y;
+            }
+            pXVertex->Flags = Flags;
+            AndFlags &= Flags;
+        } else {
+            sgl_int32 Region;
+            int Flags;
 
-				f1OverZ = 1.0f / fZws;
+            f1OverZ = 1.0f / fZws;
 
-				fXss = (SxDash * fXws * f1OverZ) + OxDash;
-				fYss = (SyDash * fYws * f1OverZ) + OyDash;
-				pXVertex->vScreenSpace[0] = fXss;
-				pXVertex->vScreenSpace[1] = fYss;
-				/* 
+            fXss = (SxDash * fXws * f1OverZ) + OxDash;
+            fYss = (SyDash * fYws * f1OverZ) + OyDash;
+            pXVertex->vScreenSpace[0] = fXss;
+            pXVertex->vScreenSpace[1] = fYss;
+            /*
 				// Work out which region it falls in.
 				// NOTE: There is a REALLY unlikely bug which could occur if the
 				// mesh face is absolutely enormous and the projected region is
 				// larger than can be represented by an sgl_int32.... but who could
 				// be bothered testing for it....
 				*/
-				Region = (sgl_int32) (fXss * fRegionXScale + 
-								  FIX_ROUNDING_PROBLEM);
-				if(Region < FirstXRegion)
-				{
-					pXVertex->nRegion[0] = (sgl_int32)FirstXRegion;
-					Flags = CLIPPED_MINUS_X;
-					AnyClipping = TRUE;
-				}
-				else if(Region > LastXRegion)
-				{
-					pXVertex->nRegion[0] = (sgl_int32)LastXRegion;
-					Flags = CLIPPED_PLUS_X;			
-					AnyClipping = TRUE;
-				}
-				else 
-				{
-					pXVertex->nRegion[0] = Region;
-					Flags = 0;
-				}
+            Region = (sgl_int32) (fXss * fRegionXScale +
+                                  FIX_ROUNDING_PROBLEM);
+            if (Region < FirstXRegion) {
+                pXVertex->nRegion[0] = (sgl_int32) FirstXRegion;
+                Flags = CLIPPED_MINUS_X;
+                AnyClipping = TRUE;
+            } else if (Region > LastXRegion) {
+                pXVertex->nRegion[0] = (sgl_int32) LastXRegion;
+                Flags = CLIPPED_PLUS_X;
+                AnyClipping = TRUE;
+            } else {
+                pXVertex->nRegion[0] = Region;
+                Flags = 0;
+            }
 
 
-				/* Correction needed with Y region.	Absolute Y co-ordinates required.
+            /* Correction needed with Y region.	Absolute Y co-ordinates required.
 				 */
-				Region = (sgl_int32) fYss;
+            Region = (sgl_int32) fYss;
 
-				/* first Y region is the top of the viewport - max Y */
-				if(Region < FirstYRegionExact)
-				{
-					pXVertex->nRegion[1] = (sgl_int32)FirstYRegionExact;
-					Flags |= CLIPPED_PLUS_Y;
-					AnyClipping = TRUE;
-				}
-				else if(Region > LastYRegionExact)
-				{
-					pXVertex->nRegion[1] = (sgl_int32)LastYRegionExact;
-					Flags |= CLIPPED_MINUS_Y;
-					AnyClipping = TRUE;
-				}
-				else 
-				{
-					pXVertex->nRegion[1] = Region;
-				}
+            /* first Y region is the top of the viewport - max Y */
+            if (Region < FirstYRegionExact) {
+                pXVertex->nRegion[1] = (sgl_int32) FirstYRegionExact;
+                Flags |= CLIPPED_PLUS_Y;
+                AnyClipping = TRUE;
+            } else if (Region > LastYRegionExact) {
+                pXVertex->nRegion[1] = (sgl_int32) LastYRegionExact;
+                Flags |= CLIPPED_MINUS_Y;
+                AnyClipping = TRUE;
+            } else {
+                pXVertex->nRegion[1] = Region;
+            }
 
-				/*
+            /*
 				// Update whether all the vertices are to one side of the
 				// view pyramid, and the flag values for this vertex.
 				*/
-				AndFlags &= Flags;
-				pXVertex->Flags= Flags;
-			}/*end else NOT Z clipped*/
+            AndFlags &= Flags;
+            pXVertex->Flags = Flags;
+        }/*end else NOT Z clipped*/
 
 #if PRE_CULL
-		}
+                                                                                                                                }
 		++p;
 #endif
-	}/*end for */
+    }/*end for */
 
-	/*
+    /*
 	//Decide whether the mesh is entirely on screen etc
 	*/
-	if(!AnyClipping)
-	{
-	    SGL_TIME_STOP(TRANSFORM_VERTICES_PARTLY_TIME)
-		return(TB_BOX_ALL_ONSCREEN);
-	}
-	else if(AndFlags)
-	{
-	    SGL_TIME_STOP(TRANSFORM_VERTICES_PARTLY_TIME)
-		return(TB_BOX_OFFSCREEN);
-	}
-	else
-	{
-	    SGL_TIME_STOP(TRANSFORM_VERTICES_PARTLY_TIME)
-		return(TB_BOX_PART_ONSCREEN);
-	}
+    if (!AnyClipping) {
+        SGL_TIME_STOP(TRANSFORM_VERTICES_PARTLY_TIME)
+        return (TB_BOX_ALL_ONSCREEN);
+    } else if (AndFlags) {
+        SGL_TIME_STOP(TRANSFORM_VERTICES_PARTLY_TIME)
+        return (TB_BOX_OFFSCREEN);
+    } else {
+        SGL_TIME_STOP(TRANSFORM_VERTICES_PARTLY_TIME)
+        return (TB_BOX_PART_ONSCREEN);
+    }
 }
 
 /**************************************************************************
  * Function Name  : ProcessEdgesAllVisible  (LOCAL FUNCTION)
  * Inputs         : pEdges     - pointer to start of an array of edge data
  *					nEdges	   - the number of edges to process
- *	
+ *
  **************************************************************************/
 
 /*sgl_int32 PackTo20BitDoubleBarrel (const float	F1, const float F2, int *pV1, int *pV2);*/
 
-void ProcessEdgesAllVisible (PEDGE pEdge, int nEdges)
-{
-	#if ICL && !(PCX2 || PCX2_003)
+void ProcessEdgesAllVisible(PEDGE pEdge, int nEdges) {
+#if ICL && !(PCX2 || PCX2_003)
 
-		/*
+                                                                                                                            /*
 		// Define the largest exponent the SABRE hardware can handle
 		*/
 		#define MAX_LEGAL_20_EXPONENT (14)
@@ -2432,15 +2348,15 @@ void ProcessEdgesAllVisible (PEDGE pEdge, int nEdges)
 
 		/*
 		// Define whether we should have an extra 1/2 bits accuracy
-		// when changing from IEEE 24 bit mantissa to the 16 bit 
+		// when changing from IEEE 24 bit mantissa to the 16 bit
 		// mantissa of the Sabre Float
 		*/
 		#define USE_ROUNDING 0
 
 		/*///////////////////////////////////////////////////////////////////
-		///////////////////////////////////////////////////////////////////// 
-		// IEEE version 
-		///////////////////////////////////////////////////////////////////// 
+		/////////////////////////////////////////////////////////////////////
+		// IEEE version
+		/////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////// */
 
 
@@ -2513,7 +2429,7 @@ void ProcessEdgesAllVisible (PEDGE pEdge, int nEdges)
 		static float	fHalfOffset = 1024.0f;
 
 		SGL_TIME_START(TRANSFORM_EDGES_ALL_TIME)
-		
+
 		__asm
 		{
 			push	ebx
@@ -2522,7 +2438,7 @@ void ProcessEdgesAllVisible (PEDGE pEdge, int nEdges)
 
 			mov		ecx, DWORD PTR nEdges
 			mov		eax, DWORD PTR pEdge
-			
+
 			/* make sure the parameters are half useful */
 
 			or		ecx, ecx
@@ -2530,26 +2446,26 @@ void ProcessEdgesAllVisible (PEDGE pEdge, int nEdges)
 			or		eax, eax
 			jz		FEAV_BombOut
 
-			/* 
-				create a new stack frame 
+			/*
+				create a new stack frame
 			*/
-			
+
 			sub		esp, 12
 			mov		[esp + 4], ecx
-			
-			/* 
+
+			/*
 				esp:		parameter for PackTo20Bit
 				esp + 4:	counter
 				esp + 8:	fMaxValueTmpStore
 			*/
-			
+
 			mov		esi, eax
 			mov		edi, gpXEdges
 			mov		ebx, DWORD PTR gpXVertices
 
 			/*
 				registers
-				
+
 				eax:	-
 				ebx:	gpXVertices
 				ecx:	-
@@ -2558,31 +2474,31 @@ void ProcessEdgesAllVisible (PEDGE pEdge, int nEdges)
 				edi:	pXEdge
 			*/
 
-FEAV_loop:			
+FEAV_loop:
 
 ;			int 3
-			
-			/* 
+
+			/*
 				edx:		pV1
 				ecx:		pV2
 
 				sizeof (TRANSVERTEX) = 36 = 4*9
 			*/
-			
+
 			mov		edx, [esi].nIDV1
 			mov		ecx, [esi].nIDV2
 			lea		edx, [edx+edx*8]
 			lea		ecx, [ecx+ecx*8]
 			lea		edx, [ebx+edx*4]
 			lea		ecx, [ebx+ecx*4]
-			
+
 			/*
 			// Compute initial A,B,&C values before scaling, using the
 			// projected vertex positions
 
 			fA = pV1->vScreenSpace[1] - pV2->vScreenSpace[1];
 			fB = pV2->vScreenSpace[0] - pV1->vScreenSpace[0];
-			fC = (pV1->vScreenSpace[0] * pV2->vScreenSpace[1]) - 
+			fC = (pV1->vScreenSpace[0] * pV2->vScreenSpace[1]) -
 				 (pV2->vScreenSpace[0] * pV1->vScreenSpace[1]);
 
 			*/
@@ -2621,12 +2537,12 @@ FEAV_loop:
 			fabs							; fabs((M*(fA+fB))+fC) fC*f2F H*(fabs(fA)+fabs(fB)) fB fA
 			faddp	ST(2), ST				; fC*f2F H*(fabs(fB)+fabs(fA))+fabs((M*(fA+fB))+fC) fB fA
 			fxch	ST(1)
-			
+
 			/*
 				fMaxVal fC	fB	fA
 			*/
 
-			fstp	DWORD PTR 8[esp]			/* C  B  A  -  -  -  -  -  -  */               
+			fstp	DWORD PTR 8[esp]			/* C  B  A  -  -  -  -  -  -  */
 
 			mov		ecx, 8[esp]
 			mov		edx, ecx
@@ -2639,15 +2555,15 @@ FEAV_loop:
 			or		ecx, edx
 			mov		8[esp], ecx
 
-			fmul	DWORD PTR 8[esp]			/* C  B  A  -  -  -  -  */               
-			fxch	ST(2)						/* A  B  c  -  -  -  -  */               
+			fmul	DWORD PTR 8[esp]			/* C  B  A  -  -  -  -  */
+			fxch	ST(2)						/* A  B  c  -  -  -  -  */
 			add		esi, SIZE EDGE
 			fmul	DWORD PTR 8[esp]
-			fxch	ST(2)						/* c  B  a  -  -  -  -  */               
-			fistp	DWORD PTR 8[edi]			/* B  a  -  -  -  -  */               
+			fxch	ST(2)						/* c  B  a  -  -  -  -  */
+			fistp	DWORD PTR 8[edi]			/* B  a  -  -  -  -  */
 			fmul	DWORD PTR 8[esp]
-			fxch	ST(1)						/* a  b  -  -  -  -  */               
-			fstp	DWORD PTR 0[esp]			/* b  -  -  -  -  */               
+			fxch	ST(1)						/* a  b  -  -  -  -  */
+			fstp	DWORD PTR 0[esp]			/* b  -  -  -  -  */
 
 			#if 0
 
@@ -2656,7 +2572,7 @@ FEAV_loop:
 
 			#else
 
-				/* 
+				/*
 					Pack to 20 bit format
 
 					ecx: exponent
@@ -2664,9 +2580,9 @@ FEAV_loop:
 				*/
 				mov		ecx, 0[esp]
 				mov		edx, ecx
-				
+
 				; exp = (intVal >> IEEE_E_SHIFT) & IEEE_E_MASK
-				
+
 				shr		ecx, IEEE_E_SHIFT
 				and		ecx, IEEE_E_MASK
 
@@ -2692,16 +2608,16 @@ FEAV_loop:
 				shr		edx, IEEE_TO_20_SHIFT
 				cmp		DWORD PTR 0[esp], 0
 				jge		p20_1exit
-			
+
 				#if PCX1
-			
+
 					or		edx, SIGN_BIT_FOR_20BIT
-				
+
 				#else
-			
+
 					neg		edx
 					and		edx, MASK_20_MANTISSA
-				
+
 				#endif
 
 				jmp		p20_1exit
@@ -2710,16 +2626,16 @@ FEAV_loop:
 				shl		ecx, SHIFT_20_EXP
 				cmp		DWORD PTR 0[esp], 0
 				jge		p20_1_3
-			
+
 				#if PCX1
-			
+
 					or		edx, SIGN_BIT_FOR_20BIT
-				
+
 				#else
-			
+
 					neg		edx
 					and		edx, MASK_20_MANTISSA
-				
+
 				#endif
 
 	p20_1_3:	or		edx, ecx
@@ -2728,7 +2644,7 @@ FEAV_loop:
 
 			#endif
 
-			fstp	DWORD PTR 0[esp] 			/* b  -  -  -  -  */               
+			fstp	DWORD PTR 0[esp] 			/* b  -  -  -  -  */
 
 			#if 0
 
@@ -2737,7 +2653,7 @@ FEAV_loop:
 
 			#else
 
-				/* 
+				/*
 					Pack to 20 bit format
 
 					ecx: exponent
@@ -2745,9 +2661,9 @@ FEAV_loop:
 				*/
 				mov		ecx, 0[esp]
 				mov		edx, ecx
-				
+
 				; exp = (intVal >> IEEE_E_SHIFT) & IEEE_E_MASK
-				
+
 				shr		ecx, IEEE_E_SHIFT
 				and		ecx, IEEE_E_MASK
 
@@ -2773,16 +2689,16 @@ FEAV_loop:
 				shr		edx, IEEE_TO_20_SHIFT
 				cmp		DWORD PTR 0[esp], 0
 				jge		p20_2exit
-			
+
 				#if PCX1
-			
+
 					or		edx, SIGN_BIT_FOR_20BIT
-				
+
 				#else
-			
+
 					neg		edx
 					and		edx, MASK_20_MANTISSA
-				
+
 				#endif
 
 				jmp		p20_2exit
@@ -2791,16 +2707,16 @@ FEAV_loop:
 				shl		ecx, SHIFT_20_EXP
 				cmp		DWORD PTR 0[esp], 0
 				jge		p20_2_3
-			
+
 				#if PCX1
-			
+
 					or		edx, SIGN_BIT_FOR_20BIT
-				
+
 				#else
-			
+
 					neg		edx
 					and		edx, MASK_20_MANTISSA
-				
+
 				#endif
 
 	p20_2_3:	or		edx, ecx
@@ -2824,73 +2740,72 @@ FEAV_loop:
 
 		SGL_TIME_STOP(TRANSFORM_EDGES_ALL_TIME)
 
-	#else
-	
-		PTRANSEDGE		pXEdge;
+#else
+
+    PTRANSEDGE pXEdge;
 #if PRE_CULL
-		sgl_uint8			*p = gpXEdgeIndex;
+    sgl_uint8			*p = gpXEdgeIndex;
 #endif
-		
-		SGL_TIME_START(TRANSFORM_EDGES_ALL_TIME)
 
-		pXEdge = gpXEdges;
+    SGL_TIME_START(TRANSFORM_EDGES_ALL_TIME)
 
-		for (/*NOTHING*/; nEdges != 0; --nEdges, ++pEdge, ++pXEdge)
-		{
+    pXEdge = gpXEdges;
+
+    for (/*NOTHING*/; nEdges != 0; --nEdges, ++pEdge, ++pXEdge) {
 #if PRE_CULL
-			if (*p)
+                                                                                                                                if (*p)
 			{
 #endif
-				/*
+        /*
 				// New wizzo faster edge computation that uses screen
 				// coordinates directly. This can be done because we know
 				// the end points are on screen.
 				//						 			Simon
 				*/
-				float			fA, fB, fC;
-				float			MaxVal;
-				PTRANSVERTEX	pV1, pV2;
-				
-				ASSERT (pEdge->nIDV1 != pEdge->nIDV2);
+        float fA, fB, fC;
+        float MaxVal;
+        PTRANSVERTEX pV1, pV2;
 
-				/*
+        ASSERT (pEdge->nIDV1 != pEdge->nIDV2);
+
+        /*
 				// Get pointers to the vertices at each end of the edge
 				*/
-				pV1 = gpXVertices + pEdge->nIDV1;
-				pV2 = gpXVertices + pEdge->nIDV2;
+        pV1 = gpXVertices + pEdge->nIDV1;
+        pV2 = gpXVertices + pEdge->nIDV2;
 
-				/*
+        /*
 				// Compute initial A,B,&C values before scaling, using the
 				// projected vertex positions
-				*/				
-				fA = pV1->vScreenSpace[1] - pV2->vScreenSpace[1];
-				fB = pV2->vScreenSpace[0] - pV1->vScreenSpace[0];
-				fC = (pV1->vScreenSpace[0] * pV2->vScreenSpace[1]) - 
-					 (pV2->vScreenSpace[0] * pV1->vScreenSpace[1]);
+				*/
+        fA = pV1->vScreenSpace[1] - pV2->vScreenSpace[1];
+        fB = pV2->vScreenSpace[0] - pV1->vScreenSpace[0];
+        fC = (pV1->vScreenSpace[0] * pV2->vScreenSpace[1]) -
+             (pV2->vScreenSpace[0] * pV1->vScreenSpace[1]);
 
-				/*
+        /*
 				// to prevent the 20Bit SFLOATS from overflowing (currently
 				// they are 2x larger than I originally thought necessary)
 				*/
-				#define MAX_CENTRE  (1024.0f)
-				#define HALF_OFFSET (1024.0f)
+#define MAX_CENTRE  (1024.0f)
+#define HALF_OFFSET (1024.0f)
 
-				MaxVal = sfabs(MAX_CENTRE * (fA+fB) + fC) +
-						 HALF_OFFSET * (sfabs(fA) + sfabs(fB));
+        MaxVal = sfabs(MAX_CENTRE * (fA + fB) + fC) +
+                 HALF_OFFSET * (sfabs(fA) + sfabs(fB));
 
-				#undef MAX_CENTRE
-				#undef HALF_OFFSET
+#undef MAX_CENTRE
+#undef HALF_OFFSET
 
-				MaxVal = ApproxRecip (MaxVal);
+        MaxVal = ApproxRecip(MaxVal);
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				/* PCX2 has IEEE floating point support. No need for rescaling.
+        /* PCX2 has IEEE floating point support. No need for rescaling.
 				 */
-				pXEdge->f32A = fA * MaxVal;
-				pXEdge->f32B = fB * MaxVal;
-				pXEdge->f32C = fC * MaxVal;
+        pXEdge->f32A = fA * MaxVal;
+        pXEdge->f32B = fB * MaxVal;
+        pXEdge->f32C = fC * MaxVal;
 #else
-		        SGL_TIME_SUSPEND(TRANSFORM_EDGES_ALL_TIME)
+                                                                                                                                SGL_TIME_SUSPEND(TRANSFORM_EDGES_ALL_TIME)
 				#if 1
 				pXEdge->n32A = PackTo20Bit (fA * MaxVal);
 				pXEdge->n32B = PackTo20Bit (fB * MaxVal);
@@ -2904,14 +2819,14 @@ FEAV_loop:
 
 
 #if PRE_CULL
-			}
+                                                                                                                                }
 			++p;
 #endif
-		}/*end for*/
+    }/*end for*/
 
-		SGL_TIME_STOP(TRANSFORM_EDGES_ALL_TIME)
+    SGL_TIME_STOP(TRANSFORM_EDGES_ALL_TIME)
 
-	#endif
+#endif
 
 }
 
@@ -2920,153 +2835,149 @@ FEAV_loop:
  * Function Name  : ProcessEdgesPartlyVisible  (LOCAL FUNCTION)
  * Inputs         : pEdges     - pointer to start of an array of edge data
  *					nEdges	   - the number of edges to process
- *	
+ *
  **************************************************************************/
 
-static void ProcessEdgesPartlyVisible (PEDGE pEdge, int nEdges)
-{
-	PTRANSVERTEX	pV1, pV2;
-	PTRANSEDGE		pXEdge;
+static void ProcessEdgesPartlyVisible(PEDGE pEdge, int nEdges) {
+    PTRANSVERTEX pV1, pV2;
+    PTRANSEDGE pXEdge;
 #if PRE_CULL
-	sgl_uint8			*p = gpXEdgeIndex;
+    sgl_uint8			*p = gpXEdgeIndex;
 #endif
-	float fOverflowRescale;
-	float yToCorner, xToCorner, xPerPixel, yPerPixel;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	sgl_vector RCentre;
+    float fOverflowRescale;
+    float yToCorner, xToCorner, xPerPixel, yPerPixel;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    sgl_vector RCentre;
 
-	SGL_TIME_START(TRANSFORM_EDGES_PARTLY_TIME)
+    SGL_TIME_START(TRANSFORM_EDGES_PARTLY_TIME)
 
-	RCentre[0] = pProjMat->RCentre[0];
-	RCentre[1] = pProjMat->RCentre[1];
-	RCentre[2] = pProjMat->RCentre[2];
-	yToCorner = pProjMat->yToCorner;
-	xToCorner = pProjMat->xToCorner;
-	fOverflowRescale = pProjMat->fOverflowRescale;
-	xPerPixel = pProjMat->xPerPixel;
-	yPerPixel = pProjMat->yPerPixel;
-	
+    RCentre[0] = pProjMat->RCentre[0];
+    RCentre[1] = pProjMat->RCentre[1];
+    RCentre[2] = pProjMat->RCentre[2];
+    yToCorner = pProjMat->yToCorner;
+    xToCorner = pProjMat->xToCorner;
+    fOverflowRescale = pProjMat->fOverflowRescale;
+    xPerPixel = pProjMat->xPerPixel;
+    yPerPixel = pProjMat->yPerPixel;
 
-	pXEdge = gpXEdges;
 
-	for (/*Nothing*/ ; nEdges != 0; --nEdges, ++pEdge, ++pXEdge)
-	{
-	#if PRE_CULL
-		if (*p)
+    pXEdge = gpXEdges;
+
+    for (/*Nothing*/ ; nEdges != 0; --nEdges, ++pEdge, ++pXEdge) {
+#if PRE_CULL
+                                                                                                                                if (*p)
 		{
-	#endif
+#endif
 
-			ASSERT (pEdge->nIDV1 != pEdge->nIDV2);
+        ASSERT (pEdge->nIDV1 != pEdge->nIDV2);
 
-			pV1 = gpXVertices + pEdge->nIDV1;
-			pV2 = gpXVertices + pEdge->nIDV2;
+        pV1 = gpXVertices + pEdge->nIDV1;
+        pV2 = gpXVertices + pEdge->nIDV2;
 
 
-			/*
+        /*
 			// If the end points are on screen, then use the faster method.
 			*/
-			if((pV1->Flags | pV2->Flags) == 0)
-			{
-				float	fA, fB, fC;
-				float	MaxVal;
+        if ((pV1->Flags | pV2->Flags) == 0) {
+            float fA, fB, fC;
+            float MaxVal;
 
-				/*
+            /*
 				// Compute initial A,B,&C values before scaling, using the
 				// projected vertex positions
-				*/				
-				fA = pV1->vScreenSpace[1] - pV2->vScreenSpace[1];
-				fB = pV2->vScreenSpace[0] - pV1->vScreenSpace[0];
-				fC = (pV1->vScreenSpace[0] * pV2->vScreenSpace[1]) - 
-					 (pV2->vScreenSpace[0] * pV1->vScreenSpace[1]);
+				*/
+            fA = pV1->vScreenSpace[1] - pV2->vScreenSpace[1];
+            fB = pV2->vScreenSpace[0] - pV1->vScreenSpace[0];
+            fC = (pV1->vScreenSpace[0] * pV2->vScreenSpace[1]) -
+                 (pV2->vScreenSpace[0] * pV1->vScreenSpace[1]);
 
-				/*
+            /*
 				// These values are a bit odd .. they are desgined
 				// to prevent the 20Bit SFLOATS from overflowing
 				*/
-				#define MAX_CENTRE  (1024.0f)
-				#define HALF_OFFSET (1024.0f)
+#define MAX_CENTRE  (1024.0f)
+#define HALF_OFFSET (1024.0f)
 
-				MaxVal = sfabs(MAX_CENTRE * (fA+fB) + fC) +
-						 HALF_OFFSET * (sfabs(fA) + sfabs(fB));
+            MaxVal = sfabs(MAX_CENTRE * (fA + fB) + fC) +
+                     HALF_OFFSET * (sfabs(fA) + sfabs(fB));
 
-				#undef MAX_CENTRE
-				#undef HALF_OFFSET
+#undef MAX_CENTRE
+#undef HALF_OFFSET
 
-				MaxVal = ApproxRecip (MaxVal);
+            MaxVal = ApproxRecip(MaxVal);
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				/* PCX2 has IEEE floating point support. No need for rescaling.
+            /* PCX2 has IEEE floating point support. No need for rescaling.
 				 */
-				pXEdge->f32A = fA * MaxVal;
-				pXEdge->f32B = fB * MaxVal;
-				pXEdge->f32C = fC * MaxVal;
+            pXEdge->f32A = fA * MaxVal;
+            pXEdge->f32B = fB * MaxVal;
+            pXEdge->f32C = fC * MaxVal;
 #else
-			    SGL_TIME_SUSPEND(TRANSFORM_EDGES_PARTLY_TIME)
+                                                                                                                                    SGL_TIME_SUSPEND(TRANSFORM_EDGES_PARTLY_TIME)
 				pXEdge->n32A = PackTo20Bit (fA * MaxVal);
 				pXEdge->n32B = PackTo20Bit (fB * MaxVal);
 			    SGL_TIME_RESUME(TRANSFORM_EDGES_PARTLY_TIME)
 
 				pXEdge->n32C = (sgl_int32)(fC * MaxVal * FLOAT_TO_FIXED);
 #endif
-			}
-			/*
+        }
+            /*
 			// Else use the world space coords to compute the edge parameters
 			*/
-			else
-			{
-				sgl_vector 		vN;
-				float			fCentreDotNormal;
-				float			fXBorder;	
-				float			fYBorder;
-				float			fMaxValue;
-				float			fA, fB;
+        else {
+            sgl_vector vN;
+            float fCentreDotNormal;
+            float fXBorder;
+            float fYBorder;
+            float fMaxValue;
+            float fA, fB;
 
-				/* 
-				//Screen space coords already calculated - calculate edge plane 
-				// equation 
+            /*
+				//Screen space coords already calculated - calculate edge plane
+				// equation
 				*/
-				CrossProd (pV1->vWorldSpace, pV2->vWorldSpace, vN);
+            CrossProd(pV1->vWorldSpace, pV2->vWorldSpace, vN);
 
-				ASSERT ((vN[0] != 0) || (vN[1] != 0) || (vN[2] != 0));
-			
-				/* calculate sabre parameters for edge plane
+            ASSERT ((vN[0] != 0) || (vN[1] != 0) || (vN[2] != 0));
+
+            /* calculate sabre parameters for edge plane
 				 */
-				fCentreDotNormal = DotProd (vN, RCentre);
-				fXBorder = vN[0] * xToCorner;
-				fYBorder = vN[1] * yToCorner;
+            fCentreDotNormal = DotProd(vN, RCentre);
+            fXBorder = vN[0] * xToCorner;
+            fYBorder = vN[1] * yToCorner;
 
-				fMaxValue = sfabs (fCentreDotNormal) + sfabs (fXBorder) + 
-													   sfabs (fYBorder);
+            fMaxValue = sfabs (fCentreDotNormal) + sfabs (fXBorder) +
+                        sfabs (fYBorder);
 
-				fMaxValue = - fOverflowRescale * ApproxRecip (fMaxValue);
-				fA = vN[0] * xPerPixel * fMaxValue;
-				fB = vN[1] * yPerPixel * fMaxValue;
+            fMaxValue = -fOverflowRescale * ApproxRecip(fMaxValue);
+            fA = vN[0] * xPerPixel * fMaxValue;
+            fB = vN[1] * yPerPixel * fMaxValue;
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				/* PCX2 has IEEE floating point support. No need for rescaling.
+            /* PCX2 has IEEE floating point support. No need for rescaling.
 				 * Negative all parameters.
 				 */
-				pXEdge->f32A = fA;
-				pXEdge->f32B = fB;
-				pXEdge->f32C = ((fCentreDotNormal-(fXBorder+fYBorder))*fMaxValue);
+            pXEdge->f32A = fA;
+            pXEdge->f32B = fB;
+            pXEdge->f32C = ((fCentreDotNormal - (fXBorder + fYBorder)) * fMaxValue);
 #else
-			    SGL_TIME_SUSPEND(TRANSFORM_EDGES_PARTLY_TIME)
+                                                                                                                                    SGL_TIME_SUSPEND(TRANSFORM_EDGES_PARTLY_TIME)
 				pXEdge->n32A = PackTo20Bit (fA);
 				pXEdge->n32B = PackTo20Bit (fB);
 				SGL_TIME_RESUME(TRANSFORM_EDGES_PARTLY_TIME)
 
-				pXEdge->n32C = 
+				pXEdge->n32C =
 				  (sgl_int32)((fCentreDotNormal-(fXBorder+fYBorder))*fMaxValue*FLOAT_TO_FIXED);
 #endif
-			}
+        }
 
-	#if PRE_CULL
-		}
+#if PRE_CULL
+                                                                                                                                }
 		++p;
-	#endif
-	}
+#endif
+    }
 
-	SGL_TIME_STOP(TRANSFORM_EDGES_PARTLY_TIME)
+    SGL_TIME_STOP(TRANSFORM_EDGES_PARTLY_TIME)
 }
 
 /**************************************************************************
@@ -3074,70 +2985,69 @@ static void ProcessEdgesPartlyVisible (PEDGE pEdge, int nEdges)
  * Inputs         : pFace     - pointer to start of an array of face data
  *					numFaces  - the number of faces to process
  *					pTransform - pointer to the transformation
- *	
+ *
  * Outputs        : pTransformedPlanes - the planes/faces after transformation
  *				    pExtras			   - the rest of the data needed for
  *
  * Returns		  : The number of planes/polys NOT rejected. (IE Not
- *					back-face culled) 
+ *					back-face culled)
  *					This version does no clipping rejection - ie it
  *					should be called by the "entirely onscreen" code.
  **************************************************************************/
-static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace, 
-												int	  numFaces,
-							const TRANSFORM_STRUCT	  *pTransform,
-										PXMESHEXTRA	  pXExtra,
-							 TRANSFORMED_PLANE_STRUCT *pXPlane,
-						const CONV_SHADING_STRUCT	  **ppExtShadingData,
-						const CONV_TEXTURE_UNION	  **ppExtTextureData,
-						const CONV_POINTS_STRUCT	  **ppExtPointsData)
-{
-	int NumProcessed;
-	
-	/*
+static int TransformAndComputeSabreParamsVisible(const FACE **ppExtFace,
+                                                 int numFaces,
+                                                 const TRANSFORM_STRUCT *pTransform,
+                                                 PXMESHEXTRA pXExtra,
+                                                 TRANSFORMED_PLANE_STRUCT *pXPlane,
+                                                 const CONV_SHADING_STRUCT **ppExtShadingData,
+                                                 const CONV_TEXTURE_UNION **ppExtTextureData,
+                                                 const CONV_POINTS_STRUCT **ppExtPointsData) {
+    int NumProcessed;
+
+    /*
 	// To make the code simpler, rather than have two different
 	// loops for processing normals: IE either using normal matrix
 	// (ie either uniform or no scaling) or transpose of inverse
 	// (when non uniform). Basically, since the non-uniform is
-	// fairly rare, we will copy the inverse and transpose it, 
+	// fairly rare, we will copy the inverse and transpose it,
 	// which means we can use the same code
 	*/
-	float const (*m)[4];
-	float matcopy[3][4];
-	PTRANSVERTEX pVert;
+    float const (*m)[4];
+    float matcopy[3][4];
+    PTRANSVERTEX pVert;
 
-	const FACE	 				*pFace;
-	const CONV_SHADING_STRUCT	*pShadingData;
-	const CONV_TEXTURE_UNION	*pTextureData;
-	const CONV_POINTS_STRUCT	*pPointsData;
+    const FACE *pFace;
+    const CONV_SHADING_STRUCT *pShadingData;
+    const CONV_TEXTURE_UNION *pTextureData;
+    const CONV_POINTS_STRUCT *pPointsData;
 
-	float	fCentreDotNormal;
-	float	fXBorder;	
-	float	fYBorder;	
+    float fCentreDotNormal;
+    float fXBorder;
+    float fYBorder;
 
-	float fOverflowRescale;
-	float yToCorner, xToCorner, xPerPixel, yPerPixel;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	sgl_vector RCentre;
+    float fOverflowRescale;
+    float yToCorner, xToCorner, xPerPixel, yPerPixel;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    sgl_vector RCentre;
 
-	SGL_TIME_START(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
+    SGL_TIME_START(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
 
-	RCentre[0] = pProjMat->RCentre[0];
-	RCentre[1] = pProjMat->RCentre[1];
-	RCentre[2] = pProjMat->RCentre[2];
-	yToCorner = pProjMat->yToCorner;
-	xToCorner = pProjMat->xToCorner;
-	fOverflowRescale = pProjMat->fOverflowRescale;
-	xPerPixel = pProjMat->xPerPixel;
-	yPerPixel = pProjMat->yPerPixel;
+    RCentre[0] = pProjMat->RCentre[0];
+    RCentre[1] = pProjMat->RCentre[1];
+    RCentre[2] = pProjMat->RCentre[2];
+    yToCorner = pProjMat->yToCorner;
+    xToCorner = pProjMat->xToCorner;
+    fOverflowRescale = pProjMat->fOverflowRescale;
+    xPerPixel = pProjMat->xPerPixel;
+    yPerPixel = pProjMat->yPerPixel;
 
-	/*
-	// Initialise the number processed and kept, to 0 
+    /*
+	// Initialise the number processed and kept, to 0
 	*/
-	NumProcessed = 0;
+    NumProcessed = 0;
 
 
-	/*
+    /*
 	// De-reference the Face, shading etc pointers to get local
 	// copies that we increment. At the end of the routine, we
 	// store these incremented values back again
@@ -3145,103 +3055,93 @@ static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace,
 	// It SHOULD be much quicker to manipulate the local copies, as
 	// this should result in less indirection.
 	*/
-	pFace 		= *ppExtFace;
-	pShadingData= *ppExtShadingData;
-	pTextureData= *ppExtTextureData;
-	pPointsData = *ppExtPointsData;
-	
+    pFace = *ppExtFace;
+    pShadingData = *ppExtShadingData;
+    pTextureData = *ppExtTextureData;
+    pPointsData = *ppExtPointsData;
 
-	/*
+
+    /*
 	// If the transform matrix is non uniform, then copy the inverse,
 	// transposing it at the same time
 	// This is not very common (hopefully :) )
 	*/
-	
-	if ( (pTransform->scale_flag == arbitrary_scale) ||
-	     (pTransform->has_neg_scaling))
-	{
-		int i,j;
 
-		if (pTransform->has_neg_scaling)
-		{
-			float fScale = -1.0f;
-		
-			for(i= 0; i < 3; i ++)
-			{
-				for(j= 0; j < 3; j ++)
-				{
-					matcopy[j][i] = pTransform->inv[i][j] * (fScale);
-				}
-			}
-		}
-		else
-		{
-			for(i= 0; i < 3; i ++)
-			{
-				for(j= 0; j < 3; j ++)
-				{
-					matcopy[j][i] = pTransform->inv[i][j];
-				}
-			}
-		}
-		/*
+    if ((pTransform->scale_flag == arbitrary_scale) ||
+        (pTransform->has_neg_scaling)) {
+        int i, j;
+
+        if (pTransform->has_neg_scaling) {
+            float fScale = -1.0f;
+
+            for (i = 0; i < 3; i++) {
+                for (j = 0; j < 3; j++) {
+                    matcopy[j][i] = pTransform->inv[i][j] * (fScale);
+                }
+            }
+        } else {
+            for (i = 0; i < 3; i++) {
+                for (j = 0; j < 3; j++) {
+                    matcopy[j][i] = pTransform->inv[i][j];
+                }
+            }
+        }
+        /*
 		// Set up pointer to the copy
 		*/
-		m = (void*) matcopy;
-	}
-	/*
+        m = (void *) matcopy;
+    }
+        /*
 	// else just set the pointer at the usual matrix
 	*/
-	else
-	{
-		m = pTransform->mat;
-	}
+    else {
+        m = pTransform->mat;
+    }
 
-	/*
+    /*
 	// Step through the planes
 	*/
-	for(/*Nil*/; numFaces != 0;  numFaces--, pFace++, 
-							   pShadingData++, pTextureData++ , pPointsData++)
-	{
-	#if PRE_CULL
-		if (pFace->EdgeFlags & FACE_VISIBLE)
+    for (/*Nil*/; numFaces != 0; numFaces--, pFace++,
+            pShadingData++, pTextureData++, pPointsData++) {
+#if PRE_CULL
+                                                                                                                                if (pFace->EdgeFlags & FACE_VISIBLE)
 		{
-	#endif
+#endif
 
-			/*
+        /*
 			// Define some temporary float values so that the compiler
 			// can assume that when we write to memory, we wont destroy
 			// the source... as in the following matrix operation.
 			*/
-			float tmp1, tmp2, tmp3;
-			
-			/*
+        float tmp1, tmp2, tmp3;
+
+        /*
 			// Transform the normal
 			*/
-			#define Norm pFace->PlaneData.normal
-			tmp1 = Norm[0]*m[0][0] + Norm[1]*m[0][1] + Norm[2]*m[0][2];
+#define Norm pFace->PlaneData.normal
+        tmp1 = Norm[0] * m[0][0] + Norm[1] * m[0][1] + Norm[2] * m[0][2];
 
-			tmp2 = Norm[0]*m[1][0] + Norm[1]*m[1][1] + Norm[2]*m[1][2];
+        tmp2 = Norm[0] * m[1][0] + Norm[1] * m[1][1] + Norm[2] * m[1][2];
 
-			tmp3 = Norm[0]*m[2][0] + Norm[1]*m[2][1] + Norm[2]*m[2][2];
-			#undef Norm
+        tmp3 = Norm[0] * m[2][0] + Norm[1] * m[2][1] + Norm[2] * m[2][2];
+#undef Norm
 
-			pXPlane->normal[0] = tmp1;
-			pXPlane->normal[1] = tmp2;
-			pXPlane->normal[2] = tmp3;
-			/*
+        pXPlane->normal[0] = tmp1;
+        pXPlane->normal[1] = tmp2;
+        pXPlane->normal[2] = tmp3;
+        /*
 			// Get a pointer to a transformed point on this face
 			*/
-			pVert = gpXVertices + pFace->pnVertexIDs[0];
+        pVert = gpXVertices + pFace->pnVertexIDs[0];
 
-			/*
+        /*
 			// Get the "D" value of the plane
 			*/
-			pXPlane->d = DotProd(pXPlane->normal, pVert->vWorldSpace);
+        pXPlane->d = DotProd(pXPlane->normal, pVert->vWorldSpace);
 
-			#if PRE_CULL
+#if PRE_CULL
 
-				/*
+                                                                                                                                /*
 				// Decide which way it faces, and whether we can cull it or not
 				*/
 			#if SLOW_FCMP && !MULTI_FP_REG
@@ -3260,7 +3160,7 @@ static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace,
 					pXPlane->flags = (int) pFace->PlaneData.flags | pf_reversed;
 				}
 				/*
-				// Else is a reverse (anti clockwise) plane 
+				// Else is a reverse (anti clockwise) plane
 				// (Something else is back the front)
 				*/
 				else
@@ -3268,91 +3168,83 @@ static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace,
 					pXExtra->u32EdgeFlags = pFace->EdgeFlags;
 					pXPlane->flags = (int) pFace->PlaneData.flags;
 				}
-			
-			#else
 
-				/*
+#else
+
+        /*
 				// Decide which way it faces, and whether we can cull it or not
 				*/
-			#if SLOW_FCMP && !MULTI_FP_REG
-				if(FLOAT_TO_LONG(pXPlane->d) > 0)
-			#else
-				if(pXPlane->d > 0.0f)
-			#endif
-				{
-					/*
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(pXPlane->d) > 0)
+#else
+            if(pXPlane->d > 0.0f)
+#endif
+        {
+            /*
 					// Read the "static global" variable that was set up when we
 					// first decided to process this mesh
 					//
 					// This is a FORWARD PLANE (Jim has put something backwards)
 					// reverse the normal to get it the right way round.
 					*/
-					if (keepAntiClock)
-					{
-						VecNegate (pXPlane->normal);
-						pXPlane->flags = (int) pFace->PlaneData.flags | pf_reversed;
-						pXPlane->d = -pXPlane->d;
-						pXExtra->u32EdgeFlags = pFace->EdgeFlags ^ 0xFF;
-					}
-					else
-					{
-						/* 
+            if (keepAntiClock) {
+                VecNegate(pXPlane->normal);
+                pXPlane->flags = (int) pFace->PlaneData.flags | pf_reversed;
+                pXPlane->d = -pXPlane->d;
+                pXExtra->u32EdgeFlags = pFace->EdgeFlags ^ 0xFF;
+            } else {
+                /*
 						// cull back faces : Go to the next one
 						*/
-						continue;
-					}
-				}
-				/*
-				// Else is a reverse (anti clockwise) plane 
+                continue;
+            }
+        }
+            /*
+				// Else is a reverse (anti clockwise) plane
 				// (Something else is back the front)
 				*/
-				else
-				{
-					if (keepClockwise)
-					{
-						pXExtra->u32EdgeFlags = pFace->EdgeFlags;
-						pXPlane->flags = (int) pFace->PlaneData.flags;
-					}
-					else
-					{
-						/* cull back faces */
-						continue;
-					}
-				}
-			
-			#endif
+        else {
+            if (keepClockwise) {
+                pXExtra->u32EdgeFlags = pFace->EdgeFlags;
+                pXPlane->flags = (int) pFace->PlaneData.flags;
+            } else {
+                /* cull back faces */
+                continue;
+            }
+        }
 
-			/*
+#endif
+
+        /*
 			// save the pointer to the original plane data... we will need
 			// to access it again later, plus in the Transformed plane data as well.
 			*/
-			pXExtra->pOrigFace = pFace;
-			pXPlane->pOriginalData = &pFace->PlaneData;
+        pXExtra->pOrigFace = pFace;
+        pXPlane->pOriginalData = &pFace->PlaneData;
 
-			/*
+        /*
 			// Compute the sabre params
 			*/
-			fCentreDotNormal = DotProd (pXPlane->normal, RCentre);
-			fXBorder = pXPlane->normal[0] * xToCorner;
-			fYBorder = pXPlane->normal[1] * yToCorner;
+        fCentreDotNormal = DotProd(pXPlane->normal, RCentre);
+        fXBorder = pXPlane->normal[0] * xToCorner;
+        fYBorder = pXPlane->normal[1] * yToCorner;
 
-			if (sfabs (pXPlane->d) < 
-				  (sfabs (fCentreDotNormal) + sfabs (fXBorder) + sfabs (fYBorder)))
-			{
-				DPF((DBG_VERBOSE, 
-					"Perpendicular polygon - bodging up flat plane ..."));
+        if (sfabs (pXPlane->d) <
+            (sfabs (fCentreDotNormal) + sfabs (fXBorder) + sfabs (fYBorder))) {
+            DPF((DBG_VERBOSE,
+                    "Perpendicular polygon - bodging up flat plane ..."));
 
 
-				ASSERT(pVert->vWorldSpace[2] >= pProjMat->foregroundDistance);
+            ASSERT(pVert->vWorldSpace[2] >= pProjMat->foregroundDistance);
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				/* PCX2 has IEEE floating point support.
+            /* PCX2 has IEEE floating point support.
 				 */
-				pXPlane->f32C = (RCentre[2] / pVert->vWorldSpace[2]);
-				pXPlane->f32A = 0.0f;
-				pXPlane->f32B = 0.0f;
+            pXPlane->f32C = (RCentre[2] / pVert->vWorldSpace[2]);
+            pXPlane->f32A = 0.0f;
+            pXPlane->f32B = 0.0f;
 #else
-				pXPlane->n32C =(sgl_int32)(RCentre[2] * FLOAT_TO_FIXED
+                                                                                                                                    pXPlane->n32C =(sgl_int32)(RCentre[2] * FLOAT_TO_FIXED
 									    / pVert->vWorldSpace[2]);
 
 				SGL_TIME_SUSPEND(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
@@ -3361,86 +3253,85 @@ static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace,
 				SGL_TIME_RESUME(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
 #endif
 
-				/*
+            /*
 				// Save pointers to the texturing and shading data
-				// (On a pentium this makes use of 
+				// (On a pentium this makes use of
 				// some of the cycles that are chewed up by the divide)
 				// These 5 pointer assignment lines were originally AFTER
 				// the if statement
 				*/
-				pXPlane->pShadingData= pShadingData;
-				pXPlane->pTextureData= pTextureData;
-				pXPlane->pPointsData= pPointsData;
-				pXExtra++;
-				NumProcessed++;
+            pXPlane->pShadingData = pShadingData;
+            pXPlane->pTextureData = pTextureData;
+            pXPlane->pPointsData = pPointsData;
+            pXExtra++;
+            NumProcessed++;
 
-			}
-			/*
+        }
+            /*
 			// Else this plane is well behaved
 			*/
-			else
-			{
-				float	fInvD;
-				float	fA, fB;
-			
-				fInvD = fOverflowRescale / pXPlane->d;
+        else {
+            float fInvD;
+            float fA, fB;
 
-				/*
+            fInvD = fOverflowRescale / pXPlane->d;
+
+            /*
 				// Save pointers to the texturing and shading data
-				// (On a pentium  this makes use of 
+				// (On a pentium  this makes use of
 				// some of the cycles that are chewed up by the divide)
 				// These 5 pointer assignment lines were originally AFTER
 				// the if statement
 				*/
-				pXPlane->pShadingData= pShadingData;
-				pXPlane->pTextureData= pTextureData;
-				pXPlane->pPointsData= pPointsData;
-				pXExtra++;
-				NumProcessed++;
+            pXPlane->pShadingData = pShadingData;
+            pXPlane->pTextureData = pTextureData;
+            pXPlane->pPointsData = pPointsData;
+            pXExtra++;
+            NumProcessed++;
 
-				fA = pXPlane->normal[0] * xPerPixel * fInvD;
-				fB = pXPlane->normal[1] * yPerPixel * fInvD;
+            fA = pXPlane->normal[0] * xPerPixel * fInvD;
+            fB = pXPlane->normal[1] * yPerPixel * fInvD;
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				pXPlane->f32A = fA;
-				pXPlane->f32B = fB;
-				pXPlane->f32C = (fCentreDotNormal - (fXBorder + fYBorder)) * fInvD;
+            pXPlane->f32A = fA;
+            pXPlane->f32B = fB;
+            pXPlane->f32C = (fCentreDotNormal - (fXBorder + fYBorder)) * fInvD;
 #else
-				SGL_TIME_SUSPEND(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
+                                                                                                                                    SGL_TIME_SUSPEND(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
 				pXPlane->n32A = PackTo20Bit (fA);
 				pXPlane->n32B = PackTo20Bit (fB);
 				SGL_TIME_RESUME(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
 
-				pXPlane->n32C = (sgl_int32) ((fCentreDotNormal - (fXBorder + fYBorder)) 
+				pXPlane->n32C = (sgl_int32) ((fCentreDotNormal - (fXBorder + fYBorder))
 										* (fInvD * FLOAT_TO_FIXED));
 #endif
-			}/* end else choose projection method*/
+        }/* end else choose projection method*/
 
 
-			/*
+        /*
 			// increment the pointers to the results
 			*/
-			pXPlane++;
+        pXPlane++;
 #if PRE_CULL
-		}
+        }
 #endif
-	}/*end for k*/
+    }/*end for k*/
 
 
-	/*
+    /*
 	// Save the incremented pointers back again
 	*/
-	*ppExtFace 		  = pFace;
-	*ppExtShadingData = pShadingData;
-	*ppExtTextureData = pTextureData;
-	*ppExtPointsData  = pPointsData;
-	
+    *ppExtFace = pFace;
+    *ppExtShadingData = pShadingData;
+    *ppExtTextureData = pTextureData;
+    *ppExtPointsData = pPointsData;
 
-	/*
+
+    /*
 	// Return the number we are left with
 	*/
-	SGL_TIME_STOP(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
-	return NumProcessed;
+    SGL_TIME_STOP(TRANSFORM_COMPUTE_SABRE_ALL_TIME)
+    return NumProcessed;
 
 }
 
@@ -3449,7 +3340,7 @@ static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace,
  * Inputs         : pFace     - pointer to start of an array of face data
  *					numFaces  - the number of faces to process
  *					pTransform - pointer to the transformation
- *	
+ *
  * Outputs        : pTransformedPlanes - the planes/faces after transformation
  *				    pExtras			   - the rest of the data needed for
  *
@@ -3461,59 +3352,57 @@ static int TransformAndComputeSabreParamsVisible(const FACE  **ppExtFace,
  *					foreground Z plane, or to one side etc,
  *					and rejects those that are.
  **************************************************************************/
-static int TransformAndComputeSabreParamsPartlyVisible(const FACE **ppExtFace, 
-												int	   numFaces,
-							const TRANSFORM_STRUCT	  *pTransform,
-										PXMESHEXTRA	   pXExtra,
-							 TRANSFORMED_PLANE_STRUCT *pXPlane,
-						const CONV_SHADING_STRUCT	  **ppExtShadingData,
-						const CONV_TEXTURE_UNION	  **ppExtTextureData,
-						const CONV_POINTS_STRUCT	  **ppExtPointsData)
+static int TransformAndComputeSabreParamsPartlyVisible(const FACE **ppExtFace,
+                                                       int numFaces,
+                                                       const TRANSFORM_STRUCT *pTransform,
+                                                       PXMESHEXTRA pXExtra,
+                                                       TRANSFORMED_PLANE_STRUCT *pXPlane,
+                                                       const CONV_SHADING_STRUCT **ppExtShadingData,
+                                                       const CONV_TEXTURE_UNION **ppExtTextureData,
+                                                       const CONV_POINTS_STRUCT **ppExtPointsData) {
+    int NumProcessed;
 
-{
-	int NumProcessed;
-	
-	/*
+    /*
 	// To make the code simpler, rather than have two different
 	// loops for processing normals: IE either using normal matrix
 	// (ie either uniform or no scaling) or transpose of inverse
 	// (when non uniform). Basically, since the non-uniform is
-	// fairly rare, we will copy the inverse and transpose it, 
+	// fairly rare, we will copy the inverse and transpose it,
 	// which means we can use the same code
 	*/
-	float const (*m)[4];
-	float matcopy[3][4];
-	PTRANSVERTEX pVert;
+    float const (*m)[4];
+    float matcopy[3][4];
+    PTRANSVERTEX pVert;
 
-	const FACE	 				*pFace;
-	const CONV_SHADING_STRUCT	*pShadingData;
-	const CONV_TEXTURE_UNION	*pTextureData;
-	const CONV_POINTS_STRUCT	*pPointsData;
-	float foregroundDistance, invForegroundDistance, fOverflowRescale;
-	float yToCorner, xToCorner, xPerPixel, yPerPixel;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	sgl_vector RCentre;
+    const FACE *pFace;
+    const CONV_SHADING_STRUCT *pShadingData;
+    const CONV_TEXTURE_UNION *pTextureData;
+    const CONV_POINTS_STRUCT *pPointsData;
+    float foregroundDistance, invForegroundDistance, fOverflowRescale;
+    float yToCorner, xToCorner, xPerPixel, yPerPixel;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    sgl_vector RCentre;
 
-	foregroundDistance = pProjMat->foregroundDistance;
-	invForegroundDistance = pProjMat->invForegroundDistance;
-	RCentre[0] = pProjMat->RCentre[0];
-	RCentre[1] = pProjMat->RCentre[1];
-	RCentre[2] = pProjMat->RCentre[2];
-	yToCorner = pProjMat->yToCorner;
-	xToCorner = pProjMat->xToCorner;
-	fOverflowRescale = pProjMat->fOverflowRescale;
-	xPerPixel = pProjMat->xPerPixel;
-	yPerPixel = pProjMat->yPerPixel;
+    foregroundDistance = pProjMat->foregroundDistance;
+    invForegroundDistance = pProjMat->invForegroundDistance;
+    RCentre[0] = pProjMat->RCentre[0];
+    RCentre[1] = pProjMat->RCentre[1];
+    RCentre[2] = pProjMat->RCentre[2];
+    yToCorner = pProjMat->yToCorner;
+    xToCorner = pProjMat->xToCorner;
+    fOverflowRescale = pProjMat->fOverflowRescale;
+    xPerPixel = pProjMat->xPerPixel;
+    yPerPixel = pProjMat->yPerPixel;
 
-	SGL_TIME_START(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
+    SGL_TIME_START(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
 
-	/*
-	// Initialise the number processed and kept, to 0 
+    /*
+	// Initialise the number processed and kept, to 0
 	*/
-	NumProcessed = 0;
+    NumProcessed = 0;
 
 
-	/*
+    /*
 	// De-reference the Face, shading etc pointers to get local
 	// copies that we increment. At the end of the routine, we
 	// store these incremented values back again
@@ -3521,77 +3410,67 @@ static int TransformAndComputeSabreParamsPartlyVisible(const FACE **ppExtFace,
 	// It SHOULD be much quicker to manipulate the local copies, as
 	// this should result in less indirection.
 	*/
-	pFace 		= *ppExtFace;
-	pShadingData= *ppExtShadingData;
-	pTextureData= *ppExtTextureData;
-	pPointsData = *ppExtPointsData;
-	
+    pFace = *ppExtFace;
+    pShadingData = *ppExtShadingData;
+    pTextureData = *ppExtTextureData;
+    pPointsData = *ppExtPointsData;
 
-	/*
+
+    /*
 	// If the transform matrix is non uniform, then copy the inverse,
 	// transposing it at the same time
 	// This is not very common (hopefully :) )
 	*/
-	
-	if ( (pTransform->scale_flag == arbitrary_scale) ||
-	     (pTransform->has_neg_scaling))
-	{
-		int i,j;
 
-		if (pTransform->has_neg_scaling)
-		{
-			float fScale = -1.0f;
-		
-			for(i= 0; i < 3; i ++)
-			{
-				for(j= 0; j < 3; j ++)
-				{
-					matcopy[j][i] = pTransform->inv[i][j] * (fScale);
-				}
-			}
-		}
-		else
-	  	{
-			for(i= 0; i < 3; i ++)
-			{
-				for(j= 0; j < 3; j ++)
-				{
-					matcopy[j][i] = pTransform->inv[i][j];
-				}
-			}
-	  	}
-		/*
+    if ((pTransform->scale_flag == arbitrary_scale) ||
+        (pTransform->has_neg_scaling)) {
+        int i, j;
+
+        if (pTransform->has_neg_scaling) {
+            float fScale = -1.0f;
+
+            for (i = 0; i < 3; i++) {
+                for (j = 0; j < 3; j++) {
+                    matcopy[j][i] = pTransform->inv[i][j] * (fScale);
+                }
+            }
+        } else {
+            for (i = 0; i < 3; i++) {
+                for (j = 0; j < 3; j++) {
+                    matcopy[j][i] = pTransform->inv[i][j];
+                }
+            }
+        }
+        /*
 		// Set up pointer to the copy
 		*/
-		m = (void*) matcopy;
-	}
-	/*
+        m = (void *) matcopy;
+    }
+        /*
 	// else just set the pointer at the usual matrix
 	*/
-	else
-	{
-		m = pTransform->mat;
-	}
+    else {
+        m = pTransform->mat;
+    }
 
-	/*
+    /*
 	// Step through the planes
 	*/
-	for(/*Nil*/;  numFaces != 0;  numFaces--, pFace++, 
-								  pShadingData++, pTextureData++, pPointsData++)
-	{
+    for (/*Nil*/; numFaces != 0; numFaces--, pFace++,
+            pShadingData++, pTextureData++, pPointsData++) {
 #if PRE_CULL
-		if (pFace->EdgeFlags & FACE_VISIBLE)
+                                                                                                                                if (pFace->EdgeFlags & FACE_VISIBLE)
 		{
 #endif
-			PTRANSVERTEX pVa, pVb, pVc;
-			int			 Offscreen;
+        PTRANSVERTEX pVa, pVb, pVc;
+        int Offscreen;
 
-			float	fCentreDotNormal;
-			float	fXBorder;
-			float	fYBorder;
-			float tmp1, tmp2, tmp3;
+        float fCentreDotNormal;
+        float fXBorder;
+        float fYBorder;
+        float tmp1, tmp2, tmp3;
 
-			/*
+        /*
 			// First see if we can reject the face as being in front of the
 			// front Z clipping plane, or to one side etc. Basically see if
 			//  ALL of the vertices have a particular clip flag set
@@ -3599,59 +3478,57 @@ static int TransformAndComputeSabreParamsPartlyVisible(const FACE **ppExtFace,
 			// This bit of code is likely to be dog slow because of all
 			// the array indexing.
 			*/
-			pVa = gpXVertices + pFace->pnVertexIDs[0];
-			pVb = gpXVertices + pFace->pnVertexIDs[1];
-			pVc = gpXVertices + pFace->pnVertexIDs[2];
+        pVa = gpXVertices + pFace->pnVertexIDs[0];
+        pVb = gpXVertices + pFace->pnVertexIDs[1];
+        pVc = gpXVertices + pFace->pnVertexIDs[2];
 
-			Offscreen = pVa->Flags & pVb->Flags & pVc->Flags;
+        Offscreen = pVa->Flags & pVb->Flags & pVc->Flags;
 
-			if(pFace->nVertices == 4)
-			{
-				PTRANSVERTEX pVd;
-				pVd = gpXVertices + pFace->pnVertexIDs[3];
-				Offscreen &= pVd->Flags;
-			}
-			/*
+        if (pFace->nVertices == 4) {
+            PTRANSVERTEX pVd;
+            pVd = gpXVertices + pFace->pnVertexIDs[3];
+            Offscreen &= pVd->Flags;
+        }
+        /*
 			// Ok if they are all clipped the same way, get the next face
 			*/
-			if(Offscreen)
-			{
-				continue;
-			}
+        if (Offscreen) {
+            continue;
+        }
 
-			
-			/*
+
+        /*
 			// Now go on with exactly the same processing as in the non Z clipped
 			// routine.....
 			//
 			// Transform the normal
 			*/
-			#define Norm pFace->PlaneData.normal
-			tmp1 = Norm[0]*m[0][0] + Norm[1]*m[0][1] + Norm[2]*m[0][2];
+#define Norm pFace->PlaneData.normal
+        tmp1 = Norm[0] * m[0][0] + Norm[1] * m[0][1] + Norm[2] * m[0][2];
 
-			tmp2 = Norm[0]*m[1][0] + Norm[1]*m[1][1] + Norm[2]*m[1][2];
+        tmp2 = Norm[0] * m[1][0] + Norm[1] * m[1][1] + Norm[2] * m[1][2];
 
-			tmp3 = Norm[0]*m[2][0] + Norm[1]*m[2][1] + Norm[2]*m[2][2];
+        tmp3 = Norm[0] * m[2][0] + Norm[1] * m[2][1] + Norm[2] * m[2][2];
 
-			#undef Norm
-			pXPlane->normal[0] = tmp1;
-			pXPlane->normal[1] = tmp2;
-			pXPlane->normal[2] = tmp3;
+#undef Norm
+        pXPlane->normal[0] = tmp1;
+        pXPlane->normal[1] = tmp2;
+        pXPlane->normal[2] = tmp3;
 
 
-			/*
+        /*
 			// Get a pointer to a transformed point on this face
 			*/
-			pVert = gpXVertices + pFace->pnVertexIDs[0];
+        pVert = gpXVertices + pFace->pnVertexIDs[0];
 
-			/*
+        /*
 			// Get the "D" value of the plane
 			*/
-			pXPlane->d = DotProd(pXPlane->normal, pVert->vWorldSpace);
+        pXPlane->d = DotProd(pXPlane->normal, pVert->vWorldSpace);
 
-			#if PRE_CULL
+#if PRE_CULL
 
-				/*
+                                                                                                                                /*
 				// Decide which way it faces, and whether we can cull it or not
 				*/
 			#if SLOW_FCMP && !MULTI_FP_REG
@@ -3673,7 +3550,7 @@ static int TransformAndComputeSabreParamsPartlyVisible(const FACE **ppExtFace,
 					pXPlane->flags = (int) pFace->PlaneData.flags | pf_reversed;
 				}
 				/*
-				// Else is a reverse (anti clockwise) plane 
+				// Else is a reverse (anti clockwise) plane
 				// (Something else is back the front)
 				*/
 				else
@@ -3682,199 +3559,187 @@ static int TransformAndComputeSabreParamsPartlyVisible(const FACE **ppExtFace,
 					pXPlane->flags = (int) pFace->PlaneData.flags;
 				}
 
-			#else
+#else
 
-				/*
+        /*
 				// Decide which way it faces, and whether we can cull it or not
 				*/
-			#if SLOW_FCMP && !MULTI_FP_REG
-				if(FLOAT_TO_LONG(pXPlane->d) > 0)
-			#else
-				if(pXPlane->d > 0.0f)
-			#endif
-				{
-					/*
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(pXPlane->d) > 0)
+#else
+            if(pXPlane->d > 0.0f)
+#endif
+        {
+            /*
 					// Read the "static global" variable that was set up when we
 					// first decided to process this mesh
 					//
-					// This is a FORWARD PLANE 
+					// This is a FORWARD PLANE
 					// reverse the normal to get it the right way round.
 					*/
-					if (keepAntiClock)
-					{
-						VecNegate (pXPlane->normal);
+            if (keepAntiClock) {
+                VecNegate(pXPlane->normal);
 
-						pXPlane->flags = (int) pFace->PlaneData.flags | pf_reversed;
-						pXPlane->d = -pXPlane->d;
-						/*
+                pXPlane->flags = (int) pFace->PlaneData.flags | pf_reversed;
+                pXPlane->d = -pXPlane->d;
+                /*
 						// Reverse the edges, by flipping the flag
 						*/
-						pXExtra->u32EdgeFlags = pFace->EdgeFlags ^ 0xFF;
-					}
-					else
-					{
-						/* 
+                pXExtra->u32EdgeFlags = pFace->EdgeFlags ^ 0xFF;
+            } else {
+                /*
 						// cull back faces : Go to the next one
 						*/
-						continue;
-					}
-				}
-				/*
-				// Else is a reverse (anti clockwise) plane 
+                continue;
+            }
+        }
+            /*
+				// Else is a reverse (anti clockwise) plane
 				// (Something else is back the front)
 				*/
-				else
-				{
-					if (keepClockwise)
-					{
-						pXExtra->u32EdgeFlags = pFace->EdgeFlags;
-						pXPlane->flags = (int) pFace->PlaneData.flags;
-					}
-					else
-					{
-						/* cull back faces */
-						continue;
-					}
-				}
-			
-			#endif
+        else {
+            if (keepClockwise) {
+                pXExtra->u32EdgeFlags = pFace->EdgeFlags;
+                pXPlane->flags = (int) pFace->PlaneData.flags;
+            } else {
+                /* cull back faces */
+                continue;
+            }
+        }
 
-			/*
+#endif
+
+        /*
 			// save the pointer to the original plane data... we will need
 			// to access it again later, plus in the Transformed plane data as well.
 			*/
-			pXExtra->pOrigFace = pFace;
-			pXPlane->pOriginalData = &pFace->PlaneData;
+        pXExtra->pOrigFace = pFace;
+        pXPlane->pOriginalData = &pFace->PlaneData;
 
-			/*
+        /*
 			// Compute the sabre params
 			*/
-			fCentreDotNormal = DotProd (pXPlane->normal, RCentre);
-			fXBorder = pXPlane->normal[0] * xToCorner;
-			fYBorder = pXPlane->normal[1] * yToCorner;
+        fCentreDotNormal = DotProd(pXPlane->normal, RCentre);
+        fXBorder = pXPlane->normal[0] * xToCorner;
+        fYBorder = pXPlane->normal[1] * yToCorner;
 
-			if (sfabs (pXPlane->d) < 
-				  (sfabs (fCentreDotNormal) + sfabs (fXBorder) + sfabs (fYBorder)))
-			{
-				float	fInvZdist;
+        if (sfabs (pXPlane->d) <
+            (sfabs (fCentreDotNormal) + sfabs (fXBorder) + sfabs (fYBorder))) {
+            float fInvZdist;
 
-				DPF((DBG_VERBOSE,
-					 "Perpendicular polygon - bodging up flat plane ..."));
+            DPF((DBG_VERBOSE,
+                    "Perpendicular polygon - bodging up flat plane ..."));
 
 
-				if(pVert->vWorldSpace[2] < foregroundDistance)
-				{
-					fInvZdist = invForegroundDistance;
-				}
-				else
-				{
-					fInvZdist = 1.0f/pVert->vWorldSpace[2];
-				}
+            if (pVert->vWorldSpace[2] < foregroundDistance) {
+                fInvZdist = invForegroundDistance;
+            } else {
+                fInvZdist = 1.0f / pVert->vWorldSpace[2];
+            }
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				/* PCX2 has IEEE floating point support.
+            /* PCX2 has IEEE floating point support.
 				 */
-				pXPlane->f32C = (RCentre[2] * fInvZdist);
-				pXPlane->f32A = 0.0f;
-				pXPlane->f32B = 0.0f;
+            pXPlane->f32C = (RCentre[2] * fInvZdist);
+            pXPlane->f32A = 0.0f;
+            pXPlane->f32B = 0.0f;
 #else
-				pXPlane->n32C 
+                                                                                                                                    pXPlane->n32C
 				  =(sgl_int32)(RCentre[2] * FLOAT_TO_FIXED * fInvZdist);
 
 				pXPlane->n32A = SFLOAT_20BIT_ZERO;
 				pXPlane->n32B = SFLOAT_20BIT_ZERO;
 #endif
 
-				/*
+            /*
 				// Save pointers to the texturing and shading data
-				// (On a pentium this makes use of 
+				// (On a pentium this makes use of
 				// some of the cycles that are chewed up by the divide)
 				// These 5 pointer assignment lines were originally AFTER
 				// the if statement
 				*/
-				pXPlane->pShadingData= pShadingData;
-				pXPlane->pTextureData= pTextureData;
-				pXPlane->pPointsData= pPointsData;
-				pXExtra++;
-				NumProcessed++;
-			}
-			/*
+            pXPlane->pShadingData = pShadingData;
+            pXPlane->pTextureData = pTextureData;
+            pXPlane->pPointsData = pPointsData;
+            pXExtra++;
+            NumProcessed++;
+        }
+            /*
 			// Else this plane is well behaved
 			*/
-			else
-			{
-				float	fInvD;
-				float	fA, fB;
+        else {
+            float fInvD;
+            float fA, fB;
 
-				fInvD = fOverflowRescale / pXPlane->d;
+            fInvD = fOverflowRescale / pXPlane->d;
 
-				/*
+            /*
 				// Save pointers to the texturing and shading data
-				// (On a pentium this makes use of 
+				// (On a pentium this makes use of
 				// some of the cycles that are chewed up by the divide)
 				// These 5 pointer assignment lines were originally AFTER
 				// the if statement
 				*/
-				pXPlane->pShadingData= pShadingData;
-				pXPlane->pTextureData= pTextureData;
-				pXPlane->pPointsData= pPointsData;
-				pXExtra++;
-				NumProcessed++;
+            pXPlane->pShadingData = pShadingData;
+            pXPlane->pTextureData = pTextureData;
+            pXPlane->pPointsData = pPointsData;
+            pXExtra++;
+            NumProcessed++;
 
-				fA = pXPlane->normal[0] * xPerPixel * fInvD;
-				fB = pXPlane->normal[1] * yPerPixel * fInvD;
+            fA = pXPlane->normal[0] * xPerPixel * fInvD;
+            fB = pXPlane->normal[1] * yPerPixel * fInvD;
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-				pXPlane->f32A = fA;
-				pXPlane->f32B = fB;
-				pXPlane->f32C = ((fCentreDotNormal - (fXBorder + fYBorder)) * fInvD);
+            pXPlane->f32A = fA;
+            pXPlane->f32B = fB;
+            pXPlane->f32C = ((fCentreDotNormal - (fXBorder + fYBorder)) * fInvD);
 #else
-				SGL_TIME_SUSPEND(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
+                                                                                                                                    SGL_TIME_SUSPEND(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
 				pXPlane->n32A = PackTo20Bit (fA);
 				pXPlane->n32B = PackTo20Bit (fB);
 				SGL_TIME_RESUME(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
 
-				pXPlane->n32C = (sgl_int32) ((fCentreDotNormal - (fXBorder + fYBorder)) 
+				pXPlane->n32C = (sgl_int32) ((fCentreDotNormal - (fXBorder + fYBorder))
 										* fInvD * FLOAT_TO_FIXED);
 
 #endif
 
-			}/* end else choose projection method*/
+        }/* end else choose projection method*/
 
-			/*
+        /*
 			// increment the pointers to the results
 			*/
-			pXPlane++;
+        pXPlane++;
 #if PRE_CULL
-		}
+        }
 #endif
-	}/*end for k*/
-													
+    }/*end for k*/
 
-	/*
+
+    /*
 	// Save the incremented pointers back again
 	*/
-	*ppExtFace 		  = pFace;
-	*ppExtShadingData = pShadingData;
-	*ppExtTextureData = pTextureData;
-	*ppExtPointsData  = pPointsData;
+    *ppExtFace = pFace;
+    *ppExtShadingData = pShadingData;
+    *ppExtTextureData = pTextureData;
+    *ppExtPointsData = pPointsData;
 
 
-	/*
+    /*
 	// Return the number we are left with
 	*/
-	SGL_TIME_STOP(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
+    SGL_TIME_STOP(TRANSFORM_COMPUTE_SABRE_PARTLY_TIME)
 
-	return NumProcessed;
+    return NumProcessed;
 
 }
 
 #if PRE_CULL
 
-static int PreprocessFacesVisible (int numVertices, 
-								   int numEdges, 
-								   int numFaces, 
-								   VERTEX *pVertices, 
-								   FACE   *pFace, 
+                                                                                                                        static int PreprocessFacesVisible (int numVertices,
+								   int numEdges,
+								   int numFaces,
+								   VERTEX *pVertices,
+								   FACE   *pFace,
 								   const TRANSFORM_STRUCT	*pTransform)
 {
 	#if ICL
@@ -3927,7 +3792,7 @@ PFVLoop:	/* load EyePointInObjectSpace */
 			fld		DWORD PTR 12[ecx]
 			fld		DWORD PTR 12[ecx+16]
 			fld		DWORD PTR 12[ecx+32]
-						
+
 			/* get object space coordinates for vertex 0 */
 
 			mov		ecx, 0[ebx].pnVertexIDs
@@ -3974,7 +3839,7 @@ PFVLoop:	/* load EyePointInObjectSpace */
 			mov		ecx, DWORD PTR [DminusEdotN]
 			and		ecx, 0x01000000UL + 0x7F000000UL
 			xor		ecx, CullMode
-			jz		NotVisible							
+			jz		NotVisible
 			or		BYTE PTR [ebx].EdgeFlags, 0x80
 
 			/* set the vertex and edge indices to 1 for visible */
@@ -3994,7 +3859,7 @@ PFVLoop:	/* load EyePointInObjectSpace */
 
 			cmp		DWORD PTR [ebx].nVertices, 4
 			jne		NotFourV
-			
+
 			mov		eax, 12[ebx].pnVertexIDs
 			mov		ecx, 12[ebx].pnEdgeIDs
 			mov		BYTE PTR [esi+eax], 1
@@ -4008,7 +3873,7 @@ NotFourV:	add		ebx, SIZE FACE
 NotVisible:	and		BYTE PTR [ebx].EdgeFlags, 0x7F
 			add		ebx, SIZE FACE
 			dec		edx
-			jnz		PFVLoop		
+			jnz		PFVLoop
 
 PFVExit:	pop		ebx
 			pop		edi
@@ -4021,20 +3886,20 @@ PFVExit:	pop		ebx
 		float		d, EyeDotNormal;
 		sgl_uint8		*p;
 		sgl_uint32		*p32;
-		
+
 		EyePointInObjectSpace[0] = pTransform->inv[0][3];
 		EyePointInObjectSpace[1] = pTransform->inv[1][3];
 		EyePointInObjectSpace[2] = pTransform->inv[2][3];
-		
+
 		p = (sgl_uint8 *) gpXVertexIndex;
-		
+
 		while (numVertices--)
 		{
 			*(p++) = 0;
 		}
 
 		p = (sgl_uint8 *) gpXEdgeIndex;
-		
+
 		while (numEdges--)
 		{
 			*(p++) = 0;
@@ -4044,9 +3909,9 @@ PFVExit:	pop		ebx
 		{
 			d = 			DotProd (pFace->PlaneData.normal, pVertices[pFace->pnVertexIDs[0]].vVertex);
 			EyeDotNormal = 	DotProd (pFace->PlaneData.normal, EyePointInObjectSpace);
-			
+
 			/* use bitwise ops to reduce branching */
-			
+
 			if (((d > EyeDotNormal) & (keepAntiClock != 0)) |
 			    ((d < EyeDotNormal) & (keepClockwise != 0)))
 			{
@@ -4091,7 +3956,7 @@ PFVExit:	pop		ebx
  * Inputs         : pFace     - pointer to start of an array of input face data
  *					numFaces  - the number of faces to process
  *					pTransform - pointer to the transformation
- *	
+ *
  * Outputs        : pTransformedPlanes - the planes/faces after transformation
  *				    pExtras			   - the rest of the data needed for
  *
@@ -4105,47 +3970,45 @@ PFVExit:	pop		ebx
  *					IT ASSUMES all the faces are COMPLETELY ON SCREEN.
  **************************************************************************/
 
-#define CHOOSE_MINMAX(a,b,c) if(a<b)b=a;else if(a>c)c=a;
+#define CHOOSE_MINMAX(a, b, c) if(a<b)b=a;else if(a>c)c=a;
 
-static int ProcessFacesVisible (const FACE **ppFace, 
-									  int	 numFaces,
-					const TRANSFORM_STRUCT	*pTransform,
-						  PXMESHEXTRA		 pXExtra,
-				TRANSFORMED_PLANE_STRUCT	*pXPlane,
-				const CONV_SHADING_STRUCT  **ppShadingData,
-				const CONV_TEXTURE_UNION   **ppTextureData,
-				const CONV_POINTS_STRUCT   **ppPointsData)
-									  
-{
-	int k;
-	#if 0 /*defined (ICL)*/
-		/* 
+static int ProcessFacesVisible(const FACE **ppFace,
+                               int numFaces,
+                               const TRANSFORM_STRUCT *pTransform,
+                               PXMESHEXTRA pXExtra,
+                               TRANSFORMED_PLANE_STRUCT *pXPlane,
+                               const CONV_SHADING_STRUCT **ppShadingData,
+                               const CONV_TEXTURE_UNION **ppTextureData,
+                               const CONV_POINTS_STRUCT **ppPointsData) {
+    int k;
+#if 0 /*defined (ICL)*/
+                                                                                                                            /*
 			Otherwise NumRemaining is optimised into a reg - we want it
 			in RAM!
 		*/
 		static int NumRemaining;
-	#else
-		int NumRemaining;
-	#endif
-	sgl_int32 n32MinX, n32MinY, n32MaxX, n32MaxY;
-	PTRANSVERTEX   pVa, pVb, pVc, pVd;
-	
-	/*
+#else
+    int NumRemaining;
+#endif
+    sgl_int32 n32MinX, n32MinY, n32MaxX, n32MaxY;
+    PTRANSVERTEX pVa, pVb, pVc, pVd;
+
+    /*
 	// First of all, transform, cull, and calculate sabre parameters for
 	// the faces.
 	*/
-	NumRemaining = TransformAndComputeSabreParamsVisible(ppFace, numFaces, 
-				   pTransform, pXExtra, pXPlane,
-				   ppShadingData, ppTextureData, ppPointsData);
+    NumRemaining = TransformAndComputeSabreParamsVisible(ppFace, numFaces,
+                                                         pTransform, pXExtra, pXPlane,
+                                                         ppShadingData, ppTextureData, ppPointsData);
 
 
-	ASSERT((NumRemaining >= 0) && (NumRemaining <= numFaces));
+    ASSERT((NumRemaining >= 0) && (NumRemaining <= numFaces));
 
-	SGL_TIME_START(TRANSFORM_FACES_ALL_TIME)
+    SGL_TIME_START(TRANSFORM_FACES_ALL_TIME)
 
-	#if 0 /*defined (ICL)*/
-		
-		__asm
+#if 0 /*defined (ICL)*/
+
+                                                                                                                            __asm
 		{
 			cmp		DWORD PTR [NumRemaining], 0
 			jle		PFV_exit
@@ -4156,7 +4019,7 @@ static int ProcessFacesVisible (const FACE **ppFace,
 			push	ebx
 
 //			int 3
-			
+
 			// esi: pXExtra
 			// edi: pXPlane
 			// ebp: pFace
@@ -4164,14 +4027,14 @@ static int ProcessFacesVisible (const FACE **ppFace,
 			// ebx: -
 			// ecx: -
 			// edx: -
-			
+
 			mov		esi, pXExtra
 			mov		edi, pXPlane
 
 PFV_loop:
 
 			mov		ebp, DWORD PTR [esi].pOrigFace
-			
+
 			mov		ecx, DWORD PTR 0[ebp].pnVertexIDs
 			mov		edx, DWORD PTR [gpXVertices]
 			lea		ecx, DWORD PTR [ecx+ecx*4]
@@ -4184,7 +4047,7 @@ PFV_loop:
 			mov		edx, DWORD PTR 4[ecx].vScreenSpace
 			mov		DWORD PTR 0[edi + 48], ebx
 			mov		DWORD PTR 4[edi + 48], edx
-			
+
 			// VecCopy (pVa->vWorldSpace, pXPlane->repPnt);
 
 			mov		eax, DWORD PTR 0[ecx].vWorldSpace
@@ -4204,7 +4067,7 @@ PFV_loop:
 			fstp	DWORD PTR 0[ebp].PlaneData.rep_point
 			fstp	DWORD PTR 4[ebp].PlaneData.rep_point
 			fstp	DWORD PTR 8[ebp].PlaneData.rep_point
-			
+
 			mov		al, BYTE PTR 0[ecx].nRegion
 			mov		bl, BYTE PTR 4[ecx].nRegion
 
@@ -4241,14 +4104,14 @@ _1_2:
 			jmp		_2_2
 _2_1:		cmp		ah, dl
 			jg		_2_2
-			mov		ah, dl			
+			mov		ah, dl
 _2_2:		cmp		bl, dh
 			jl		_3_1
 			mov		bl, dh
 			jmp		_3_2
 _3_1:		cmp		bh, dh
 			jg		_3_2
-			mov		bh, dh			
+			mov		bh, dh
 _3_2:
 			// pXExtra->pE[0] = gpXEdges + pFace->pnEdgeIDs[0];
 			// pXExtra->pE[1] = gpXEdges + pFace->pnEdgeIDs[1];
@@ -4269,7 +4132,7 @@ _3_2:
 			mov		DWORD PTR 8[esi].pE, ecx
 
 			// pXExtra->nEdges = pFace->nVertices;
-			
+
 			mov		ecx, DWORD PTR [ebp].nVertices
 			mov		DWORD PTR [esi].nEdges, ecx
 
@@ -4298,15 +4161,15 @@ _3_2:
 			jmp		_4_2
 _4_1:		cmp		ah, dl
 			jg		_4_2
-			mov		ah, dl			
+			mov		ah, dl
 _4_2:		cmp		bl, dh
 			jl		_5_1
 			mov		bl, dh
 			jmp		_5_2
 _5_1:		cmp		bh, dh
 			jg		_5_2
-			mov		bh, dh			
-_5_2:		
+			mov		bh, dh
+_5_2:
 
 			// pXExtra->ZClipped = FALSE;
 
@@ -4329,7 +4192,7 @@ _5_2:
 			add		edi, SIZE TRANSFORMED_PLANE_STRUCT
 			dec		DWORD PTR [NumRemaining]
 			jnz		PFV_loop
-			
+
 			pop		ebx
 			pop		edi
 			pop		esi
@@ -4339,181 +4202,170 @@ PFV_exit:
 
 		}
 
-	#else
+#else
 
-		/*
+    /*
 		// Step through the remaining faces determining the regions of the screen
 		// they lie in
 		*/
-		for(k = NumRemaining; k != 0; k--, pXPlane++, pXExtra++)
-		{
-			const FACE *pFace;
+    for (k = NumRemaining; k != 0; k--, pXPlane++, pXExtra++) {
+        const FACE *pFace;
 
-			/*
+        /*
 			// Get access to the ORIGINAL face
 			*/
-			pFace = pXExtra->pOrigFace;
+        pFace = pXExtra->pOrigFace;
 
-			pXExtra->nEdges = pFace->nVertices;
+        pXExtra->nEdges = pFace->nVertices;
 
-			/*
+        /*
 			// Check that we have the correct number of vertices
 			*/
-			ASSERT ((pFace->nVertices == 3) || (pFace->nVertices == 4));
+        ASSERT ((pFace->nVertices == 3) || (pFace->nVertices == 4));
 
-			/*
+        /*
 			// Work out the regions the face covers
 			//
 			// First get pointers to the first three vertices
 			*/
-			pVa = gpXVertices + pFace->pnVertexIDs[0];
-			pVb = gpXVertices + pFace->pnVertexIDs[1];
-			pVc = gpXVertices + pFace->pnVertexIDs[2];
+        pVa = gpXVertices + pFace->pnVertexIDs[0];
+        pVb = gpXVertices + pFace->pnVertexIDs[1];
+        pVc = gpXVertices + pFace->pnVertexIDs[2];
 
-			/* 
+        /*
 			// copy projected rep point coords. All points are visible,
 			// so the first vertex will do nicely.
 			*/
-			{
-				/*
+        {
+            /*
 				// Use temporary variables because this will convince
 				// a compiler that pVa->vScreenSpace and pXPlane->projRepPoint
 				// dont overlap, and hence can be done in parallel
 				*/
-				float tmp1, tmp2;
+            float tmp1, tmp2;
 
-				tmp1 = pVa->vScreenSpace[0];
-				tmp2 = pVa->vScreenSpace[1];
-				pXPlane->projRepPoint[0] = tmp1; 
-				pXPlane->projRepPoint[1] = tmp2;
-			}
+            tmp1 = pVa->vScreenSpace[0];
+            tmp2 = pVa->vScreenSpace[1];
+            pXPlane->projRepPoint[0] = tmp1;
+            pXPlane->projRepPoint[1] = tmp2;
+        }
 
-			/*
+        /*
 			// Set up a world space rep point (which would be used
 			// by the shading routine
 			//
 			// OPTIMISATION. The pFace->PlaneData.rep_point should
 			// be set when the mesh face is created/modified. SJF
 			*/
-			VecCopy (pVa->pvVertex, (float*) pFace->PlaneData.rep_point);
-			VecCopy (pVa->vWorldSpace, pXPlane->repPnt);
+        VecCopy(pVa->pvVertex, (float *) pFace->PlaneData.rep_point);
+        VecCopy(pVa->vWorldSpace, pXPlane->repPnt);
 
 
-			/*
+        /*
 			// Get the extremes of the first 2 points
 			*/
-			if(pVa->nRegion[0] < pVb->nRegion[0])
-			{
-				n32MinX	= pVa->nRegion[0];
-				n32MaxX	= pVb->nRegion[0];
-			}
-			else
-			{
-				n32MinX	= pVb->nRegion[0];
-				n32MaxX	= pVa->nRegion[0];
-			}
+        if (pVa->nRegion[0] < pVb->nRegion[0]) {
+            n32MinX = pVa->nRegion[0];
+            n32MaxX = pVb->nRegion[0];
+        } else {
+            n32MinX = pVb->nRegion[0];
+            n32MaxX = pVa->nRegion[0];
+        }
 
-			if(pVa->nRegion[1] < pVb->nRegion[1])
-			{
-				n32MinY = pVa->nRegion[1];
-				n32MaxY = pVb->nRegion[1];
-			}
-			else
-			{
-				n32MinY = pVb->nRegion[1];
-				n32MaxY = pVa->nRegion[1];
-			}
+        if (pVa->nRegion[1] < pVb->nRegion[1]) {
+            n32MinY = pVa->nRegion[1];
+            n32MaxY = pVb->nRegion[1];
+        } else {
+            n32MinY = pVb->nRegion[1];
+            n32MaxY = pVa->nRegion[1];
+        }
 
-			/*
+        /*
 			// Look at the third point
 			*/
-			CHOOSE_MINMAX (pVc->nRegion[0], n32MinX, n32MaxX);
-			CHOOSE_MINMAX (pVc->nRegion[1], n32MinY, n32MaxY);
+        CHOOSE_MINMAX (pVc->nRegion[0], n32MinX, n32MaxX);
+        CHOOSE_MINMAX (pVc->nRegion[1], n32MinY, n32MaxY);
 
-			/*
+        /*
 			// Save the pointers to the first 3 transformed edges
 			*/
-			pXExtra->pE[0] = gpXEdges + pFace->pnEdgeIDs[0];
-			pXExtra->pE[1] = gpXEdges + pFace->pnEdgeIDs[1];
-			pXExtra->pE[2] = gpXEdges + pFace->pnEdgeIDs[2];
+        pXExtra->pE[0] = gpXEdges + pFace->pnEdgeIDs[0];
+        pXExtra->pE[1] = gpXEdges + pFace->pnEdgeIDs[1];
+        pXExtra->pE[2] = gpXEdges + pFace->pnEdgeIDs[2];
 
-			/*
+        /*
 			// Is there a 4th point
-			*/		
-			if (pFace->nVertices == 4)
-			{
-				pVd = gpXVertices + pFace->pnVertexIDs[3];
+			*/
+        if (pFace->nVertices == 4) {
+            pVd = gpXVertices + pFace->pnVertexIDs[3];
 
-				CHOOSE_MINMAX (pVd->nRegion[0], n32MinX, n32MaxX);
-				CHOOSE_MINMAX (pVd->nRegion[1], n32MinY, n32MaxY);
+            CHOOSE_MINMAX (pVd->nRegion[0], n32MinX, n32MaxX);
+            CHOOSE_MINMAX (pVd->nRegion[1], n32MinY, n32MaxY);
 
-				/*
+            /*
 				// At the same time store the 4th edge
 				*/
-				pXExtra->pE[3] = gpXEdges + pFace->pnEdgeIDs[3];
+            pXExtra->pE[3] = gpXEdges + pFace->pnEdgeIDs[3];
 
-			}/*end if 4th pointers */
-			
-			/*
+        }/*end if 4th pointers */
+
+        /*
 			// Store the results
-			*/		
-			pXExtra->RegionsRect.FirstXRegion = n32MinX;
-			pXExtra->RegionsRect.FirstYRegion = n32MinY;
-			pXExtra->RegionsRect.LastXRegion  = n32MaxX;
-			pXExtra->RegionsRect.LastYRegion  = n32MaxY;
-			
+			*/
+        pXExtra->RegionsRect.FirstXRegion = n32MinX;
+        pXExtra->RegionsRect.FirstYRegion = n32MinY;
+        pXExtra->RegionsRect.LastXRegion = n32MaxX;
+        pXExtra->RegionsRect.LastYRegion = n32MaxY;
 
-			/* check they aren't back to front */
-			ASSERT ( n32MinX <= n32MaxX);
-			ASSERT ( n32MinY <= n32MaxY);
 
-			/* check face is on screen */
-			DPF((DBG_MESSAGE,"RnGlobalProjMatRegionBoxOnScreen = %d",
-				 RnGlobalProjMatRegionBoxOnScreen(&(pXExtra->RegionsRect))));
+        /* check they aren't back to front */
+        ASSERT (n32MinX <= n32MaxX);
+        ASSERT (n32MinY <= n32MaxY);
 
-			/*
+        /* check face is on screen */
+        DPF((DBG_MESSAGE, "RnGlobalProjMatRegionBoxOnScreen = %d",
+                RnGlobalProjMatRegionBoxOnScreen(&(pXExtra->RegionsRect))));
+
+        /*
 			// Because of the crap plane limit on Midas3, we need
 			// sort sort of heuristic for rejecting some faces.
 			// Look at the "length" of the edge AB
 			*/
-			#if ISPTSP
-				pXExtra->ApproxSize = 
+#if ISPTSP
+                                                                                                                                pXExtra->ApproxSize =
 					sfabs(pVa->vScreenSpace[0] - pVc->vScreenSpace[0]) +
 					sfabs(pVa->vScreenSpace[1] - pVc->vScreenSpace[1]);
-			#endif
+#endif
 
-			/*
+        /*
 			// For the cases when this is translucent, give a 1/Z depth
 			// Note that this is a waste WRT divisions... but
 			// this stuff will all be re-written for version 3.1 of SGL
 			*/
-			if(pFace->nVertices == 4)
-			{
-			  pXExtra->NearZ = 4.0f /
-				(pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-				 pVc->vWorldSpace[2]+pVd->vWorldSpace[2]);
-			}
-			else
-			{
-			  pXExtra->NearZ = 3.0f /
-				(pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-				 pVc->vWorldSpace[2]);
-			}
+        if (pFace->nVertices == 4) {
+            pXExtra->NearZ = 4.0f /
+                             (pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                              pVc->vWorldSpace[2] + pVd->vWorldSpace[2]);
+        } else {
+            pXExtra->NearZ = 3.0f /
+                             (pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                              pVc->vWorldSpace[2]);
+        }
 
 
-			/*
+        /*
 			// It's not Z clipped.
 			*/
-			pXExtra->ZClipped = FALSE;
+        pXExtra->ZClipped = FALSE;
 
-		}/*end for k*/
-	
+    }/*end for k*/
 
-	#endif
 
-	SGL_TIME_STOP(TRANSFORM_FACES_ALL_TIME)
+#endif
 
-	return NumRemaining;
+    SGL_TIME_STOP(TRANSFORM_FACES_ALL_TIME)
+
+    return NumRemaining;
 }
 
 
@@ -4522,7 +4374,7 @@ PFV_exit:
  * Inputs         : pFace     - pointer to start of an array of input face data
  *					numFaces  - the number of faces to process
  *					pTransform - pointer to the transformation
- *	
+ *
  * Outputs        : pTransformedPlanes - the planes/faces after transformation
  *				    pExtras			   - the rest of the data needed for
  *
@@ -4535,247 +4387,230 @@ PFV_exit:
  **************************************************************************/
 
 
-static int ProcessFacesPartlyVisible (const FACE **ppFace,
-									  int	 numFaces,
-					const TRANSFORM_STRUCT	*pTransform,
-						  PXMESHEXTRA	     pXExtra,
-				TRANSFORMED_PLANE_STRUCT	*pXPlane,
-				const CONV_SHADING_STRUCT	**ppShadingData,
-				const CONV_TEXTURE_UNION	**ppTextureData,
-				const CONV_POINTS_STRUCT	**ppPointsData)
-									  
-{
-	int k;
-	int AnyClipped;
-	int NumRemaining;
-	sgl_int32 n32MinX, n32MinY, n32MaxX, n32MaxY;
-	PTRANSVERTEX   pVa, pVb, pVc, pVd;
-	float invForegroundDistance;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+static int ProcessFacesPartlyVisible(const FACE **ppFace,
+                                     int numFaces,
+                                     const TRANSFORM_STRUCT *pTransform,
+                                     PXMESHEXTRA pXExtra,
+                                     TRANSFORMED_PLANE_STRUCT *pXPlane,
+                                     const CONV_SHADING_STRUCT **ppShadingData,
+                                     const CONV_TEXTURE_UNION **ppTextureData,
+                                     const CONV_POINTS_STRUCT **ppPointsData) {
+    int k;
+    int AnyClipped;
+    int NumRemaining;
+    sgl_int32 n32MinX, n32MinY, n32MaxX, n32MaxY;
+    PTRANSVERTEX pVa, pVb, pVc, pVd;
+    float invForegroundDistance;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-	invForegroundDistance = pProjMat->invForegroundDistance;
-	
-	/*
+    invForegroundDistance = pProjMat->invForegroundDistance;
+
+    /*
 	// First of all, transform, cull, and calculate sabre parameters for
 	// the faces.
 	*/
-	NumRemaining = TransformAndComputeSabreParamsPartlyVisible(ppFace, numFaces, 
-								pTransform,	pXExtra, pXPlane,
-								ppShadingData, ppTextureData, ppPointsData);
+    NumRemaining = TransformAndComputeSabreParamsPartlyVisible(ppFace, numFaces,
+                                                               pTransform, pXExtra, pXPlane,
+                                                               ppShadingData, ppTextureData, ppPointsData);
 
-	ASSERT((NumRemaining >= 0) && (NumRemaining <= numFaces));
+    ASSERT((NumRemaining >= 0) && (NumRemaining <= numFaces));
 
-	SGL_TIME_START(TRANSFORM_FACES_PARTLY_TIME)
+    SGL_TIME_START(TRANSFORM_FACES_PARTLY_TIME)
 
-	/*
+    /*
 	// Step through the remaining faces determining the regions of the screen
 	// they lie in
 	*/
-	for(k = NumRemaining; k != 0; k--, pXPlane++, pXExtra++)
-	{
-		const FACE *pFace;
+    for (k = NumRemaining; k != 0; k--, pXPlane++, pXExtra++) {
+        const FACE *pFace;
 
-		/*
+        /*
 		// Get access to the ORIGINAL face
 		*/
-		pFace = pXExtra->pOrigFace;
+        pFace = pXExtra->pOrigFace;
 
-		pXExtra->nEdges = pFace->nVertices;
+        pXExtra->nEdges = pFace->nVertices;
 
-		/*
+        /*
 		// Check that we have the correct number of vertices
 		*/
-		ASSERT ((pFace->nVertices == 3) || (pFace->nVertices == 4));
+        ASSERT ((pFace->nVertices == 3) || (pFace->nVertices == 4));
 
 
-		/*
+        /*
 		// First get pointers to the first three vertices, and the
 		// 4th if this is a quad.
 		*/
-		pVa = gpXVertices + pFace->pnVertexIDs[0];
-		pVb = gpXVertices + pFace->pnVertexIDs[1];
-		pVc = gpXVertices + pFace->pnVertexIDs[2];
+        pVa = gpXVertices + pFace->pnVertexIDs[0];
+        pVb = gpXVertices + pFace->pnVertexIDs[1];
+        pVc = gpXVertices + pFace->pnVertexIDs[2];
 
-		/*
-		// Store the pointers to the edges 
+        /*
+		// Store the pointers to the edges
 		*/
-		pXExtra->pE[0] = gpXEdges + pFace->pnEdgeIDs[0];
-		pXExtra->pE[1] = gpXEdges + pFace->pnEdgeIDs[1];
-		pXExtra->pE[2] = gpXEdges + pFace->pnEdgeIDs[2];
+        pXExtra->pE[0] = gpXEdges + pFace->pnEdgeIDs[0];
+        pXExtra->pE[1] = gpXEdges + pFace->pnEdgeIDs[1];
+        pXExtra->pE[2] = gpXEdges + pFace->pnEdgeIDs[2];
 
-		/*
+        /*
 		// Also see if any of the vertices were clipped.
 		*/
 
-		AnyClipped = pVa->Flags | pVb->Flags | pVc->Flags;
+        AnyClipped = pVa->Flags | pVb->Flags | pVc->Flags;
 
-		if(pFace->nVertices == 4)
-		{
-			pVd = gpXVertices + pFace->pnVertexIDs[3];
-			AnyClipped |=  pVd->Flags;
-			
-			/*
+        if (pFace->nVertices == 4) {
+            pVd = gpXVertices + pFace->pnVertexIDs[3];
+            AnyClipped |= pVd->Flags;
+
+            /*
 			// save pointer to the 4th edge
 			*/
-			pXExtra->pE[3] = gpXEdges + pFace->pnEdgeIDs[3];
-		}
+            pXExtra->pE[3] = gpXEdges + pFace->pnEdgeIDs[3];
+        }
 
-		/*///////////////////////
+        /*///////////////////////
 		// If the face is entirely on screen, handle it in
 		// exactly the same way as the All visible code
 		/////////////////////// */
-		if((AnyClipped & CLIPPED_FLAGS)==0)
-		{
-			/* 
-			// copy projected rep point coords. Any vertex is valid,	
+        if ((AnyClipped & CLIPPED_FLAGS) == 0) {
+            /*
+			// copy projected rep point coords. Any vertex is valid,
 			// so choose the first.
 			*/
-			pXPlane->projRepPoint[0] = pVa->vScreenSpace[0];
-			pXPlane->projRepPoint[1] = pVa->vScreenSpace[1];
+            pXPlane->projRepPoint[0] = pVa->vScreenSpace[0];
+            pXPlane->projRepPoint[1] = pVa->vScreenSpace[1];
 
 
-			/*
+            /*
 			// Set up a world space rep point (which would be used
 			// by the shading routine
 			//
 			// OPTIMISATION. The pFace->PlaneData.rep_point should
 			// be set when the mesh face is created/modified. SJF
 			*/
-			VecCopy (pVa->pvVertex, (float*) pFace->PlaneData.rep_point);
-			VecCopy (pVa->vWorldSpace,	pXPlane->repPnt);
-			
-			/*
+            VecCopy(pVa->pvVertex, (float *) pFace->PlaneData.rep_point);
+            VecCopy(pVa->vWorldSpace, pXPlane->repPnt);
+
+            /*
 			// Work out the regions the face covers
 			//
 			// Get the extremes of the first 2 points
 			*/
-			if(pVa->nRegion[0] < pVb->nRegion[0])
-			{
-				n32MinX	= pVa->nRegion[0];
-				n32MaxX	= pVb->nRegion[0];
-			}
-			else
-			{
-				n32MinX	= pVb->nRegion[0];
-				n32MaxX	= pVa->nRegion[0];
-			}
+            if (pVa->nRegion[0] < pVb->nRegion[0]) {
+                n32MinX = pVa->nRegion[0];
+                n32MaxX = pVb->nRegion[0];
+            } else {
+                n32MinX = pVb->nRegion[0];
+                n32MaxX = pVa->nRegion[0];
+            }
 
-			if(pVa->nRegion[1] < pVb->nRegion[1])
-			{
-				n32MinY = pVa->nRegion[1];
-				n32MaxY = pVb->nRegion[1];
-			}
-			else
-			{
-				n32MinY = pVb->nRegion[1];
-				n32MaxY = pVa->nRegion[1];
-			}
+            if (pVa->nRegion[1] < pVb->nRegion[1]) {
+                n32MinY = pVa->nRegion[1];
+                n32MaxY = pVb->nRegion[1];
+            } else {
+                n32MinY = pVb->nRegion[1];
+                n32MaxY = pVa->nRegion[1];
+            }
 
-			/*
+            /*
 			// Look at the third point
 			*/
-			CHOOSE_MINMAX (pVc->nRegion[0], n32MinX, n32MaxX);
-			CHOOSE_MINMAX (pVc->nRegion[1], n32MinY, n32MaxY);
-	
-			/*
+            CHOOSE_MINMAX (pVc->nRegion[0], n32MinX, n32MaxX);
+            CHOOSE_MINMAX (pVc->nRegion[1], n32MinY, n32MaxY);
+
+            /*
 			// Is there a 4th point
-			*/		
-			if (pFace->nVertices == 4)
-			{
-				CHOOSE_MINMAX (pVd->nRegion[0], n32MinX, n32MaxX);
-				CHOOSE_MINMAX (pVd->nRegion[1], n32MinY, n32MaxY);
-			}/*end if 4th pointers */
-		
-			/*
+			*/
+            if (pFace->nVertices == 4) {
+                CHOOSE_MINMAX (pVd->nRegion[0], n32MinX, n32MaxX);
+                CHOOSE_MINMAX (pVd->nRegion[1], n32MinY, n32MaxY);
+            }/*end if 4th pointers */
+
+            /*
 			// Store the results
-			*/		
-			pXExtra->RegionsRect.FirstXRegion = n32MinX;
-			pXExtra->RegionsRect.FirstYRegion = n32MinY;
-			pXExtra->RegionsRect.LastXRegion  = n32MaxX;
-			pXExtra->RegionsRect.LastYRegion  = n32MaxY;
-		
+			*/
+            pXExtra->RegionsRect.FirstXRegion = n32MinX;
+            pXExtra->RegionsRect.FirstYRegion = n32MinY;
+            pXExtra->RegionsRect.LastXRegion = n32MaxX;
+            pXExtra->RegionsRect.LastYRegion = n32MaxY;
 
-			/* check they aren't back to front */
-			ASSERT ( n32MinX <= n32MaxX);
-			ASSERT ( n32MinY <= n32MaxY);
 
-			/* check face is on screen */
+            /* check they aren't back to front */
+            ASSERT (n32MinX <= n32MaxX);
+            ASSERT (n32MinY <= n32MaxY);
+
+            /* check face is on screen */
 #if DEBUG
-			if(!RnGlobalProjMatRegionBoxOnScreen(&(pXExtra->RegionsRect)))
+                                                                                                                                    if(!RnGlobalProjMatRegionBoxOnScreen(&(pXExtra->RegionsRect)))
 			{
 				DPF ((DBG_MESSAGE, "RnGlobalProjMatRegionBoxOnScreen Failed\n"));
 			}
 #endif
-			/*
+            /*
 			// Because of the crap plane limit on Midas3, we need
 			// sort sort of heuristic for rejecting some faces.
 			// Look at the "length" of the edge AB
 			*/
-			#if ISPTSP
-				pXExtra->ApproxSize = 
+#if ISPTSP
+                                                                                                                                    pXExtra->ApproxSize =
 					sfabs(pVa->vScreenSpace[0] - pVc->vScreenSpace[0]) +
 					sfabs(pVa->vScreenSpace[1] - pVc->vScreenSpace[1]);
-			#endif
+#endif
 
-			/*
+            /*
 			// For the cases when this is translucent, give a 1/Z depth
 			// Note that this is a waste WRT divisions... but
 			// this stuff will all be re-written for version 3.1 of SGL
 			*/
-			if(pFace->nVertices == 4)
-			{
-			  pXExtra->NearZ = 4.0f /
-				(pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-				 pVc->vWorldSpace[2]+pVd->vWorldSpace[2]);
-			}
-			else
-			{
-			  pXExtra->NearZ = 3.0f /
-				(pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-				 pVc->vWorldSpace[2]);
-			}
+            if (pFace->nVertices == 4) {
+                pXExtra->NearZ = 4.0f /
+                                 (pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                                  pVc->vWorldSpace[2] + pVd->vWorldSpace[2]);
+            } else {
+                pXExtra->NearZ = 3.0f /
+                                 (pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                                  pVc->vWorldSpace[2]);
+            }
 
-			/*
+            /*
 			// It's not Z clipped.
 			*/
-			pXExtra->ZClipped = FALSE;
-		}
+            pXExtra->ZClipped = FALSE;
+        }
 
-		/*///////////////////////
-		// ELSE if any of the points were on the wrong side of 
+            /*///////////////////////
+		// ELSE if any of the points were on the wrong side of
 		// the law ....
 		/////////////////////// */
-		else if(AnyClipped & CLIPPED_Z)
-		{
-			/*
+        else if (AnyClipped & CLIPPED_Z) {
+            /*
 			// OK, face goes through the foreground plane, we will use
 			// the bounding box routine to find out which regions the
 			// face goes in. This is not blindingly efficient, but
 			// hey, this should crop up too often.
 			*/
-			BBOX_MINMAX_STRUCT BBox;
+            BBOX_MINMAX_STRUCT BBox;
 
-			DPF ((DBG_VERBOSE, "Using behind the eye region bbox method ..."));
-			
-			VecCopy (pVa->vWorldSpace, BBox.boxMin);
-			VecCopy (pVa->vWorldSpace, BBox.boxMax);
-			
-			CHOOSE_MINMAX (pVb->vWorldSpace[0], BBox.boxMin[0], BBox.boxMax[0]);
-			CHOOSE_MINMAX (pVb->vWorldSpace[1], BBox.boxMin[1], BBox.boxMax[1]);
-			CHOOSE_MINMAX (pVb->vWorldSpace[2], BBox.boxMin[2], BBox.boxMax[2]);
+            DPF ((DBG_VERBOSE, "Using behind the eye region bbox method ..."));
 
-			CHOOSE_MINMAX (pVc->vWorldSpace[0], BBox.boxMin[0], BBox.boxMax[0]);
-			CHOOSE_MINMAX (pVc->vWorldSpace[1], BBox.boxMin[1], BBox.boxMax[1]);
-			CHOOSE_MINMAX (pVc->vWorldSpace[2], BBox.boxMin[2], BBox.boxMax[2]);
+            VecCopy(pVa->vWorldSpace, BBox.boxMin);
+            VecCopy(pVa->vWorldSpace, BBox.boxMax);
 
-			if (pFace->nVertices == 4)
-			{
-				CHOOSE_MINMAX(pVd->vWorldSpace[0],BBox.boxMin[0],BBox.boxMax[0]);
-				CHOOSE_MINMAX(pVd->vWorldSpace[1],BBox.boxMin[1],BBox.boxMax[1]);
-				CHOOSE_MINMAX(pVd->vWorldSpace[2],BBox.boxMin[2],BBox.boxMax[2]);
-			}
+            CHOOSE_MINMAX (pVb->vWorldSpace[0], BBox.boxMin[0], BBox.boxMax[0]);
+            CHOOSE_MINMAX (pVb->vWorldSpace[1], BBox.boxMin[1], BBox.boxMax[1]);
+            CHOOSE_MINMAX (pVb->vWorldSpace[2], BBox.boxMin[2], BBox.boxMax[2]);
 
-			/*
+            CHOOSE_MINMAX (pVc->vWorldSpace[0], BBox.boxMin[0], BBox.boxMax[0]);
+            CHOOSE_MINMAX (pVc->vWorldSpace[1], BBox.boxMin[1], BBox.boxMax[1]);
+            CHOOSE_MINMAX (pVc->vWorldSpace[2], BBox.boxMin[2], BBox.boxMax[2]);
+
+            if (pFace->nVertices == 4) {
+                CHOOSE_MINMAX(pVd->vWorldSpace[0], BBox.boxMin[0], BBox.boxMax[0]);
+                CHOOSE_MINMAX(pVd->vWorldSpace[1], BBox.boxMin[1], BBox.boxMax[1]);
+                CHOOSE_MINMAX(pVd->vWorldSpace[2], BBox.boxMin[2], BBox.boxMax[2]);
+            }
+
+            /*
 			// Is this off screen?
 			//
 			// if so compact up the lists (this is really nasty!) BUT
@@ -4783,350 +4618,306 @@ static int ProcessFacesPartlyVisible (const FACE **ppFace,
 			//
 			// Guess we'll just have to see when we profile...
 			*/
-			if (!RnDetermineRegionsFromBBox (&BBox, &pXExtra->RegionsRect))
-			{
-			  	PXMESHEXTRA					pNewExtras;
-				TRANSFORMED_PLANE_STRUCT	*pNewXPlane;
-				int j;
+            if (!RnDetermineRegionsFromBBox(&BBox, &pXExtra->RegionsRect)) {
+                PXMESHEXTRA pNewExtras;
+                TRANSFORMED_PLANE_STRUCT *pNewXPlane;
+                int j;
 
-				DPF ((DBG_MESSAGE,"Part ZCLIPPED OFFscreen:Shift down:%d",k-1));
+                DPF ((DBG_MESSAGE, "Part ZCLIPPED OFFscreen:Shift down:%d", k - 1));
 
-				pNewExtras = pXExtra;
-				pNewXPlane = pXPlane;
-				/*
+                pNewExtras = pXExtra;
+                pNewXPlane = pXPlane;
+                /*
 				// Step through the number of planes we haven't yet looked at
 				*/
-				for(j = k - 1; j != 0; j--, pNewExtras++, pNewXPlane++)
-				{
-					/*
+                for (j = k - 1; j != 0; j--, pNewExtras++, pNewXPlane++) {
+                    /*
 					// Copy the next one up down to this point
 					*/
-					*pNewExtras = *(pNewExtras+1);
-					*pNewXPlane = *(pNewXPlane+1);
-				}/*end for*/
+                    *pNewExtras = *(pNewExtras + 1);
+                    *pNewXPlane = *(pNewXPlane + 1);
+                }/*end for*/
 
-				/*
+                /*
 				// Move the pointers down one spot to compensate for the
 				// add that will happen at the end of the loops :)
 				*/
-				pXExtra --;
-				pXPlane --;
-				NumRemaining --;
+                pXExtra--;
+                pXPlane--;
+                NumRemaining--;
 
-				ASSERT(NumRemaining >= 0);
-			}
-			/*
+                ASSERT(NumRemaining >= 0);
+            }
+                /*
 			// Else this  is on screen (well probably 8) )
 			*/
-			else
-			{
-				PTRANSVERTEX pBestVert;
-				float 	fRepZ, fTotalZ;
-				
-				/* check they aren't back to front */
-				ASSERT (pXExtra->RegionsRect.FirstXRegion <= 
-									pXExtra->RegionsRect.LastXRegion);
-				ASSERT (pXExtra->RegionsRect.FirstYRegion <= 
-									pXExtra->RegionsRect.LastYRegion);
+            else {
+                PTRANSVERTEX pBestVert;
+                float fRepZ, fTotalZ;
 
-				/* 
-				// look for furthest away rep point 
+                /* check they aren't back to front */
+                ASSERT (pXExtra->RegionsRect.FirstXRegion <=
+                        pXExtra->RegionsRect.LastXRegion);
+                ASSERT (pXExtra->RegionsRect.FirstYRegion <=
+                        pXExtra->RegionsRect.LastYRegion);
+
+                /*
+				// look for furthest away rep point
 				*/
-				fRepZ	  = pVa->vWorldSpace[2];
-				pBestVert = pVa;
+                fRepZ = pVa->vWorldSpace[2];
+                pBestVert = pVa;
 
-				if(pVb->vWorldSpace[2] > fRepZ)
-				{
-					fRepZ	  = pVb->vWorldSpace[2];
-					pBestVert = pVb;
-				}
+                if (pVb->vWorldSpace[2] > fRepZ) {
+                    fRepZ = pVb->vWorldSpace[2];
+                    pBestVert = pVb;
+                }
 
-				if(pVc->vWorldSpace[2] > fRepZ)
-				{
-					fRepZ	  = pVc->vWorldSpace[2];
-					pBestVert = pVc;
-				}
+                if (pVc->vWorldSpace[2] > fRepZ) {
+                    fRepZ = pVc->vWorldSpace[2];
+                    pBestVert = pVc;
+                }
 
-				if((pFace->nVertices == 4) &&( pVd->vWorldSpace[2] > fRepZ))
-				{
-					fRepZ	  = pVd->vWorldSpace[2];
-					pBestVert = pVd;
-				}
+                if ((pFace->nVertices == 4) && (pVd->vWorldSpace[2] > fRepZ)) {
+                    fRepZ = pVd->vWorldSpace[2];
+                    pBestVert = pVd;
+                }
 
-				/*
+                /*
 				// NOTE We MUST have found one in front of the clipping plane
 				*/
 #if DEBUG
-				if(!(fRepZ >= (pProjMat->invForegroundDistance) ))
+                                                                                                                                        if(!(fRepZ >= (pProjMat->invForegroundDistance) ))
 				{
 					DPF ((DBG_WARNING, "Rep Z infront of Foreground\n"));
 				}
 #endif
-				
-				/* 
-				// copy the rep point's data 
-				*/
-				VecCopy (pBestVert->pvVertex, (float*) pFace->PlaneData.rep_point);
-				VecCopy (pBestVert->vWorldSpace, pXPlane->repPnt);
-				pXPlane->projRepPoint[0] = pBestVert->vScreenSpace[0];
-				pXPlane->projRepPoint[1] = pBestVert->vScreenSpace[1];
 
-				/*
+                /*
+				// copy the rep point's data
+				*/
+                VecCopy(pBestVert->pvVertex, (float *) pFace->PlaneData.rep_point);
+                VecCopy(pBestVert->vWorldSpace, pXPlane->repPnt);
+                pXPlane->projRepPoint[0] = pBestVert->vScreenSpace[0];
+                pXPlane->projRepPoint[1] = pBestVert->vScreenSpace[1];
+
+                /*
 				// Because of the crap plane limit on Midas3, we need
 				// sort sort of heuristic for rejecting some faces.
 				// Just make it large for this case
 				*/
-				#if ISPTSP
-					pXExtra->ApproxSize = 1000;
-				#endif
+#if ISPTSP
+                pXExtra->ApproxSize = 1000;
+#endif
 
-				/*
+                /*
 				// For the cases when this is translucent, give a 1/Z depth
 				// Note that this is a waste WRT divisions... but
 				// this stuff will all be re-written for version 3.1 of SGL
 				*/
-				 
-				if(pFace->nVertices == 4)
-				{
-				  fTotalZ = pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-					pVc->vWorldSpace[2]+pVd->vWorldSpace[2];
-				  if(fTotalZ !=0.0f)
-				  {
-					pXExtra->NearZ = 4.0f /fTotalZ;
-				  }
-				  else
-				  {
-					pXExtra->NearZ = invForegroundDistance;
-				  }  
-				}
-				else
-				{
-				  fTotalZ = pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-					pVc->vWorldSpace[2];
-				  if(fTotalZ !=0.0f)
-				  {
-					pXExtra->NearZ = 3.0f /fTotalZ;
-				  }
-				  else
-				  {
-					pXExtra->NearZ = invForegroundDistance;
-				  }  
-				}
 
-				/*
+                if (pFace->nVertices == 4) {
+                    fTotalZ = pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                              pVc->vWorldSpace[2] + pVd->vWorldSpace[2];
+                    if (fTotalZ != 0.0f) {
+                        pXExtra->NearZ = 4.0f / fTotalZ;
+                    } else {
+                        pXExtra->NearZ = invForegroundDistance;
+                    }
+                } else {
+                    fTotalZ = pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                              pVc->vWorldSpace[2];
+                    if (fTotalZ != 0.0f) {
+                        pXExtra->NearZ = 3.0f / fTotalZ;
+                    } else {
+                        pXExtra->NearZ = invForegroundDistance;
+                    }
+                }
+
+                /*
 				// Set a flag on the face to indicate that it is Z clipped.
 				// This indicates if we need to add a clipping plane
 				*/
-				pXExtra->ZClipped = TRUE;
+                pXExtra->ZClipped = TRUE;
 
-			}/*end else the funny poly is on screen*/
+            }/*end else the funny poly is on screen*/
 
-		}
-		/*///////////////////////
+        }
+            /*///////////////////////
 		// Else SOME of the points are off screen. BUT NONE are Z clipped
 	 	/////////////////////// */
-		else
-		{
-			/*static c = 0;*/
-			/*
+        else {
+            /*static c = 0;*/
+            /*
 			// Work out the regions the face covers
 			//
 			// Get the extremes of the first 2 points
 			*/
-			if(pVa->nRegion[0] < pVb->nRegion[0])
-			{
-				n32MinX	= pVa->nRegion[0];
-				n32MaxX	= pVb->nRegion[0];
-			}
-			else
-			{
-				n32MinX	= pVb->nRegion[0];
-				n32MaxX	= pVa->nRegion[0];
-			}
+            if (pVa->nRegion[0] < pVb->nRegion[0]) {
+                n32MinX = pVa->nRegion[0];
+                n32MaxX = pVb->nRegion[0];
+            } else {
+                n32MinX = pVb->nRegion[0];
+                n32MaxX = pVa->nRegion[0];
+            }
 
-			if(pVa->nRegion[1] < pVb->nRegion[1])
-			{
-				n32MinY = pVa->nRegion[1];
-				n32MaxY = pVb->nRegion[1];
-			}
-			else
-			{
-				n32MinY = pVb->nRegion[1];
-				n32MaxY = pVa->nRegion[1];
-			}
+            if (pVa->nRegion[1] < pVb->nRegion[1]) {
+                n32MinY = pVa->nRegion[1];
+                n32MaxY = pVb->nRegion[1];
+            } else {
+                n32MinY = pVb->nRegion[1];
+                n32MaxY = pVa->nRegion[1];
+            }
 
-			/*
+            /*
 			// Look at the third point
 			*/
-			CHOOSE_MINMAX (pVc->nRegion[0], n32MinX, n32MaxX);
-			CHOOSE_MINMAX (pVc->nRegion[1], n32MinY, n32MaxY);
-	
-			/*
+            CHOOSE_MINMAX (pVc->nRegion[0], n32MinX, n32MaxX);
+            CHOOSE_MINMAX (pVc->nRegion[1], n32MinY, n32MaxY);
+
+            /*
 			// Is there a 4th point
-			*/		
-			if (pFace->nVertices == 4)
-			{
-				CHOOSE_MINMAX (pVd->nRegion[0], n32MinX, n32MaxX);
-				CHOOSE_MINMAX (pVd->nRegion[1], n32MinY, n32MaxY);
-			}/*end if 4th pointers */
-		
-			/*
+			*/
+            if (pFace->nVertices == 4) {
+                CHOOSE_MINMAX (pVd->nRegion[0], n32MinX, n32MaxX);
+                CHOOSE_MINMAX (pVd->nRegion[1], n32MinY, n32MaxY);
+            }/*end if 4th pointers */
+
+            /*
 			// Store the results
-			*/		
-			pXExtra->RegionsRect.FirstXRegion = n32MinX;
-			pXExtra->RegionsRect.FirstYRegion = n32MinY;
-			pXExtra->RegionsRect.LastXRegion  = n32MaxX;
-			pXExtra->RegionsRect.LastYRegion  = n32MaxY;
+			*/
+            pXExtra->RegionsRect.FirstXRegion = n32MinX;
+            pXExtra->RegionsRect.FirstYRegion = n32MinY;
+            pXExtra->RegionsRect.LastXRegion = n32MaxX;
+            pXExtra->RegionsRect.LastYRegion = n32MaxY;
 
-			/* check they aren't back to front */
-			ASSERT ( n32MinX <= n32MaxX);
-			ASSERT ( n32MinY <= n32MaxY);
+            /* check they aren't back to front */
+            ASSERT (n32MinX <= n32MaxX);
+            ASSERT (n32MinY <= n32MaxY);
 
-			/* check face is on screen */
+            /* check face is on screen */
 #if DEBUG
-			if(!RnGlobalProjMatRegionBoxOnScreen(&(pXExtra->RegionsRect)))
+                                                                                                                                    if(!RnGlobalProjMatRegionBoxOnScreen(&(pXExtra->RegionsRect)))
 			{
 				DPF ((DBG_MESSAGE, "RnGlobalProjMatRegionBoxOnScreen Failed\n"));
 			}
 #endif
-			/*
+            /*
 			//Now look for a Rep Point, basically first see if there
 			// is one that is on screen
 			*/
-			if(/*(++c%2) ||*/ ((pVa->Flags & CLIPPED_FLAGS) == 0))
-			{
-				DPF((DBG_VERBOSE, "Choosing Vert A as rep"));
-				pXPlane->projRepPoint[0] = pVa->vScreenSpace[0];
-				pXPlane->projRepPoint[1] = pVa->vScreenSpace[1];
+            if (/*(++c%2) ||*/ ((pVa->Flags & CLIPPED_FLAGS) == 0)) {
+                DPF((DBG_VERBOSE, "Choosing Vert A as rep"));
+                pXPlane->projRepPoint[0] = pVa->vScreenSpace[0];
+                pXPlane->projRepPoint[1] = pVa->vScreenSpace[1];
 
-				VecCopy (pVa->pvVertex, (float*) pFace->PlaneData.rep_point);
-				VecCopy (pVa->vWorldSpace,	pXPlane->repPnt);
-			}
-			else if((pVb->Flags & CLIPPED_FLAGS) == 0)
-			{
-				DPF((DBG_VERBOSE, "Choosing Vert B as rep"));
-				pXPlane->projRepPoint[0] = pVb->vScreenSpace[0];
-				pXPlane->projRepPoint[1] = pVb->vScreenSpace[1];
+                VecCopy(pVa->pvVertex, (float *) pFace->PlaneData.rep_point);
+                VecCopy(pVa->vWorldSpace, pXPlane->repPnt);
+            } else if ((pVb->Flags & CLIPPED_FLAGS) == 0) {
+                DPF((DBG_VERBOSE, "Choosing Vert B as rep"));
+                pXPlane->projRepPoint[0] = pVb->vScreenSpace[0];
+                pXPlane->projRepPoint[1] = pVb->vScreenSpace[1];
 
-				VecCopy (pVb->pvVertex, (float*) pFace->PlaneData.rep_point);
-				VecCopy (pVb->vWorldSpace,	pXPlane->repPnt);
-			}
-			else if((pVc->Flags & CLIPPED_FLAGS) == 0)
-			{
-				DPF((DBG_VERBOSE, "Choosing Vert C as rep"));
-				pXPlane->projRepPoint[0] = pVc->vScreenSpace[0];
-				pXPlane->projRepPoint[1] = pVc->vScreenSpace[1];
+                VecCopy(pVb->pvVertex, (float *) pFace->PlaneData.rep_point);
+                VecCopy(pVb->vWorldSpace, pXPlane->repPnt);
+            } else if ((pVc->Flags & CLIPPED_FLAGS) == 0) {
+                DPF((DBG_VERBOSE, "Choosing Vert C as rep"));
+                pXPlane->projRepPoint[0] = pVc->vScreenSpace[0];
+                pXPlane->projRepPoint[1] = pVc->vScreenSpace[1];
 
-				VecCopy (pVc->pvVertex, (float*) pFace->PlaneData.rep_point);
-				VecCopy (pVc->vWorldSpace,	pXPlane->repPnt);
-			}
-			else if((pFace->nVertices == 4)&&(pVd->Flags & CLIPPED_FLAGS) == 0)
-			{
-				DPF((DBG_VERBOSE, "Choosing Vert D as rep"));
-				pXPlane->projRepPoint[0] = pVd->vScreenSpace[0];
-				pXPlane->projRepPoint[1] = pVd->vScreenSpace[1];
+                VecCopy(pVc->pvVertex, (float *) pFace->PlaneData.rep_point);
+                VecCopy(pVc->vWorldSpace, pXPlane->repPnt);
+            } else if ((pFace->nVertices == 4) && (pVd->Flags & CLIPPED_FLAGS) == 0) {
+                DPF((DBG_VERBOSE, "Choosing Vert D as rep"));
+                pXPlane->projRepPoint[0] = pVd->vScreenSpace[0];
+                pXPlane->projRepPoint[1] = pVd->vScreenSpace[1];
 
-				VecCopy (pVd->pvVertex, (float*) pFace->PlaneData.rep_point);
-				VecCopy (pVd->vWorldSpace,	pXPlane->repPnt);
-			}
-			/*
+                VecCopy(pVd->pvVertex, (float *) pFace->PlaneData.rep_point);
+                VecCopy(pVd->vWorldSpace, pXPlane->repPnt);
+            }
+                /*
 			// They are all off screen.
 			*/
-			else
-			{
-				PTRANSVERTEX pV;
-								
-				if (pVa->vWorldSpace[2] > pVb->vWorldSpace[2])
-				{
-					if (pVa->vWorldSpace[2] > pVc->vWorldSpace[2])
-					{
-						pV = pVa;
-					}
-					else
-					{
-						pV = pVc;
-					}
-				}
-				else
-				{
-					if (pVb->vWorldSpace[2] > pVc->vWorldSpace[2])
-					{
-						pV = pVb;
-					}
-					else 
-					{
-						pV = pVc;
-					}
-				}
-				
-				if ((pFace->nVertices == 4) && 
-									  (pVd->vWorldSpace[2] > pV->vWorldSpace[2]))
-				{
-					pV = pVd;
-				}
-				
-				pXPlane->projRepPoint[0] = pV->vScreenSpace[0];
-				pXPlane->projRepPoint[1] = pV->vScreenSpace[1];
-				VecCopy (pV->pvVertex, (float*) pFace->PlaneData.rep_point);
-				VecCopy (pV->vWorldSpace,	pXPlane->repPnt);
-			}
+            else {
+                PTRANSVERTEX pV;
 
-			/*
+                if (pVa->vWorldSpace[2] > pVb->vWorldSpace[2]) {
+                    if (pVa->vWorldSpace[2] > pVc->vWorldSpace[2]) {
+                        pV = pVa;
+                    } else {
+                        pV = pVc;
+                    }
+                } else {
+                    if (pVb->vWorldSpace[2] > pVc->vWorldSpace[2]) {
+                        pV = pVb;
+                    } else {
+                        pV = pVc;
+                    }
+                }
+
+                if ((pFace->nVertices == 4) &&
+                    (pVd->vWorldSpace[2] > pV->vWorldSpace[2])) {
+                    pV = pVd;
+                }
+
+                pXPlane->projRepPoint[0] = pV->vScreenSpace[0];
+                pXPlane->projRepPoint[1] = pV->vScreenSpace[1];
+                VecCopy(pV->pvVertex, (float *) pFace->PlaneData.rep_point);
+                VecCopy(pV->vWorldSpace, pXPlane->repPnt);
+            }
+
+            /*
 			// Because of the crap plane limit on Midas3, we need
 			// sort sort of heuristic for rejecting some faces.
 			// Look at the "length" of the edge AB
 			*/
-			#if ISPTSP
-				pXExtra->ApproxSize = 
+#if ISPTSP
+                                                                                                                                    pXExtra->ApproxSize =
 					sfabs(pVa->vScreenSpace[0] - pVb->vScreenSpace[0]) +
 					sfabs(pVa->vScreenSpace[1] - pVb->vScreenSpace[1]);
-			#endif
+#endif
 
-			/*
+            /*
 			// For the cases when this is translucent, give a 1/Z depth
 			// Note that this is a waste WRT divisions... but
 			// this stuff will all be re-written for version 3.1 of SGL
 			*/
-			if(pFace->nVertices == 4)
-			{
-			  pXExtra->NearZ = 4.0f /
-				(pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-				 pVc->vWorldSpace[2]+pVd->vWorldSpace[2]);
-			}
-			else
-			{
-			  pXExtra->NearZ = 3.0f /
-				(pVa->vWorldSpace[2]+pVb->vWorldSpace[2]+
-				 pVc->vWorldSpace[2]);
-			}
+            if (pFace->nVertices == 4) {
+                pXExtra->NearZ = 4.0f /
+                                 (pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                                  pVc->vWorldSpace[2] + pVd->vWorldSpace[2]);
+            } else {
+                pXExtra->NearZ = 3.0f /
+                                 (pVa->vWorldSpace[2] + pVb->vWorldSpace[2] +
+                                  pVc->vWorldSpace[2]);
+            }
 
-			/*
+            /*
 			// It's not Z clipped.
 			*/
-			pXExtra->ZClipped = FALSE;
+            pXExtra->ZClipped = FALSE;
 
-		}/* End Else all corners off screen */			
+        }/* End Else all corners off screen */
 
-	}/*end for k*/
-	
-	SGL_TIME_STOP(TRANSFORM_FACES_PARTLY_TIME)
-	return NumRemaining;
+    }/*end for k*/
+
+    SGL_TIME_STOP(TRANSFORM_FACES_PARTLY_TIME)
+    return NumRemaining;
 }
 
 /**************************************************************************
  * Function Name  : CreatePointData (LOCAL FUNCTION)
  *					pXExtra   - pointer to the first of the Extra Data for faces
  *					numFaces  - the number of faces to process
- *	
+ *
  * Outputs        : pPointsData - an array of point data
  *					pXPlane		- array of transformed (INPUT/OUTPUT)
  * Returns		  : NOTHING
  *
  *	NOTE NOTE NOTE: THIS ROUTINE IS A STOP GAP MEASURE., THE SET UP OF THIS
- *					DATA SHOULD BE DONE IN DLMESH!!!!!!!!!				
+ *					DATA SHOULD BE DONE IN DLMESH!!!!!!!!!
  **************************************************************************/
 #if 0
-static void CreatePointData(PXMESHEXTRA	     pXExtra,
+                                                                                                                        static void CreatePointData(PXMESHEXTRA	     pXExtra,
 								int			 numFaces,
 					  CONV_POINTS_STRUCT	 *pPointsData,
 					TRANSFORMED_PLANE_STRUCT *pXPlane)
@@ -5165,174 +4956,168 @@ static void CreatePointData(PXMESHEXTRA	     pXExtra,
 }
 
 #endif
+
 /**************************************************************************
  * Function Name  : CreateSmoothShadingDataVisible(LOCAL FUNCTION)
- *					
- *	
- * Outputs        : 
  *
- *	
+ *
+ * Outputs        :
+ *
+ *
  **************************************************************************/
 
-static void CreateSmoothShadingDataVisible (PXMESHEXTRA	 pXExtra,
-											int			 numFaces,
-											TRANSFORMED_PLANE_STRUCT *pXPlane)
-{
-	const FACE * pFace;
-	PTRANSVERTEX   pVa, pVb, pVc;
-	CONV_SHADING_STRUCT	 *pS;
+static void CreateSmoothShadingDataVisible(PXMESHEXTRA pXExtra,
+                                           int numFaces,
+                                           TRANSFORMED_PLANE_STRUCT *pXPlane) {
+    const FACE *pFace;
+    PTRANSVERTEX pVa, pVb, pVc;
+    CONV_SHADING_STRUCT *pS;
 
-	for(/*NOTHING*/;  numFaces != 0; numFaces --, pXExtra++, pXPlane++)
-	{
-		float fDet;
+    for (/*NOTHING*/; numFaces != 0; numFaces--, pXExtra++, pXPlane++) {
+        float fDet;
 
-		/*
+        /*
 		// Get the pointer to the face data
 		*/
-		pFace = pXExtra->pOrigFace;
+        pFace = pXExtra->pOrigFace;
 
-		if (pFace->PlaneData.flags & pf_smooth_shad)
-		{
-			/*
+        if (pFace->PlaneData.flags & pf_smooth_shad) {
+            /*
 			// Get the pointer to the shading data
 			*/
-			pS = (CONV_SHADING_STRUCT*) pXPlane->pShadingData;
+            pS = (CONV_SHADING_STRUCT *) pXPlane->pShadingData;
 
-			/*
+            /*
 			// Get pointers to the vertices on this face
 			*/
-			pVa = gpXVertices + pFace->pnVertexIDs[0];
-			pVb = gpXVertices + pFace->pnVertexIDs[1];
-			pVc = gpXVertices + pFace->pnVertexIDs[2];
+            pVa = gpXVertices + pFace->pnVertexIDs[0];
+            pVb = gpXVertices + pFace->pnVertexIDs[1];
+            pVc = gpXVertices + pFace->pnVertexIDs[2];
 
-			#define fX0 pVa->vScreenSpace[0]
-			#define fX1 pVb->vScreenSpace[0]
-			#define fX2 pVc->vScreenSpace[0]
+#define fX0 pVa->vScreenSpace[0]
+#define fX1 pVb->vScreenSpace[0]
+#define fX2 pVc->vScreenSpace[0]
 
-			#define fY0 pVa->vScreenSpace[1]
-			#define fY1 pVb->vScreenSpace[1]
-			#define fY2 pVc->vScreenSpace[1]
+#define fY0 pVa->vScreenSpace[1]
+#define fY1 pVb->vScreenSpace[1]
+#define fY2 pVc->vScreenSpace[1]
 
-			fDet = fX0*fY1 - fX0*fY2 - fX1*fY0 + fX1*fY2 + fX2*fY0 - fX2*fY1;
+            fDet = fX0 * fY1 - fX0 * fY2 - fX1 * fY0 + fX1 * fY2 + fX2 * fY0 - fX2 * fY1;
 
-			/*
+            /*
 			// Calculate 1/determinant:
 			*/
-		  #if defined(MIDAS_ARCADE)
+#if defined(MIDAS_ARCADE)
 
-			/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+                                                                                                                                    /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 			if (sfabs (fDet) > 1.0e-3f)
 
-		  #else
+#else
 
-			if (sfabs (fDet) > 1.0e-20f)
+            if (sfabs (fDet) > 1.0e-20f)
 
-		  #endif
-			{
-				pS->f1OverDet = 1.0f / fDet;
+#endif
+            {
+                pS->f1OverDet = 1.0f / fDet;
 
-				/*
+                /*
 				// pPre->fAdjoint is a constant zero offset
 				*/
-				pS->fAdjoint[0][0] = fY1-fY2;
-				pS->fAdjoint[0][1] = fY2-fY0;
-				pS->fAdjoint[0][2] = fY0-fY1;
+                pS->fAdjoint[0][0] = fY1 - fY2;
+                pS->fAdjoint[0][1] = fY2 - fY0;
+                pS->fAdjoint[0][2] = fY0 - fY1;
 
-				pS->fAdjoint[1][0] = fX2-fX1;
-				pS->fAdjoint[1][1] = fX0-fX2;
-				pS->fAdjoint[1][2] = fX1-fX0;
+                pS->fAdjoint[1][0] = fX2 - fX1;
+                pS->fAdjoint[1][1] = fX0 - fX2;
+                pS->fAdjoint[1][2] = fX1 - fX0;
 
-				pS->fRepDeltaX = 0.0f;
-				pS->fRepDeltaY = 0.0f;
-			}
+                pS->fRepDeltaX = 0.0f;
+                pS->fRepDeltaY = 0.0f;
+            }
 
-			#undef fX0
-			#undef fX1
-			#undef fX2
+#undef fX0
+#undef fX1
+#undef fX2
 
-			#undef fY0
-			#undef fY1
-			#undef fY2
-		}
-	}/*end for*/
+#undef fY0
+#undef fY1
+#undef fY2
+        }
+    }/*end for*/
 }
-
 
 
 /**************************************************************************
  * Function Name  : ExtrapolateScreenPos(LOCAL FUNCTION)
- *					
+ *
  * Inputs		  : pVClipped    A vertex that is Z clipped
  *				    pVOK		 A vertex which is NOT
- *	
+ *
  * Outputs        : PretendProj	 A "screen" position for the clipped
  *								 vertex. This is obtained by clipping the
  *								 line joing the two vertices, getting its
  *								 Screen position.  By THEN extrapolating the line
  *								 between the projected screen coord of the OK
- *								 vertex and clipped point, we should get a 
+ *								 vertex and clipped point, we should get a
  *								 pseudo pos for our original bad vertex.
- *	
+ *
  **************************************************************************/
-static void  ExtrapolateScreenPos( const PTRANSVERTEX pVClipped,
-								   const PTRANSVERTEX pVOk,
-								   sgl_2d_vec PretendProj,
-								   float foregroundDistance,
-								   float invForegroundDistance,
-								   float SxDash, float SyDash,
-								   float OxDash, float OyDash)
-{
-	float fBehind, fZdelta, fScale;
-	float fX, fY;
-	/*
+static void ExtrapolateScreenPos(const PTRANSVERTEX pVClipped,
+                                 const PTRANSVERTEX pVOk,
+                                 sgl_2d_vec PretendProj,
+                                 float foregroundDistance,
+                                 float invForegroundDistance,
+                                 float SxDash, float SyDash,
+                                 float OxDash, float OyDash) {
+    float fBehind, fZdelta, fScale;
+    float fX, fY;
+    /*
 	// First intersect the line between the vertices in world space
 	// with clipping plane
 	*/
-	fZdelta = pVOk->vWorldSpace[2] - pVClipped->vWorldSpace[2];
-	fBehind = foregroundDistance - pVClipped->vWorldSpace[2];
-	ASSERT(fZdelta >= 0.0f);
-	ASSERT(fBehind >= 0.0f);
+    fZdelta = pVOk->vWorldSpace[2] - pVClipped->vWorldSpace[2];
+    fBehind = foregroundDistance - pVClipped->vWorldSpace[2];
+    ASSERT(fZdelta >= 0.0f);
+    ASSERT(fBehind >= 0.0f);
 
-  #if defined(MIDAS_ARCADE)
+#if defined(MIDAS_ARCADE)
 
-	/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+                                                                                                                            /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 	if(fZdelta > 1.0E-3f)
 
-  #else
+#else
 
-	if(fZdelta > 1.0E-20f)
+    if (fZdelta > 1.0E-20f)
 
-  #endif
-	{
-		fScale = fBehind / (fZdelta);
-	}
-	else
-	{
-		fScale = fBehind * 1.0E20f;
-	}
+#endif
+    {
+        fScale = fBehind / (fZdelta);
+    } else {
+        fScale = fBehind * 1.0E20f;
+    }
 
-	/*
+    /*
 	// Get the World space pos of the clipped value
 	*/
-	fX = pVClipped->vWorldSpace[0] + 
-			fScale * (pVOk->vWorldSpace[0] - pVClipped->vWorldSpace[0]);
-	fY = pVClipped->vWorldSpace[1] + 
-			fScale * (pVOk->vWorldSpace[1] - pVClipped->vWorldSpace[1]);
-	
-	/*
+    fX = pVClipped->vWorldSpace[0] +
+         fScale * (pVOk->vWorldSpace[0] - pVClipped->vWorldSpace[0]);
+    fY = pVClipped->vWorldSpace[1] +
+         fScale * (pVOk->vWorldSpace[1] - pVClipped->vWorldSpace[1]);
+
+    /*
 	// Get the screen space pos of the clipped value
 	*/
-	fX = (SxDash * fX * invForegroundDistance) + OxDash;
-	fY = (SyDash * fY * invForegroundDistance) + OyDash;
+    fX = (SxDash * fX * invForegroundDistance) + OxDash;
+    fY = (SyDash * fY * invForegroundDistance) + OyDash;
 
-	/*
+    /*
 	// Now interpolate BACK to where the pseudo bad vertex will end up
 	*/
-	fBehind = (1.0f - fScale);
+    fBehind = (1.0f - fScale);
 
-  #if defined(MIDAS_ARCADE)
+#if defined(MIDAS_ARCADE)
 
-	/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+                                                                                                                            /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 	if(fBehind > 1.0E-3f)
 	{
 		fBehind = 1.0f / fBehind;
@@ -5342,198 +5127,176 @@ static void  ExtrapolateScreenPos( const PTRANSVERTEX pVClipped,
 		fBehind = 1.0E-3f;
 	}
 
-  #else
+#else
 
-	if(fBehind > 1.0E-20f)
-	{
-		fBehind = 1.0f / fBehind;
-	}
-	else
-	{
-		fBehind = 1.0E-20f;
-	}
+    if (fBehind > 1.0E-20f) {
+        fBehind = 1.0f / fBehind;
+    } else {
+        fBehind = 1.0E-20f;
+    }
 
-  #endif
+#endif
 
-	PretendProj[0] = (fX - fScale * pVOk->vScreenSpace[0]) * fBehind;
-	PretendProj[1] = (fY - fScale * pVOk->vScreenSpace[1]) * fBehind;
+    PretendProj[0] = (fX - fScale * pVOk->vScreenSpace[0]) * fBehind;
+    PretendProj[1] = (fY - fScale * pVOk->vScreenSpace[1]) * fBehind;
 
 }
 
 /**************************************************************************
  * Function Name  : CreateSmoothShadingDataPartlyVisible(LOCAL FUNCTION)
- *					
- *	
- * Outputs        : 
- * 
+ *
+ *
+ * Outputs        :
+ *
  * 					Generates the input to the smooth shading function, when
  *					there is a chance of the faces being Z clipped.
- *	
+ *
  **************************************************************************/
 
-#define Vec2dCopy(x,y)	y[0]=x[0];y[1]=x[1];
+#define Vec2dCopy(x, y)    y[0]=x[0];y[1]=x[1];
 
-static void CreateSmoothShadingDataPartlyVisible (PXMESHEXTRA	 pXExtra,
-											int			 numFaces,
-											TRANSFORMED_PLANE_STRUCT *pXPlane,
-											sgl_bool bIsTextureWrapping,
-											const TRANSFORM_STRUCT	 *pTransform)
-{
-	const FACE * pFace;
-	PTRANSVERTEX   pVa, pVb, pVc;
-	CONV_SHADING_STRUCT	*pS;
-	float foregroundDistance, invForegroundDistance, SxDash, SyDash, OxDash, OyDash;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+static void CreateSmoothShadingDataPartlyVisible(PXMESHEXTRA pXExtra,
+                                                 int numFaces,
+                                                 TRANSFORMED_PLANE_STRUCT *pXPlane,
+                                                 sgl_bool bIsTextureWrapping,
+                                                 const TRANSFORM_STRUCT *pTransform) {
+    const FACE *pFace;
+    PTRANSVERTEX pVa, pVb, pVc;
+    CONV_SHADING_STRUCT *pS;
+    float foregroundDistance, invForegroundDistance, SxDash, SyDash, OxDash, OyDash;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-	foregroundDistance = pProjMat->foregroundDistance;
-	invForegroundDistance = pProjMat->invForegroundDistance;
-	SxDash = pProjMat->SxDash;
-	SyDash = pProjMat->SyDash;
-	OxDash = pProjMat->OxDash;
-	OyDash = pProjMat->OyDash;
+    foregroundDistance = pProjMat->foregroundDistance;
+    invForegroundDistance = pProjMat->invForegroundDistance;
+    SxDash = pProjMat->SxDash;
+    SyDash = pProjMat->SyDash;
+    OxDash = pProjMat->OxDash;
+    OyDash = pProjMat->OyDash;
 
-	for(/*NOTHING*/;  numFaces != 0; numFaces --, pXExtra++, pXPlane++)
-	{
-		float fDet;
+    for (/*NOTHING*/; numFaces != 0; numFaces--, pXExtra++, pXPlane++) {
+        float fDet;
 
-		/*
+        /*
 		// Get the pointer to the face data
 		*/
-		pFace = pXExtra->pOrigFace;
+        pFace = pXExtra->pOrigFace;
 
-		if (pFace->PlaneData.flags & pf_smooth_shad)
-		{
-			/*
+        if (pFace->PlaneData.flags & pf_smooth_shad) {
+            /*
 			// Get the pointer to the shading data
 			*/
-			pS = (CONV_SHADING_STRUCT*) pXPlane->pShadingData;
+            pS = (CONV_SHADING_STRUCT *) pXPlane->pShadingData;
 
-			/*
+            /*
 			// Get pointers to the vertices on this face
 			*/
-			pVa = gpXVertices + pFace->pnVertexIDs[0];
-			pVb = gpXVertices + pFace->pnVertexIDs[1];
-			pVc = gpXVertices + pFace->pnVertexIDs[2];
+            pVa = gpXVertices + pFace->pnVertexIDs[0];
+            pVb = gpXVertices + pFace->pnVertexIDs[1];
+            pVc = gpXVertices + pFace->pnVertexIDs[2];
 
 
-			/*
+            /*
 			// If any of vertices A, B, or C are Z clipped, then can't
 			// use the usual Non-clipped code.
 			*/
-			if ((pVa->Flags | pVb->Flags | pVc->Flags) & CLIPPED_Z)
-			{
-				/*
+            if ((pVa->Flags | pVb->Flags | pVc->Flags) & CLIPPED_Z) {
+                /*
 				// This holds the projected position of the vertices AND OR
 				// clipped positions
 				*/
-				sgl_2d_vec proj[3];
-				float dist;
-				PTRANSVERTEX  pVfurthest;
-				
+                sgl_2d_vec proj[3];
+                float dist;
+                PTRANSVERTEX pVfurthest;
 
-				/*
+
+                /*
 				// This code needs to come up with "new" screen positions
 				// for any of A,B, or C that are clipped. To do this,
 				// first choose the vertex that is furthest away
 				*/
-				if(pVa->vWorldSpace[2] > pVb->vWorldSpace[2])
-				{
-					dist = pVa->vWorldSpace[2];
-					pVfurthest = pVa;
-				}
-				else
-				{
-					dist = pVb->vWorldSpace[2];
-					pVfurthest = pVb;
-				}
+                if (pVa->vWorldSpace[2] > pVb->vWorldSpace[2]) {
+                    dist = pVa->vWorldSpace[2];
+                    pVfurthest = pVa;
+                } else {
+                    dist = pVb->vWorldSpace[2];
+                    pVfurthest = pVb;
+                }
 
-				if(dist <  pVc->vWorldSpace[2])
-				{
-					dist = pVc->vWorldSpace[2];
-					pVfurthest = pVc;
-				}
+                if (dist < pVc->vWorldSpace[2]) {
+                    dist = pVc->vWorldSpace[2];
+                    pVfurthest = pVc;
+                }
 
-				if(pFace->nVertices == 4)
-				{
-					PTRANSVERTEX  pVd;
-					pVd = gpXVertices + pFace->pnVertexIDs[3];
+                if (pFace->nVertices == 4) {
+                    PTRANSVERTEX pVd;
+                    pVd = gpXVertices + pFace->pnVertexIDs[3];
 
-					
-					if(dist <  pVd->vWorldSpace[2])
-					{
-						dist = pVd->vWorldSpace[2];
-						pVfurthest = pVd;
-					}
-				}
 
-				/*
+                    if (dist < pVd->vWorldSpace[2]) {
+                        dist = pVd->vWorldSpace[2];
+                        pVfurthest = pVd;
+                    }
+                }
+
+                /*
 				// The furthest vertex CANT be zclipped. We wouldnt be here
 				// otherwise.
 				*/
-				ASSERT(!(pVfurthest->Flags& CLIPPED_Z))
+                ASSERT(!(pVfurthest->Flags & CLIPPED_Z))
 
-				/*
+                /*
 				// For each vertex that is Z clipped, come up with an
 				// "extrapolated" screen position for it, otherwise just use
 				// the screen position it's current got
 				*/
-				if(pVa->Flags & CLIPPED_Z)
-				{
-					ExtrapolateScreenPos(pVa, pVfurthest, proj[0], 
-										 foregroundDistance, 
-										 invForegroundDistance, 
-										 SxDash, SyDash, OxDash, OyDash);
-				}
-				else
-				{
-					Vec2dCopy (pVa->vScreenSpace, proj[0]);
-				}
+                if (pVa->Flags & CLIPPED_Z) {
+                    ExtrapolateScreenPos(pVa, pVfurthest, proj[0],
+                                         foregroundDistance,
+                                         invForegroundDistance,
+                                         SxDash, SyDash, OxDash, OyDash);
+                } else {
+                    Vec2dCopy (pVa->vScreenSpace, proj[0]);
+                }
 
 
-				if(pVb->Flags & CLIPPED_Z)
-				{
-					ExtrapolateScreenPos(pVb, pVfurthest, proj[1],
-										 foregroundDistance, 
-										 invForegroundDistance, 
-										 SxDash, SyDash, OxDash, OyDash);
-				}
-				else
-				{
-					Vec2dCopy (pVb->vScreenSpace, proj[1]);
-				}
+                if (pVb->Flags & CLIPPED_Z) {
+                    ExtrapolateScreenPos(pVb, pVfurthest, proj[1],
+                                         foregroundDistance,
+                                         invForegroundDistance,
+                                         SxDash, SyDash, OxDash, OyDash);
+                } else {
+                    Vec2dCopy (pVb->vScreenSpace, proj[1]);
+                }
 
-				if(pVc->Flags & CLIPPED_Z)
-				{
-					ExtrapolateScreenPos(pVc, pVfurthest, proj[2],
-										 foregroundDistance, 
-										 invForegroundDistance, 
-										 SxDash, SyDash, OxDash, OyDash);
-				}
-				else
-				{
-					Vec2dCopy (pVc->vScreenSpace, proj[2]);
-				}
+                if (pVc->Flags & CLIPPED_Z) {
+                    ExtrapolateScreenPos(pVc, pVfurthest, proj[2],
+                                         foregroundDistance,
+                                         invForegroundDistance,
+                                         SxDash, SyDash, OxDash, OyDash);
+                } else {
+                    Vec2dCopy (pVc->vScreenSpace, proj[2]);
+                }
 
 
-				/*
+                /*
 				// Come up with the adjoint matrix of the screen positions
 				*/
-				#define fX0 proj[0][0]
-				#define fX1 proj[1][0]
-				#define fX2 proj[2][0]
+#define fX0 proj[0][0]
+#define fX1 proj[1][0]
+#define fX2 proj[2][0]
 
-				#define fY0 proj[0][1]
-				#define fY1 proj[1][1]
-				#define fY2 proj[2][1]
+#define fY0 proj[0][1]
+#define fY1 proj[1][1]
+#define fY2 proj[2][1]
 
-				fDet = fX0*fY1 - fX0*fY2 - fX1*fY0 + fX1*fY2 + fX2*fY0 - fX2*fY1;
+                fDet = fX0 * fY1 - fX0 * fY2 - fX1 * fY0 + fX1 * fY2 + fX2 * fY0 - fX2 * fY1;
 
-				/*
+                /*
 				// Calculate 1/determinant:
 				*/
-			  #if defined(MIDAS_ARCADE)
+#if defined(MIDAS_ARCADE)
 
-				/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+                                                                                                                                        /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 				if (sfabs (fDet) > 1.0e-3f)
 				{
 					pS->f1OverDet = 1.0f / fDet;
@@ -5547,65 +5310,59 @@ static void CreateSmoothShadingDataPartlyVisible (PXMESHEXTRA	 pXExtra,
 					pS->f1OverDet = -1.0e-3f;
 				}
 
-			  #else
+#else
 
-				if (sfabs (fDet) > 1.0e-20f)
-				{
-					pS->f1OverDet = 1.0f / fDet;
-				}
-				else if(fDet > 0.0f)
-				{
-					pS->f1OverDet = 1.0e-20f;
-				}
-				else
-				{
-					pS->f1OverDet = -1.0e-20f;
-				}
+                if (sfabs (fDet) > 1.0e-20f) {
+                    pS->f1OverDet = 1.0f / fDet;
+                } else if (fDet > 0.0f) {
+                    pS->f1OverDet = 1.0e-20f;
+                } else {
+                    pS->f1OverDet = -1.0e-20f;
+                }
 
-			  #endif
-				/*
+#endif
+                /*
 				// pPre->fAdjoint is a constant zero offset
 				*/
-				pS->fAdjoint[0][0] = fY1-fY2;
-				pS->fAdjoint[0][1] = fY2-fY0;
-				pS->fAdjoint[0][2] = fY0-fY1;
+                pS->fAdjoint[0][0] = fY1 - fY2;
+                pS->fAdjoint[0][1] = fY2 - fY0;
+                pS->fAdjoint[0][2] = fY0 - fY1;
 
-				pS->fAdjoint[1][0] = fX2-fX1;
-				pS->fAdjoint[1][1] = fX0-fX2;
-				pS->fAdjoint[1][2] = fX1-fX0;
+                pS->fAdjoint[1][0] = fX2 - fX1;
+                pS->fAdjoint[1][1] = fX0 - fX2;
+                pS->fAdjoint[1][2] = fX1 - fX0;
 
-				pS->fRepDeltaX = pXPlane->projRepPoint[0] - proj[0][0];
-				pS->fRepDeltaY = pXPlane->projRepPoint[1] - proj[0][1];
+                pS->fRepDeltaX = pXPlane->projRepPoint[0] - proj[0][0];
+                pS->fRepDeltaY = pXPlane->projRepPoint[1] - proj[0][1];
 
-				#undef fX0
-				#undef fX1
-				#undef fX2
+#undef fX0
+#undef fX1
+#undef fX2
 
-				#undef fY0
-				#undef fY1
-				#undef fY2
-			}
-			/*
+#undef fY0
+#undef fY1
+#undef fY2
+            }
+                /*
 			// Else No Z clipping to worry us. Just use A, B, & C directly
 			*/
-			else
-			{
-				#define fX0 pVa->vScreenSpace[0]
-				#define fX1 pVb->vScreenSpace[0]
-				#define fX2 pVc->vScreenSpace[0]
+            else {
+#define fX0 pVa->vScreenSpace[0]
+#define fX1 pVb->vScreenSpace[0]
+#define fX2 pVc->vScreenSpace[0]
 
-				#define fY0 pVa->vScreenSpace[1]
-				#define fY1 pVb->vScreenSpace[1]
-				#define fY2 pVc->vScreenSpace[1]
+#define fY0 pVa->vScreenSpace[1]
+#define fY1 pVb->vScreenSpace[1]
+#define fY2 pVc->vScreenSpace[1]
 
-				fDet = fX0*fY1 - fX0*fY2 - fX1*fY0 + fX1*fY2 + fX2*fY0 - fX2*fY1;
+                fDet = fX0 * fY1 - fX0 * fY2 - fX1 * fY0 + fX1 * fY2 + fX2 * fY0 - fX2 * fY1;
 
-				/*
+                /*
 				// Calculate 1/determinant:
 				*/
-			  #if defined(MIDAS_ARCADE)
+#if defined(MIDAS_ARCADE)
 
-				/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+                                                                                                                                        /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 				if (sfabs (fDet) > 1.0e-3f)
 				{
 					pS->f1OverDet = 1.0f / fDet;
@@ -5619,54 +5376,49 @@ static void CreateSmoothShadingDataPartlyVisible (PXMESHEXTRA	 pXExtra,
 					pS->f1OverDet = -1.0e-3f;
 				}
 
-			  #else
+#else
 
-				if (sfabs (fDet) > 1.0e-20f)
-				{
-					pS->f1OverDet = 1.0f / fDet;
-				}
-				else if(fDet > 0.0f)
-				{
-					pS->f1OverDet = 1.0e-20f;
-				}
-				else
-				{
-					pS->f1OverDet = -1.0e-20f;
-				}
+                if (sfabs (fDet) > 1.0e-20f) {
+                    pS->f1OverDet = 1.0f / fDet;
+                } else if (fDet > 0.0f) {
+                    pS->f1OverDet = 1.0e-20f;
+                } else {
+                    pS->f1OverDet = -1.0e-20f;
+                }
 
-			  #endif
+#endif
 
 
-				/*
+                /*
 				// pPre->fAdjoint is a constant zero offset
 				*/
-				pS->fAdjoint[0][0] = fY1-fY2;
-				pS->fAdjoint[0][1] = fY2-fY0;
-				pS->fAdjoint[0][2] = fY0-fY1;
+                pS->fAdjoint[0][0] = fY1 - fY2;
+                pS->fAdjoint[0][1] = fY2 - fY0;
+                pS->fAdjoint[0][2] = fY0 - fY1;
 
-				pS->fAdjoint[1][0] = fX2-fX1;
-				pS->fAdjoint[1][1] = fX0-fX2;
-				pS->fAdjoint[1][2] = fX1-fX0;
+                pS->fAdjoint[1][0] = fX2 - fX1;
+                pS->fAdjoint[1][1] = fX0 - fX2;
+                pS->fAdjoint[1][2] = fX1 - fX0;
 
-				pS->fRepDeltaX = pXPlane->projRepPoint[0] - pVa->vScreenSpace[0];
-				pS->fRepDeltaY = pXPlane->projRepPoint[1] - pVa->vScreenSpace[1];
+                pS->fRepDeltaX = pXPlane->projRepPoint[0] - pVa->vScreenSpace[0];
+                pS->fRepDeltaY = pXPlane->projRepPoint[1] - pVa->vScreenSpace[1];
 
-				#undef fX0
-				#undef fX1
-				#undef fX2
+#undef fX0
+#undef fX1
+#undef fX2
 
-				#undef fY0
-				#undef fY1
-				#undef fY2
-			}
-		}
-	}/*end for*/
+#undef fY0
+#undef fY1
+#undef fY2
+            }
+        }
+    }/*end for*/
 }
 
 /**************************************************************************
  * Function Name  : RnProcessMeshNode
  * Inputs         : pMesh- pointer to the convex primitive node
- *					
+ *
  * Outputs        : None
  * Input/Output	  : pState- pointer to a master state stack "frame"
  * Returns        : None
@@ -5679,225 +5431,207 @@ static void CreateSmoothShadingDataPartlyVisible (PXMESHEXTRA	 pXExtra,
  *
  **************************************************************************/
 
-void RnProcessMeshNode (const MESH_NODE_STRUCT *pMesh, 
-						MASTER_STATE_STRUCT *pState,
-						int nCurrTransSetID)
-{
-	int			nEdges, nVertices;
-	int 		m;
-	const FACE	*pFace;
+void RnProcessMeshNode(const MESH_NODE_STRUCT *pMesh,
+                       MASTER_STATE_STRUCT *pState,
+                       int nCurrTransSetID) {
+    int nEdges, nVertices;
+    int m;
+    const FACE *pFace;
 
 #if DEBUG
-	int FaceNumber = 0;
+    int FaceNumber = 0;
 #endif
 #if DEBUG || PRE_CULL
-	int nFaces;
+    int nFaces;
 #endif
 
-	const CONV_SHADING_STRUCT  *pShadingData;
-	const CONV_TEXTURE_UNION   *pTextureData;
-	const CONV_POINTS_STRUCT   *pPointsData;
+    const CONV_SHADING_STRUCT *pShadingData;
+    const CONV_TEXTURE_UNION *pTextureData;
+    const CONV_POINTS_STRUCT *pPointsData;
 
-	PMESHMATERIAL pLocMatEnt;
-	
-	/*
+    PMESHMATERIAL pLocMatEnt;
+
+    /*
 	// If we have REAL local materials, then we must take a copy
 	// of the global material state.
 	*/
-	MATERIAL_STATE_STRUCT LocalMaterialState, *pMaterialState;
-	
-	sgl_bool				 bZClipped;
-	sgl_bool				 bMustTextWrap;	
-	sgl_bool				 bIsSmoothShaded;
-	TEST_BOX_ENUM BoxCase;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+    MATERIAL_STATE_STRUCT LocalMaterialState, *pMaterialState;
 
-	SGL_TIME_START(TRIVIAL_REJECTION_TIME)
-	/*
+    sgl_bool bZClipped;
+    sgl_bool bMustTextWrap;
+    sgl_bool bIsSmoothShaded;
+    TEST_BOX_ENUM BoxCase;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+
+    SGL_TIME_START(TRIVIAL_REJECTION_TIME)
+    /*
 	// First test if the mesh is likely to be on screen. If not, exit.
 	//
 	// transform the bounding box into world space, and compare it against
 	// the viewing pyramid
 	*/
-	TransformBBox(pState->pTransformState, &pMesh->CentBBox, &BBoxMinmax);
+    TransformBBox(pState->pTransformState, &pMesh->CentBBox, &BBoxMinmax);
 
-	BoxCase = RnTestBoxWithCamera (&BBoxMinmax, TRUE, &bZClipped);
+    BoxCase = RnTestBoxWithCamera(&BBoxMinmax, TRUE, &bZClipped);
 
-	SGL_TIME_STOP(TRIVIAL_REJECTION_TIME)
+    SGL_TIME_STOP(TRIVIAL_REJECTION_TIME)
 
-	if(BoxCase ==TB_BOX_OFFSCREEN)
-	{
-		DPF ((DBG_VERBOSE, "Mesh invisible"));
-		/* if only we could do this for all objects */
-		return;
-	}
+    if (BoxCase == TB_BOX_OFFSCREEN) {
+        DPF ((DBG_VERBOSE, "Mesh invisible"));
+        /* if only we could do this for all objects */
+        return;
+    }
 
-	/*
+    /*
 	// Set up local variables etc
 	*/
 
-	ASSERT (gpXVertices);
-	
-	ASSERT (pMesh);
-	ASSERT (pState);
+    ASSERT (gpXVertices);
 
-	SGL_TIME_START(MESH_NODE_TIME)
+    ASSERT (pMesh);
+    ASSERT (pState);
 
-	/*
+    SGL_TIME_START(MESH_NODE_TIME)
+
+    /*
 	// if there are no faces, then get out of here!
 	*/
-	if(pMesh->nEdges <= 0)
-	{
-		return;
-	}
+    if (pMesh->nEdges <= 0) {
+        return;
+    }
 
-	/* Set bilinear filtering mode.
+    /* Set bilinear filtering mode.
 	 * This is the best place to do this. The relevent bilinear
 	 * filtering setting will be set for all subsequent mesh objects.
 	 */
-  	if (pState->pQualityState->flags & qf_texture_filtering)
-	{
-		pProjMat->eFilterType = pState->pQualityState->eFilterType;
-	}
+    if (pState->pQualityState->flags & qf_texture_filtering) {
+        pProjMat->eFilterType = pState->pQualityState->eFilterType;
+    }
 
-	/* Set dithering mode.
+    /* Set dithering mode.
 	 */
-  	if (pState->pQualityState->flags & qf_dithering)
-	{
-		pProjMat->bDithering = TRUE;
-	}
-	else
-	{
-		pProjMat->bDithering = FALSE;
-	}
+    if (pState->pQualityState->flags & qf_dithering) {
+        pProjMat->bDithering = TRUE;
+    } else {
+        pProjMat->bDithering = FALSE;
+    }
 
-	pShadingData = pMesh->pShadingData;
-	pTextureData = pMesh->pTextureData;
-	pPointsData	 = pMesh->pPointsData;
+    pShadingData = pMesh->pShadingData;
+    pTextureData = pMesh->pTextureData;
+    pPointsData = pMesh->pPointsData;
 
-	ASSERT (pMesh->pVertexData);
-	ASSERT (pMesh->pEdgeData);
-	ASSERT (pMesh->Faces);
+    ASSERT (pMesh->pVertexData);
+    ASSERT (pMesh->pEdgeData);
+    ASSERT (pMesh->Faces);
 
-	/*
+    /*
 	// Set up the global face culling mode for this mesh
 	*/
-	
-	if(! pState->pTransformState->has_neg_scaling)
-	{
-		keepAntiClock = (pMesh->CullMode != sgl_cull_anticlock);
-		keepClockwise = (pMesh->CullMode != sgl_cull_clockwise);
-	}
-	else
-	{
-		keepClockwise = (pMesh->CullMode != sgl_cull_anticlock);
-		keepAntiClock = (pMesh->CullMode != sgl_cull_clockwise);
- 	}
+
+    if (!pState->pTransformState->has_neg_scaling) {
+        keepAntiClock = (pMesh->CullMode != sgl_cull_anticlock);
+        keepClockwise = (pMesh->CullMode != sgl_cull_clockwise);
+    } else {
+        keepClockwise = (pMesh->CullMode != sgl_cull_anticlock);
+        keepAntiClock = (pMesh->CullMode != sgl_cull_clockwise);
+    }
 
 #if PRE_CULL
-	switch (pMesh->CullMode)
+                                                                                                                            switch (pMesh->CullMode)
 	{
-		case sgl_cull_anticlock: 
+		case sgl_cull_anticlock:
 		{
-			CullMode = 0x00000000; 
+			CullMode = 0x00000000;
 			break;
 		}
 
-		case sgl_cull_clockwise: 
+		case sgl_cull_clockwise:
 		{
-			CullMode = 0x80000000; 
+			CullMode = 0x80000000;
 			break;
 		}
 
-		default: 
+		default:
 		{
-			CullMode = 0xFFFFFFFF; 
+			CullMode = 0xFFFFFFFF;
 			break;
 		}
 	}
 #endif
 
-	nVertices = pMesh->nVertices;
-	nEdges	  = pMesh->nEdges;
+    nVertices = pMesh->nVertices;
+    nEdges = pMesh->nEdges;
 
 #if DEBUG || PRE_CULL
-	nFaces	  = ListGetItemsInList (pMesh->Faces);
+    nFaces	  = ListGetItemsInList (pMesh->Faces);
 #endif
 
-	if (nVertices > gnXVertices)
-	{
-		PTRANSVERTEX pNew;
-	#if PRE_CULL
-		sgl_uint8		 *pNewIndex;
-	#endif
+    if (nVertices > gnXVertices) {
+        PTRANSVERTEX pNew;
+#if PRE_CULL
+        sgl_uint8		 *pNewIndex;
+#endif
 
-		pNew = SGLMalloc (sizeof (TRANSVERTEX) * nVertices);
-		if (pNew)
-		{
-			DPF ((DBG_WARNING, "Bumping up static vertex array to %d", nVertices));
+        pNew = SGLMalloc (sizeof(TRANSVERTEX) * nVertices);
+        if (pNew) {
+            DPF ((DBG_WARNING, "Bumping up static vertex array to %d", nVertices));
 
-			SGLFree (gpXVertices);
-			
-			gpXVertices = pNew;
-			gnXVertices = nVertices;
-		}
-		else
-		{
-			DPF ((DBG_ERROR,
-			 "Unable to bump up static vertex array to %d - not rendering mesh", 
-							 nVertices));
-			SGL_TIME_STOP(MESH_NODE_TIME)
-			return ;
-		}
+            SGLFree (gpXVertices);
 
-		#if PRE_CULL
-		pNewIndex = SGLMalloc (sizeof (sgl_uint8) * nVertices);
+            gpXVertices = pNew;
+            gnXVertices = nVertices;
+        } else {
+            DPF ((DBG_ERROR,
+                    "Unable to bump up static vertex array to %d - not rendering mesh",
+                    nVertices));
+            SGL_TIME_STOP(MESH_NODE_TIME)
+            return;
+        }
+
+#if PRE_CULL
+                                                                                                                                pNewIndex = SGLMalloc (sizeof (sgl_uint8) * nVertices);
 		if (pNewIndex)
 		{
 		    DPF ((DBG_WARNING, "Bumping up static vertex index array to %d", nVertices));
-			
+
 			SGLFree (gpXVertexIndex);
-			
+
 			gpXVertexIndex = pNewIndex;
 		}
 		else
 		{
 		    DPF ((DBG_ERROR,
-				  "Unable to bump up static vertex index array to %d - not rendering mesh", 
+				  "Unable to bump up static vertex index array to %d - not rendering mesh",
 				  nVertices));
 			SGL_TIME_STOP(MESH_NODE_TIME)
 			  return ;
 		}
 
-		#endif
-	}
-
-	if (nEdges > gnXEdges)
-	{
-	    PTRANSEDGE pNew;
-#if PRE_CULL
-		sgl_uint8	   *pNewIndex;
 #endif
-		pNew = SGLMalloc ( sizeof (TRANSEDGE) * nEdges);
-		if (pNew)
-		{
-			DPF ((DBG_WARNING, "Bumping up static edge array to %d", nEdges));
-			SGLFree(gpXEdges);
+    }
 
-			gpXEdges = pNew;
-			gnXEdges = nEdges;
-		}
-		else
-		{
-			DPF ((DBG_ERROR,
-				  "Unable to bump up static edge array to %d - not rendering mesh",
-				  nEdges));
-			SGL_TIME_STOP(MESH_NODE_TIME)
-			return ;
-		}
+    if (nEdges > gnXEdges) {
+        PTRANSEDGE pNew;
+#if PRE_CULL
+        sgl_uint8	   *pNewIndex;
+#endif
+        pNew = SGLMalloc (sizeof(TRANSEDGE) * nEdges);
+        if (pNew) {
+            DPF ((DBG_WARNING, "Bumping up static edge array to %d", nEdges));
+            SGLFree(gpXEdges);
 
-	 #if PRE_CULL
-		pNewIndex = SGLMalloc ( sizeof (sgl_uint8) * nEdges);		
+            gpXEdges = pNew;
+            gnXEdges = nEdges;
+        } else {
+            DPF ((DBG_ERROR,
+                    "Unable to bump up static edge array to %d - not rendering mesh",
+                    nEdges));
+            SGL_TIME_STOP(MESH_NODE_TIME)
+            return;
+        }
+
+#if PRE_CULL
+                                                                                                                                pNewIndex = SGLMalloc ( sizeof (sgl_uint8) * nEdges);
 		if (pNewIndex)
 		{
 			DPF ((DBG_WARNING, "Bumping up static edge index array to %d", nEdges));
@@ -5907,369 +5641,348 @@ void RnProcessMeshNode (const MESH_NODE_STRUCT *pMesh,
 		else
 		{
 			DPF((DBG_ERROR,
-			"Unable to bump up static edge index array to %d - not rendering mesh", 
+			"Unable to bump up static edge index array to %d - not rendering mesh",
 				 nEdges));
 			SGL_TIME_STOP(MESH_NODE_TIME)
 			return ;
 		}
 
-	#endif
-	}
+#endif
+    }
 
 
-	/*
+    /*
 	// We must have a valid mesh
 	*/
-	#if DEBUG
-		if (!nVertices || !nFaces || !nEdges)
+#if DEBUG
+                                                                                                                            if (!nVertices || !nFaces || !nEdges)
 		{
-			DPF ((DBG_ERROR, 
-				"RnProcessMeshNode: Bad mesh: %d vertices, %d faces, %d edges", 
+			DPF ((DBG_ERROR,
+				"RnProcessMeshNode: Bad mesh: %d vertices, %d faces, %d edges",
 				nVertices, nFaces, nEdges));
 		}
-	#endif
+#endif
 
-	
-	/*
+
+    /*
 	  // Do we need to update the local projection matrix
 	*/
-	if(!RnGlobalLocalProjMatIsValid())
-	{
-		DPF((DBG_MESSAGE, "Update LT mat"));
-		RnUpdateLocalProjectionMatrix(pState->pTransformState);
-	}
+    if (!RnGlobalLocalProjMatIsValid()) {
+        DPF((DBG_MESSAGE, "Update LT mat"));
+        RnUpdateLocalProjectionMatrix(pState->pTransformState);
+    }
 
-	/*
+    /*
 	// Do we have any "real" local materials? If we do, make a local
 	// copy of the global one, and set up a pointer to it
 	*/
-	ASSERT(ListGetItemsInList(pMesh->Materials) > 0);
+    ASSERT(ListGetItemsInList(pMesh->Materials) > 0);
 
-	if(pMesh->HasLocalMaterials)
-	{
-		LocalMaterialState =  *pState->pMaterialState;
-		pMaterialState     =  &LocalMaterialState;
-	}
-	/*
+    if (pMesh->HasLocalMaterials) {
+        LocalMaterialState = *pState->pMaterialState;
+        pMaterialState = &LocalMaterialState;
+    }
+        /*
 	// Else we arent going to modify the global materials
 	// structure, so just use it (ie get a pointer to it)
 	*/
-	else
-	{
-		pMaterialState = pState->pMaterialState;
+    else {
+        pMaterialState = pState->pMaterialState;
 
-	}/*end if/else local materials*/
+    }/*end if/else local materials*/
 
 
-	#if PRE_CULL
+#if PRE_CULL
 
-	    SGL_TIME_SUSPEND(MESH_NODE_TIME)
-		PreprocessFacesVisible (nVertices, nEdges, nFaces, 
-								ListFindItemFast (pMesh->Vertices, 0), 
-								ListFindItemFast (pMesh->Faces, 0), 
+                                                                                                                            SGL_TIME_SUSPEND(MESH_NODE_TIME)
+		PreprocessFacesVisible (nVertices, nEdges, nFaces,
+								ListFindItemFast (pMesh->Vertices, 0),
+								ListFindItemFast (pMesh->Faces, 0),
 								pState->pTransformState);
 	    SGL_TIME_RESUME(MESH_NODE_TIME)
 
-	#endif
+#endif
 
-	/*
+    /*
 	// Determine if we have to do any texture wrapping
 	*/
 
-	bMustTextWrap =(pMaterialState->texture_flags & MASK_TEXTURE) &&
-				   (pMaterialState->texture_flags & SMAP_BITS) &&
-				   (pMaterialState->texture_flags & OMAP_BITS) &&
-					!(pMesh->ORedPlaneFlags & pf_pre_mapped);
+    bMustTextWrap = (pMaterialState->texture_flags & MASK_TEXTURE) &&
+                    (pMaterialState->texture_flags & SMAP_BITS) &&
+                    (pMaterialState->texture_flags & OMAP_BITS) &&
+                    !(pMesh->ORedPlaneFlags & pf_pre_mapped);
 
-	/* 
+    /*
 	// is any part of the mesh smooth shaded?  and is smooth shading enabled
 	*/
 
-	bIsSmoothShaded = (pMesh->ORedPlaneFlags & pf_smooth_shad) &&
-					  (pState->pQualityState->flags & qf_smooth_shading);
+    bIsSmoothShaded = (pMesh->ORedPlaneFlags & pf_smooth_shad) &&
+                      (pState->pQualityState->flags & qf_smooth_shading);
 
-	/*
+    /*
 	// Process the vertices of the mesh. Determine which routine to
 	// use by the flag returned from the bounding box routine
 	*/
-	if(BoxCase == TB_BOX_ALL_ONSCREEN)
-	{
-		DPF ((DBG_VERBOSE, "Mesh completely visible"));
-		/* 
+    if (BoxCase == TB_BOX_ALL_ONSCREEN) {
+        DPF ((DBG_VERBOSE, "Mesh completely visible"));
+        /*
 		// transform all vertices to world space and project it to
-		//  screen space 
+		//  screen space
 		*/
-		SGL_TIME_SUSPEND(MESH_NODE_TIME)
-		ProcessVerticesAllVisible (pMesh->pVertexData, nVertices, 
-									  pState->pTransformState);
-		SGL_TIME_RESUME(MESH_NODE_TIME)
-	}
-	else
-	{
-		DPF ((DBG_VERBOSE, "Mesh partly visible"));
+        SGL_TIME_SUSPEND(MESH_NODE_TIME)
+        ProcessVerticesAllVisible(pMesh->pVertexData, nVertices,
+                                  pState->pTransformState);
+        SGL_TIME_RESUME(MESH_NODE_TIME)
+    } else {
+        DPF ((DBG_VERBOSE, "Mesh partly visible"));
 
-		ASSERT(BoxCase == TB_BOX_PART_ONSCREEN);
-		
-		/* 
+        ASSERT(BoxCase == TB_BOX_PART_ONSCREEN);
+
+        /*
 		// transform all vertices to world space and clip. If a vertex is
-		// visible, transform it to screen space 
+		// visible, transform it to screen space
 		//
 		// NOTE if all the vertices are visible, then we can upgrade to
 		// the completely on-screen case, which is faster.
 		*/
-		SGL_TIME_SUSPEND(MESH_NODE_TIME)
-		BoxCase = ProcessVerticesPartlyVisible (pMesh->pVertexData, nVertices, 
-										 pState->pTransformState);
-		SGL_TIME_RESUME(MESH_NODE_TIME)
+        SGL_TIME_SUSPEND(MESH_NODE_TIME)
+        BoxCase = ProcessVerticesPartlyVisible(pMesh->pVertexData, nVertices,
+                                               pState->pTransformState);
+        SGL_TIME_RESUME(MESH_NODE_TIME)
 
-		/*
+        /*
 		// If the mesh IS offscreen... then get out of here
 		*/
-		if(BoxCase ==TB_BOX_OFFSCREEN)
-		{
-			DPF ((DBG_VERBOSE, "Mesh invisible"));
-			/* if only we could do this for all objects */
-		    SGL_TIME_STOP(MESH_NODE_TIME)
-			return;
-		}
-	}
+        if (BoxCase == TB_BOX_OFFSCREEN) {
+            DPF ((DBG_VERBOSE, "Mesh invisible"));
+            /* if only we could do this for all objects */
+            SGL_TIME_STOP(MESH_NODE_TIME)
+            return;
+        }
+    }
 
-	/*
+    /*
 	// Process the Edges and faces of the mesh. NOTE. I am hoping the
 	// compiler is smart enough to notice that in the previous case where
 	// "BoxCase == TB_BOX_ALL_ONSCREEN" ie for the vertices, that it will
 	// notice the value has not changed and short circuit the test. GCC will
 	// do this, so I hope other compilers will as well. SJF
 	*/
-	if(BoxCase == TB_BOX_ALL_ONSCREEN)
-	{
+    if (BoxCase == TB_BOX_ALL_ONSCREEN) {
 
-		DPF ((DBG_VERBOSE, "Mesh completely visible AGAIN"));
+        DPF ((DBG_VERBOSE, "Mesh completely visible AGAIN"));
 
-		/*
+        /*
 		// The next thing to do is process all the edges working out their
 		// sabre parameters. Direction will have to be decided later, should
 		// be a matter of negating if the opposite sense is desired.
 		// Should be able to tell according to order the vertices are
 		// specified on the edge.
 		*/
-	    SGL_TIME_SUSPEND(MESH_NODE_TIME)
-		ProcessEdgesAllVisible (pMesh->pEdgeData, nEdges);
-	    SGL_TIME_RESUME(MESH_NODE_TIME)
-		/*
+        SGL_TIME_SUSPEND(MESH_NODE_TIME)
+        ProcessEdgesAllVisible(pMesh->pEdgeData, nEdges);
+        SGL_TIME_RESUME(MESH_NODE_TIME)
+        /*
 		// Step through all the "local" materials. Note even if there
 		// aren't any real local materials, the first one always refers
 		// to the number of planes affected by the global material.
 		//
-		// Furthermore, each material can refer to a maximum of 
+		// Furthermore, each material can refer to a maximum of
 		// SGL_MAX_PLANES surfaces. This reduces the amount of testing we
 		// have to do during this routine.
 		//
 		*/
-		pFace = ListFindItemFast (pMesh->Faces, 0);
-		pLocMatEnt = ListFindItemFast (pMesh->Materials, 0);
+        pFace = ListFindItemFast(pMesh->Faces, 0);
+        pLocMatEnt = ListFindItemFast(pMesh->Materials, 0);
 
-		for(m = ListGetItemsInList(pMesh->Materials); m!=0; m--, pLocMatEnt++)
-		{
-			int numProjected;
+        for (m = ListGetItemsInList(pMesh->Materials); m != 0; m--, pLocMatEnt++) {
+            int numProjected;
 
-			/*
+            /*
 			// Update the material with this new material if necessary
 			//
 			// If the pointer is NULL then no changes are to be made.
 			*/
-			if(pLocMatEnt->pMaterial != NULL)
-			{
-				RnProcessMaterialNode( pLocMatEnt->pMaterial, pMaterialState,
-															  pState);
-			}
+            if (pLocMatEnt->pMaterial != NULL) {
+                RnProcessMaterialNode(pLocMatEnt->pMaterial, pMaterialState,
+                                      pState);
+            }
 
-			ASSERT(pLocMatEnt->nMaterialUsage >= 0);
-			ASSERT(pLocMatEnt->nMaterialUsage <= SGL_MAX_INTERNAL_PLANES);
+            ASSERT(pLocMatEnt->nMaterialUsage >= 0);
+            ASSERT(pLocMatEnt->nMaterialUsage <= SGL_MAX_INTERNAL_PLANES);
 
-			/*
+            /*
 			// Do the faces affected by the material
 			//
 			// First cull/project/etc the faces, and return the number
 			// that remain.
 			*/
-	        SGL_TIME_SUSPEND(MESH_NODE_TIME)
-			numProjected = ProcessFacesVisible (&pFace, 
-						   pLocMatEnt->nMaterialUsage,
-						   pState->pTransformState,
-						   gXExtras,
-						   GlobalTransformedPlanes,
-						   &pShadingData,
-						   &pTextureData,
-						   &pPointsData);
-	        SGL_TIME_RESUME(MESH_NODE_TIME)
-		#if DEBUG
-			FaceNumber += pLocMatEnt->nMaterialUsage;
-		#endif
+            SGL_TIME_SUSPEND(MESH_NODE_TIME)
+            numProjected = ProcessFacesVisible(&pFace,
+                                               pLocMatEnt->nMaterialUsage,
+                                               pState->pTransformState,
+                                               gXExtras,
+                                               GlobalTransformedPlanes,
+                                               &pShadingData,
+                                               &pTextureData,
+                                               &pPointsData);
+            SGL_TIME_RESUME(MESH_NODE_TIME)
+#if DEBUG
+            FaceNumber += pLocMatEnt->nMaterialUsage;
+#endif
 
 
-			/*
+            /*
 			// if all the faces were rejected, go to the next group
 			*/
-			if(numProjected == 0)
-			{
-				continue;
-			}
+            if (numProjected == 0) {
+                continue;
+            }
 
-		#if 0
-			/*
+#if 0
+                                                                                                                                        /*
 			// if we are doing texture wrapping then create point data
 			*/
 			if (bMustTextWrap)
 			{
 				CreatePointData (gXExtras, numProjected, gPointsData, GlobalTransformedPlanes);
 			}
-		#endif
-			#if 1
-			/*
+#endif
+#if 1
+            /*
 			// if we are doing smooth shading then create shading data
 			*/
-			SGL_TIME_SUSPEND(MESH_NODE_TIME)
-			if (bIsSmoothShaded)
-			{
-				CreateSmoothShadingDataVisible (gXExtras, 
-												numProjected, 
-												GlobalTransformedPlanes);
-			}
-			SGL_TIME_RESUME(MESH_NODE_TIME)
-			#endif
+            SGL_TIME_SUSPEND(MESH_NODE_TIME)
+            if (bIsSmoothShaded) {
+                CreateSmoothShadingDataVisible(gXExtras,
+                                               numProjected,
+                                               GlobalTransformedPlanes);
+            } SGL_TIME_RESUME(MESH_NODE_TIME)
+#endif
 
-			/*
+            /*
 			// Now shade the remaining planes
 			*/
-			SGL_TIME_SUSPEND(MESH_NODE_TIME)
-			if (!DoPlaneStuff (pMesh, numProjected, pState, 
-							   pMaterialState, nCurrTransSetID))
-			{
-				break;
-			}
-			SGL_TIME_RESUME(MESH_NODE_TIME)
-		}/*end for step through the materials*/
-	}
-	/*
+            SGL_TIME_SUSPEND(MESH_NODE_TIME)
+            if (!DoPlaneStuff(pMesh, numProjected, pState,
+                              pMaterialState, nCurrTransSetID)) {
+                break;
+            }
+            SGL_TIME_RESUME(MESH_NODE_TIME)
+        }/*end for step through the materials*/
+    }
+        /*
 	// ELSE PARTLY OnScreen
 	*/
-	else
-	{
-		DPF ((DBG_VERBOSE, "Mesh partly visible AGAIN"));
+    else {
+        DPF ((DBG_VERBOSE, "Mesh partly visible AGAIN"));
 
-		ASSERT(BoxCase == TB_BOX_PART_ONSCREEN);
+        ASSERT(BoxCase == TB_BOX_PART_ONSCREEN);
 
-  		/*
-		// If we are here then we should have a partially transformed list 
+        /*
+		// If we are here then we should have a partially transformed list
 		// of vertices. If the vertex is visible, we should have screen coords,
 		// and region info calculated. If invisible, we should have world
 		// coordinates, a reasonable halfway house should we wish to work out
 		// where the point is in screen coords later (such as working out data
-		// for partially offscreen edge). The next thing to do is process all 
+		// for partially offscreen edge). The next thing to do is process all
 		// the edges to work out their sabre parameters. Direction will have
 		// to be decided later, should be a matter of negating if the
 		// opposite sense is desired. Should be able to tell according to
 		//  the direction the face walks the edge.
 		*/
-		SGL_TIME_SUSPEND(MESH_NODE_TIME)
-		ProcessEdgesPartlyVisible (pMesh->pEdgeData, nEdges);
+        SGL_TIME_SUSPEND(MESH_NODE_TIME)
+        ProcessEdgesPartlyVisible(pMesh->pEdgeData, nEdges);
 
-		SGL_TIME_RESUME(MESH_NODE_TIME)
-		/*
+        SGL_TIME_RESUME(MESH_NODE_TIME)
+        /*
 		// Step through all the "local" materials. Note even if there
 		// aren't any real local materials, the first one always refers
 		// to the number of planes affected by the global material.
 		//
-		// Furthermore, each material can refer to a maximum of 
+		// Furthermore, each material can refer to a maximum of
 		// SGL_MAX_PLANES surfaces. This reduces the amount of testing we
 		// have to do during this routine.
 		//
 		*/
-		pFace = ListFindItemFast (pMesh->Faces, 0);
-		pLocMatEnt = ListFindItemFast (pMesh->Materials, 0);
+        pFace = ListFindItemFast(pMesh->Faces, 0);
+        pLocMatEnt = ListFindItemFast(pMesh->Materials, 0);
 
-		for(m = ListGetItemsInList(pMesh->Materials); m!=0; m--, pLocMatEnt++)
-		{
-			int numProjected;
+        for (m = ListGetItemsInList(pMesh->Materials); m != 0; m--, pLocMatEnt++) {
+            int numProjected;
 
-			/*
+            /*
 			// Update the material with this new material if necessary
 			//
 			// If the pointer is NULL then no changes are to be made.
 			*/
-			if(pLocMatEnt->pMaterial != NULL)
-			{
-				RnProcessMaterialNode( pLocMatEnt->pMaterial, pMaterialState,
-															  pState);
-			}
+            if (pLocMatEnt->pMaterial != NULL) {
+                RnProcessMaterialNode(pLocMatEnt->pMaterial, pMaterialState,
+                                      pState);
+            }
 
-			ASSERT(pLocMatEnt->nMaterialUsage >= 0);
-			ASSERT(pLocMatEnt->nMaterialUsage <= SGL_MAX_INTERNAL_PLANES);
+            ASSERT(pLocMatEnt->nMaterialUsage >= 0);
+            ASSERT(pLocMatEnt->nMaterialUsage <= SGL_MAX_INTERNAL_PLANES);
 
-			/*
+            /*
 			// Do the faces affected by the material
 			//
 			// First cull/project/etc the faces, and return the number
 			// that remain.
 			*/
-			numProjected = ProcessFacesPartlyVisible (&pFace, 
-						   pLocMatEnt->nMaterialUsage,
-						   pState->pTransformState,
-						   gXExtras,
-						   GlobalTransformedPlanes,
-						   &pShadingData,
-						   &pTextureData,
-						   &pPointsData);
+            numProjected = ProcessFacesPartlyVisible(&pFace,
+                                                     pLocMatEnt->nMaterialUsage,
+                                                     pState->pTransformState,
+                                                     gXExtras,
+                                                     GlobalTransformedPlanes,
+                                                     &pShadingData,
+                                                     &pTextureData,
+                                                     &pPointsData);
 
-			/*
+            /*
 			// if all the faces were rejected, go to the next group
 			*/
-			if(numProjected == 0)
-			{
-				continue;
-			}
-		
-		#if 0
-			/*
+            if (numProjected == 0) {
+                continue;
+            }
+
+#if 0
+                                                                                                                                    /*
 			// if we are doing texture wrapping then create point data
 			*/
 			if (bMustTextWrap)
 			{
 				CreatePointData (gXExtras, numProjected, gPointsData, GlobalTransformedPlanes);
 			}
-		#endif
-			#if 1
-			/*
+#endif
+#if 1
+            /*
 			// if we are doing smooth shading then create shading data
 			*/
-			if (bIsSmoothShaded)
-			{
-				CreateSmoothShadingDataPartlyVisible (gXExtras, 
-												numProjected, 
-												GlobalTransformedPlanes,
-												bMustTextWrap,
-												pState->pTransformState);
-			}
-			#endif
+            if (bIsSmoothShaded) {
+                CreateSmoothShadingDataPartlyVisible(gXExtras,
+                                                     numProjected,
+                                                     GlobalTransformedPlanes,
+                                                     bMustTextWrap,
+                                                     pState->pTransformState);
+            }
+#endif
 
-			/*
+            /*
 			// Now shade the remaining planes
 			*/
-			SGL_TIME_SUSPEND(MESH_NODE_TIME)
-			if (!DoPlaneStuff (pMesh, numProjected, pState, 
-							   pMaterialState, nCurrTransSetID))
-			{
-				break;
-			}
-		    SGL_TIME_RESUME(MESH_NODE_TIME)
+            SGL_TIME_SUSPEND(MESH_NODE_TIME)
+            if (!DoPlaneStuff(pMesh, numProjected, pState,
+                              pMaterialState, nCurrTransSetID)) {
+                break;
+            }
+            SGL_TIME_RESUME(MESH_NODE_TIME)
 
-		}/*end for step through the materials*/
-	}/*end else partly on screen */
-	
-	SGL_TIME_STOP(MESH_NODE_TIME)
+        }/*end for step through the materials*/
+    }/*end else partly on screen */
+
+    SGL_TIME_STOP(MESH_NODE_TIME)
 }
-
 
 
 /**************************************************************************
@@ -6278,7 +5991,7 @@ void RnProcessMeshNode (const MESH_NODE_STRUCT *pMesh,
  *					pState- pointer to a master state stack "frame"
  *					ppCachedTexture - pointer to cached texture struct.
  * Outputs        : None
- * Input/Output	  : 
+ * Input/Output	  :
  * Returns        : None
  * Global Used    : See description
  *
@@ -6287,121 +6000,110 @@ void RnProcessMeshNode (const MESH_NODE_STRUCT *pMesh,
  *
  **************************************************************************/
 
-void RnCTPreProcessMeshNode(const MESH_NODE_STRUCT * pMesh, 
-								  MASTER_STATE_STRUCT *pState,
-								  void *pCachedTexture)
-{
-	int size,YSize, i;
-	PMESHMATERIAL pLocMatEnt;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	
-	/*
+void RnCTPreProcessMeshNode(const MESH_NODE_STRUCT *pMesh,
+                            MASTER_STATE_STRUCT *pState,
+                            void *pCachedTexture) {
+    int size, YSize, i;
+    PMESHMATERIAL pLocMatEnt;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+
+    /*
 	// Transformed Bounding box (if any) in world Coordinates
 	*/
-	BBOX_MINMAX_STRUCT bboxInWC;
+    BBOX_MINMAX_STRUCT bboxInWC;
 
-	/*
+    /*
 	// The regions the box spans
-	*/	
-	REGIONS_RECT_STRUCT Regions;
+	*/
+    REGIONS_RECT_STRUCT Regions;
 
-	int BoxCase;
-	sgl_bool bZClipped;
+    int BoxCase;
+    sgl_bool bZClipped;
 
 
-	/*
+    /*
 	// First, if there are definitely NO cached textures affecting this
 	// mesh, get out of here
 	*/
-	if((pCachedTexture== NULL) && !pMesh->HasLocalMaterials)
-	{
-		return;
-	}
+    if ((pCachedTexture == NULL) && !pMesh->HasLocalMaterials) {
+        return;
+    }
 
-	/*
+    /*
 	// If the quality flags say there is no texture - get out as well
 	*/
-	if(! pState->pQualityState->flags & qf_textures)
-	{
-		return;
-	}
+    if (!pState->pQualityState->flags & qf_textures) {
+        return;
+    }
 
 
-	/*
+    /*
 	// Ok decide if the  mesh is onscreen, and how much of the screen
 	// it covers.
 	//
 	// First transform into world space
 	*/
 
-	TransformBBox(pState->pTransformState, &pMesh->CentBBox, &bboxInWC);
+    TransformBBox(pState->pTransformState, &pMesh->CentBBox, &bboxInWC);
 
-	BoxCase = RnTestBoxWithCamera (&bboxInWC, TRUE, &bZClipped);
+    BoxCase = RnTestBoxWithCamera(&bboxInWC, TRUE, &bZClipped);
 
-	if (BoxCase == TB_BOX_OFFSCREEN)
-	{
-		/*
+    if (BoxCase == TB_BOX_OFFSCREEN) {
+        /*
 		// Get out of here
 		*/
-		DPF((DBG_VERBOSE, "BBox Offscreen:"));
-		return;
-	}
-	else
-	{
-		int Res = RnDetermineRegionsFromBBox(&bboxInWC, &Regions);
+        DPF((DBG_VERBOSE, "BBox Offscreen:"));
+        return;
+    } else {
+        int Res = RnDetermineRegionsFromBBox(&bboxInWC, &Regions);
 
-		ASSERT (Res != 0);
-	}
+        ASSERT (Res != 0);
+    }
 
-	/*
+    /*
 	// Ok map these into sizes
 	*/
-	size= (Regions.LastXRegion - Regions.FirstXRegion +1) * 
-									 pProjMat->RegionInfo.XSize;
-	YSize= (Regions.LastYRegion - Regions.FirstYRegion +1) * 
-									 pProjMat->RegionInfo.YSize;
+    size = (Regions.LastXRegion - Regions.FirstXRegion + 1) *
+           pProjMat->RegionInfo.XSize;
+    YSize = (Regions.LastYRegion - Regions.FirstYRegion + 1) *
+            pProjMat->RegionInfo.YSize;
 
-	if(YSize > size)
-	{
-		size = YSize;
-	}
+    if (YSize > size) {
+        size = YSize;
+    }
 
 
-	/*
+    /*
 	// Now step through the materials used, (including the first) and
 	// set up any cacheable textures. NOTE this doesnt check to see if
 	// the texture IS actually used, but who cares - it's close enough
 	*/
-	if(pCachedTexture != NULL)
-	{
-		MarkCachedTextureUsed(pCachedTexture, size);
-	}
-	pLocMatEnt = ListFindItemFast (pMesh->Materials, 0);
+    if (pCachedTexture != NULL) {
+        MarkCachedTextureUsed(pCachedTexture, size);
+    }
+    pLocMatEnt = ListFindItemFast(pMesh->Materials, 0);
 
 
-	for(i = ListGetItemsInList(pMesh->Materials); i != 0;   i--, pLocMatEnt++)
-	{
-		void * pPreviousCText;
+    for (i = ListGetItemsInList(pMesh->Materials); i != 0; i--, pLocMatEnt++) {
+        void *pPreviousCText;
 
-		pPreviousCText = pCachedTexture;
-		/*
+        pPreviousCText = pCachedTexture;
+        /*
 		// Update using this material
 		// NOTE: Ignore null material entries.
 		*/
-		if(pLocMatEnt->pMaterial!=NULL)
-		{
-			RnCTPreprocessMaterialNode(pLocMatEnt->pMaterial, pState, &pCachedTexture);
-		}
-		/*
+        if (pLocMatEnt->pMaterial != NULL) {
+            RnCTPreprocessMaterialNode(pLocMatEnt->pMaterial, pState, &pCachedTexture);
+        }
+        /*
 		// if the texture has changed, and we still have a cached texture,
 		// mark it as used
 		*/
-		if((pPreviousCText != pCachedTexture) &&(pCachedTexture != NULL))
-		{
-			MarkCachedTextureUsed(pCachedTexture, size);
-		}
-		
-	}/*end for*/
+        if ((pPreviousCText != pCachedTexture) && (pCachedTexture != NULL)) {
+            MarkCachedTextureUsed(pCachedTexture, size);
+        }
+
+    }/*end for*/
 
 }
 

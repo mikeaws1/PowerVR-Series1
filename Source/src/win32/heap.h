@@ -31,31 +31,31 @@
 /*
  * MemAlloc - allocate memory from our global pool
  */
-void * MemAlloc( unsigned long size );
+void *MemAlloc(unsigned long size);
 
 /*
  * MemSize - return size of object
  */
-unsigned long MemSize( void * lptr );
+unsigned long MemSize(void *lptr);
 
 /*
  * MemFree - free memory from our global pool
  */
-void MemFree( void * lptr );
+void MemFree(void *lptr);
 
 /*
  * MemReAlloc
  */
-void * MemReAlloc( void * lptr, unsigned long size );
+void *MemReAlloc(void *lptr, unsigned long size);
 
 /*
  * MemInit - initialize the heap manager
  */
-int MemInit( void );
+int MemInit(void);
 
 /*
  * MemFini - finished with our heap manager
  */
-void MemFini( void );
+void MemFini(void);
 
 #endif

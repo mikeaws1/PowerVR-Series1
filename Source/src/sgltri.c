@@ -428,14 +428,15 @@
 
 #if WIN32 || DOS32
 
-	#define DO_FPU_PRECISION TRUE
+#define DO_FPU_PRECISION TRUE
 
-	void __cdecl SetupFPU (void);
-	void __cdecl RestoreFPU (void);
+void __cdecl SetupFPU(void);
+
+void __cdecl RestoreFPU(void);
 
 #else
 
-	#define DO_FPU_PRECISION FALSE
+#define DO_FPU_PRECISION FALSE
 
 #endif
 
@@ -454,8 +455,8 @@ extern float fMaxZ, fMinInvZ;
 #endif
 
 /* declared in rnrender beside GetApplicationHint func */
-extern float 	fMinInvZ;
-extern float 	fAddToXY;
+extern float fMinInvZ;
+extern float fAddToXY;
 
 /*
 // ============================================================================
@@ -463,513 +464,461 @@ extern float 	fAddToXY;
 // ============================================================================
 */
 
-static INLINE void ProcessConvexPlanePerp (PSGLVERTEX	pV0,
-										   PSGLVERTEX	pV1,
-										   PSGLVERTEX	pV2,
-										   TRANSFORMED_PLANE_STRUCT *pPlane,
-										   sgl_bool bIsReversed)
-{
-	float fA, fB, fC;
+static INLINE void ProcessConvexPlanePerp(PSGLVERTEX pV0,
+                                          PSGLVERTEX pV1,
+                                          PSGLVERTEX pV2,
+                                          TRANSFORMED_PLANE_STRUCT *pPlane,
+                                          sgl_bool bIsReversed) {
+    float fA, fB, fC;
 #if !((PCX2 || PCX2_003) && !FORCE_NO_FPU)
-	float fMaxVal;
+    float fMaxVal;
 #endif
-	float delX1,delX2,delX3;
-	float delY1,delY2,delY3;
-	float del1,del2,del3;
+    float delX1, delX2, delX3;
+    float delY1, delY2, delY3;
+    float del1, del2, del3;
 
-	/* use the RMS deltas to figure which two vertices have greatest
-	** screen separation - these will give the most accurate result
-	*/ 
-	delX1 =  pV1->fX - pV0->fX;
-	delX2 =  pV2->fX - pV0->fX;
-	delX3 =  pV2->fX - pV1->fX;
+    /* use the RMS deltas to figure which two vertices have greatest
+    ** screen separation - these will give the most accurate result
+    */
+    delX1 = pV1->fX - pV0->fX;
+    delX2 = pV2->fX - pV0->fX;
+    delX3 = pV2->fX - pV1->fX;
 
-	delY1 =  pV1->fY - pV0->fY;
-	delY2 =  pV2->fY - pV0->fY;
-	delY3 =  pV2->fY - pV1->fY;
+    delY1 = pV1->fY - pV0->fY;
+    delY2 = pV2->fY - pV0->fY;
+    delY3 = pV2->fY - pV1->fY;
 
-	del1=delX1*delX1 + delY1*delY1;
-	del2=delX2*delX2 + delY2*delY2;
-	del3=delX3*delX3 + delY3*delY3;
+    del1 = delX1 * delX1 + delY1 * delY1;
+    del2 = delX2 * delX2 + delY2 * delY2;
+    del3 = delX3 * delX3 + delY3 * delY3;
 
-	if(del1>del2)
-	{
-		if(del1>del3)
-		{
-			/*1 and 0*/
-			fA = -delY1;
-			fB = delX1;
-			fC = ((pV0->fX * pV1->fY) - (pV1->fX * pV0->fY));
-		}
-		else
-		{
-			/*2 and 1*/
-			fA = -delY3;
-			fB = delX3;
-			fC = ((pV1->fX * pV2->fY) - (pV2->fX * pV1->fY));
-		}
-	}
-	else 
-	{
-		if(del2>del3)
-		{
-			/*2 and 0*/
-			fA = -delY2;
-			fB = delX2;
-			fC = ((pV0->fX * pV2->fY) - (pV2->fX * pV0->fY));
-		}
-		else
-		{
-			/*2 and 1*/
-			fA = -delY3;
-			fB = delX3;
-			fC = ((pV1->fX * pV2->fY) - (pV2->fX * pV1->fY));
-		}
-	}
+    if (del1 > del2) {
+        if (del1 > del3) {
+            /*1 and 0*/
+            fA = -delY1;
+            fB = delX1;
+            fC = ((pV0->fX * pV1->fY) - (pV1->fX * pV0->fY));
+        } else {
+            /*2 and 1*/
+            fA = -delY3;
+            fB = delX3;
+            fC = ((pV1->fX * pV2->fY) - (pV2->fX * pV1->fY));
+        }
+    } else {
+        if (del2 > del3) {
+            /*2 and 0*/
+            fA = -delY2;
+            fB = delX2;
+            fC = ((pV0->fX * pV2->fY) - (pV2->fX * pV0->fY));
+        } else {
+            /*2 and 1*/
+            fA = -delY3;
+            fB = delX3;
+            fC = ((pV1->fX * pV2->fY) - (pV2->fX * pV1->fY));
+        }
+    }
 
-	if(bIsReversed==FALSE)
-	{
-		fA *= -1.0f;
-		fB *= -1.0f;
-		fC *= -1.0f;
-	}
+    if (bIsReversed == FALSE) {
+        fA *= -1.0f;
+        fB *= -1.0f;
+        fC *= -1.0f;
+    }
 
-	/*
-	// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-	// larger than I originally thought necessary)
-	*/
+    /*
+    // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+    // larger than I originally thought necessary)
+    */
 
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-		/* PCX2 supports IEEE floating point numbers.
-		 */	
-		pPlane->f32A = fA;
-		pPlane->f32B = fB;
-		pPlane->f32C = fC;
+    /* PCX2 supports IEEE floating point numbers.
+     */
+    pPlane->f32A = fA;
+    pPlane->f32B = fB;
+    pPlane->f32C = fC;
 #else
 
 #define MAX_CENTRE  (1024.0f)
 #define HALF_OFFSET (1024.0f)
 
-	fMaxVal = sfabs(MAX_CENTRE * (fA+fB) + fC) +
-		HALF_OFFSET * (sfabs(fA) + sfabs(fB));
+    fMaxVal = sfabs(MAX_CENTRE * (fA+fB) + fC) +
+        HALF_OFFSET * (sfabs(fA) + sfabs(fB));
 
 #undef MAX_CENTRE
 #undef HALF_OFFSET
-	
 
-	fMaxVal = ApproxRecip (fMaxVal);
 
-	pPlane->n32A = PackTo20Bit (fA * fMaxVal);
-	pPlane->n32B = PackTo20Bit (fB * fMaxVal);
-	pPlane->n32C = (sgl_int32) (fC * fMaxVal * FLOAT_TO_FIXED);
+    fMaxVal = ApproxRecip (fMaxVal);
+
+    pPlane->n32A = PackTo20Bit (fA * fMaxVal);
+    pPlane->n32B = PackTo20Bit (fB * fMaxVal);
+    pPlane->n32C = (sgl_int32) (fC * fMaxVal * FLOAT_TO_FIXED);
 #endif
 }
 
-static INLINE TRANSFORMED_PLANE_STRUCT *ProcessConvexPlane (PLANE_CATEGORIES_STRUCT *PlaneCats, 
-											TRANSFORMED_PLANE_STRUCT *pPlane,
-											PSGLVERTEX	pV0,
-										    PSGLVERTEX	pV1,
-										    PSGLVERTEX	pV2,
-										    sgl_bool bIsReversed)
-{
-	float  fX0,fX1,fX2, fY0,fY1,fY2, fZ0,fZ1,fZ2, fA,fB,fC, fMaxVal;
-	float  fDet; /* matrix determinant */
+static INLINE TRANSFORMED_PLANE_STRUCT *ProcessConvexPlane(PLANE_CATEGORIES_STRUCT *PlaneCats,
+                                                           TRANSFORMED_PLANE_STRUCT *pPlane,
+                                                           PSGLVERTEX pV0,
+                                                           PSGLVERTEX pV1,
+                                                           PSGLVERTEX pV2,
+                                                           sgl_bool bIsReversed) {
+    float fX0, fX1, fX2, fY0, fY1, fY2, fZ0, fZ1, fZ2, fA, fB, fC, fMaxVal;
+    float fDet; /* matrix determinant */
 
-	ASSERT(pV0 != pV1 && pV1 != pV2);
+    ASSERT(pV0 != pV1 && pV1 != pV2);
 
-	fX0 = pV0->fX;
-	fX1 = pV1->fX;
-	fX2 = pV2->fX;
+    fX0 = pV0->fX;
+    fX1 = pV1->fX;
+    fX2 = pV2->fX;
 
-	fY0 = pV0->fY;
-	fY1 = pV1->fY;
-	fY2 = pV2->fY;
+    fY0 = pV0->fY;
+    fY1 = pV1->fY;
+    fY2 = pV2->fY;
 
-	/* calculate determinant and see if we can cull this plane */
+    /* calculate determinant and see if we can cull this plane */
 
-	fDet = fX0*(fY1 - fY2) + fX1*(fY2 - fY0) + fX2*(fY0 - fY1);
+    fDet = fX0 * (fY1 - fY2) + fX1 * (fY2 - fY0) + fX2 * (fY0 - fY1);
 
-	/*
-	// Calculate 1/determinant:
-	*/
+    /*
+    // Calculate 1/determinant:
+    */
 
-  #if defined (MIDAS_ARCADE)
+#if defined (MIDAS_ARCADE)
 
-	/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
-	if (sfabs (fDet) < 1.0e-3f)
-	{
-		/* perpendicular plane */
-		
-		ProcessConvexPlanePerp (pV0, pV1, pV2, pPlane, bIsReversed);
-		PlaneCats->PEPlanes[PlaneCats->NumPE++] = pPlane;
-	}
- 
-  #else
+    /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+    if (sfabs (fDet) < 1.0e-3f)
+    {
+        /* perpendicular plane */
 
-	if (sfabs (fDet) < 2.0f)
-	{
-		/* perpendicular plane */
-		
-		ProcessConvexPlanePerp (pV0, pV1, pV2, pPlane, bIsReversed);
-		PlaneCats->PEPlanes[PlaneCats->NumPE++] = pPlane;
-	}
+        ProcessConvexPlanePerp (pV0, pV1, pV2, pPlane, bIsReversed);
+        PlaneCats->PEPlanes[PlaneCats->NumPE++] = pPlane;
+    }
 
-  #endif
-
-	else
-	{
-		float	fAdjoint[3][3];
-		float	f1OverDet;
-
-		f1OverDet = 1.0f / fDet;
-
-		/*
-		// Reduce Z range from 32 to 24 bits (taking a sign bit into account), and
-		// invert so 0 is at infinity.
-		*/
-		fZ0 = pV0->fInvW * fMinInvZ;
-		fZ1 = pV1->fInvW * fMinInvZ;
-		fZ2 = pV2->fInvW * fMinInvZ;
-
-		/*
-		// fAdjoint is a constant zero offset
-		*/
-		fAdjoint[0][0] = fY1-fY2;
-		fAdjoint[0][1] = fY2-fY0;
-		fAdjoint[0][2] = fY0-fY1;
-
-		fAdjoint[1][0] = fX2-fX1;
-		fAdjoint[1][1] = fX0-fX2;
-		fAdjoint[1][2] = fX1-fX0;
-
-		fAdjoint[2][0] = fX1*fY2 - fX2*fY1;
-		fAdjoint[2][1] = fX2*fY0 - fX0*fY2;
-		fAdjoint[2][2] = fX0*fY1 - fX1*fY0;
-
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		*/
-		fA = fZ0*fAdjoint[0][0] + fZ1*fAdjoint[0][1] + fZ2*fAdjoint[0][2];
-		fB = fZ0*fAdjoint[1][0] + fZ1*fAdjoint[1][1] + fZ2*fAdjoint[1][2];
-		fC = fZ0*fAdjoint[2][0] + fZ1*fAdjoint[2][1] + fZ2*fAdjoint[2][2];
-
-		/*
-		// Scale A,B,C values:
-		*/
-		fA *= f1OverDet;
-		fB *= f1OverDet;
-		fC *= f1OverDet;
-
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		#define MAX_CENTRE  (1024.0f)
-		#define HALF_OFFSET (1024.0f)
-
-		fMaxVal = sfabs(MAX_CENTRE * (fA+fB) + fC) +
-		  HALF_OFFSET * (sfabs(fA) + sfabs(fB));
-
-		#undef MAX_CENTRE
-		#undef HALF_OFFSET
-
-		/*fMaxVal = (2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC);*/
-
-		if (fMaxVal > 1.0f)
-		{
-			float fInvMaxVal = ApproxRecip(fMaxVal);
-
-			/* out of hardware range - treat as perp */
-			
-		#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			pPlane->f32A = fA * fInvMaxVal;
-			pPlane->f32B = fB * fInvMaxVal;
-			pPlane->f32C = fC * fInvMaxVal;
-		#else
-			pPlane->n32A = PackTo20Bit (fA * fInvMaxVal);
-			pPlane->n32B = PackTo20Bit (fB * fInvMaxVal);
-			pPlane->n32C = (sgl_int32) (fC * FLOAT_TO_FIXED * fInvMaxVal);		
-		#endif	
-
-			if (bIsReversed)
-			{
-				PlaneCats->RVPlanes[PlaneCats->NumRV++] = pPlane;
-			}
-			else
-			{
-				PlaneCats->FVPlanes[PlaneCats->NumFV++] = pPlane;
-				pPlane->u32TexasTag = 2;
-			}
-			/*			ProcessConvexPlanePerp (pV0, pV1, pV2, pPlane);
-			**PlaneCats->PEPlanes[PlaneCats->NumPE++] = pPlane;
-			*/
-		}
-		else
-		{
-#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
-			/* PCX2 supports IEEE floating point numbers.
-			 */	
-			pPlane->f32A = fA;
-			pPlane->f32B = fB;
-			pPlane->f32C = fC;
 #else
-			pPlane->n32A = PackTo20Bit (fA);
-			pPlane->n32B = PackTo20Bit (fB);
-			pPlane->n32C = (sgl_int32) (fC * FLOAT_TO_FIXED);
+
+    if (sfabs (fDet) < 2.0f) {
+        /* perpendicular plane */
+
+        ProcessConvexPlanePerp(pV0, pV1, pV2, pPlane, bIsReversed);
+        PlaneCats->PEPlanes[PlaneCats->NumPE++] = pPlane;
+    }
+
 #endif
 
-			if (bIsReversed)
-			{
-				PlaneCats->RVPlanes[PlaneCats->NumRV++] = pPlane;
-			}
-			else
-			{
-				PlaneCats->FVPlanes[PlaneCats->NumFV++] = pPlane;
-				pPlane->u32TexasTag = 2;
-			}
-		}
-	}
+    else {
+        float fAdjoint[3][3];
+        float f1OverDet;
 
-	return (pPlane + 1);
+        f1OverDet = 1.0f / fDet;
+
+        /*
+        // Reduce Z range from 32 to 24 bits (taking a sign bit into account), and
+        // invert so 0 is at infinity.
+        */
+        fZ0 = pV0->fInvW * fMinInvZ;
+        fZ1 = pV1->fInvW * fMinInvZ;
+        fZ2 = pV2->fInvW * fMinInvZ;
+
+        /*
+        // fAdjoint is a constant zero offset
+        */
+        fAdjoint[0][0] = fY1 - fY2;
+        fAdjoint[0][1] = fY2 - fY0;
+        fAdjoint[0][2] = fY0 - fY1;
+
+        fAdjoint[1][0] = fX2 - fX1;
+        fAdjoint[1][1] = fX0 - fX2;
+        fAdjoint[1][2] = fX1 - fX0;
+
+        fAdjoint[2][0] = fX1 * fY2 - fX2 * fY1;
+        fAdjoint[2][1] = fX2 * fY0 - fX0 * fY2;
+        fAdjoint[2][2] = fX0 * fY1 - fX1 * fY0;
+
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        */
+        fA = fZ0 * fAdjoint[0][0] + fZ1 * fAdjoint[0][1] + fZ2 * fAdjoint[0][2];
+        fB = fZ0 * fAdjoint[1][0] + fZ1 * fAdjoint[1][1] + fZ2 * fAdjoint[1][2];
+        fC = fZ0 * fAdjoint[2][0] + fZ1 * fAdjoint[2][1] + fZ2 * fAdjoint[2][2];
+
+        /*
+        // Scale A,B,C values:
+        */
+        fA *= f1OverDet;
+        fB *= f1OverDet;
+        fC *= f1OverDet;
+
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+#define MAX_CENTRE  (1024.0f)
+#define HALF_OFFSET (1024.0f)
+
+        fMaxVal = sfabs(MAX_CENTRE * (fA + fB) + fC) +
+                  HALF_OFFSET * (sfabs(fA) + sfabs(fB));
+
+#undef MAX_CENTRE
+#undef HALF_OFFSET
+
+        /*fMaxVal = (2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC);*/
+
+        if (fMaxVal > 1.0f) {
+            float fInvMaxVal = ApproxRecip(fMaxVal);
+
+            /* out of hardware range - treat as perp */
+
+#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
+            pPlane->f32A = fA * fInvMaxVal;
+            pPlane->f32B = fB * fInvMaxVal;
+            pPlane->f32C = fC * fInvMaxVal;
+#else
+            pPlane->n32A = PackTo20Bit (fA * fInvMaxVal);
+            pPlane->n32B = PackTo20Bit (fB * fInvMaxVal);
+            pPlane->n32C = (sgl_int32) (fC * FLOAT_TO_FIXED * fInvMaxVal);
+#endif
+
+            if (bIsReversed) {
+                PlaneCats->RVPlanes[PlaneCats->NumRV++] = pPlane;
+            } else {
+                PlaneCats->FVPlanes[PlaneCats->NumFV++] = pPlane;
+                pPlane->u32TexasTag = 2;
+            }
+            /*			ProcessConvexPlanePerp (pV0, pV1, pV2, pPlane);
+            **PlaneCats->PEPlanes[PlaneCats->NumPE++] = pPlane;
+            */
+        } else {
+#if (PCX2 || PCX2_003) && !FORCE_NO_FPU
+            /* PCX2 supports IEEE floating point numbers.
+             */
+            pPlane->f32A = fA;
+            pPlane->f32B = fB;
+            pPlane->f32C = fC;
+#else
+            pPlane->n32A = PackTo20Bit (fA);
+            pPlane->n32B = PackTo20Bit (fB);
+            pPlane->n32C = (sgl_int32) (fC * FLOAT_TO_FIXED);
+#endif
+
+            if (bIsReversed) {
+                PlaneCats->RVPlanes[PlaneCats->NumRV++] = pPlane;
+            } else {
+                PlaneCats->FVPlanes[PlaneCats->NumFV++] = pPlane;
+                pPlane->u32TexasTag = 2;
+            }
+        }
+    }
+
+    return (pPlane + 1);
 }
 
 
-void DirectShadows(PSGLCONTEXT	pContext,
-				   int			nNumFaces,
-				   int			pFaces[][3],
-			 	   PSGLVERTEX	pVertices,
-				   float		fBoundingBox[2][2] )
-{
-	static PLANE_CATEGORIES_STRUCT	PlaneCats;
-	static TRANSFORMED_PLANE_STRUCT	Planes[SGL_MAX_PLANES];
+void DirectShadows(PSGLCONTEXT pContext,
+                   int nNumFaces,
+                   int pFaces[][3],
+                   PSGLVERTEX pVertices,
+                   float fBoundingBox[2][2]) {
+    static PLANE_CATEGORIES_STRUCT PlaneCats;
+    static TRANSFORMED_PLANE_STRUCT Planes[SGL_MAX_PLANES];
 
-	sgl_uint32 					k;
-	REGIONS_RECT_STRUCT 		RegionsRect;
-	int							nNumPlanes;
-	sgl_uint32					u32StartOfSection;
-	TRANSFORMED_PLANE_STRUCT	*pXPlane;
-	int							*pFace = (int *) pFaces;
+    sgl_uint32 k;
+    REGIONS_RECT_STRUCT RegionsRect;
+    int nNumPlanes;
+    sgl_uint32 u32StartOfSection;
+    TRANSFORMED_PLANE_STRUCT *pXPlane;
+    int *pFace = (int *) pFaces;
 
-	/* ignore this call if shadows are disabled
-	 */
-	if (pContext->eShadowLightVolMode == NO_SHADOWS_OR_LIGHTVOLS)
-	{
-		return;
-	}
+    /* ignore this call if shadows are disabled
+     */
+    if (pContext->eShadowLightVolMode == NO_SHADOWS_OR_LIGHTVOLS) {
+        return;
+    }
 
-	pXPlane = Planes;
+    pXPlane = Planes;
 
-	PlaneCats.NumPE = 0;
-	PlaneCats.NumFV = 0;
-	PlaneCats.NumRV = 0;
-	PlaneCats.NumFI = 0;
-	PlaneCats.NumRI = 0;
+    PlaneCats.NumPE = 0;
+    PlaneCats.NumFV = 0;
+    PlaneCats.NumRV = 0;
+    PlaneCats.NumFI = 0;
+    PlaneCats.NumRI = 0;
 
-	#if DO_FPU_PRECISION
+#if DO_FPU_PRECISION
 
-		SetupFPU ();
+    SetupFPU();
 
-	#endif
+#endif
 
-	if (fBoundingBox)
-	{
-		/* calculate plane data and max vertex (hack)
-		 */
-		for (k = 0; k < nNumFaces; ++k, pFace += 3)
-		{
-			PSGLVERTEX  pV0,pV1,pV2;
-			sgl_vector	Vec1, Vec2;
-			float		fNormZ;
-			
-			pV0 = pVertices + pFace[0];
-			pV1 = pVertices + pFace[1];
-			pV2 = pVertices + pFace[2];
+    if (fBoundingBox) {
+        /* calculate plane data and max vertex (hack)
+         */
+        for (k = 0; k < nNumFaces; ++k, pFace += 3) {
+            PSGLVERTEX pV0, pV1, pV2;
+            sgl_vector Vec1, Vec2;
+            float fNormZ;
 
-			Vec1[0] = pV1->fX - pV0->fX;
-			Vec1[1] = pV1->fY - pV0->fY;
+            pV0 = pVertices + pFace[0];
+            pV1 = pVertices + pFace[1];
+            pV2 = pVertices + pFace[2];
 
-			Vec2[0] = pV2->fX - pV0->fX;
-			Vec2[1] = pV2->fY - pV0->fY;
+            Vec1[0] = pV1->fX - pV0->fX;
+            Vec1[1] = pV1->fY - pV0->fY;
 
-			fNormZ = (Vec1[0] * Vec2[1]) - (Vec1[1] * Vec2[0]);
+            Vec2[0] = pV2->fX - pV0->fX;
+            Vec2[1] = pV2->fY - pV0->fY;
 
-			pXPlane = ProcessConvexPlane (&PlaneCats, pXPlane, pV0, pV1, pV2, (fNormZ > 0.0f));
-		}
+            fNormZ = (Vec1[0] * Vec2[1]) - (Vec1[1] * Vec2[0]);
 
-		RegionsRect.FirstXRegion = (int)(fBoundingBox[0][0] * pContext->invRegX);
-		RegionsRect.FirstYRegion = (int)(fBoundingBox[0][1] * pContext->invRegY);
-		RegionsRect.LastXRegion =  (int)(fBoundingBox[1][0] * pContext->invRegX);
-		RegionsRect.LastYRegion =  (int)(fBoundingBox[1][1] * pContext->invRegY);
+            pXPlane = ProcessConvexPlane(&PlaneCats, pXPlane, pV0, pV1, pV2, (fNormZ > 0.0f));
+        }
 
-		/*
-		// Workaround for bug in Ultimate Race.
-		*/
-		if (RegionsRect.FirstXRegion > RegionsRect.LastXRegion)
-		{
-			RegionsRect.FirstXRegion = RegionsRect.LastXRegion;
-		}
+        RegionsRect.FirstXRegion = (int) (fBoundingBox[0][0] * pContext->invRegX);
+        RegionsRect.FirstYRegion = (int) (fBoundingBox[0][1] * pContext->invRegY);
+        RegionsRect.LastXRegion = (int) (fBoundingBox[1][0] * pContext->invRegX);
+        RegionsRect.LastYRegion = (int) (fBoundingBox[1][1] * pContext->invRegY);
 
-		if (RegionsRect.FirstYRegion > RegionsRect.LastYRegion)
-		{
-			RegionsRect.FirstYRegion = RegionsRect.LastYRegion;
-		}
-	}
-	else
-	{
-		int nMaxVertexID = 0;
+        /*
+        // Workaround for bug in Ultimate Race.
+        */
+        if (RegionsRect.FirstXRegion > RegionsRect.LastXRegion) {
+            RegionsRect.FirstXRegion = RegionsRect.LastXRegion;
+        }
 
-		/* calculate plane data and max vertex (hack)
-		 */
-		for (k = 0; k < nNumFaces; ++k, pFace += 3)
-		{
-			PSGLVERTEX  pV0,pV1,pV2;
-			sgl_vector	Vec1, Vec2;
-			float		fNormZ;
-			
-			pV0 = pVertices + pFace[0];
-			pV1 = pVertices + pFace[1];
-			pV2 = pVertices + pFace[2];
+        if (RegionsRect.FirstYRegion > RegionsRect.LastYRegion) {
+            RegionsRect.FirstYRegion = RegionsRect.LastYRegion;
+        }
+    } else {
+        int nMaxVertexID = 0;
 
-			if (pFace[0] > nMaxVertexID)
-			{
-				nMaxVertexID = pFace[0];
-			}
+        /* calculate plane data and max vertex (hack)
+         */
+        for (k = 0; k < nNumFaces; ++k, pFace += 3) {
+            PSGLVERTEX pV0, pV1, pV2;
+            sgl_vector Vec1, Vec2;
+            float fNormZ;
 
-			if (pFace[1] > nMaxVertexID)
-			{
-				nMaxVertexID = pFace[1];
-			}
+            pV0 = pVertices + pFace[0];
+            pV1 = pVertices + pFace[1];
+            pV2 = pVertices + pFace[2];
 
-			if (pFace[2] > nMaxVertexID)
-			{
-				nMaxVertexID = pFace[2];
-			}
+            if (pFace[0] > nMaxVertexID) {
+                nMaxVertexID = pFace[0];
+            }
 
-			Vec1[0] = pV1->fX - pV0->fX;
-			Vec1[1] = pV1->fY - pV0->fY;
+            if (pFace[1] > nMaxVertexID) {
+                nMaxVertexID = pFace[1];
+            }
 
-			Vec2[0] = pV2->fX - pV0->fX;
-			Vec2[1] = pV2->fY - pV0->fY;
+            if (pFace[2] > nMaxVertexID) {
+                nMaxVertexID = pFace[2];
+            }
 
-			fNormZ = (Vec1[0] * Vec2[1]) - (Vec1[1] * Vec2[0]);
+            Vec1[0] = pV1->fX - pV0->fX;
+            Vec1[1] = pV1->fY - pV0->fY;
 
-			pXPlane = ProcessConvexPlane (&PlaneCats, pXPlane, pV0, pV1, pV2, (fNormZ > 0.0f));
-		}
+            Vec2[0] = pV2->fX - pV0->fX;
+            Vec2[1] = pV2->fY - pV0->fY;
 
-		/* calculate bounding box
-		 */
-		RegionsRect.FirstXRegion = pContext->LastXRegion;
-		RegionsRect.FirstYRegion = pContext->LastYRegion;
-		RegionsRect.LastXRegion = pContext->FirstXRegion;
-		RegionsRect.LastYRegion = pContext->FirstYRegion;
+            fNormZ = (Vec1[0] * Vec2[1]) - (Vec1[1] * Vec2[0]);
 
-		for (k = 0; k <= nMaxVertexID; ++k, ++pVertices)
-		{
-			int 	nXRgn, nYRgn;
+            pXPlane = ProcessConvexPlane(&PlaneCats, pXPlane, pV0, pV1, pV2, (fNormZ > 0.0f));
+        }
 
-			nXRgn = (int)((pVertices->fX + fAddToXY) * pContext->invRegX);
+        /* calculate bounding box
+         */
+        RegionsRect.FirstXRegion = pContext->LastXRegion;
+        RegionsRect.FirstYRegion = pContext->LastYRegion;
+        RegionsRect.LastXRegion = pContext->FirstXRegion;
+        RegionsRect.LastYRegion = pContext->FirstYRegion;
 
-			if (nXRgn < RegionsRect.FirstXRegion)
-			{
-				RegionsRect.FirstXRegion = nXRgn;
-			}
-			else if (nXRgn > RegionsRect.LastXRegion)
-			{
-				RegionsRect.LastXRegion = nXRgn;
-			}
+        for (k = 0; k <= nMaxVertexID; ++k, ++pVertices) {
+            int nXRgn, nYRgn;
 
-			nYRgn = (int)((pVertices->fY + fAddToXY) * pContext->invRegY);
+            nXRgn = (int) ((pVertices->fX + fAddToXY) * pContext->invRegX);
 
-			if (nYRgn < RegionsRect.FirstYRegion)
-			{
-				RegionsRect.FirstYRegion = nYRgn;
-			}
-			else if (nYRgn > RegionsRect.LastYRegion)
-			{
-				RegionsRect.LastYRegion = nYRgn;
-			}
-		}
-	}
+            if (nXRgn < RegionsRect.FirstXRegion) {
+                RegionsRect.FirstXRegion = nXRgn;
+            } else if (nXRgn > RegionsRect.LastXRegion) {
+                RegionsRect.LastXRegion = nXRgn;
+            }
 
-	if (pContext->bDoClipping)
-	{
-		if (RegionsRect.FirstXRegion > pContext->LastXRegion ||
-		    RegionsRect.FirstYRegion > pContext->LastYRegion ||
-			RegionsRect.LastXRegion < pContext->FirstXRegion ||
-			RegionsRect.LastYRegion < pContext->FirstYRegion)
-		{
-		#if DO_FPU_PRECISION
-			RestoreFPU();
-		#endif
-			return;
-		}
+            nYRgn = (int) ((pVertices->fY + fAddToXY) * pContext->invRegY);
 
-		if (RegionsRect.FirstXRegion < pContext->FirstXRegion)
-		{
-			RegionsRect.FirstXRegion = pContext->FirstXRegion;
-		}
+            if (nYRgn < RegionsRect.FirstYRegion) {
+                RegionsRect.FirstYRegion = nYRgn;
+            } else if (nYRgn > RegionsRect.LastYRegion) {
+                RegionsRect.LastYRegion = nYRgn;
+            }
+        }
+    }
 
-		if (RegionsRect.FirstYRegion < pContext->FirstYRegion)
-		{
-			RegionsRect.FirstYRegion = pContext->FirstYRegion;
-		}
+    if (pContext->bDoClipping) {
+        if (RegionsRect.FirstXRegion > pContext->LastXRegion ||
+            RegionsRect.FirstYRegion > pContext->LastYRegion ||
+            RegionsRect.LastXRegion < pContext->FirstXRegion ||
+            RegionsRect.LastYRegion < pContext->FirstYRegion) {
+#if DO_FPU_PRECISION
+            RestoreFPU();
+#endif
+            return;
+        }
 
-		if (RegionsRect.LastXRegion > pContext->LastXRegion)
-		{
-			RegionsRect.LastXRegion = pContext->LastXRegion;
-		}
+        if (RegionsRect.FirstXRegion < pContext->FirstXRegion) {
+            RegionsRect.FirstXRegion = pContext->FirstXRegion;
+        }
 
-		if (RegionsRect.LastYRegion > pContext->LastYRegion)
-		{
-			RegionsRect.LastYRegion = pContext->LastYRegion;
-		}
-	}
+        if (RegionsRect.FirstYRegion < pContext->FirstYRegion) {
+            RegionsRect.FirstYRegion = pContext->FirstYRegion;
+        }
 
-	/* add whole shadow volume */
-	
-	u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+        if (RegionsRect.LastXRegion > pContext->LastXRegion) {
+            RegionsRect.LastXRegion = pContext->LastXRegion;
+        }
 
-	#if DEBUG_SHADOWS && FALSE
+        if (RegionsRect.LastYRegion > pContext->LastYRegion) {
+            RegionsRect.LastYRegion = pContext->LastYRegion;
+        }
+    }
 
-		RegionsRect.FirstXRegion = pContext->FirstXRegion;
-		RegionsRect.FirstYRegion = pContext->FirstYRegion;
-		RegionsRect.LastXRegion = pContext->LastXRegion;
-		RegionsRect.LastYRegion = pContext->LastYRegion;
+    /* add whole shadow volume */
 
-	#endif
+    u32StartOfSection = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
-	#if DEBUG_SHADOWS || FALSE
+#if DEBUG_SHADOWS && FALSE
 
-		nNumPlanes = PackOpaqueParams (&PlaneCats, FALSE, FALSE);
-	
-	#else
-	
-		nNumPlanes = PackLightShadVolParams (&PlaneCats, 
-						pContext->eShadowLightVolMode == ENABLE_SHADOWS);
+    RegionsRect.FirstXRegion = pContext->FirstXRegion;
+    RegionsRect.FirstYRegion = pContext->FirstYRegion;
+    RegionsRect.LastXRegion = pContext->LastXRegion;
+    RegionsRect.LastYRegion = pContext->LastYRegion;
 
-	#endif
+#endif
 
-	if (nNumPlanes)
-	{
-		if (pContext->eShadowLightVolMode == ENABLE_SHADOWS)
-		{
-			/* using this works just as well for visible convexes */
-			AddRegionShadowL(&RegionsRect, u32StartOfSection, nNumPlanes);
-		}
-		else
-		{
-			/* using this works just as well for visible convexes */
-			AddRegionLightVolL(&RegionsRect, u32StartOfSection, nNumPlanes);
-		}
-	}
+#if DEBUG_SHADOWS || FALSE
 
-	#if DO_FPU_PRECISION
+    nNumPlanes = PackOpaqueParams (&PlaneCats, FALSE, FALSE);
 
-		RestoreFPU ();
+#else
 
-	#endif
+    nNumPlanes = PackLightShadVolParams(&PlaneCats,
+                                        pContext->eShadowLightVolMode == ENABLE_SHADOWS);
+
+#endif
+
+    if (nNumPlanes) {
+        if (pContext->eShadowLightVolMode == ENABLE_SHADOWS) {
+            /* using this works just as well for visible convexes */
+            AddRegionShadowL(&RegionsRect, u32StartOfSection, nNumPlanes);
+        } else {
+            /* using this works just as well for visible convexes */
+            AddRegionLightVolL(&RegionsRect, u32StartOfSection, nNumPlanes);
+        }
+    }
+
+#if DO_FPU_PRECISION
+
+    RestoreFPU();
+
+#endif
 
 } /* DirectShadows */
 
@@ -992,62 +941,57 @@ void DirectShadows(PSGLCONTEXT	pContext,
  * Description    : see header file
  *****************************************************************************/
 
-#define DEBUG_SHADOWS	0
+#define DEBUG_SHADOWS    0
 
-void CALL_CONV sgltri_shadow ( PSGLCONTEXT	pContext,
-							   int			nNumFaces,
-							   int			pFaces[][3],
-						 	   PSGLVERTEX	pVertices,
-							   float		fBoundingBox[2][2] )
-{
-	#if FIX_RENDER
-		if (nFrameNum > FIX_FRAME_NUM)
-		{
-			return;
-		}
-	#endif
+void CALL_CONV sgltri_shadow(PSGLCONTEXT pContext,
+                             int nNumFaces,
+                             int pFaces[][3],
+                             PSGLVERTEX pVertices,
+                             float fBoundingBox[2][2]) {
+#if FIX_RENDER
+    if (nFrameNum > FIX_FRAME_NUM)
+    {
+        return;
+    }
+#endif
 
-	/*
-	// ----------------------
-	// Check input parameters
-	// ----------------------
-	*/
+    /*
+    // ----------------------
+    // Check input parameters
+    // ----------------------
+    */
 
-	if (nNumFaces == 0)
-	{
-		SglError(sgl_no_err);
-		return;
-	}
+    if (nNumFaces == 0) {
+        SglError(sgl_no_err);
+        return;
+    }
 
-	if (nNumFaces > SGL_MAX_PLANES)
-	{
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    if (nNumFaces > SGL_MAX_PLANES) {
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-	if (pContext == NULL || pFaces == NULL || pVertices == NULL || nNumFaces < 0)
-	{
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    if (pContext == NULL || pFaces == NULL || pVertices == NULL || nNumFaces < 0) {
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-    if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if (SglInitialise()) {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 
-	/* Call the DirectShadows() routine.
-	 */
-	DirectShadows(pContext, nNumFaces, pFaces, pVertices, fBoundingBox);
-	
-	/*
-	// ------------------------------
-	// Set ok error status and return
-	// ------------------------------
-	*/
+    /* Call the DirectShadows() routine.
+     */
+    DirectShadows(pContext, nNumFaces, pFaces, pVertices, fBoundingBox);
 
-	SglError(sgl_no_err);
+    /*
+    // ------------------------------
+    // Set ok error status and return
+    // ------------------------------
+    */
+
+    SglError(sgl_no_err);
 
 } /* sgltri_shadow */
 

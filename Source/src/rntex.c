@@ -241,7 +241,7 @@
 
 #include "metrics.h"
 
-SGL_EXTERN_TIME_REF  /* if we are timing code !!! */ 
+SGL_EXTERN_TIME_REF  /* if we are timing code !!! */
 
 /* this is used for storing the data from the texture wrapping, and is
    input to the texture mapper*/
@@ -254,18 +254,18 @@ CONV_TEXTURE_UNION TempTexResults[SGL_MAX_PLANES];
 */
 
 typedef union {
-	float f;
-	unsigned long l;
+    float f;
+    unsigned long l;
 } flong;
 
 /* this is the number of times the texture repeats before we translate
    it back to the origin */
 
-#define	RESCALE_MAGIC_NO	16.0f   
+#define    RESCALE_MAGIC_NO    16.0f
 
 
 /*
-**	CFRreciprocal is used by DoTextureMapping to 
+**	CFRreciprocal is used by DoTextureMapping to
 **	rescale 'c','f', and 'r' to keep the coefficients
 **  in a similar range to a,b,d,e,p and q.
 **  Texas will scale them back to the right values.
@@ -286,74 +286,73 @@ typedef union {
  *				  calculates the inverse, and packs the coefficients
  *				  into TEXAS format. It also packs the TexAddress which includes
  *				  some of the texture flags.
- * Comments		: 
+ * Comments		:
  *				  THIS IS THE 'FULL_ON' VERSION OF THIS ROUTINE. IE the fastest
- *				  way i can think of doing the routine.The slower (but more 
- *				  accurate routine is below this one). 
+ *				  way i can think of doing the routine.The slower (but more
+ *				  accurate routine is below this one).
  *****************************************************************************/
 
-void DoTextureMappingFast(int							   NumberOfPlanes,
-						  const TRANSFORMED_PLANE_STRUCT   ** PlanesArray,
-						  const TRANSFORM_STRUCT		   *ObjToEye,
-						  const MATERIAL_STATE_STRUCT	   *MState,
-						  TEXTURING_RESULT_STRUCT  		   *pResults)
-{
+void DoTextureMappingFast(int NumberOfPlanes,
+                          const TRANSFORMED_PLANE_STRUCT **PlanesArray,
+                          const TRANSFORM_STRUCT *ObjToEye,
+                          const MATERIAL_STATE_STRUCT *MState,
+                          TEXTURING_RESULT_STRUCT *pResults) {
 
-	float 	largestT,largestB;
-	float	compression,pqr,approx1;
-	float 	dudx,dvdx,dudy,dvdy;
-	float	eye_a,eye_b,eye_c,eye_d,eye_e,eye_f,eye_p,eye_q,eye_r;
-	float	adj_a,adj_b,adj_c,adj_d,adj_e,adj_f,adj_p,adj_q,adj_r;
+    float largestT, largestB;
+    float compression, pqr, approx1;
+    float dudx, dvdx, dudy, dvdy;
+    float eye_a, eye_b, eye_c, eye_d, eye_e, eye_f, eye_p, eye_q, eye_r;
+    float adj_a, adj_b, adj_c, adj_d, adj_e, adj_f, adj_p, adj_q, adj_r;
 
-	float	x,y;
-	flong 	topExponent,MipMap;
-	long	exp;
-	long	MipMant,MipExp;
+    float x, y;
+    flong topExponent, MipMap;
+    long exp;
+    long MipMant, MipExp;
 
-	sgl_bool	MipMapped;
+    sgl_bool MipMapped;
 
-	const TRANSFORMED_PLANE_STRUCT   * pPlane;
-	const CONV_TEXTURE_UNION		 * pPremapped;
-	const LOCAL_PROJECTION_STRUCT  * const pLocalProjMat = RnGlobalGetLocalProjMat();
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	float CFRreciprocal = pProjMat->CFRreciprocal;
+    const TRANSFORMED_PLANE_STRUCT *pPlane;
+    const CONV_TEXTURE_UNION *pPremapped;
+    const LOCAL_PROJECTION_STRUCT *const pLocalProjMat = RnGlobalGetLocalProjMat();
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    float CFRreciprocal = pProjMat->CFRreciprocal;
 
-	#if MULTI_FP_REG
-		/*
+#if MULTI_FP_REG
+                                                                                                                            /*
 		// If we have floating point registers, make a local "copy" of
 		// the projection matrix values. This should put it in registers.
 		*/
 		float	Sr00,Sr01,Sr02,Sr03,Sr10,Sr11,Sr12,Sr13,Sr20,Sr21,Sr22,Sr23;
-	#else
-		/*
+#else
+    /*
 		// For the case where we DONT have many FP registers,
 		// define aliases for the projection matrix entries.
 		*/
-		#define Sr00 (pLocalProjMat->sr[0][0])
-		#define Sr01 (pLocalProjMat->sr[0][1])
-		#define Sr02 (pLocalProjMat->sr[0][2])
-		#define Sr03 (pLocalProjMat->sr[0][3])
-		#define Sr10 (pLocalProjMat->sr[1][0])
-		#define Sr11 (pLocalProjMat->sr[1][1])
-		#define Sr12 (pLocalProjMat->sr[1][2])
-		#define Sr13 (pLocalProjMat->sr[1][3])
+#define Sr00 (pLocalProjMat->sr[0][0])
+#define Sr01 (pLocalProjMat->sr[0][1])
+#define Sr02 (pLocalProjMat->sr[0][2])
+#define Sr03 (pLocalProjMat->sr[0][3])
+#define Sr10 (pLocalProjMat->sr[1][0])
+#define Sr11 (pLocalProjMat->sr[1][1])
+#define Sr12 (pLocalProjMat->sr[1][2])
+#define Sr13 (pLocalProjMat->sr[1][3])
 
-		#define Sr20 (ObjToEye->mat[2][0])
-		#define Sr21 (ObjToEye->mat[2][1])
-		#define Sr22 (ObjToEye->mat[2][2])
-		#define Sr23 (ObjToEye->mat[2][3])
+#define Sr20 (ObjToEye->mat[2][0])
+#define Sr21 (ObjToEye->mat[2][1])
+#define Sr22 (ObjToEye->mat[2][2])
+#define Sr23 (ObjToEye->mat[2][3])
 
-	#endif
+#endif
 
-	ASSERT(pLocalProjMat->valid); /*stop if the matrix is not valid*/
+    ASSERT(pLocalProjMat->valid); /*stop if the matrix is not valid*/
 
-	SGL_TIME_START(TEXTURE_TIME)
+    SGL_TIME_START(TEXTURE_TIME)
 
-	/*
+    /*
 	// load up the Object to Screen matrix (if we have fp registers)
 	*/
-	#if MULTI_FP_REG
-		Sr00=pLocalProjMat->sr[0][0];
+#if MULTI_FP_REG
+                                                                                                                            Sr00=pLocalProjMat->sr[0][0];
 		Sr01=pLocalProjMat->sr[0][1];
 		Sr02=pLocalProjMat->sr[0][2];
 		Sr03=pLocalProjMat->sr[0][3];
@@ -365,168 +364,162 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 		Sr21=ObjToEye->mat[2][1];
 		Sr22=ObjToEye->mat[2][2];
 		Sr23=ObjToEye->mat[2][3];
-	#endif
+#endif
 
 
-	/*
+    /*
 	// also define convenient access to the "scaled" texture projection
 	// as well
 	*/
-	#define TSr00 pLocalProjMat->textureSR[0][0]
-	#define TSr01 pLocalProjMat->textureSR[0][1]
-	#define TSr02 pLocalProjMat->textureSR[0][2]
+#define TSr00 pLocalProjMat->textureSR[0][0]
+#define TSr01 pLocalProjMat->textureSR[0][1]
+#define TSr02 pLocalProjMat->textureSR[0][2]
 
-	#define TSr10 pLocalProjMat->textureSR[1][0]
-	#define TSr11 pLocalProjMat->textureSR[1][1]
-	#define TSr12 pLocalProjMat->textureSR[1][2]
+#define TSr10 pLocalProjMat->textureSR[1][0]
+#define TSr11 pLocalProjMat->textureSR[1][1]
+#define TSr12 pLocalProjMat->textureSR[1][2]
 
-	#define TSr20 pLocalProjMat->textureSR[2][0]
-	#define TSr21 pLocalProjMat->textureSR[2][1]
-	#define TSr22 pLocalProjMat->textureSR[2][2]
+#define TSr20 pLocalProjMat->textureSR[2][0]
+#define TSr21 pLocalProjMat->textureSR[2][1]
+#define TSr22 pLocalProjMat->textureSR[2][2]
 
-	MipMapped = MState->texas_precomp.TexAddress & MASK_MIP_MAPPED;
+    MipMapped = MState->texas_precomp.TexAddress & MASK_MIP_MAPPED;
 
-	/*
+    /*
 	// Are all these planes MIP mapped? Use either the MIP map loop
 	// or the non MIP'd.
 	*/
-	for(/*Nil*/; NumberOfPlanes!=0; NumberOfPlanes--, pResults++, PlanesArray++)
-	{
-		/*
+    for (/*Nil*/; NumberOfPlanes != 0; NumberOfPlanes--, pResults++, PlanesArray++) {
+        /*
 		// get pointer to this plane
 		*/
-		pPlane = *PlanesArray;
+        pPlane = *PlanesArray;
 
-		/*
+        /*
 		// Get a pointer to the UV Info
 		*/
-		pPremapped = pPlane->pTextureData;
+        pPremapped = pPlane->pTextureData;
 
-		/*
+        /*
 		// For typing convenience, define aliases to the various
 		// bits in the premapped stuff
 		*/
-		#define UPoint pPremapped->pre_mapped.u_vect
-		#define VPoint pPremapped->pre_mapped.v_vect
-		#define OPoint pPremapped->pre_mapped.o_vect
+#define UPoint pPremapped->pre_mapped.u_vect
+#define VPoint pPremapped->pre_mapped.v_vect
+#define OPoint pPremapped->pre_mapped.o_vect
 
-		/*
+        /*
 		**	transform U,V and the origin from object space to eye space.
 		*/
-		eye_a=UPoint[0]*TSr00 + UPoint[1]*TSr01 + UPoint[2]*TSr02;
-		eye_b=VPoint[0]*TSr00 + VPoint[1]*TSr01 + VPoint[2]*TSr02;
-		eye_c=OPoint[0]*Sr00  + OPoint[1]*Sr01  + OPoint[2]*Sr02 + Sr03;
+        eye_a = UPoint[0] * TSr00 + UPoint[1] * TSr01 + UPoint[2] * TSr02;
+        eye_b = VPoint[0] * TSr00 + VPoint[1] * TSr01 + VPoint[2] * TSr02;
+        eye_c = OPoint[0] * Sr00 + OPoint[1] * Sr01 + OPoint[2] * Sr02 + Sr03;
 
-		eye_d=UPoint[0]*TSr10 + UPoint[1]*TSr11 + UPoint[2]*TSr12;
-		eye_e=VPoint[0]*TSr10 + VPoint[1]*TSr11 + VPoint[2]*TSr12;
-		eye_f=OPoint[0]*Sr10  + OPoint[1]*Sr11  + OPoint[2]*Sr12 + Sr13;
+        eye_d = UPoint[0] * TSr10 + UPoint[1] * TSr11 + UPoint[2] * TSr12;
+        eye_e = VPoint[0] * TSr10 + VPoint[1] * TSr11 + VPoint[2] * TSr12;
+        eye_f = OPoint[0] * Sr10 + OPoint[1] * Sr11 + OPoint[2] * Sr12 + Sr13;
 
-		eye_p=UPoint[0]*TSr20 + UPoint[1]*TSr21 + UPoint[2]*TSr22;
-		eye_q=VPoint[0]*TSr20 + VPoint[1]*TSr21 + VPoint[2]*TSr22;
-		eye_r=OPoint[0]*Sr20  + OPoint[1]*Sr21  + OPoint[2]*Sr22 + Sr23;
+        eye_p = UPoint[0] * TSr20 + UPoint[1] * TSr21 + UPoint[2] * TSr22;
+        eye_q = VPoint[0] * TSr20 + VPoint[1] * TSr21 + VPoint[2] * TSr22;
+        eye_r = OPoint[0] * Sr20 + OPoint[1] * Sr21 + OPoint[2] * Sr22 + Sr23;
 
-		#undef UPoint
-		#undef VPoint
-		#undef OPoint
+#undef UPoint
+#undef VPoint
+#undef OPoint
 
 
-		/*
+        /*
 		**	calculate the adjoint.
 		*/
-		adj_a=eye_e*eye_r - eye_q*eye_f;
-		adj_b=eye_q*eye_c - eye_b*eye_r;
-		adj_c=eye_b*eye_f - eye_e*eye_c; 
+        adj_a = eye_e * eye_r - eye_q * eye_f;
+        adj_b = eye_q * eye_c - eye_b * eye_r;
+        adj_c = eye_b * eye_f - eye_e * eye_c;
 
-		adj_d=eye_p*eye_f - eye_d*eye_r;
-		adj_e=eye_a*eye_r - eye_p*eye_c;
-		adj_f=eye_d*eye_c - eye_a*eye_f; 
+        adj_d = eye_p * eye_f - eye_d * eye_r;
+        adj_e = eye_a * eye_r - eye_p * eye_c;
+        adj_f = eye_d * eye_c - eye_a * eye_f;
 
-		adj_p=eye_d*eye_q - eye_p*eye_e; 
-		adj_q=eye_p*eye_b - eye_a*eye_q; 
-		adj_r=eye_a*eye_e - eye_d*eye_b; 
+        adj_p = eye_d * eye_q - eye_p * eye_e;
+        adj_q = eye_p * eye_b - eye_a * eye_q;
+        adj_r = eye_a * eye_e - eye_d * eye_b;
 
-		/* check that pqr is not negative at the representative point */
+        /* check that pqr is not negative at the representative point */
 
-		x=pPlane->projRepPoint[0];
-		y=pPlane->projRepPoint[1];
+        x = pPlane->projRepPoint[0];
+        y = pPlane->projRepPoint[1];
 
-		pqr=adj_p*x + adj_q*y + adj_r;
+        pqr = adj_p * x + adj_q * y + adj_r;
 
-		if(MipMapped)
-		{
-			/*do the mip mapped calculation*/
+        if (MipMapped) {
+            /*do the mip mapped calculation*/
 
-			dudx= sfabs(adj_a*adj_r - adj_p*adj_c);
-			dvdx= sfabs(adj_d*adj_r - adj_p*adj_f);
+            dudx = sfabs(adj_a * adj_r - adj_p * adj_c);
+            dvdx = sfabs(adj_d * adj_r - adj_p * adj_f);
 
-			/* 
-			//approximate the pythagorean distance 
+            /*
+			//approximate the pythagorean distance
 			//
 			// IE dist(a,b) = |a| + |b| - 0.585786f*min(|a|,|b|)
 			// I think this is supposed to be about 7% out worst case...
 			*/
-		#if SLOW_FCMP && !MULTI_FP_REG
-			if(FLOAT_TO_LONG(dudx) < FLOAT_TO_LONG(dvdx))
-		#else
-			if(dudx < dvdx)
-		#endif
-			{
-				approx1= (1.0f-0.585786f) * dudx + dvdx;
-			}
-			else
-			{
-				approx1=  dudx + (1.0f-0.585786f) * dvdx;
-			}
-	
-			dudy= sfabs(adj_b*adj_r - adj_q*adj_c);
-			dvdy= sfabs(adj_e*adj_r - adj_q*adj_f);
-	
-			/*
+#if SLOW_FCMP && !MULTI_FP_REG
+            if (FLOAT_TO_LONG(dudx) < FLOAT_TO_LONG(dvdx))
+#else
+                if(dudx < dvdx)
+#endif
+            {
+                approx1 = (1.0f - 0.585786f) * dudx + dvdx;
+            } else {
+                approx1 = dudx + (1.0f - 0.585786f) * dvdx;
+            }
+
+            dudy = sfabs(adj_b * adj_r - adj_q * adj_c);
+            dvdy = sfabs(adj_e * adj_r - adj_q * adj_f);
+
+            /*
 			// And again
 			*/
-		#if SLOW_FCMP && !MULTI_FP_REG
-			if(FLOAT_TO_LONG(dudy) < FLOAT_TO_LONG(dvdy))
-		#else
-			if( dudy < dvdy )
-		#endif
-			{
-				compression= (1.0f-0.585786f) * dudy + dvdy;
-			}
-			else
-			{
-				compression= dudy + (1.0f-0.585786f) * dvdy;
-			}
-			
-			/* 
+#if SLOW_FCMP && !MULTI_FP_REG
+            if (FLOAT_TO_LONG(dudy) < FLOAT_TO_LONG(dvdy))
+#else
+                if( dudy < dvdy )
+#endif
+            {
+                compression = (1.0f - 0.585786f) * dudy + dvdy;
+            } else {
+                compression = dudy + (1.0f - 0.585786f) * dvdy;
+            }
+
+            /*
 			// pick the larger of the distances and store in
 			// compression. Originally there was a variable
 			// called approx2, but we re-use compression instead.
 			*/
-			ASSERT(approx1>= 0.0f);
-			ASSERT(compression>= 0.0f);
+            ASSERT(approx1 >= 0.0f);
+            ASSERT(compression >= 0.0f);
 
-		#if SLOW_FCMP && !MULTI_FP_REG
-			if (FLOAT_TO_LONG(approx1) > FLOAT_TO_LONG(compression))
-		#else
-			if (approx1>compression)
-		#endif
-			{
-			  	compression=approx1;
-			}
+#if SLOW_FCMP && !MULTI_FP_REG
+            if (FLOAT_TO_LONG(approx1) > FLOAT_TO_LONG(compression))
+#else
+                if (approx1>compression)
+#endif
+            {
+                compression = approx1;
+            }
 
-			/*
+            /*
 			**	rescale 'c','f', and 'r' to keep the coefficients
 			**  in a similar range to a,b,d,e,p and q.
 			**  Texas will scale them back to the right values.
 			*/
 
-			adj_c*=CFRreciprocal;
-			adj_f*=CFRreciprocal;
-			adj_r*=CFRreciprocal;
+            adj_c *= CFRreciprocal;
+            adj_f *= CFRreciprocal;
+            adj_r *= CFRreciprocal;
 
-			/*
-			**	find the largest (magnitude) of a,b,c,d,e,f 
-			** 
+            /*
+			**	find the largest (magnitude) of a,b,c,d,e,f
+			**
 			** On some slower processors floating point compare
 			** etc is very slow. Since these values are all positive, we
 			** can just as validly "assume" they are integer as the IEEE
@@ -538,86 +531,79 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 			** registers)
 			*/
 
-			SGL_TIME_SUSPEND(TEXTURE_TIME)
-			SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
+            SGL_TIME_SUSPEND(TEXTURE_TIME)
+            SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
 
-		#if SLOW_FCMP && !MULTI_FP_REG
-			{
-				long  LargestIntEquiv;
-				long  temp;
+#if SLOW_FCMP && !MULTI_FP_REG
+            {
+                long LargestIntEquiv;
+                long temp;
 
-				/*
+                /*
 				// Get the abs of a, and "convert" it to int.
 				*/
-				LargestIntEquiv = FLOAT_TO_LONG(adj_a) & FABS_MASK;
+                LargestIntEquiv = FLOAT_TO_LONG(adj_a) & FABS_MASK;
 
 
-				/*
+                /*
 				// Get "fabs" of b and compare it with that of a
 				// etc etc etc
 				*/
-				temp = FLOAT_TO_LONG(adj_b) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_b) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_c) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_c) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_d) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_d) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
 
-				temp = FLOAT_TO_LONG(adj_e) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_e) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_f) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_f) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				largestT = LONG_TO_FLOAT(LargestIntEquiv);
+                largestT = LONG_TO_FLOAT(LargestIntEquiv);
 
-				/*
-				** find the largest of p,q,r 
+                /*
+				** find the largest of p,q,r
 				*/
-				/*
+                /*
 				// Get the abs of p, and "convert" it to int.
 				*/
-				LargestIntEquiv = FLOAT_TO_LONG(adj_p) & FABS_MASK;
+                LargestIntEquiv = FLOAT_TO_LONG(adj_p) & FABS_MASK;
 
-				temp = FLOAT_TO_LONG(adj_q) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_q) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_r) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_r) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				largestB = LONG_TO_FLOAT(LargestIntEquiv);
-			}
-			/*
+                largestB = LONG_TO_FLOAT(LargestIntEquiv);
+            }
+            /*
 			// Use FP compares to get the largest
 			*/
-		#else
-			largestT= sfabs(adj_a);
+#else
+                                                                                                                                    largestT= sfabs(adj_a);
 
-			/* 
+			/*
 			// make a temp copy of the result of the sfabs() because
 			// this may be faster on compilers that call an sfabs
 			// function
@@ -643,7 +629,7 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 				largestT=FabsT1;
 
 			/*
-			** find the largest of p,q,r 
+			** find the largest of p,q,r
 			*/
 			largestB= sfabs(adj_p);
 
@@ -654,181 +640,176 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 			FabsT2=sfabs(adj_r);
 			if (FabsT2>largestB)
 				  largestB=FabsT2;
-		#endif
+#endif
 
 
 
 
-			/*
+            /*
 			** calculate a fast floor(log2(largest/largest_bot))
 			*/
 
-			largestT=1.0f/largestT;
+            largestT = 1.0f / largestT;
 
-			topExponent.f=largestB*largestT;
+            topExponent.f = largestB * largestT;
 
-			/* extract the offset exponent from the IEEE fp number */
+            /* extract the offset exponent from the IEEE fp number */
 
-			exp=(topExponent.l>>23) & 0xff; 	
+            exp = (topExponent.l >> 23) & 0xff;
 
-			/* calculate the reciprocal (ignore post normalising) */
+            /* calculate the reciprocal (ignore post normalising) */
 
-			exp=126-exp;
+            exp = 126 - exp;
 
-			/*
+            /*
 			** rescale the texturing coefficients to 16 bits.
 			*/
 
-			largestT=largestT * 32767.0f;
+            largestT = largestT * 32767.0f;
 
-			if(pqr<0.0f)
-			{
-				largestT=-largestT;
-			}
+            if (pqr < 0.0f) {
+                largestT = -largestT;
+            }
 
-			adj_a=adj_a * largestT;
-			adj_b=adj_b * largestT;
-			adj_c=adj_c * largestT;
-			adj_d=adj_d * largestT;
-			adj_e=adj_e * largestT;
-			adj_f=adj_f * largestT;
+            adj_a = adj_a * largestT;
+            adj_b = adj_b * largestT;
+            adj_c = adj_c * largestT;
+            adj_d = adj_d * largestT;
+            adj_e = adj_e * largestT;
+            adj_f = adj_f * largestT;
 
-			/* calculate a fast pow(2.0,floor())*largestT */
+            /* calculate a fast pow(2.0,floor())*largestT */
 
-			topExponent.l=(exp+127)<<23;
+            topExponent.l = (exp + 127) << 23;
 
-			largestT=largestT * topExponent.f;
+            largestT = largestT * topExponent.f;
 
-			adj_p=adj_p * largestT;
-			adj_q=adj_q * largestT;
-			adj_r=adj_r * largestT;
+            adj_p = adj_p * largestT;
+            adj_q = adj_q * largestT;
+            adj_r = adj_r * largestT;
 
-			/* solve the compression for 'n'.Compression is
+            /* solve the compression for 'n'.Compression is
 			   pre-multiplied by pqr*pqr, so we only have to multiply by the
 			   square of the rescale value */
 
-			MipMap.f=compression*largestT*largestT;
+            MipMap.f = compression * largestT * largestT;
 
-			/* convert from IEEE to the TEXAS floating point format*/
+            /* convert from IEEE to the TEXAS floating point format*/
 
-			MipMant =(MipMap.l>>16)&0x7f;
-			MipMant+=128; /*add in the implied 0.5*/
-			/*126 because of the different decimal point*/
-			MipExp=(MipMap.l>>23)-126;
+            MipMant = (MipMap.l >> 16) & 0x7f;
+            MipMant += 128; /*add in the implied 0.5*/
+            /*126 because of the different decimal point*/
+            MipExp = (MipMap.l >> 23) - 126;
 
 
-			/*
+            /*
 			** Texas can't handle an exponent greater than 15,so we will
    			** reduce the resolution of 'p', 'q', and 'r'.
 			** THIS SHOULD HAPPEN **VERY** RARELY.The Level Of Detail
 			** should have removed the texture by now.
 			*/
 
-			if(exp>15)
-			{
-				adj_p=(float)((sgl_int32)adj_p >>(exp-15));
-				adj_q=(float)((sgl_int32)adj_q >>(exp-15));
-				adj_r=(float)((sgl_int32)adj_r >>(exp-15));
-				MipExp-=(exp-15)<<1;
+            if (exp > 15) {
+                adj_p = (float) ((sgl_int32) adj_p >> (exp - 15));
+                adj_q = (float) ((sgl_int32) adj_q >> (exp - 15));
+                adj_r = (float) ((sgl_int32) adj_r >> (exp - 15));
+                MipExp -= (exp - 15) << 1;
 
-				exp=15;
-			}
-			/*
+                exp = 15;
+            }
+                /*
 			** Texas can't handle a negative exponent,so we will
    			** reduce the resolution of a,b,c,d,e and f.
 			** This condition only happens if the texture is VERY zoomed.
 			** It may not be worth the expense of testing for this.
 			*/
-			else if(exp<0)
-			{
-				adj_a=(float)((sgl_int32)adj_a >>(0-exp));
-				adj_b=(float)((sgl_int32)adj_b >>(0-exp));
-				adj_c=(float)((sgl_int32)adj_c >>(0-exp));
-				adj_d=(float)((sgl_int32)adj_d >>(0-exp));
-				adj_e=(float)((sgl_int32)adj_e >>(0-exp));
-				adj_f=(float)((sgl_int32)adj_f >>(0-exp));
+            else if (exp < 0) {
+                adj_a = (float) ((sgl_int32) adj_a >> (0 - exp));
+                adj_b = (float) ((sgl_int32) adj_b >> (0 - exp));
+                adj_c = (float) ((sgl_int32) adj_c >> (0 - exp));
+                adj_d = (float) ((sgl_int32) adj_d >> (0 - exp));
+                adj_e = (float) ((sgl_int32) adj_e >> (0 - exp));
+                adj_f = (float) ((sgl_int32) adj_f >> (0 - exp));
 
-				exp=0;
-			}
-
+                exp = 0;
+            }
 
 
 
-			/*
+
+            /*
 			**  now pack up the data in TEXAS format
 			*/
-			/*first instruction word*/
+            /*first instruction word*/
 
-			pResults->Control1=((sgl_uint32)exp << SHIFT_EXPONENT);
+            pResults->Control1 = ((sgl_uint32) exp << SHIFT_EXPONENT);
 
-			/*texture parameters*/ 
+            /*texture parameters*/
 
-			pResults->TexCoeff1 =((sgl_uint32)MipMant << SHIFT_PMIP_M);
-			pResults->TexCoeff1|=((sgl_uint32)MipExp  << SHIFT_PMIP_E);
-			pResults->TexCoeff1|=((sgl_int32)adj_r) & 0xffffUL;
+            pResults->TexCoeff1 = ((sgl_uint32) MipMant << SHIFT_PMIP_M);
+            pResults->TexCoeff1 |= ((sgl_uint32) MipExp << SHIFT_PMIP_E);
+            pResults->TexCoeff1 |= ((sgl_int32) adj_r) & 0xffffUL;
 
-	        pResults->TexCoeff2 =((sgl_int32)adj_q << 16);
-	        pResults->TexCoeff2|=((sgl_int32)adj_p) & 0xffffUL;
+            pResults->TexCoeff2 = ((sgl_int32) adj_q << 16);
+            pResults->TexCoeff2 |= ((sgl_int32) adj_p) & 0xffffUL;
 
-	        pResults->TexCoeff3 =(MState->texas_precomp.TexAddress) << 16;
-	        pResults->TexCoeff3|=((sgl_int32)adj_c) & 0xffffUL;
+            pResults->TexCoeff3 = (MState->texas_precomp.TexAddress) << 16;
+            pResults->TexCoeff3 |= ((sgl_int32) adj_c) & 0xffffUL;
 
-	        pResults->TexCoeff4 =((sgl_int32)adj_b << 16);
-	        pResults->TexCoeff4|=((sgl_int32)adj_a) & 0xffffUL;
+            pResults->TexCoeff4 = ((sgl_int32) adj_b << 16);
+            pResults->TexCoeff4 |= ((sgl_int32) adj_a) & 0xffffUL;
 
-	        pResults->TexCoeff5 =(MState->texas_precomp.TexAddress) & 0xffff0000UL;
-	        pResults->TexCoeff5|=((sgl_int32)adj_f) & 0xffffUL;
+            pResults->TexCoeff5 = (MState->texas_precomp.TexAddress) & 0xffff0000UL;
+            pResults->TexCoeff5 |= ((sgl_int32) adj_f) & 0xffffUL;
 
-	        pResults->TexCoeff6 =((sgl_int32)adj_e << 16);
-	        pResults->TexCoeff6|=((sgl_int32)adj_d) & 0xffffUL;
-	
-			SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
-			SGL_TIME_RESUME(TEXTURE_TIME)
+            pResults->TexCoeff6 = ((sgl_int32) adj_e << 16);
+            pResults->TexCoeff6 |= ((sgl_int32) adj_d) & 0xffffUL;
 
-		}
-		/*
+            SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
+            SGL_TIME_RESUME(TEXTURE_TIME)
+
+        }
+            /*
 		// Else it's not MIP mapped.
 		*/
-		else
-		{
-			/*
-			//do the non-mip map calculation 
+        else {
+            /*
+			//do the non-mip map calculation
 			*/
 
-			/*
+            /*
 			** TEXAS does not divide by a negative number correctly,
 			** so we need to negate everything
 			*/
 
-			SGL_TIME_SUSPEND(TEXTURE_TIME)
-			SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
+            SGL_TIME_SUSPEND(TEXTURE_TIME)
+            SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
 
-			if(pqr<0.0f)
-			{
-				adj_a=-adj_a;
-				adj_b=-adj_b;
-				adj_c=-adj_c;
-				adj_d=-adj_d;
-				adj_e=-adj_e;
-				adj_f=-adj_f;
-				adj_p=-adj_p;
-				adj_q=-adj_q;
-				adj_r=-adj_r;
-			}
-	
-			/*
+            if (pqr < 0.0f) {
+                adj_a = -adj_a;
+                adj_b = -adj_b;
+                adj_c = -adj_c;
+                adj_d = -adj_d;
+                adj_e = -adj_e;
+                adj_f = -adj_f;
+                adj_p = -adj_p;
+                adj_q = -adj_q;
+                adj_r = -adj_r;
+            }
+
+            /*
 			**	rescale 'c','f', and 'r' to keep the coefficients
 			**  in a similar range to a,b,d,e,p and q.
 			**  Texas will scale them back to the right values.
 			*/
 
-			adj_c*=CFRreciprocal;
-			adj_f*=CFRreciprocal;
-			adj_r*=CFRreciprocal;
+            adj_c *= CFRreciprocal;
+            adj_f *= CFRreciprocal;
+            adj_r *= CFRreciprocal;
 
-			/*
-			**	find the largest (magnitude) of a,b,c,d,e,f 
-			** 
+            /*
+			**	find the largest (magnitude) of a,b,c,d,e,f
+			**
 			** On some slower processors floating point compare
 			** etc is very slow. Since these values are all positive, we
 			** can just as validly "assume" they are integer as the IEEE
@@ -841,84 +822,77 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 			*/
 
 
-		#if SLOW_FCMP && !MULTI_FP_REG
-			{
-				long  LargestIntEquiv;
-				long  temp;
+#if SLOW_FCMP && !MULTI_FP_REG
+            {
+                long LargestIntEquiv;
+                long temp;
 
-				/*
+                /*
 				// Get the abs of a, and "convert" it to int.
 				*/
-				LargestIntEquiv = FLOAT_TO_LONG(adj_a) & FABS_MASK;
+                LargestIntEquiv = FLOAT_TO_LONG(adj_a) & FABS_MASK;
 
 
-				/*
+                /*
 				// Get "fabs" of b and compare it with that of a
 				// etc etc etc
 				*/
-				temp = FLOAT_TO_LONG(adj_b) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_b) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_c) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_c) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_d) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_d) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
 
-				temp = FLOAT_TO_LONG(adj_e) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_e) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_f) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_f) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				largestT = LONG_TO_FLOAT(LargestIntEquiv);
+                largestT = LONG_TO_FLOAT(LargestIntEquiv);
 
 
-				/*
-				** find the largest of p,q,r 
+                /*
+				** find the largest of p,q,r
 				*/
-				/*
+                /*
 				// Get the abs of p, and "convert" it to int.
 				*/
-				LargestIntEquiv = FLOAT_TO_LONG(adj_p) & FABS_MASK;
+                LargestIntEquiv = FLOAT_TO_LONG(adj_p) & FABS_MASK;
 
-				temp = FLOAT_TO_LONG(adj_q) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_q) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				temp = FLOAT_TO_LONG(adj_r) & FABS_MASK;
-				if(temp > LargestIntEquiv)
-				{
-					LargestIntEquiv = temp;
-				}
+                temp = FLOAT_TO_LONG(adj_r) & FABS_MASK;
+                if (temp > LargestIntEquiv) {
+                    LargestIntEquiv = temp;
+                }
 
-				largestB = LONG_TO_FLOAT(LargestIntEquiv);
-			}
-			/*
+                largestB = LONG_TO_FLOAT(LargestIntEquiv);
+            }
+            /*
 			// Use FP compares to get the largest
 			*/
-		#else
-			largestT= sfabs(adj_a);
+#else
+                                                                                                                                    largestT= sfabs(adj_a);
 
-			/* 
+			/*
 			// make a temp copy of the result of the sfabs() because
 			// this may be faster on compilers that call an sfabs
 			// function
@@ -944,7 +918,7 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 				largestT=FabsT1;
 
 			/*
-			** find the largest of p,q,r 
+			** find the largest of p,q,r
 			*/
 			largestB= sfabs(adj_p);
 
@@ -955,133 +929,131 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
 			FabsT2=sfabs(adj_r);
 			if (FabsT2>largestB)
 				  largestB=FabsT2;
-		#endif
+#endif
 
-			/*
+            /*
 			** calculate a fast floor(log2(largest/largest_bot))
 			*/
 
-			largestT=1.0f/largestT;
+            largestT = 1.0f / largestT;
 
-			topExponent.f=largestB*largestT;
+            topExponent.f = largestB * largestT;
 
-			/* extract the offset exponent from the IEEE fp number */
+            /* extract the offset exponent from the IEEE fp number */
 
-			exp=(topExponent.l>>23) & 0xff; 	
+            exp = (topExponent.l >> 23) & 0xff;
 
-			/* calculate the reciprocal (ignore post normalising) */
+            /* calculate the reciprocal (ignore post normalising) */
 
-			exp=126-exp;
+            exp = 126 - exp;
 
-			/*
+            /*
 			** rescale the texturing coefficients to 16 bits.
 			*/
 
-			largestT=largestT * 32767.0f;
+            largestT = largestT * 32767.0f;
 
-			adj_a=adj_a * largestT;
-			adj_b=adj_b * largestT;
-			adj_c=adj_c * largestT;
-			adj_d=adj_d * largestT;
-			adj_e=adj_e * largestT;
-			adj_f=adj_f * largestT;
+            adj_a = adj_a * largestT;
+            adj_b = adj_b * largestT;
+            adj_c = adj_c * largestT;
+            adj_d = adj_d * largestT;
+            adj_e = adj_e * largestT;
+            adj_f = adj_f * largestT;
 
-			/* calculate a fast pow(2.0,floor())*largestT */
+            /* calculate a fast pow(2.0,floor())*largestT */
 
-			topExponent.l=(exp+127)<<23;
+            topExponent.l = (exp + 127) << 23;
 
-			largestT=largestT * topExponent.f;
+            largestT = largestT * topExponent.f;
 
-			adj_p=adj_p * largestT;
-			adj_q=adj_q * largestT;
-			adj_r=adj_r * largestT;
+            adj_p = adj_p * largestT;
+            adj_q = adj_q * largestT;
+            adj_r = adj_r * largestT;
 
-			/*
+            /*
 			** Texas can't handle an exponent greater than 15,so we will
    			** reduce the resolution of 'p', 'q', and 'r'.
 			** THIS SHOULD HAPPEN **VERY** RARELY.The Level Of Detail
 			** should have removed the texture by now.
 			*/
 
-			if(exp>15)
-			{
-				adj_p=(float)((sgl_int32)adj_p >>(exp-15));
-				adj_q=(float)((sgl_int32)adj_q >>(exp-15));
-				adj_r=(float)((sgl_int32)adj_r >>(exp-15));
+            if (exp > 15) {
+                adj_p = (float) ((sgl_int32) adj_p >> (exp - 15));
+                adj_q = (float) ((sgl_int32) adj_q >> (exp - 15));
+                adj_r = (float) ((sgl_int32) adj_r >> (exp - 15));
 
-				exp=15;
-			}
-			/*
+                exp = 15;
+            }
+                /*
 			** Texas can't handle a negative exponent,so we will
    			** reduce the resolution of a,b,c,d,e and f.
 			** This condition only happens if the texture is VERY zoomed.
 			** It may not be worth the expense of testing for this.
 			*/
-			else if(exp<0)
-			{
-				adj_a=(float)((sgl_int32)adj_a >>(0-exp));
-				adj_b=(float)((sgl_int32)adj_b >>(0-exp));
-				adj_c=(float)((sgl_int32)adj_c >>(0-exp));
-				adj_d=(float)((sgl_int32)adj_d >>(0-exp));
-				adj_e=(float)((sgl_int32)adj_e >>(0-exp));
-				adj_f=(float)((sgl_int32)adj_f >>(0-exp));
+            else if (exp < 0) {
+                adj_a = (float) ((sgl_int32) adj_a >> (0 - exp));
+                adj_b = (float) ((sgl_int32) adj_b >> (0 - exp));
+                adj_c = (float) ((sgl_int32) adj_c >> (0 - exp));
+                adj_d = (float) ((sgl_int32) adj_d >> (0 - exp));
+                adj_e = (float) ((sgl_int32) adj_e >> (0 - exp));
+                adj_f = (float) ((sgl_int32) adj_f >> (0 - exp));
 
-				exp=0;
-			}
-
+                exp = 0;
+            }
 
 
-			/*
+
+            /*
 			**  now pack up the data in TEXAS format
 			*/
-	
-			/*first instruction word*/
 
-			pResults->Control1=((sgl_uint32)exp << SHIFT_EXPONENT);
+            /*first instruction word*/
 
-			/*texture parameters*/ 
+            pResults->Control1 = ((sgl_uint32) exp << SHIFT_EXPONENT);
 
-			pResults->TexCoeff1 =((sgl_int32)adj_r) & 0xffffUL;
+            /*texture parameters*/
 
-	        pResults->TexCoeff2 =((sgl_int32)adj_q << 16);
-	        pResults->TexCoeff2|=((sgl_int32)adj_p) & 0xffffUL;
+            pResults->TexCoeff1 = ((sgl_int32) adj_r) & 0xffffUL;
 
-	        pResults->TexCoeff3 =(MState->texas_precomp.TexAddress) << 16;
-	        pResults->TexCoeff3|=((sgl_int32)adj_c) & 0xffffUL;
+            pResults->TexCoeff2 = ((sgl_int32) adj_q << 16);
+            pResults->TexCoeff2 |= ((sgl_int32) adj_p) & 0xffffUL;
 
-	        pResults->TexCoeff4 =((sgl_int32)adj_b << 16);
-	        pResults->TexCoeff4|=((sgl_int32)adj_a) & 0xffffUL;
+            pResults->TexCoeff3 = (MState->texas_precomp.TexAddress) << 16;
+            pResults->TexCoeff3 |= ((sgl_int32) adj_c) & 0xffffUL;
 
-	        pResults->TexCoeff5 =(MState->texas_precomp.TexAddress) & 0xffff0000;
-	        pResults->TexCoeff5|=((sgl_int32)adj_f) & 0xffffUL;
+            pResults->TexCoeff4 = ((sgl_int32) adj_b << 16);
+            pResults->TexCoeff4 |= ((sgl_int32) adj_a) & 0xffffUL;
 
-	        pResults->TexCoeff6 =((sgl_int32)adj_e << 16);
-	        pResults->TexCoeff6|=((sgl_int32)adj_d) & 0xffffUL;
+            pResults->TexCoeff5 = (MState->texas_precomp.TexAddress) & 0xffff0000;
+            pResults->TexCoeff5 |= ((sgl_int32) adj_f) & 0xffffUL;
 
-			SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
-			SGL_TIME_RESUME(TEXTURE_TIME)
+            pResults->TexCoeff6 = ((sgl_int32) adj_e << 16);
+            pResults->TexCoeff6 |= ((sgl_int32) adj_d) & 0xffffUL;
 
-		}/*end if MIP mapped or not*/
-	
-	} /*end for loop*/
+            SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
+            SGL_TIME_RESUME(TEXTURE_TIME)
 
-	SGL_TIME_STOP(TEXTURE_TIME)
+        }/*end if MIP mapped or not*/
 
-	/*
+    } /*end for loop*/
+
+    SGL_TIME_STOP(TEXTURE_TIME)
+
+    /*
 	// Undo our defines
 	*/
-	#undef Sr00
-	#undef Sr01
-	#undef Sr02
-	#undef Sr03
-	#undef Sr10
-	#undef Sr11
-	#undef Sr12
-	#undef Sr13
-	#undef Sr20
-	#undef Sr21
-	#undef Sr22
-	#undef Sr23
+#undef Sr00
+#undef Sr01
+#undef Sr02
+#undef Sr03
+#undef Sr10
+#undef Sr11
+#undef Sr12
+#undef Sr13
+#undef Sr20
+#undef Sr21
+#undef Sr22
+#undef Sr23
 
 }
 
@@ -1100,77 +1072,75 @@ void DoTextureMappingFast(int							   NumberOfPlanes,
  *				  calculates the inverse, and packs the coefficients
  *				  into TEXAS format. It also packs the TexAddress which includes
  *				  some of the texture flags.
- * Comments		: 
- *				  I deal with negative exponents, it may not be worth the 
+ * Comments		:
+ *				  I deal with negative exponents, it may not be worth the
  *				  expense.
  *****************************************************************************/
 
-void DoTextureMappingAccurate(int							   NumberOfPlanes,
-							  const TRANSFORMED_PLANE_STRUCT   * const Planes[],
-							  const TRANSFORM_STRUCT		   *ObjToEye,
-							  const MATERIAL_STATE_STRUCT	   *MState,
-							  TEXTURING_RESULT_STRUCT  		   *Results)
-{
+void DoTextureMappingAccurate(int NumberOfPlanes,
+                              const TRANSFORMED_PLANE_STRUCT *const Planes[],
+                              const TRANSFORM_STRUCT *ObjToEye,
+                              const MATERIAL_STATE_STRUCT *MState,
+                              TEXTURING_RESULT_STRUCT *Results) {
 
-	float 	largestT,largestB;
-	float	compression,reciprocal,u,v,abc,def,pqr,min,approx1,approx2;
-	float 	dudx,dvdx,dudy,dvdy;
-	float	eye_a,eye_b,eye_c,eye_d,eye_e,eye_f,eye_p,eye_q,eye_r;
-	float	adj_a,adj_b,adj_c,adj_d,adj_e,adj_f,adj_p,adj_q,adj_r;
-	float	Sr00,Sr01,Sr02,Sr03,Sr10,Sr11,Sr12,Sr13,Sr20,Sr21,Sr22,Sr23;
-	float	*UPoint,*VPoint,*OPoint,OPointD[3];
-	float	x,y;
-	flong 	topExponent,MipMap;
-	long	exp;
-	long	MipMant,MipExp;
-	int		i;
-	const LOCAL_PROJECTION_STRUCT  *pLocalProjMat = RnGlobalGetLocalProjMat();
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	float CFRreciprocal = pProjMat->CFRreciprocal;
-	/*load up the Object to Screen matrix*/
+    float largestT, largestB;
+    float compression, reciprocal, u, v, abc, def, pqr, min, approx1, approx2;
+    float dudx, dvdx, dudy, dvdy;
+    float eye_a, eye_b, eye_c, eye_d, eye_e, eye_f, eye_p, eye_q, eye_r;
+    float adj_a, adj_b, adj_c, adj_d, adj_e, adj_f, adj_p, adj_q, adj_r;
+    float Sr00, Sr01, Sr02, Sr03, Sr10, Sr11, Sr12, Sr13, Sr20, Sr21, Sr22, Sr23;
+    float *UPoint, *VPoint, *OPoint, OPointD[3];
+    float x, y;
+    flong topExponent, MipMap;
+    long exp;
+    long MipMant, MipExp;
+    int i;
+    const LOCAL_PROJECTION_STRUCT *pLocalProjMat = RnGlobalGetLocalProjMat();
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    float CFRreciprocal = pProjMat->CFRreciprocal;
+    /*load up the Object to Screen matrix*/
 
-	ASSERT(pLocalProjMat->valid); /*stop if the matrix is not valid*/
+    ASSERT(pLocalProjMat->valid); /*stop if the matrix is not valid*/
 
-	SGL_TIME_START(TEXTURE_TIME)
+    SGL_TIME_START(TEXTURE_TIME)
 
-	Sr00=pLocalProjMat->sr[0][0];
-	Sr01=pLocalProjMat->sr[0][1];
-	Sr02=pLocalProjMat->sr[0][2];
-	Sr03=pLocalProjMat->sr[0][3];
-	Sr10=pLocalProjMat->sr[1][0];
-	Sr11=pLocalProjMat->sr[1][1];
-	Sr12=pLocalProjMat->sr[1][2];
-	Sr13=pLocalProjMat->sr[1][3];
-	Sr20=ObjToEye->mat[2][0];
-	Sr21=ObjToEye->mat[2][1];
-	Sr22=ObjToEye->mat[2][2];
-	Sr23=ObjToEye->mat[2][3];
+    Sr00 = pLocalProjMat->sr[0][0];
+    Sr01 = pLocalProjMat->sr[0][1];
+    Sr02 = pLocalProjMat->sr[0][2];
+    Sr03 = pLocalProjMat->sr[0][3];
+    Sr10 = pLocalProjMat->sr[1][0];
+    Sr11 = pLocalProjMat->sr[1][1];
+    Sr12 = pLocalProjMat->sr[1][2];
+    Sr13 = pLocalProjMat->sr[1][3];
+    Sr20 = ObjToEye->mat[2][0];
+    Sr21 = ObjToEye->mat[2][1];
+    Sr22 = ObjToEye->mat[2][2];
+    Sr23 = ObjToEye->mat[2][3];
 
-	/*
+    /*
 	// also define convenient access to the "scaled" texture projection
 	// as well
 	*/
-	#define TSr00 pLocalProjMat->textureSR[0][0]
-	#define TSr01 pLocalProjMat->textureSR[0][1]
-	#define TSr02 pLocalProjMat->textureSR[0][2]
+#define TSr00 pLocalProjMat->textureSR[0][0]
+#define TSr01 pLocalProjMat->textureSR[0][1]
+#define TSr02 pLocalProjMat->textureSR[0][2]
 
-	#define TSr10 pLocalProjMat->textureSR[1][0]
-	#define TSr11 pLocalProjMat->textureSR[1][1]
-	#define TSr12 pLocalProjMat->textureSR[1][2]
+#define TSr10 pLocalProjMat->textureSR[1][0]
+#define TSr11 pLocalProjMat->textureSR[1][1]
+#define TSr12 pLocalProjMat->textureSR[1][2]
 
-	#define TSr20 pLocalProjMat->textureSR[2][0]
-	#define TSr21 pLocalProjMat->textureSR[2][1]
-	#define TSr22 pLocalProjMat->textureSR[2][2]
+#define TSr20 pLocalProjMat->textureSR[2][0]
+#define TSr21 pLocalProjMat->textureSR[2][1]
+#define TSr22 pLocalProjMat->textureSR[2][2]
 
-	for(i=0;i<NumberOfPlanes;i++)
-	{
-		/*get a pointer to the U,V and O vector*/
+    for (i = 0; i < NumberOfPlanes; i++) {
+        /*get a pointer to the U,V and O vector*/
 
-		UPoint=(float*)(Planes[i]->pTextureData->pre_mapped.u_vect);
-		VPoint=(float*)(Planes[i]->pTextureData->pre_mapped.v_vect);
-		OPoint=(float*)(Planes[i]->pTextureData->pre_mapped.o_vect);
+        UPoint = (float *) (Planes[i]->pTextureData->pre_mapped.u_vect);
+        VPoint = (float *) (Planes[i]->pTextureData->pre_mapped.v_vect);
+        OPoint = (float *) (Planes[i]->pTextureData->pre_mapped.o_vect);
 
-		/*
+        /*
 		** As the origin of the texture moves a long way from
 		** the viewer, the texture coefficients get less accurate.
 		** So the following code brings the origin back to
@@ -1178,516 +1148,495 @@ void DoTextureMappingAccurate(int							   NumberOfPlanes,
 		*/
 
 
-		/* translate the texture origin into eye space*/
+        /* translate the texture origin into eye space*/
 
-		OPointD[0]=OPoint[0]-(ObjToEye->inv[0][3]);
-		OPointD[1]=OPoint[1]-(ObjToEye->inv[1][3]);
-		OPointD[2]=OPoint[2]-(ObjToEye->inv[2][3]);
+        OPointD[0] = OPoint[0] - (ObjToEye->inv[0][3]);
+        OPointD[1] = OPoint[1] - (ObjToEye->inv[1][3]);
+        OPointD[2] = OPoint[2] - (ObjToEye->inv[2][3]);
 
-		/* find the closest approach with 0 */
+        /* find the closest approach with 0 */
 
-		u=-(OPointD[0]*UPoint[0] + OPointD[1]*UPoint[1] + OPointD[2]*UPoint[2]) /
-			(UPoint[0]*UPoint[0] + UPoint[1]*UPoint[1] + UPoint[2]*UPoint[2]);
+        u = -(OPointD[0] * UPoint[0] + OPointD[1] * UPoint[1] + OPointD[2] * UPoint[2]) /
+            (UPoint[0] * UPoint[0] + UPoint[1] * UPoint[1] + UPoint[2] * UPoint[2]);
 
-		v=-(OPointD[0]*VPoint[0] + OPointD[1]*VPoint[1] + OPointD[2]*VPoint[2]) /
-			(VPoint[0]*VPoint[0] + VPoint[1]*VPoint[1] + VPoint[2]*VPoint[2]);
-		
-		u=(float)floor(u*0.5f)*2.0f; /*as textures repeat after 1 or 2 units*/
-		v=(float)floor(v*0.5f)*2.0f;
+        v = -(OPointD[0] * VPoint[0] + OPointD[1] * VPoint[1] + OPointD[2] * VPoint[2]) /
+            (VPoint[0] * VPoint[0] + VPoint[1] * VPoint[1] + VPoint[2] * VPoint[2]);
 
-		/* move the texture origin to the closest approach */
+        u = (float) floor(u * 0.5f) * 2.0f; /*as textures repeat after 1 or 2 units*/
+        v = (float) floor(v * 0.5f) * 2.0f;
 
-		OPointD[0]=OPoint[0] + u*UPoint[0] + v*VPoint[0];
-		OPointD[1]=OPoint[1] + u*UPoint[1] + v*VPoint[1];
-		OPointD[2]=OPoint[2] + u*UPoint[2] + v*VPoint[2];
+        /* move the texture origin to the closest approach */
+
+        OPointD[0] = OPoint[0] + u * UPoint[0] + v * VPoint[0];
+        OPointD[1] = OPoint[1] + u * UPoint[1] + v * VPoint[1];
+        OPointD[2] = OPoint[2] + u * UPoint[2] + v * VPoint[2];
 
 
-		/*
+        /*
 		**	transform U,V and the origin from object space to eye space.
 		*/
-		eye_a= UPoint[0]*TSr00 +  UPoint[1]*TSr01 +  UPoint[2]*TSr02;
-		eye_b= VPoint[0]*TSr00 +  VPoint[1]*TSr01 +  VPoint[2]*TSr02;
-		eye_c=OPointD[0]*Sr00  + OPointD[1]*Sr01  + OPointD[2]*Sr02 + Sr03;
+        eye_a = UPoint[0] * TSr00 + UPoint[1] * TSr01 + UPoint[2] * TSr02;
+        eye_b = VPoint[0] * TSr00 + VPoint[1] * TSr01 + VPoint[2] * TSr02;
+        eye_c = OPointD[0] * Sr00 + OPointD[1] * Sr01 + OPointD[2] * Sr02 + Sr03;
 
-		eye_d= UPoint[0]*TSr10 +  UPoint[1]*TSr11 +  UPoint[2]*TSr12;
-		eye_e= VPoint[0]*TSr10 +  VPoint[1]*TSr11 +  VPoint[2]*TSr12;
-		eye_f=OPointD[0]*Sr10  + OPointD[1]*Sr11  + OPointD[2]*Sr12 + Sr13;
+        eye_d = UPoint[0] * TSr10 + UPoint[1] * TSr11 + UPoint[2] * TSr12;
+        eye_e = VPoint[0] * TSr10 + VPoint[1] * TSr11 + VPoint[2] * TSr12;
+        eye_f = OPointD[0] * Sr10 + OPointD[1] * Sr11 + OPointD[2] * Sr12 + Sr13;
 
-		eye_p= UPoint[0]*TSr20 +  UPoint[1]*TSr21 +  UPoint[2]*TSr22;
-		eye_q= VPoint[0]*TSr20 +  VPoint[1]*TSr21 +  VPoint[2]*TSr22;
-		eye_r=OPointD[0]*Sr20  + OPointD[1]*Sr21  + OPointD[2]*Sr22 + Sr23;
+        eye_p = UPoint[0] * TSr20 + UPoint[1] * TSr21 + UPoint[2] * TSr22;
+        eye_q = VPoint[0] * TSr20 + VPoint[1] * TSr21 + VPoint[2] * TSr22;
+        eye_r = OPointD[0] * Sr20 + OPointD[1] * Sr21 + OPointD[2] * Sr22 + Sr23;
 
-		/*
+        /*
 		**	calculate the adjoint.
 		*/
 
-		adj_a=eye_e*eye_r - eye_q*eye_f;
- 		adj_b=eye_q*eye_c - eye_b*eye_r;
- 		adj_c=eye_b*eye_f - eye_e*eye_c; 
+        adj_a = eye_e * eye_r - eye_q * eye_f;
+        adj_b = eye_q * eye_c - eye_b * eye_r;
+        adj_c = eye_b * eye_f - eye_e * eye_c;
 
-	 	adj_d=eye_p*eye_f - eye_d*eye_r;
- 		adj_e=eye_a*eye_r - eye_p*eye_c;
- 		adj_f=eye_d*eye_c - eye_a*eye_f; 
+        adj_d = eye_p * eye_f - eye_d * eye_r;
+        adj_e = eye_a * eye_r - eye_p * eye_c;
+        adj_f = eye_d * eye_c - eye_a * eye_f;
 
-	 	adj_p=eye_d*eye_q - eye_p*eye_e; 
-	 	adj_q=eye_p*eye_b - eye_a*eye_q; 
-	 	adj_r=eye_a*eye_e - eye_d*eye_b; 
+        adj_p = eye_d * eye_q - eye_p * eye_e;
+        adj_q = eye_p * eye_b - eye_a * eye_q;
+        adj_r = eye_a * eye_e - eye_d * eye_b;
 
-		/*
+        /*
 		**	calculate the MIP-map coefficient.
 		*/
 
-		/* calculate u and v at the representative point */
+        /* calculate u and v at the representative point */
 
-		x=Planes[i]->projRepPoint[0];
-		y=Planes[i]->projRepPoint[1];
+        x = Planes[i]->projRepPoint[0];
+        y = Planes[i]->projRepPoint[1];
 
-		pqr=adj_p*x + adj_q*y + adj_r;
+        pqr = adj_p * x + adj_q * y + adj_r;
 
-		if(MState->texas_precomp.TexAddress & MASK_MIP_MAPPED)
-		{   /*do the mip mapped calculation*/
+        if (MState->texas_precomp.TexAddress & MASK_MIP_MAPPED) {   /*do the mip mapped calculation*/
 
-			abc=adj_a*x + adj_b*y + adj_c;
-			def=adj_d*x + adj_e*y + adj_f;
+            abc = adj_a * x + adj_b * y + adj_c;
+            def = adj_d * x + adj_e * y + adj_f;
 
 
-			/*pqr is only zero if the routine has been given bad data*/
-			ASSERT(pqr!=0)
-	
-			reciprocal=1.0f/pqr;
+            /*pqr is only zero if the routine has been given bad data*/
+            ASSERT(pqr != 0)
 
-			u=abc*reciprocal;
-			v=def*reciprocal;
+            reciprocal = 1.0f / pqr;
 
-			/*
+            u = abc * reciprocal;
+            v = def * reciprocal;
+
+            /*
 			// calculate the changes in u,v when x is incremented, and
 			// get abs value
 			//
 			// (Re-arranged this from original, as gcc was putting in some
 			// double maths!
 			*/
-			reciprocal=1.0f/(pqr+adj_p);
-		
-			dudx= sfabs((abc+adj_a)*reciprocal - u);
-			dvdx= sfabs((def+adj_d)*reciprocal - v);
+            reciprocal = 1.0f / (pqr + adj_p);
 
-			/* approximate the pythagorean distance */
-			min=(dudx < dvdx) ? dudx : dvdx;
-			approx1= dudx + dvdx - (0.585786f*min);
+            dudx = sfabs((abc + adj_a) * reciprocal - u);
+            dvdx = sfabs((def + adj_d) * reciprocal - v);
 
-	
-			/* calculate the changes in u,v when y is incremented */
-			reciprocal=1.0f/(pqr+adj_q);
-	
-			dudy=sfabs((abc+adj_b)*reciprocal - u);
-			dvdy=sfabs((def+adj_e)*reciprocal - v);
+            /* approximate the pythagorean distance */
+            min = (dudx < dvdx) ? dudx : dvdx;
+            approx1 = dudx + dvdx - (0.585786f * min);
 
-			min=( dudy < dvdy ) ? dudy : dvdy;
-			approx2= dudy + dvdy - (0.585786f*min);
 
-			/* pick the larger of the distances */
+            /* calculate the changes in u,v when y is incremented */
+            reciprocal = 1.0f / (pqr + adj_q);
+
+            dudy = sfabs((abc + adj_b) * reciprocal - u);
+            dvdy = sfabs((def + adj_e) * reciprocal - v);
+
+            min = (dudy < dvdy) ? dudy : dvdy;
+            approx2 = dudy + dvdy - (0.585786f * min);
+
+            /* pick the larger of the distances */
 #define ORIGINAL 0
 #if ORIGINAL
-			if (approx1>approx2)
+                                                                                                                                    if (approx1>approx2)
 			  	compression=approx1;
 	   		else
-				compression=approx2; 
+				compression=approx2;
 #else
-			/*
+            /*
 			// Pick a combination of the two...
 			*/
-			if (approx1>approx2)
-			{
-				if((approx1 * 0.25f) > approx2)
-				{
-			  		compression=approx1 * 0.25f;
-				}
-				else if((approx1 * 0.5f) > approx2)
-				{
-			  		compression=approx1 * 0.5f;
-				}
-				else
-				{
-			  		compression=approx1;
-				}
-			}
-	   		else
-			{	
-				if((approx2 * 0.25f) > approx1)
-				{
-			  		compression=approx2 * 0.25f;
-				}
-				else if((approx2 * 0.5f) > approx1)
-				{
-			  		compression=approx2 * 0.5f;
-				}
-				else
-				{
-			  		compression=approx2;
-				}
-			}
+            if (approx1 > approx2) {
+                if ((approx1 * 0.25f) > approx2) {
+                    compression = approx1 * 0.25f;
+                } else if ((approx1 * 0.5f) > approx2) {
+                    compression = approx1 * 0.5f;
+                } else {
+                    compression = approx1;
+                }
+            } else {
+                if ((approx2 * 0.25f) > approx1) {
+                    compression = approx2 * 0.25f;
+                } else if ((approx2 * 0.5f) > approx1) {
+                    compression = approx2 * 0.5f;
+                } else {
+                    compression = approx2;
+                }
+            }
 
 #endif
 
-			/*
+            /*
 			** TEXAS does not divide by a negative number correctly,
 			** so we need to negate everything
 			*/
 
-			SGL_TIME_SUSPEND(TEXTURE_TIME)
-			SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
-			if(pqr<0.0f)
-			{
-				adj_a=-adj_a;
-				adj_b=-adj_b;
-				adj_c=-adj_c;
-				adj_d=-adj_d;
-				adj_e=-adj_e;
-				adj_f=-adj_f;
-				adj_p=-adj_p;
-				adj_q=-adj_q;
-				adj_r=-adj_r;
-			}
+            SGL_TIME_SUSPEND(TEXTURE_TIME)
+            SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
+            if (pqr < 0.0f) {
+                adj_a = -adj_a;
+                adj_b = -adj_b;
+                adj_c = -adj_c;
+                adj_d = -adj_d;
+                adj_e = -adj_e;
+                adj_f = -adj_f;
+                adj_p = -adj_p;
+                adj_q = -adj_q;
+                adj_r = -adj_r;
+            }
 
 
-			/*
+            /*
 			**	rescale 'c','f', and 'r' to keep the coefficients
 			**  in a similar range to a,b,d,e,p and q.
 			**  Texas will scale them back to the right values.
 			*/
 
-			adj_c*=CFRreciprocal;
-			adj_f*=CFRreciprocal;
-			adj_r*=CFRreciprocal;
+            adj_c *= CFRreciprocal;
+            adj_f *= CFRreciprocal;
+            adj_r *= CFRreciprocal;
 
-			/*
-			**	find the largest of a,b,c,d,e,f 
+            /*
+			**	find the largest of a,b,c,d,e,f
 			*/
-			largestT= sfabs(adj_a);
+            largestT = sfabs(adj_a);
 
-			if (sfabs(adj_b)>largestT)
-				  largestT=sfabs(adj_b);
+            if (sfabs(adj_b) > largestT)
+                largestT = sfabs(adj_b);
 
-			if (sfabs(adj_c)>largestT)
-				  largestT=sfabs(adj_c);
+            if (sfabs(adj_c) > largestT)
+                largestT = sfabs(adj_c);
 
-			if (sfabs(adj_d)>largestT)
-				  largestT=sfabs(adj_d);
+            if (sfabs(adj_d) > largestT)
+                largestT = sfabs(adj_d);
 
-			if (sfabs(adj_e)>largestT)
-				  largestT=sfabs(adj_e);
+            if (sfabs(adj_e) > largestT)
+                largestT = sfabs(adj_e);
 
-	  		if (sfabs(adj_f)>largestT)
-				  largestT=sfabs(adj_f);
+            if (sfabs(adj_f) > largestT)
+                largestT = sfabs(adj_f);
 
-			/*
-			** find the largest of p,q,r 
+            /*
+			** find the largest of p,q,r
 			*/
-			largestB= sfabs(adj_p);
+            largestB = sfabs(adj_p);
 
-			if (sfabs(adj_q)>largestB)
-				  largestB=sfabs(adj_q);
+            if (sfabs(adj_q) > largestB)
+                largestB = sfabs(adj_q);
 
-			if (sfabs(adj_r)>largestB)
-				  largestB=sfabs(adj_r);
+            if (sfabs(adj_r) > largestB)
+                largestB = sfabs(adj_r);
 
 
-			/*
+            /*
 			** calculate a fast floor(log2(largest/largest_bot))
 			*/
 
-			largestT=1.0f/largestT;
+            largestT = 1.0f / largestT;
 
-			topExponent.f=largestB*largestT;
+            topExponent.f = largestB * largestT;
 
-			/* extract the offset exponent from the IEEE fp number */
+            /* extract the offset exponent from the IEEE fp number */
 
-			exp=(topExponent.l>>23) & 0xff; 	
+            exp = (topExponent.l >> 23) & 0xff;
 
-			/* calculate the reciprocal (ignore post normalising) */
+            /* calculate the reciprocal (ignore post normalising) */
 
-			exp=126-exp;
+            exp = 126 - exp;
 
 
-			/*
+            /*
 			** rescale the texturing coefficients to 16 bits.
 			*/
 
-			largestT=largestT * 32767.0f;
+            largestT = largestT * 32767.0f;
 
-			adj_a=adj_a * largestT;
-			adj_b=adj_b * largestT;
-			adj_c=adj_c * largestT;
-			adj_d=adj_d * largestT;
-			adj_e=adj_e * largestT;
-			adj_f=adj_f * largestT;
+            adj_a = adj_a * largestT;
+            adj_b = adj_b * largestT;
+            adj_c = adj_c * largestT;
+            adj_d = adj_d * largestT;
+            adj_e = adj_e * largestT;
+            adj_f = adj_f * largestT;
 
-			/* calculate a fast pow(2.0,floor()) */
+            /* calculate a fast pow(2.0,floor()) */
 
-			topExponent.l=(exp+127)<<23;
+            topExponent.l = (exp + 127) << 23;
 
-			largestT=largestT * topExponent.f;
+            largestT = largestT * topExponent.f;
 
-			pqr=pqr * largestT;
-			adj_p=adj_p * largestT;
-			adj_q=adj_q * largestT;
-			adj_r=adj_r * largestT;
+            pqr = pqr * largestT;
+            adj_p = adj_p * largestT;
+            adj_q = adj_q * largestT;
+            adj_r = adj_r * largestT;
 
-			/* solve the compression for 'n' */
+            /* solve the compression for 'n' */
 
-			MipMap.f=compression*pqr*pqr;
+            MipMap.f = compression * pqr * pqr;
 
-			/* convert from IEEE to the TEXAS floating point format*/
+            /* convert from IEEE to the TEXAS floating point format*/
 
-			MipMant =(MipMap.l>>16)&0x7f;
-			MipMant+=128; /*add in the implied 0.5*/
+            MipMant = (MipMap.l >> 16) & 0x7f;
+            MipMant += 128; /*add in the implied 0.5*/
 
-			MipExp=(MipMap.l>>23)-126; /*126 because of the different decimal point*/
+            MipExp = (MipMap.l >> 23) - 126; /*126 because of the different decimal point*/
 
 
-			/*
+            /*
 			** Texas can't handle an exponent greater than 15,so we will
    			** reduce the resolution of 'p', 'q', and 'r'.
 			** THIS SHOULD HAPPEN **VERY** RARELY.The Level Of Detail
 			** should have removed the texture by now.
 			*/
 
-			if(exp>15)
-			{
-				adj_p=(float)((sgl_int32)adj_p >>(exp-15));
-				adj_q=(float)((sgl_int32)adj_q >>(exp-15));
-				adj_r=(float)((sgl_int32)adj_r >>(exp-15));
-				MipExp-=(exp-15)<<1;
+            if (exp > 15) {
+                adj_p = (float) ((sgl_int32) adj_p >> (exp - 15));
+                adj_q = (float) ((sgl_int32) adj_q >> (exp - 15));
+                adj_r = (float) ((sgl_int32) adj_r >> (exp - 15));
+                MipExp -= (exp - 15) << 1;
 
-				exp=15;
-			}
+                exp = 15;
+            }
 
-			/*
+                /*
 			** Texas can't handle a negative exponent,so we will
    			** reduce the resolution of a,b,c,d,e and f.
 			** This condition only happens if the texture is VERY zoomed.
 			** It may not be worth the expense of testing for this.
 			*/
-			else if(exp<0)
-			{
-				adj_a=(float)((sgl_int32)adj_a >>(0-exp));
-				adj_b=(float)((sgl_int32)adj_b >>(0-exp));
-				adj_c=(float)((sgl_int32)adj_c >>(0-exp));
-				adj_d=(float)((sgl_int32)adj_d >>(0-exp));
-				adj_e=(float)((sgl_int32)adj_e >>(0-exp));
-				adj_f=(float)((sgl_int32)adj_f >>(0-exp));
+            else if (exp < 0) {
+                adj_a = (float) ((sgl_int32) adj_a >> (0 - exp));
+                adj_b = (float) ((sgl_int32) adj_b >> (0 - exp));
+                adj_c = (float) ((sgl_int32) adj_c >> (0 - exp));
+                adj_d = (float) ((sgl_int32) adj_d >> (0 - exp));
+                adj_e = (float) ((sgl_int32) adj_e >> (0 - exp));
+                adj_f = (float) ((sgl_int32) adj_f >> (0 - exp));
 
-				exp=0;
-			}
+                exp = 0;
+            }
 
-			/*
+            /*
 			**  now pack up the data in TEXAS format
 			**  I will remove some of the masks when the
 			**  routine works.
 			*/
-			/*first instruction word*/
+            /*first instruction word*/
 
-			Results[i].Control1=((sgl_uint32)exp << SHIFT_EXPONENT) & MASK_EXPONENT;
+            Results[i].Control1 = ((sgl_uint32) exp << SHIFT_EXPONENT) & MASK_EXPONENT;
 
-			/*texture parameters*/ 
+            /*texture parameters*/
 
-			Results[i].TexCoeff1 =((sgl_uint32)MipMant << SHIFT_PMIP_M) & MASK_PMIP_M;
-			Results[i].TexCoeff1|=((sgl_uint32)MipExp  << SHIFT_PMIP_E) & MASK_PMIP_E;
-			Results[i].TexCoeff1|=((sgl_int32)adj_r) & 0xffffUL;
+            Results[i].TexCoeff1 = ((sgl_uint32) MipMant << SHIFT_PMIP_M) & MASK_PMIP_M;
+            Results[i].TexCoeff1 |= ((sgl_uint32) MipExp << SHIFT_PMIP_E) & MASK_PMIP_E;
+            Results[i].TexCoeff1 |= ((sgl_int32) adj_r) & 0xffffUL;
 
-	        Results[i].TexCoeff2 =((sgl_int32)adj_q << 16) & 0xffff0000;
-	        Results[i].TexCoeff2|=((sgl_int32)adj_p) & 0xffffUL;
+            Results[i].TexCoeff2 = ((sgl_int32) adj_q << 16) & 0xffff0000;
+            Results[i].TexCoeff2 |= ((sgl_int32) adj_p) & 0xffffUL;
 
-	        Results[i].TexCoeff3 =(MState->texas_precomp.TexAddress) << 16;
-	        Results[i].TexCoeff3|=((sgl_int32)adj_c) & 0xffffUL;
+            Results[i].TexCoeff3 = (MState->texas_precomp.TexAddress) << 16;
+            Results[i].TexCoeff3 |= ((sgl_int32) adj_c) & 0xffffUL;
 
-	        Results[i].TexCoeff4 =((sgl_int32)adj_b << 16) & 0xffff0000;
-	        Results[i].TexCoeff4|=((sgl_int32)adj_a) & 0xffffUL;
+            Results[i].TexCoeff4 = ((sgl_int32) adj_b << 16) & 0xffff0000;
+            Results[i].TexCoeff4 |= ((sgl_int32) adj_a) & 0xffffUL;
 
-	        Results[i].TexCoeff5 =(MState->texas_precomp.TexAddress) & 0xffff0000;
-	        Results[i].TexCoeff5|=((sgl_int32)adj_f) & 0xffffUL;
+            Results[i].TexCoeff5 = (MState->texas_precomp.TexAddress) & 0xffff0000;
+            Results[i].TexCoeff5 |= ((sgl_int32) adj_f) & 0xffffUL;
 
-	        Results[i].TexCoeff6 =((sgl_int32)adj_e << 16) & 0xffff0000;
-	        Results[i].TexCoeff6|=((sgl_int32)adj_d) & 0xffffUL;
+            Results[i].TexCoeff6 = ((sgl_int32) adj_e << 16) & 0xffff0000;
+            Results[i].TexCoeff6 |= ((sgl_int32) adj_d) & 0xffffUL;
 
-			SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
-			SGL_TIME_RESUME(TEXTURE_TIME)
+            SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
+            SGL_TIME_RESUME(TEXTURE_TIME)
 
-		} 
-		else    /*do the non-mip map calculation */
-		{
-			/*
+        } else    /*do the non-mip map calculation */
+        {
+            /*
 			** TEXAS does not divide by a negative number correctly,
 			** so we need to negate everything
 			*/
-			SGL_TIME_SUSPEND(TEXTURE_TIME)
-			SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
-			if(pqr<0.0f)
-			{
-				adj_a=-adj_a;
-				adj_b=-adj_b;
-				adj_c=-adj_c;
-				adj_d=-adj_d;
-				adj_e=-adj_e;
-				adj_f=-adj_f;
-				adj_p=-adj_p;
-				adj_q=-adj_q;
-				adj_r=-adj_r;
-			}
-	
-			/*
+            SGL_TIME_SUSPEND(TEXTURE_TIME)
+            SGL_TIME_START(TEXTURE_PARAMETER_SETUP_TIME)
+            if (pqr < 0.0f) {
+                adj_a = -adj_a;
+                adj_b = -adj_b;
+                adj_c = -adj_c;
+                adj_d = -adj_d;
+                adj_e = -adj_e;
+                adj_f = -adj_f;
+                adj_p = -adj_p;
+                adj_q = -adj_q;
+                adj_r = -adj_r;
+            }
+
+            /*
 			**	rescale 'c','f', and 'r' to keep the coefficients
 			**  in a similar range to a,b,d,e,p and q.
 			**  Texas will scale them back to the right values.
 			*/
 
-			adj_c*=CFRreciprocal;
-			adj_f*=CFRreciprocal;
-			adj_r*=CFRreciprocal;
+            adj_c *= CFRreciprocal;
+            adj_f *= CFRreciprocal;
+            adj_r *= CFRreciprocal;
 
-			/*
-			**	find the largest of a,b,c,d,e,f 
+            /*
+			**	find the largest of a,b,c,d,e,f
 			*/
 
-			largestT= sfabs(adj_a);
+            largestT = sfabs(adj_a);
 
-			if (sfabs(adj_b)>largestT)
-				  largestT=sfabs(adj_b);
+            if (sfabs(adj_b) > largestT)
+                largestT = sfabs(adj_b);
 
-			if (sfabs(adj_c)>largestT)
-				  largestT=sfabs(adj_c);
+            if (sfabs(adj_c) > largestT)
+                largestT = sfabs(adj_c);
 
-			if (sfabs(adj_d)>largestT)
-				  largestT=sfabs(adj_d);
+            if (sfabs(adj_d) > largestT)
+                largestT = sfabs(adj_d);
 
-			if (sfabs(adj_e)>largestT)
-				  largestT=sfabs(adj_e);
+            if (sfabs(adj_e) > largestT)
+                largestT = sfabs(adj_e);
 
-	  		if (sfabs(adj_f)>largestT)
-				  largestT=sfabs(adj_f);
+            if (sfabs(adj_f) > largestT)
+                largestT = sfabs(adj_f);
 
-			/*
-			** find the largest of p,q,r 
+            /*
+			** find the largest of p,q,r
 			*/
 
-			largestB= sfabs(adj_p);
+            largestB = sfabs(adj_p);
 
-			if (sfabs(adj_q)>largestB)
-				  largestB=sfabs(adj_q);
+            if (sfabs(adj_q) > largestB)
+                largestB = sfabs(adj_q);
 
-			if (sfabs(adj_r)>largestB)
-				  largestB=sfabs(adj_r);
+            if (sfabs(adj_r) > largestB)
+                largestB = sfabs(adj_r);
 
-			/*
+            /*
 			** calculate a fast floor(log2(largest/largest_bot))
 			*/
 
-			largestT=1.0f/largestT;
+            largestT = 1.0f / largestT;
 
-			topExponent.f=largestB*largestT;
+            topExponent.f = largestB * largestT;
 
-			/* extract the offset exponent from the IEEE fp number */
+            /* extract the offset exponent from the IEEE fp number */
 
-			exp=(topExponent.l>>23) & 0xff; 	
+            exp = (topExponent.l >> 23) & 0xff;
 
-			/* calculate the reciprocal (ignore post normalising) */
+            /* calculate the reciprocal (ignore post normalising) */
 
-			exp=126-exp;
+            exp = 126 - exp;
 
-			/*
+            /*
 			** rescale the texturing coefficients to 16 bits.
 			*/
 
-			largestT=largestT * 32767.0f;
+            largestT = largestT * 32767.0f;
 
-			adj_a=adj_a * largestT;
-			adj_b=adj_b * largestT;
-			adj_c=adj_c * largestT;
-			adj_d=adj_d * largestT;
-			adj_e=adj_e * largestT;
-			adj_f=adj_f * largestT;
+            adj_a = adj_a * largestT;
+            adj_b = adj_b * largestT;
+            adj_c = adj_c * largestT;
+            adj_d = adj_d * largestT;
+            adj_e = adj_e * largestT;
+            adj_f = adj_f * largestT;
 
-			/* calculate a fast pow(2.0,floor()) */
+            /* calculate a fast pow(2.0,floor()) */
 
-			topExponent.l=(exp+127)<<23;
+            topExponent.l = (exp + 127) << 23;
 
-			largestT=largestT * topExponent.f;
+            largestT = largestT * topExponent.f;
 
-			adj_p=adj_p * largestT;
-			adj_q=adj_q * largestT;
-			adj_r=adj_r * largestT;
+            adj_p = adj_p * largestT;
+            adj_q = adj_q * largestT;
+            adj_r = adj_r * largestT;
 
-			/*
+            /*
 			** Texas can't handle an exponent greater than 15,so we will
    			** reduce the resolution of 'p', 'q', and 'r'.
 			** THIS SHOULD HAPPEN **VERY** RARELY.The Level Of Detail
 			** should have removed the texture by now.
 			*/
 
-			if(exp>15)
-			{
-				adj_p=(float)((sgl_int32)adj_p >>(exp-15));
-				adj_q=(float)((sgl_int32)adj_q >>(exp-15));
-				adj_r=(float)((sgl_int32)adj_r >>(exp-15));
+            if (exp > 15) {
+                adj_p = (float) ((sgl_int32) adj_p >> (exp - 15));
+                adj_q = (float) ((sgl_int32) adj_q >> (exp - 15));
+                adj_r = (float) ((sgl_int32) adj_r >> (exp - 15));
 
-				exp=15;
-			}
-			/*
+                exp = 15;
+            }
+                /*
 			** Texas can't handle a negative exponent,so we will
    			** reduce the resolution of a,b,c,d,e and f.
 			** This condition only happens if the texture is VERY zoomed.
 			** It may not be worth the expense of testing for this.
 			*/
-			else if(exp<0)
-			{
-				adj_a=(float)((sgl_int32)adj_a >>(0-exp));
-				adj_b=(float)((sgl_int32)adj_b >>(0-exp));
-				adj_c=(float)((sgl_int32)adj_c >>(0-exp));
-				adj_d=(float)((sgl_int32)adj_d >>(0-exp));
-				adj_e=(float)((sgl_int32)adj_e >>(0-exp));
-				adj_f=(float)((sgl_int32)adj_f >>(0-exp));
+            else if (exp < 0) {
+                adj_a = (float) ((sgl_int32) adj_a >> (0 - exp));
+                adj_b = (float) ((sgl_int32) adj_b >> (0 - exp));
+                adj_c = (float) ((sgl_int32) adj_c >> (0 - exp));
+                adj_d = (float) ((sgl_int32) adj_d >> (0 - exp));
+                adj_e = (float) ((sgl_int32) adj_e >> (0 - exp));
+                adj_f = (float) ((sgl_int32) adj_f >> (0 - exp));
 
-				exp=0;
-			}
-
+                exp = 0;
+            }
 
 
-			/*
+
+            /*
 			**  now pack up the data in TEXAS format
 			**  I will remove some of the masks when the
 			**  routine works.
 			*/
-	
-			/*first instruction word*/
 
-			Results[i].Control1=((sgl_uint32)exp << SHIFT_EXPONENT) & MASK_EXPONENT;
+            /*first instruction word*/
 
-			/*texture parameters*/ 
+            Results[i].Control1 = ((sgl_uint32) exp << SHIFT_EXPONENT) & MASK_EXPONENT;
 
-			Results[i].TexCoeff1 =((sgl_int32)adj_r) & 0xffffUL;
+            /*texture parameters*/
 
-	        Results[i].TexCoeff2 =((sgl_int32)adj_q << 16) & 0xffff0000;
-	        Results[i].TexCoeff2|=((sgl_int32)adj_p) & 0xffffUL;
+            Results[i].TexCoeff1 = ((sgl_int32) adj_r) & 0xffffUL;
 
-	        Results[i].TexCoeff3 =(MState->texas_precomp.TexAddress) << 16;
-	        Results[i].TexCoeff3|=((sgl_int32)adj_c) & 0xffffUL;
+            Results[i].TexCoeff2 = ((sgl_int32) adj_q << 16) & 0xffff0000;
+            Results[i].TexCoeff2 |= ((sgl_int32) adj_p) & 0xffffUL;
 
-	        Results[i].TexCoeff4 =((sgl_int32)adj_b << 16) & 0xffff0000;
-	        Results[i].TexCoeff4|=((sgl_int32)adj_a) & 0xffffUL;
+            Results[i].TexCoeff3 = (MState->texas_precomp.TexAddress) << 16;
+            Results[i].TexCoeff3 |= ((sgl_int32) adj_c) & 0xffffUL;
 
-	        Results[i].TexCoeff5 =(MState->texas_precomp.TexAddress) & 0xffff0000;
-	        Results[i].TexCoeff5|=((sgl_int32)adj_f) & 0xffffUL;
+            Results[i].TexCoeff4 = ((sgl_int32) adj_b << 16) & 0xffff0000;
+            Results[i].TexCoeff4 |= ((sgl_int32) adj_a) & 0xffffUL;
 
-	        Results[i].TexCoeff6 =((sgl_int32)adj_e << 16) & 0xffff0000;
-	        Results[i].TexCoeff6|=((sgl_int32)adj_d) & 0xffffUL;
+            Results[i].TexCoeff5 = (MState->texas_precomp.TexAddress) & 0xffff0000;
+            Results[i].TexCoeff5 |= ((sgl_int32) adj_f) & 0xffffUL;
 
-			SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
-			SGL_TIME_RESUME(TEXTURE_TIME)
+            Results[i].TexCoeff6 = ((sgl_int32) adj_e << 16) & 0xffff0000;
+            Results[i].TexCoeff6 |= ((sgl_int32) adj_d) & 0xffffUL;
 
-		}
-	} /*end for loop*/
+            SGL_TIME_STOP(TEXTURE_PARAMETER_SETUP_TIME)
+            SGL_TIME_RESUME(TEXTURE_TIME)
 
-	SGL_TIME_STOP(TEXTURE_TIME)
+        }
+    } /*end for loop*/
+
+    SGL_TIME_STOP(TEXTURE_TIME)
 }
 
 
@@ -1706,60 +1655,53 @@ void DoTextureMappingAccurate(int							   NumberOfPlanes,
  *				: direction of the vector V.
  * Comments		: Taken from An Introduction to Ray Tracing by Glassner pp91
  *****************************************************************************/
-sgl_bool IntersectSphere(sgl_vector O,sgl_vector V,float Radius,sgl_vector Result)
-{
-	float A,B,C,X,Part;
+sgl_bool IntersectSphere(sgl_vector O, sgl_vector V, float Radius, sgl_vector Result) {
+    float A, B, C, X, Part;
 
-	Radius=Radius*Radius;
-	C=O[0]*O[0] + O[1]*O[1] + O[2]*O[2];
-	C-=Radius;
+    Radius = Radius * Radius;
+    C = O[0] * O[0] + O[1] * O[1] + O[2] * O[2];
+    C -= Radius;
 
-	if(C<0.0f)
-	{
-		/*
+    if (C < 0.0f) {
+        /*
 		** inside the sphere
 		*/
 
-		B=(O[0]*V[0] + O[1]*V[1] + O[2]*V[2]) *2.0f;
-		A=V[0]*V[0] + V[1]*V[1] + V[2]*V[2];
+        B = (O[0] * V[0] + O[1] * V[1] + O[2] * V[2]) * 2.0f;
+        A = V[0] * V[0] + V[1] * V[1] + V[2] * V[2];
 
-		/*find the roots of the quadratic*/
+        /*find the roots of the quadratic*/
 
-		Part=ssqrt(B*B - 4.0f*A*C); /*This should never be complex*/
+        Part = ssqrt(B * B - 4.0f * A * C); /*This should never be complex*/
 
-		X=-B + Part;
+        X = -B + Part;
 
-		if(X>0.0f)
-		{
-			/*we have the forward direction root*/
+        if (X > 0.0f) {
+            /*we have the forward direction root*/
 
-			X/=2.0f*A;
-		}
-		else
-		{
-			/*pick the other root*/
-			
-			X=-B - Part;
-			X/=2.0f*A;
+            X /= 2.0f * A;
+        } else {
+            /*pick the other root*/
 
-		}
+            X = -B - Part;
+            X /= 2.0f * A;
 
-		/*calculate the intersection point*/
-		
-		Result[0]=O[0] + X*V[0];
-		Result[1]=O[1] + X*V[1];
-		Result[2]=O[2] + X*V[2];
+        }
 
-		return(TRUE);
-	}
-	else
-	{
-		/*
+        /*calculate the intersection point*/
+
+        Result[0] = O[0] + X * V[0];
+        Result[1] = O[1] + X * V[1];
+        Result[2] = O[2] + X * V[2];
+
+        return (TRUE);
+    } else {
+        /*
 		** outside the sphere
 		*/
 
-		return(FALSE);
-	}
+        return (FALSE);
+    }
 
 }
 
@@ -1778,80 +1720,71 @@ sgl_bool IntersectSphere(sgl_vector O,sgl_vector V,float Radius,sgl_vector Resul
  *				: inside the cylinder. The intersection point returned is in the
  *				: direction of the vector V.
  * Comments		: Taken from An Introduction to Ray Tracing by Glassner pp91
- *				: The cylinder is aligned along the Y axis. 
+ *				: The cylinder is aligned along the Y axis.
  *****************************************************************************/
-sgl_bool IntersectCylinder(sgl_vector O,sgl_vector V,float Radius,sgl_vector Result)
-{
-	float A,B,C,X,Part;
+sgl_bool IntersectCylinder(sgl_vector O, sgl_vector V, float Radius, sgl_vector Result) {
+    float A, B, C, X, Part;
 
-	Radius=Radius*Radius;
-	C=O[0]*O[0] + O[2]*O[2];
-	C-=Radius;
+    Radius = Radius * Radius;
+    C = O[0] * O[0] + O[2] * O[2];
+    C -= Radius;
 
-	if(C<0.0f)
-	{
-		/*
+    if (C < 0.0f) {
+        /*
 		** inside the cylinder
 		*/
 
-		B=(O[0]*V[0] + O[2]*V[2]) *2.0f;
-		A=V[0]*V[0] + V[2]*V[2];
+        B = (O[0] * V[0] + O[2] * V[2]) * 2.0f;
+        A = V[0] * V[0] + V[2] * V[2];
 
-	  #if defined (MIDAS_ARCADE)  || defined (ZEUS_ARCADE)
+#if defined (MIDAS_ARCADE) || defined (ZEUS_ARCADE)
 
-		/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+                                                                                                                                /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 		if(A>1.0e-3f) /* is it not pointing along the Y axis */
 
-	  #else
+#else
 
-		if(A>1.0e-20f) /* is it not pointing along the Y axis */
+        if (A > 1.0e-20f) /* is it not pointing along the Y axis */
 
-	  #endif
-		{
-			/*find the roots of the quadratic*/
+#endif
+        {
+            /*find the roots of the quadratic*/
 
-			ASSERT((B*B - 4.0f*A*C)>=0.0f)
-			Part=ssqrt(B*B - 4.0f*A*C); /*This should never be complex*/
+            ASSERT((B * B - 4.0f * A * C) >= 0.0f)
+            Part = ssqrt(B * B - 4.0f * A * C); /*This should never be complex*/
 
-			X=-B + Part;
+            X = -B + Part;
 
-			if(X>0.0f)
-			{
-				/*we have the forward direction root*/
+            if (X > 0.0f) {
+                /*we have the forward direction root*/
 
-				X/=2.0f*A;
-			}
-			else
-			{
-				/*pick the other root*/
-				
-				X=-B - Part;
-				X/=2.0f*A;
-			}
+                X /= 2.0f * A;
+            } else {
+                /*pick the other root*/
 
-			/*calculate the intersection point*/
-		
-			Result[0]=O[0] + X*V[0];
-			Result[1]=O[1] + X*V[1];
-			Result[2]=O[2] + X*V[2];
+                X = -B - Part;
+                X /= 2.0f * A;
+            }
 
-			return(TRUE);
-		}
-		else
-		{	
-			/*we are pointing along the Y axis */
-	
-			return(FALSE);
-		}
-	}
-	else
-	{
-		/*
+            /*calculate the intersection point*/
+
+            Result[0] = O[0] + X * V[0];
+            Result[1] = O[1] + X * V[1];
+            Result[2] = O[2] + X * V[2];
+
+            return (TRUE);
+        } else {
+            /*we are pointing along the Y axis */
+
+            return (FALSE);
+        }
+    } else {
+        /*
 		** outside the cylinder
 		*/
 
-		return(FALSE);
-	}
+        return (FALSE);
+    }
 
 }
 
@@ -1866,35 +1799,32 @@ sgl_bool IntersectCylinder(sgl_vector O,sgl_vector V,float Radius,sgl_vector Res
  *
  * Description  : Intersects a line and the z=0 plane.
  *****************************************************************************/
-sgl_bool IntersectPlane(sgl_vector O,sgl_vector V,sgl_vector Result)
-{
-	float X;
-	
-  #if defined (MIDAS_ARCADE) || defined (ZEUS_ARCADE)
+sgl_bool IntersectPlane(sgl_vector O, sgl_vector V, sgl_vector Result) {
+    float X;
 
-	/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+#if defined (MIDAS_ARCADE) || defined (ZEUS_ARCADE)
+
+                                                                                                                            /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
 	if(sfabs(V[2])>1.0e-3f)
 
-  #else
+#else
 
-	if(sfabs(V[2])>1.0e-20f)
+    if (sfabs(V[2]) > 1.0e-20f)
 
-  #endif
-	{
-		X=-O[2] / V[2];
+#endif
+    {
+        X = -O[2] / V[2];
 
-   		/*calculate the intersection point*/
-		
-   		Result[0]=O[0] + X*V[0];
-   		Result[1]=O[1] + X*V[1];
-   		Result[2]=0.0f;
+        /*calculate the intersection point*/
 
-		return(TRUE);
-	}
-	else
-	{
-		return(FALSE);
-	}
+        Result[0] = O[0] + X * V[0];
+        Result[1] = O[1] + X * V[1];
+        Result[2] = 0.0f;
+
+        return (TRUE);
+    } else {
+        return (FALSE);
+    }
 
 
 }
@@ -1915,19 +1845,18 @@ sgl_bool IntersectPlane(sgl_vector O,sgl_vector V,sgl_vector Result)
  *
  * Description  : maps from three points on the z=0 plane to U,V coordinates.
  *****************************************************************************/
-void MapPlane(sgl_vector P0,sgl_vector P1,sgl_vector P2,
-   				float su,float sv,float ou,float ov,
-   				sgl_2d_vec UV0,sgl_2d_vec UV1,sgl_2d_vec UV2)
-{
+void MapPlane(sgl_vector P0, sgl_vector P1, sgl_vector P2,
+              float su, float sv, float ou, float ov,
+              sgl_2d_vec UV0, sgl_2d_vec UV1, sgl_2d_vec UV2) {
 
-	UV0[0]=(P0[0]-ou)/su;
-	UV0[1]=(P0[1]-ov)/sv;
+    UV0[0] = (P0[0] - ou) / su;
+    UV0[1] = (P0[1] - ov) / sv;
 
-	UV1[0]=(P1[0]-ou)/su;
-	UV1[1]=(P1[1]-ov)/sv;
+    UV1[0] = (P1[0] - ou) / su;
+    UV1[1] = (P1[1] - ov) / sv;
 
-	UV2[0]=(P2[0]-ou)/su;
-	UV2[1]=(P2[1]-ov)/sv;
+    UV2[0] = (P2[0] - ou) / su;
+    UV2[1] = (P2[1] - ov) / sv;
 
 }
 
@@ -1947,59 +1876,54 @@ void MapPlane(sgl_vector P0,sgl_vector P1,sgl_vector P2,
  *
  * Description  : maps from three points on a cylinder to U,V coordinates.
  *****************************************************************************/
-void MapCylinder(sgl_vector P0,sgl_vector P1,sgl_vector P2,
-   				float su,float sv,float ou,float ov,
-   				sgl_2d_vec UV0,sgl_2d_vec UV1,sgl_2d_vec UV2)
-{
-	float ang0,ang1,ang2;
+void MapCylinder(sgl_vector P0, sgl_vector P1, sgl_vector P2,
+                 float su, float sv, float ou, float ov,
+                 sgl_2d_vec UV0, sgl_2d_vec UV1, sgl_2d_vec UV2) {
+    float ang0, ang1, ang2;
 
-	/*
+    /*
 	** how far round the cylinder are the points ?
 	*/
 
-	/* atan2 is an expensive operation. It could be replaced by a single precision
+    /* atan2 is an expensive operation. It could be replaced by a single precision
 	** ACOS and a little fiddling.
     */
 
-	ang0=(float)atan2(P0[2],P0[0]); 
-	ang1=(float)atan2(P1[2],P1[0]);
-	ang2=(float)atan2(P2[2],P2[0]);
+    ang0 = (float) atan2(P0[2], P0[0]);
+    ang1 = (float) atan2(P1[2], P1[0]);
+    ang2 = (float) atan2(P2[2], P2[0]);
 
-	/*
+    /*
 	** now, deal with the cross over from PI to -PI.
 	*/
 
-	if(P0[0]<0.0f && P1[0]<0.0f && P2[0]<0.0f) /*probably not a good idea*/
-	{
+    if (P0[0] < 0.0f && P1[0] < 0.0f && P2[0] < 0.0f) /*probably not a good idea*/
+    {
 
-		if(ang0>0.0f)
-		{
-			if(ang1<0.0f)
-			    ang1+=SGL_2_PI;
-			if(ang2<0.0f)
-			    ang2+=SGL_2_PI;
-		}
-		else
-		{
-			if(ang1>0.0f || ang2>0.0f)
-			{
-				ang0+=SGL_2_PI;
-				if(ang1<0.0f)
-				    ang1+=SGL_2_PI;
-				if(ang2<0.0f)
-				    ang2+=SGL_2_PI;
+        if (ang0 > 0.0f) {
+            if (ang1 < 0.0f)
+                ang1 += SGL_2_PI;
+            if (ang2 < 0.0f)
+                ang2 += SGL_2_PI;
+        } else {
+            if (ang1 > 0.0f || ang2 > 0.0f) {
+                ang0 += SGL_2_PI;
+                if (ang1 < 0.0f)
+                    ang1 += SGL_2_PI;
+                if (ang2 < 0.0f)
+                    ang2 += SGL_2_PI;
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	UV0[0]=( (ang0/(float)SGL_2_PI)-ou )/su;    /*set the U coordinates*/
-	UV1[0]=( (ang1/(float)SGL_2_PI)-ou )/su;
-	UV2[0]=( (ang2/(float)SGL_2_PI)-ou )/su;
+    UV0[0] = ((ang0 / (float) SGL_2_PI) - ou) / su;    /*set the U coordinates*/
+    UV1[0] = ((ang1 / (float) SGL_2_PI) - ou) / su;
+    UV2[0] = ((ang2 / (float) SGL_2_PI) - ou) / su;
 
-	UV0[1]=(P0[1]-ov)/sv;    /*set the V coordinates*/
-	UV1[1]=(P1[1]-ov)/sv;    
-	UV2[1]=(P2[1]-ov)/sv;    
+    UV0[1] = (P0[1] - ov) / sv;    /*set the V coordinates*/
+    UV1[1] = (P1[1] - ov) / sv;
+    UV2[1] = (P2[1] - ov) / sv;
 
 }
 
@@ -2020,59 +1944,54 @@ void MapCylinder(sgl_vector P0,sgl_vector P1,sgl_vector P2,
  *
  * Description  : maps from three points on a sphere to U,V coordinates.
  *****************************************************************************/
-void MapSphere(sgl_vector P0,sgl_vector P1,sgl_vector P2,
-   				float su,float sv,float ou,float ov,float Radius,
-   				sgl_2d_vec UV0,sgl_2d_vec UV1,sgl_2d_vec UV2)
-{
-	float ang0,ang1,ang2;
-	float Part,Part1;
+void MapSphere(sgl_vector P0, sgl_vector P1, sgl_vector P2,
+               float su, float sv, float ou, float ov, float Radius,
+               sgl_2d_vec UV0, sgl_2d_vec UV1, sgl_2d_vec UV2) {
+    float ang0, ang1, ang2;
+    float Part, Part1;
 
-	/* atan2 is an expensive operation. It could be replaced by a single precision
+    /* atan2 is an expensive operation. It could be replaced by a single precision
 	** ACOS and a little fiddling.
     */
 
-	ang0=(float)atan2(P0[2],P0[0]); 
-	ang1=(float)atan2(P1[2],P1[0]);
-	ang2=(float)atan2(P2[2],P2[0]);
+    ang0 = (float) atan2(P0[2], P0[0]);
+    ang1 = (float) atan2(P1[2], P1[0]);
+    ang2 = (float) atan2(P2[2], P2[0]);
 
-	/*
+    /*
 	** now, deal with the cross over from PI to -PI.
 	*/
 
-	if(P0[0]<0.0f && P1[0]<0.0f && P2[0]<0.0f) /*probably not a good idea*/
-	{
+    if (P0[0] < 0.0f && P1[0] < 0.0f && P2[0] < 0.0f) /*probably not a good idea*/
+    {
 
-		if(ang0>0.0f)
-		{
-			if(ang1<0.0f)
-			    ang1+=SGL_2_PI;
-			if(ang2<0.0f)
-			    ang2+=SGL_2_PI;
-		}
-		else
-		{
-			if(ang1>0.0f || ang2>0.0f)
-			{
-				ang0+=SGL_2_PI;
-				if(ang1<0.0f)
-				    ang1+=SGL_2_PI;
-				if(ang2<0.0f)
-				    ang2+=SGL_2_PI;
+        if (ang0 > 0.0f) {
+            if (ang1 < 0.0f)
+                ang1 += SGL_2_PI;
+            if (ang2 < 0.0f)
+                ang2 += SGL_2_PI;
+        } else {
+            if (ang1 > 0.0f || ang2 > 0.0f) {
+                ang0 += SGL_2_PI;
+                if (ang1 < 0.0f)
+                    ang1 += SGL_2_PI;
+                if (ang2 < 0.0f)
+                    ang2 += SGL_2_PI;
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	Part=Radius*sv; /*partial result*/
-	Part1=1.0f/(2.0f*Part);
+    Part = Radius * sv; /*partial result*/
+    Part1 = 1.0f / (2.0f * Part);
 
-	UV0[1]=(P0[1]- ov + Part)*Part1;    /*calculate the V coordinates*/
-	UV1[1]=(P1[1]- ov + Part)*Part1;    
-	UV2[1]=(P2[1]- ov + Part)*Part1;    
+    UV0[1] = (P0[1] - ov + Part) * Part1;    /*calculate the V coordinates*/
+    UV1[1] = (P1[1] - ov + Part) * Part1;
+    UV2[1] = (P2[1] - ov + Part) * Part1;
 
-	UV0[0]=( (ang0/(float)SGL_2_PI)-ou )/su;    /*calculate part of the U coordinates*/
-	UV1[0]=( (ang1/(float)SGL_2_PI)-ou )/su;
-	UV2[0]=( (ang2/(float)SGL_2_PI)-ou )/su;
+    UV0[0] = ((ang0 / (float) SGL_2_PI) - ou) / su;    /*calculate part of the U coordinates*/
+    UV1[0] = ((ang1 / (float) SGL_2_PI) - ou) / su;
+    UV2[0] = ((ang2 / (float) SGL_2_PI) - ou) / su;
 
 
 }
@@ -2088,46 +2007,44 @@ void MapSphere(sgl_vector P0,sgl_vector P1,sgl_vector P2,
  * Globals Used : -
  *
  * Description  : Given a point on the object, a ray is generated that is
- *				  perpendicular to the intermediate surface normal and 
+ *				  perpendicular to the intermediate surface normal and
  *				  intersects the object point.
  *****************************************************************************/
-void ConstructISurfaceNormalRay(sgl_uint32 SmapType,sgl_vector Point,
-								sgl_vector O,sgl_vector V)
-{
+void ConstructISurfaceNormalRay(sgl_uint32 SmapType, sgl_vector Point,
+                                sgl_vector O, sgl_vector V) {
 
-	switch (SmapType)
-	{
-		case sgl_smap_plane:
-			O[0]=Point[0];
-			O[1]=Point[1];
-			O[2]=Point[2];
+    switch (SmapType) {
+        case sgl_smap_plane:
+            O[0] = Point[0];
+            O[1] = Point[1];
+            O[2] = Point[2];
 
-			V[0]=0.0f;
-			V[1]=0.0f;
-			V[2]=-1.0f;
-			break;
-		case sgl_smap_cylinder:
-			O[0]=0.0f;
-			O[1]=Point[1];
-			O[2]=0.0f;
+            V[0] = 0.0f;
+            V[1] = 0.0f;
+            V[2] = -1.0f;
+            break;
+        case sgl_smap_cylinder:
+            O[0] = 0.0f;
+            O[1] = Point[1];
+            O[2] = 0.0f;
 
-			V[0]=Point[0];
-			V[1]=0.0f;
-			V[2]=Point[2];
+            V[0] = Point[0];
+            V[1] = 0.0f;
+            V[2] = Point[2];
 
-			break;
-		case sgl_smap_sphere:
-			O[0]=0.0f;
-			O[1]=0.0f;
-			O[2]=0.0f;
+            break;
+        case sgl_smap_sphere:
+            O[0] = 0.0f;
+            O[1] = 0.0f;
+            O[2] = 0.0f;
 
-			V[0]=Point[0];
-			V[1]=Point[1];
-			V[2]=Point[2];
-		
-			break;
+            V[0] = Point[0];
+            V[1] = Point[1];
+            V[2] = Point[2];
 
-	}
+            break;
+
+    }
 }
 
 /******************************************************************************
@@ -2141,29 +2058,28 @@ void ConstructISurfaceNormalRay(sgl_uint32 SmapType,sgl_vector Point,
  * Globals Used : -
  *
  * Description  : Given a point on the object, the normal to the surface and the
- *				  viewpoint, a ray is generated that is a reflection off the 
- *				  surface. 
+ *				  viewpoint, a ray is generated that is a reflection off the
+ *				  surface.
  * Comments		: The equation is taken from Foley & VanDam pp730
  *****************************************************************************/
 void ConstructReflectedRay(sgl_vector ViewPoint,
-						   sgl_vector Point,
-						   sgl_vector Normal,
-						   sgl_vector V)
-{
-	sgl_vector I;
-	float Dot;
+                           sgl_vector Point,
+                           sgl_vector Normal,
+                           sgl_vector V) {
+    sgl_vector I;
+    float Dot;
 
-	/* I=ViewPoint-Point */
+    /* I=ViewPoint-Point */
 
-	VecSub(ViewPoint,Point,I);
+    VecSub(ViewPoint, Point, I);
 
-	VecNormalise(I);
+    VecNormalise(I);
 
-	Dot= 2.0f*DotProd(Normal,I);
+    Dot = 2.0f * DotProd(Normal, I);
 
-	V[0]=Dot*Normal[0] - I[0];
-	V[1]=Dot*Normal[1] - I[1];
-	V[2]=Dot*Normal[2] - I[2];
+    V[0] = Dot * Normal[0] - I[0];
+    V[1] = Dot * Normal[1] - I[1];
+    V[2] = Dot * Normal[2] - I[2];
 
 }
 
@@ -2178,34 +2094,32 @@ void ConstructReflectedRay(sgl_vector ViewPoint,
  * Returns      : -
  * Globals Used : -
  *
- * Description  : Given a point on the object, the normal to the surface,the 
- *				  refractive index and the viewpoint, a ray is generated that 
- * 				  is refracted through the surface. 
+ * Description  : Given a point on the object, the normal to the surface,the
+ *				  refractive index and the viewpoint, a ray is generated that
+ * 				  is refracted through the surface.
  * Comments		: The equation is taken from Foley & VanDam pp758
  *****************************************************************************/
 void ConstructRefractedRay(sgl_vector ViewPoint,
-						   sgl_vector Point,
-						   sgl_vector Normal,
-						   float RefracIndex,
-						   sgl_vector V)
-{
-	sgl_vector I;
-	float Dot,Part;
+                           sgl_vector Point,
+                           sgl_vector Normal,
+                           float RefracIndex,
+                           sgl_vector V) {
+    sgl_vector I;
+    float Dot, Part;
 
-	/* I=ViewPoint-Point */
+    /* I=ViewPoint-Point */
 
-	VecSub(ViewPoint,Point,I);
+    VecSub(ViewPoint, Point, I);
 
-	VecNormalise(I);
+    VecNormalise(I);
 
-	Dot= DotProd(Normal,I);
+    Dot = DotProd(Normal, I);
 
-	Part=RefracIndex*Dot - ssqrt(1.0f - RefracIndex*RefracIndex*(1.0f-Dot*Dot));
+    Part = RefracIndex * Dot - ssqrt(1.0f - RefracIndex * RefracIndex * (1.0f - Dot * Dot));
 
-	V[0]=Normal[0]*Part - RefracIndex*I[0];
-	V[1]=Normal[1]*Part - RefracIndex*I[1];
-	V[2]=Normal[2]*Part - RefracIndex*I[2];
-
+    V[0] = Normal[0] * Part - RefracIndex * I[0];
+    V[1] = Normal[1] * Part - RefracIndex * I[1];
+    V[2] = Normal[2] * Part - RefracIndex * I[2];
 
 
 }
@@ -2222,297 +2136,282 @@ void ConstructRefractedRay(sgl_vector ViewPoint,
  * Globals Used : TempTexResults,
  *
  * Description  : This performs the mapping from points in object space to
- *				  UV coordinates. These are then transformed to U,V, and O 
+ *				  UV coordinates. These are then transformed to U,V, and O
  *				  vectors in object space. The texture pointer in the transformed
- *				  plane structure is redirected to this temp data, and 
+ *				  plane structure is redirected to this temp data, and
  *				  finally DoTextureMapping is called.
  *
  * Comments		: map optimise the transformState==WrappingTransform case
  *****************************************************************************/
-void DoTextureWrapping(int						NumberOfPlanes,
-					TRANSFORMED_PLANE_STRUCT   * Planes[],
-					  TRANSFORM_STRUCT		   *ObjToEye,
-					  MATERIAL_STATE_STRUCT	   *MState,
-					  TEXTURING_RESULT_STRUCT  *Results)
-{
+void DoTextureWrapping(int NumberOfPlanes,
+                       TRANSFORMED_PLANE_STRUCT *Planes[],
+                       TRANSFORM_STRUCT *ObjToEye,
+                       MATERIAL_STATE_STRUCT *MState,
+                       TEXTURING_RESULT_STRUCT *Results) {
 
-	sgl_vector V1,V2,V3,O1,O2,O3;
-	sgl_vector IPoint1,IPoint2,IPoint3;
-	sgl_vector SourceO1,SourceO2,SourceO3;
-	sgl_vector SourceN1,SourceN2,SourceN3;
-	sgl_vector ViewPoint;
-	sgl_2d_vec UV0,UV1,UV2;
-	int	i;
-	TRANSFORM_STRUCT WrapSpace;
-	TRANSFORM_STRUCT WrappingTransform;
-	sgl_vector pt2, pt3;
+    sgl_vector V1, V2, V3, O1, O2, O3;
+    sgl_vector IPoint1, IPoint2, IPoint3;
+    sgl_vector SourceO1, SourceO2, SourceO3;
+    sgl_vector SourceN1, SourceN2, SourceN3;
+    sgl_vector ViewPoint;
+    sgl_2d_vec UV0, UV1, UV2;
+    int i;
+    TRANSFORM_STRUCT WrapSpace;
+    TRANSFORM_STRUCT WrappingTransform;
+    sgl_vector pt2, pt3;
 
 
-	/* get a copy of the camera position in object space */
+    /* get a copy of the camera position in object space */
 
-	ViewPoint[0]=ObjToEye->inv[0][3];
-	ViewPoint[1]=ObjToEye->inv[1][3];
-	ViewPoint[2]=ObjToEye->inv[2][3];
+    ViewPoint[0] = ObjToEye->inv[0][3];
+    ViewPoint[1] = ObjToEye->inv[1][3];
+    ViewPoint[2] = ObjToEye->inv[2][3];
 
-	/* We need to calculate the matrix that moves the wrapped object
+    /* We need to calculate the matrix that moves the wrapped object
     ** in relation to the intermediate surface.
-    ** When the smap was placed in the display list, a copy of the 
+    ** When the smap was placed in the display list, a copy of the
     ** current transformation was made in 'WrappingTransform'.
-    ** Multiplying the current transform by the inverse of the 
+    ** Multiplying the current transform by the inverse of the
     ** wrapping transform should be the object to wrap space matrix.
     */
 
-	/* get a local copy of the wrapping transform */
-	RnGlobalCopyWrappingTransform(&WrappingTransform);
+    /* get a local copy of the wrapping transform */
+    RnGlobalCopyWrappingTransform(&WrappingTransform);
 
-	for(i=0;i<3;i++)
-	{
+    for (i = 0; i < 3; i++) {
 
-		WrapSpace.mat[i][0]= ObjToEye->mat[0][0] * WrappingTransform.inv[i][0] +
-						     ObjToEye->mat[1][0] * WrappingTransform.inv[i][1] +
-						     ObjToEye->mat[2][0] * WrappingTransform.inv[i][2] ;
-		WrapSpace.mat[i][1]= ObjToEye->mat[0][1] * WrappingTransform.inv[i][0] +
-						     ObjToEye->mat[1][1] * WrappingTransform.inv[i][1] +
-						     ObjToEye->mat[2][1] * WrappingTransform.inv[i][2] ;
-		WrapSpace.mat[i][2]= ObjToEye->mat[0][2] * WrappingTransform.inv[i][0] +
-						     ObjToEye->mat[1][2] * WrappingTransform.inv[i][1] +
-						     ObjToEye->mat[2][2] * WrappingTransform.inv[i][2] ;
-		WrapSpace.mat[i][3]= ObjToEye->mat[0][3] * WrappingTransform.inv[i][0] +
-						     ObjToEye->mat[1][3] * WrappingTransform.inv[i][1] +
-						     ObjToEye->mat[2][3] * WrappingTransform.inv[i][2] +
-							 WrappingTransform.inv[i][3];
-	}
-
-
-	for(i=0;i<NumberOfPlanes;i++)
-	{
-
-		/*transform the points into wrapping space */
+        WrapSpace.mat[i][0] = ObjToEye->mat[0][0] * WrappingTransform.inv[i][0] +
+                              ObjToEye->mat[1][0] * WrappingTransform.inv[i][1] +
+                              ObjToEye->mat[2][0] * WrappingTransform.inv[i][2];
+        WrapSpace.mat[i][1] = ObjToEye->mat[0][1] * WrappingTransform.inv[i][0] +
+                              ObjToEye->mat[1][1] * WrappingTransform.inv[i][1] +
+                              ObjToEye->mat[2][1] * WrappingTransform.inv[i][2];
+        WrapSpace.mat[i][2] = ObjToEye->mat[0][2] * WrappingTransform.inv[i][0] +
+                              ObjToEye->mat[1][2] * WrappingTransform.inv[i][1] +
+                              ObjToEye->mat[2][2] * WrappingTransform.inv[i][2];
+        WrapSpace.mat[i][3] = ObjToEye->mat[0][3] * WrappingTransform.inv[i][0] +
+                              ObjToEye->mat[1][3] * WrappingTransform.inv[i][1] +
+                              ObjToEye->mat[2][3] * WrappingTransform.inv[i][2] +
+                              WrappingTransform.inv[i][3];
+    }
 
 
-		/*we don't allow wrapping on sgl_add_simple_planes*/
+    for (i = 0; i < NumberOfPlanes; i++) {
 
-		ASSERT(Planes[i]->pPointsData);
+        /*transform the points into wrapping space */
 
-		VecAdd (Planes[i]->pPointsData->pt1, Planes[i]->pPointsData->pt2_delta, pt2);
-		VecAdd (Planes[i]->pPointsData->pt1, Planes[i]->pPointsData->pt3_delta, pt3);
 
-		TransformVector(&WrapSpace,Planes[i]->pPointsData->pt1,SourceO1);
-		TransformVector(&WrapSpace,pt2,						   SourceO2);
-		TransformVector(&WrapSpace,pt3,						   SourceO3);
+        /*we don't allow wrapping on sgl_add_simple_planes*/
 
-		/*rotate the normals into wrapping space */
-		/* NOTE there better not be any scale */
-		/* NOTE i may optimise this out for the I-surface normal */
+        ASSERT(Planes[i]->pPointsData);
 
-		if (Planes[i]->flags & pf_smooth_shad)
-		{
-		
-		
-			TransformDirVector(&WrapSpace,Planes[i]->pShadingData->norm1,SourceN1); 
-			TransformDirVector(&WrapSpace,Planes[i]->pShadingData->norm2,SourceN2); 
-			TransformDirVector(&WrapSpace,Planes[i]->pShadingData->norm3,SourceN3); 
-		}
-		else
-		{
-			/* we have to flat wrap */
+        VecAdd(Planes[i]->pPointsData->pt1, Planes[i]->pPointsData->pt2_delta, pt2);
+        VecAdd(Planes[i]->pPointsData->pt1, Planes[i]->pPointsData->pt3_delta, pt3);
 
-			TransformDirVector(&WrapSpace,Planes[i]->pOriginalData->normal,SourceN1); 
+        TransformVector(&WrapSpace, Planes[i]->pPointsData->pt1, SourceO1);
+        TransformVector(&WrapSpace, pt2, SourceO2);
+        TransformVector(&WrapSpace, pt3, SourceO3);
 
-			/*the other two normals are identical*/
+        /*rotate the normals into wrapping space */
+        /* NOTE there better not be any scale */
+        /* NOTE i may optimise this out for the I-surface normal */
 
-			SourceN2[0]=SourceN1[0];
-			SourceN2[1]=SourceN1[1];
-			SourceN2[2]=SourceN1[2];
+        if (Planes[i]->flags & pf_smooth_shad) {
 
-			SourceN3[0]=SourceN1[0];
-			SourceN3[1]=SourceN1[1];
-			SourceN3[2]=SourceN1[2];
 
-		}
+            TransformDirVector(&WrapSpace, Planes[i]->pShadingData->norm1, SourceN1);
+            TransformDirVector(&WrapSpace, Planes[i]->pShadingData->norm2, SourceN2);
+            TransformDirVector(&WrapSpace, Planes[i]->pShadingData->norm3, SourceN3);
+        } else {
+            /* we have to flat wrap */
 
-		/* NOTE I may rewrite this copy*/
+            TransformDirVector(&WrapSpace, Planes[i]->pOriginalData->normal, SourceN1);
 
-		O1[0]=SourceO1[0];
-		O1[1]=SourceO1[1];
-		O1[2]=SourceO1[2];
-		O2[0]=SourceO2[0];
-		O2[1]=SourceO2[1];
-		O2[2]=SourceO2[2];
-		O3[0]=SourceO3[0];
-		O3[1]=SourceO3[1];
-		O3[2]=SourceO3[2];
+            /*the other two normals are identical*/
 
-		switch(MState->texture_flags & 0x1C) /* sgl_omap_types*/
-		{
-			case sgl_omap_obj_normal:
-				/*just copy the data over*/
-			
-				V1[0]=SourceN1[0];
-				V1[1]=SourceN1[1];
-				V1[2]=SourceN1[2];
-			
-				V2[0]=SourceN2[0];
-				V2[1]=SourceN2[1];
-				V2[2]=SourceN2[2];
+            SourceN2[0] = SourceN1[0];
+            SourceN2[1] = SourceN1[1];
+            SourceN2[2] = SourceN1[2];
 
-				V3[0]=SourceN3[0];
-				V3[1]=SourceN3[1];
-				V3[2]=SourceN3[2]; 
+            SourceN3[0] = SourceN1[0];
+            SourceN3[1] = SourceN1[1];
+            SourceN3[2] = SourceN1[2];
 
-				break;
+        }
 
-			case sgl_omap_inter_normal:
-				ConstructISurfaceNormalRay(MState->texture_flags & 0x3,
-										   SourceO1,O1,V1);
-				ConstructISurfaceNormalRay(MState->texture_flags & 0x3,
-										   SourceO2,O2,V2);
-				ConstructISurfaceNormalRay(MState->texture_flags & 0x3,
-										   SourceO3,O3,V3);
+        /* NOTE I may rewrite this copy*/
 
-				break;
-			case sgl_omap_reflection:
+        O1[0] = SourceO1[0];
+        O1[1] = SourceO1[1];
+        O1[2] = SourceO1[2];
+        O2[0] = SourceO2[0];
+        O2[1] = SourceO2[1];
+        O2[2] = SourceO2[2];
+        O3[0] = SourceO3[0];
+        O3[1] = SourceO3[1];
+        O3[2] = SourceO3[2];
 
-				ConstructReflectedRay(ViewPoint,SourceO1,
-									  SourceN1,V1);
-				ConstructReflectedRay(ViewPoint,SourceO2,
-									  SourceN2,V2);
-				ConstructReflectedRay(ViewPoint,SourceO3,
-									  SourceN3,V3);
+        switch (MState->texture_flags & 0x1C) /* sgl_omap_types*/
+        {
+            case sgl_omap_obj_normal:
+                /*just copy the data over*/
 
-				break;
-			case sgl_omap_transmission:
+                V1[0] = SourceN1[0];
+                V1[1] = SourceN1[1];
+                V1[2] = SourceN1[2];
 
-				ConstructRefractedRay(ViewPoint,
-									  SourceO1,
-									  SourceN1,
-									  MState->refrac_index,
-									  V1);
-				ConstructRefractedRay(ViewPoint,
-									  SourceO2,
-									  SourceN2,
-									  MState->refrac_index,
-									  V2);
-				ConstructRefractedRay(ViewPoint,
-									  SourceO3,
-									  SourceN3,
-									  MState->refrac_index,
-									  V3);
+                V2[0] = SourceN2[0];
+                V2[1] = SourceN2[1];
+                V2[2] = SourceN2[2];
 
-				break;
-			default:
+                V3[0] = SourceN3[0];
+                V3[1] = SourceN3[1];
+                V3[2] = SourceN3[2];
 
-				DPF ((DBG_ERROR, "Bad OMAP"));
+                break;
 
-				break;
-		}
+            case sgl_omap_inter_normal:
+                ConstructISurfaceNormalRay(MState->texture_flags & 0x3,
+                                           SourceO1, O1, V1);
+                ConstructISurfaceNormalRay(MState->texture_flags & 0x3,
+                                           SourceO2, O2, V2);
+                ConstructISurfaceNormalRay(MState->texture_flags & 0x3,
+                                           SourceO3, O3, V3);
 
-		/*
+                break;
+            case sgl_omap_reflection:
+
+                ConstructReflectedRay(ViewPoint, SourceO1,
+                                      SourceN1, V1);
+                ConstructReflectedRay(ViewPoint, SourceO2,
+                                      SourceN2, V2);
+                ConstructReflectedRay(ViewPoint, SourceO3,
+                                      SourceN3, V3);
+
+                break;
+            case sgl_omap_transmission:
+
+                ConstructRefractedRay(ViewPoint,
+                                      SourceO1,
+                                      SourceN1,
+                                      MState->refrac_index,
+                                      V1);
+                ConstructRefractedRay(ViewPoint,
+                                      SourceO2,
+                                      SourceN2,
+                                      MState->refrac_index,
+                                      V2);
+                ConstructRefractedRay(ViewPoint,
+                                      SourceO3,
+                                      SourceN3,
+                                      MState->refrac_index,
+                                      V3);
+
+                break;
+            default:
+
+                DPF ((DBG_ERROR, "Bad OMAP"));
+
+                break;
+        }
+
+        /*
 		** The bounced rays have been generated.
 		** Next, the intersection of the rays and the intermediate surface is
 		** performed, and then mapped into UV space.
 		*/
 
 
-		switch(MState->texture_flags & 0x3) /* sgl_smap_types */
-		{
-			case sgl_smap_plane:
-				if( IntersectPlane(O1,V1,IPoint1) &&
-					IntersectPlane(O2,V2,IPoint2) &&
-					IntersectPlane(O3,V3,IPoint3) )
-				{
-					MapPlane(IPoint1,IPoint2,IPoint3,
-   						 	 MState->su,MState->sv,MState->ou,MState->ov,
-   							 UV0,UV1,UV2);
-				}
-				else
-				{
-					/* Construct dummy parameters*/
-					DPF((DBG_WARNING, "Invalid texture wrapping ray"));
+        switch (MState->texture_flags & 0x3) /* sgl_smap_types */
+        {
+            case sgl_smap_plane:
+                if (IntersectPlane(O1, V1, IPoint1) &&
+                    IntersectPlane(O2, V2, IPoint2) &&
+                    IntersectPlane(O3, V3, IPoint3)) {
+                    MapPlane(IPoint1, IPoint2, IPoint3,
+                             MState->su, MState->sv, MState->ou, MState->ov,
+                             UV0, UV1, UV2);
+                } else {
+                    /* Construct dummy parameters*/
+                    DPF((DBG_WARNING, "Invalid texture wrapping ray"));
 
-					UV0[0]=0.0f;
-					UV0[1]=0.0f;
-					UV1[0]=1.0f;
-					UV1[1]=0.0f;
-					UV2[0]=0.0f;
-					UV2[1]=1.0f;
-				}			
-				break;
+                    UV0[0] = 0.0f;
+                    UV0[1] = 0.0f;
+                    UV1[0] = 1.0f;
+                    UV1[1] = 0.0f;
+                    UV2[0] = 0.0f;
+                    UV2[1] = 1.0f;
+                }
+                break;
 
-			case sgl_smap_cylinder:
-				if( IntersectCylinder(O1,V1,MState->radius,IPoint1) &&
-					IntersectCylinder(O2,V2,MState->radius,IPoint2) &&
-					IntersectCylinder(O3,V3,MState->radius,IPoint3) )
-				{
-					MapCylinder(IPoint1,IPoint2,IPoint3,
-   						 	 	MState->su,MState->sv,MState->ou,MState->ov,
-   							 	UV0,UV1,UV2);
-				}
-				else
-				{
-					/* Construct dummy parameters*/
-					DPF((DBG_WARNING, "Invalid texture wrapping ray"));
+            case sgl_smap_cylinder:
+                if (IntersectCylinder(O1, V1, MState->radius, IPoint1) &&
+                    IntersectCylinder(O2, V2, MState->radius, IPoint2) &&
+                    IntersectCylinder(O3, V3, MState->radius, IPoint3)) {
+                    MapCylinder(IPoint1, IPoint2, IPoint3,
+                                MState->su, MState->sv, MState->ou, MState->ov,
+                                UV0, UV1, UV2);
+                } else {
+                    /* Construct dummy parameters*/
+                    DPF((DBG_WARNING, "Invalid texture wrapping ray"));
 
-					UV0[0]=0.0f;
-					UV0[1]=0.0f;
-					UV1[0]=1.0f;
-					UV1[1]=0.0f;
-					UV2[0]=0.0f;
-					UV2[1]=1.0f;
-				}
-				break;
+                    UV0[0] = 0.0f;
+                    UV0[1] = 0.0f;
+                    UV1[0] = 1.0f;
+                    UV1[1] = 0.0f;
+                    UV2[0] = 0.0f;
+                    UV2[1] = 1.0f;
+                }
+                break;
 
-			case sgl_smap_sphere:
+            case sgl_smap_sphere:
 
-				if( IntersectSphere(O1,V1,MState->radius,IPoint1) && 
-					IntersectSphere(O2,V2,MState->radius,IPoint2) &&
-					IntersectSphere(O3,V3,MState->radius,IPoint3) )
-				{
-					MapSphere(IPoint1,IPoint2,IPoint3,
-   						      MState->su,MState->sv,MState->ou,MState->ov,MState->radius,
-   							  UV0,UV1,UV2);
-				}
-				else
-				{
-					/* Construct dummy parameters*/
-					DPF((DBG_WARNING, "Invalid texture wrapping ray"));
+                if (IntersectSphere(O1, V1, MState->radius, IPoint1) &&
+                    IntersectSphere(O2, V2, MState->radius, IPoint2) &&
+                    IntersectSphere(O3, V3, MState->radius, IPoint3)) {
+                    MapSphere(IPoint1, IPoint2, IPoint3,
+                              MState->su, MState->sv, MState->ou, MState->ov, MState->radius,
+                              UV0, UV1, UV2);
+                } else {
+                    /* Construct dummy parameters*/
+                    DPF((DBG_WARNING, "Invalid texture wrapping ray"));
 
-					UV0[0]=0.0f;
-					UV0[1]=0.0f;
-					UV1[0]=1.0f;
-					UV1[1]=0.0f;
-					UV2[0]=0.0f;
-					UV2[1]=1.0f;
-				}
-				break;
-			default:
+                    UV0[0] = 0.0f;
+                    UV0[1] = 0.0f;
+                    UV1[0] = 1.0f;
+                    UV1[1] = 0.0f;
+                    UV2[0] = 0.0f;
+                    UV2[1] = 1.0f;
+                }
+                break;
+            default:
 
-				DPF ((DBG_ERROR, "Bad IMAP"));
+                DPF ((DBG_ERROR, "Bad IMAP"));
 
-				break;
-	   	}
+                break;
+        }
 
-		/* convert the three points and three UV's to the internal format of
-		   U,V, and O */ 
+        /* convert the three points and three UV's to the internal format of
+		   U,V, and O */
 
-		MapExternalToInternal((float*)(Planes[i]->pPointsData->pt1),
-   							  pt2,
-   							  pt3,
-  							  UV0, UV1, UV2,
-							  TempTexResults[i].pre_mapped.u_vect,
-							  TempTexResults[i].pre_mapped.v_vect,
-							  TempTexResults[i].pre_mapped.o_vect);
+        MapExternalToInternal((float *) (Planes[i]->pPointsData->pt1),
+                              pt2,
+                              pt3,
+                              UV0, UV1, UV2,
+                              TempTexResults[i].pre_mapped.u_vect,
+                              TempTexResults[i].pre_mapped.v_vect,
+                              TempTexResults[i].pre_mapped.o_vect);
 
-		/*redirect the projected plane texture pointer to this data*/
+        /*redirect the projected plane texture pointer to this data*/
 
-		Planes[i]->pTextureData=&(TempTexResults[i]);
-	}
+        Planes[i]->pTextureData = &(TempTexResults[i]);
+    }
 
-	/*now calculate the TEXAS coefficients */
+    /*now calculate the TEXAS coefficients */
 
-	DoTextureMappingFast( NumberOfPlanes, 
-						  (const TRANSFORMED_PLANE_STRUCT **)Planes,
-						  ObjToEye, MState, Results );
+    DoTextureMappingFast(NumberOfPlanes,
+                         (const TRANSFORMED_PLANE_STRUCT **) Planes,
+                         ObjToEye, MState, Results);
 
 
 };

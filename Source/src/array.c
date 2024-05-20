@@ -67,143 +67,123 @@ static int gnRemoves = 0;
 static int gnNum = 0;
 #endif
 
-int ArrayInitialiseArray (PARRAY pArray, int nItemSize, int nBlockSize)
-{
-	pArray->pArray = SGLMalloc (nBlockSize * nItemSize);
-	pArray->nItemSize = nItemSize;
-	pArray->nBlockSize = nBlockSize;
-	pArray->nMaxItems = nBlockSize;
-	pArray->nItems = 0;
+int ArrayInitialiseArray(PARRAY pArray, int nItemSize, int nBlockSize) {
+    pArray->pArray = SGLMalloc (nBlockSize * nItemSize);
+    pArray->nItemSize = nItemSize;
+    pArray->nBlockSize = nBlockSize;
+    pArray->nMaxItems = nBlockSize;
+    pArray->nItems = 0;
 
-	gnInits++;
+    gnInits++;
 
-	return (pArray->pArray != NULL);
+    return (pArray->pArray != NULL);
 }
 
-void ArrayDeleteArray (PARRAY pArray)
-{
-	gnDeletes++;
+void ArrayDeleteArray(PARRAY pArray) {
+    gnDeletes++;
 
-	if (pArray->pArray)
-	{
-		SGLFree (pArray->pArray);
-		pArray->pArray = NULL;
-	}
+    if (pArray->pArray) {
+        SGLFree (pArray->pArray);
+        pArray->pArray = NULL;
+    }
 
-	if (pArray->nItems)
-	{
-		DPF ((DBG_VERBOSE, "Array being deleted contained %d items!", pArray->nItems));
-	}
+    if (pArray->nItems) {
+        DPF ((DBG_VERBOSE, "Array being deleted contained %d items!", pArray->nItems));
+    }
 
-	pArray->nItemSize = 0;
-	pArray->nBlockSize = 0;
-	pArray->nItems = 0;
+    pArray->nItemSize = 0;
+    pArray->nBlockSize = 0;
+    pArray->nItems = 0;
 }
 
-void *ArrayAddItem (PARRAY pArray)
-{
-	int nID;
+void *ArrayAddItem(PARRAY pArray) {
+    int nID;
 
-	ASSERT (pArray);
-	ASSERT (pArray->pArray);
+    ASSERT (pArray);
+    ASSERT (pArray->pArray);
 
-	gnAdds++;
+    gnAdds++;
 
-	nID = pArray->nItems++;
+    nID = pArray->nItems++;
 
-	if (pArray->nItems == pArray->nMaxItems)
-	{
-		char *pNewArray = SGLRealloc (pArray->pArray, (pArray->nMaxItems + pArray->nBlockSize) * pArray->nItemSize);
+    if (pArray->nItems == pArray->nMaxItems) {
+        char *pNewArray = SGLRealloc (pArray->pArray, (pArray->nMaxItems + pArray->nBlockSize) * pArray->nItemSize);
 
-		++gnExtends;
+        ++gnExtends;
 
-		if (pNewArray)
-		{
-			pArray->pArray = pNewArray;
-			pArray->nMaxItems += pArray->nBlockSize;
-		}
-		else
-		{
-			nID = -1;
-		}
-	}
+        if (pNewArray) {
+            pArray->pArray = pNewArray;
+            pArray->nMaxItems += pArray->nBlockSize;
+        } else {
+            nID = -1;
+        }
+    }
 
-	return (pArray->pArray + (nID * pArray->nItemSize));
+    return (pArray->pArray + (nID * pArray->nItemSize));
 }
 
-void *ArrayGetItem (PARRAY pArray, int nID)
-{
-	ASSERT (pArray);
-	ASSERT (pArray->pArray);
+void *ArrayGetItem(PARRAY pArray, int nID) {
+    ASSERT (pArray);
+    ASSERT (pArray->pArray);
 
-	gnGets++;
+    gnGets++;
 
-	if ((nID >= 0) && (nID < pArray->nItems))
-	{
-		return (pArray->pArray + (nID * pArray->nItemSize));
-	}
-	else
-	{
-		DPF ((DBG_ERROR, "ArrayGetItem - attempt to get item outside array bounds (%d)", nID));
-		return (0);
-	}
+    if ((nID >= 0) && (nID < pArray->nItems)) {
+        return (pArray->pArray + (nID * pArray->nItemSize));
+    } else {
+        DPF ((DBG_ERROR, "ArrayGetItem - attempt to get item outside array bounds (%d)", nID));
+        return (0);
+    }
 }
 
-int ArrayRemoveItem (PARRAY pArray, int nID)
-{
-	ASSERT (pArray);
-	ASSERT (pArray->pArray);
+int ArrayRemoveItem(PARRAY pArray, int nID) {
+    ASSERT (pArray);
+    ASSERT (pArray->pArray);
 
-	++gnRemoves;
+    ++gnRemoves;
 
-	if ((nID >= 0) && (nID < pArray->nItems))
-	{
-		char *p1 = pArray->pArray + (nID * pArray->nItemSize);
-		char *p2 = p1 + pArray->nItemSize;
-		int k, nStuffToMove;
-		
-		/* memcpy is undefined for overlapping buffers */
-		
-		nStuffToMove = (pArray->nItems - (nID + 1)) * pArray->nItemSize;
-		
-		for (k = 0; k < nStuffToMove; ++k)
-		{
-			p1[k] = p2[k];
-		}
-		
-		/* one less item in the array */
-		
-		pArray->nItems--;
+    if ((nID >= 0) && (nID < pArray->nItems)) {
+        char *p1 = pArray->pArray + (nID * pArray->nItemSize);
+        char *p2 = p1 + pArray->nItemSize;
+        int k, nStuffToMove;
 
-		return (1);
-	}
-	else
-	{
-		DPF ((DBG_ERROR, "ArrayRemoveItem - attempt to remove item outside array bounds (%d)", nID));
-		return (0);
-	}
+        /* memcpy is undefined for overlapping buffers */
+
+        nStuffToMove = (pArray->nItems - (nID + 1)) * pArray->nItemSize;
+
+        for (k = 0; k < nStuffToMove; ++k) {
+            p1[k] = p2[k];
+        }
+
+        /* one less item in the array */
+
+        pArray->nItems--;
+
+        return (1);
+    } else {
+        DPF ((DBG_ERROR, "ArrayRemoveItem - attempt to remove item outside array bounds (%d)", nID));
+        return (0);
+    }
 }
 
-int ArrayGetNumItems (PARRAY pArray)
-{
-	ASSERT (pArray);
-	ASSERT (pArray->pArray);
+int ArrayGetNumItems(PARRAY pArray) {
+    ASSERT (pArray);
+    ASSERT (pArray->pArray);
 
-	gnNum++;
+    gnNum++;
 
-	return (pArray->nItems);
+    return (pArray->nItems);
 }
 
-void ArrayPrintStats (void)
-{
-	DPF ((DBG_MESSAGE, "Array stats: Inits %d, Deletes %d, Adds %d, Gets %d, Removes %d, Num %d, Extends %d",
-								gnInits,
-								gnDeletes,
-								gnAdds,
-								gnGets,
-								gnRemoves,
-								gnNum,
-								gnExtends));
+void ArrayPrintStats(void) {
+    DPF ((DBG_MESSAGE, "Array stats: Inits %d, Deletes %d, Adds %d, Gets %d, Removes %d, Num %d, Extends %d",
+            gnInits,
+            gnDeletes,
+            gnAdds,
+            gnGets,
+            gnRemoves,
+            gnNum,
+            gnExtends));
 }
 
 /* end of $RCSfile: array.c,v $ */

@@ -244,13 +244,15 @@
 
 #if WIN32 || DOS32 || MAC
 
-	#include <brdcfg.h>
+#include <brdcfg.h>
 
 #endif
 
 /* JWF added following missing prototype */
 #if VIGNETTE_FIX
-void	AddRegionOpaqueDummyLargeL(const sgl_uint32  ObjectAddr);
+
+void AddRegionOpaqueDummyLargeL(const sgl_uint32 ObjectAddr);
+
 #endif
 
 
@@ -258,27 +260,27 @@ void	AddRegionOpaqueDummyLargeL(const sgl_uint32  ObjectAddr);
 // Define the arrays of transformed planes, and the shading
 // and texturing results of a convex or mesh.
 */
-TRANS_PLANE_ARRAY_TYPE 	GlobalTransformedPlanes;
-SHADING_RESULT_STRUCT   GlobalShadingResults[SGL_MAX_INTERNAL_PLANES];
+TRANS_PLANE_ARRAY_TYPE GlobalTransformedPlanes;
+SHADING_RESULT_STRUCT GlobalShadingResults[SGL_MAX_INTERNAL_PLANES];
 TEXTURING_RESULT_STRUCT GlobalTextureResults[SGL_MAX_INTERNAL_PLANES];
 
 
 /*
 // Define the global editing variables
 */
-DL_USER_GLOBALS_STRUCT	dlUserGlobals;
+DL_USER_GLOBALS_STRUCT dlUserGlobals;
 
 /*
 // declare the two special projection matrices
 */
 static PROJECTION_MATRIX_STRUCT projection_mat;
-static LOCAL_PROJECTION_STRUCT	local_projection_mat;
+static LOCAL_PROJECTION_STRUCT local_projection_mat;
 
 
-int sgl_render_start=0;
-int sgl_render_end=0;
-int sgl_render_start_old=0;
-int sgl_render_end_old=0;
+int sgl_render_start = 0;
+int sgl_render_end = 0;
+int sgl_render_start_old = 0;
+int sgl_render_end_old = 0;
 
 /*
 // Variable to decide if we have initialised the system or not
@@ -334,53 +336,46 @@ static TRANSFORM_STRUCT WrappingTransform;
 static TRANSFORM_STRUCT absoluteCoordTransform;
 
 /**********************************************************************/
-sgl_bool RnGlobalProjMatRegionOnScreen(int XRegion, int YRegion)
-{
-	return (sgl_bool)(XRegion >= projection_mat.FirstXRegion &&
-					  XRegion <= projection_mat.LastXRegion &&
-					  YRegion >= projection_mat.FirstYRegionExact &&
-					  YRegion <= projection_mat.LastYRegionExact);
+sgl_bool RnGlobalProjMatRegionOnScreen(int XRegion, int YRegion) {
+    return (sgl_bool) (XRegion >= projection_mat.FirstXRegion &&
+                       XRegion <= projection_mat.LastXRegion &&
+                       YRegion >= projection_mat.FirstYRegionExact &&
+                       YRegion <= projection_mat.LastYRegionExact);
 }
 
-sgl_bool RnGlobalProjMatRegionBoxOnScreen(REGIONS_RECT_STRUCT *Regions)
-{
-	return (sgl_bool)((int)&Regions->FirstYRegion >= projection_mat.FirstYRegionExact &&
-					  (int)&Regions->LastYRegion <= projection_mat.LastYRegionExact &&
-					  (int)&Regions->FirstXRegion >= projection_mat.FirstXRegion &&
-					  (int)&Regions->LastXRegion  <= projection_mat.LastXRegion);
+sgl_bool RnGlobalProjMatRegionBoxOnScreen(REGIONS_RECT_STRUCT *Regions) {
+    return (sgl_bool) ((int) &Regions->FirstYRegion >= projection_mat.FirstYRegionExact &&
+                       (int) &Regions->LastYRegion <= projection_mat.LastYRegionExact &&
+                       (int) &Regions->FirstXRegion >= projection_mat.FirstXRegion &&
+                       (int) &Regions->LastXRegion <= projection_mat.LastXRegion);
 }
 
-sgl_bool RnGlobalProjMatAllRegionsPositive()
-{
-	DPFOO((DBG_MESSAGE, "Viewport  X: %d-%d  Y: %d-%d\n",
-		   projection_mat.FirstXRegion, projection_mat.LastXRegion,
-		   projection_mat.FirstYRegion, projection_mat.LastYRegion));
+sgl_bool RnGlobalProjMatAllRegionsPositive() {
+    DPFOO((DBG_MESSAGE, "Viewport  X: %d-%d  Y: %d-%d\n",
+            projection_mat.FirstXRegion, projection_mat.LastXRegion,
+            projection_mat.FirstYRegion, projection_mat.LastYRegion));
 
-	return (sgl_bool)(projection_mat.FirstXRegion >= 0 &&
-					  projection_mat.LastXRegion  >= 0 &&
-					  projection_mat.FirstYRegion >= 0 &&
-					  projection_mat.LastYRegion  >= 0 );
+    return (sgl_bool) (projection_mat.FirstXRegion >= 0 &&
+                       projection_mat.LastXRegion >= 0 &&
+                       projection_mat.FirstYRegion >= 0 &&
+                       projection_mat.LastYRegion >= 0);
 }
 
-sgl_bool RnGlobalProjMatRegLastGtRegFirst()
-{
-	return (sgl_bool)(projection_mat.LastXRegion >= projection_mat.FirstXRegion &&
-					  projection_mat.LastYRegion >= projection_mat.FirstYRegion);
+sgl_bool RnGlobalProjMatRegLastGtRegFirst() {
+    return (sgl_bool) (projection_mat.LastXRegion >= projection_mat.FirstXRegion &&
+                       projection_mat.LastYRegion >= projection_mat.FirstYRegion);
 }
 
-void RnGlobalCopyProjMat (PROJECTION_MATRIX_STRUCT  *pProjMat)
-{
-	*pProjMat = projection_mat;
+void RnGlobalCopyProjMat(PROJECTION_MATRIX_STRUCT *pProjMat) {
+    *pProjMat = projection_mat;
 }
 
-void RnGlobalSetProjMat (PROJECTION_MATRIX_STRUCT  *pProjMat)
-{
-	projection_mat = *pProjMat;
+void RnGlobalSetProjMat(PROJECTION_MATRIX_STRUCT *pProjMat) {
+    projection_mat = *pProjMat;
 }
 
-PROJECTION_MATRIX_STRUCT *RnGlobalGetProjMat ()
-{
-	return &projection_mat;
+PROJECTION_MATRIX_STRUCT *RnGlobalGetProjMat() {
+    return &projection_mat;
 }
 
 /**************************************************************************
@@ -397,74 +392,65 @@ PROJECTION_MATRIX_STRUCT *RnGlobalGetProjMat ()
  **************************************************************************/
 
 #if PCX2 || PCX2_003
-float RnGlobalGetFixedClipDist ()
-{
-	return(projection_mat.f32FixedClipDist);
+
+float RnGlobalGetFixedClipDist() {
+    return (projection_mat.f32FixedClipDist);
 }
+
 #else
 int RnGlobalGetFixedClipDist ()
 {
-	return(projection_mat.n32FixedClipDist);
+    return(projection_mat.n32FixedClipDist);
 }
 #endif
 
 /**********************************************************************/
 
-void RnGlobalSetLocalProjMat (LOCAL_PROJECTION_STRUCT  *pLocalProjMat)
-{
-	local_projection_mat = *pLocalProjMat;
+void RnGlobalSetLocalProjMat(LOCAL_PROJECTION_STRUCT *pLocalProjMat) {
+    local_projection_mat = *pLocalProjMat;
 }
 
-sgl_bool RnGlobalLocalProjMatIsValid ()
-{
-	return (sgl_bool)local_projection_mat.valid;
+sgl_bool RnGlobalLocalProjMatIsValid() {
+    return (sgl_bool) local_projection_mat.valid;
 }
 
-sgl_bool RnGlobalLocalProjMatTextureIsValid (int TexSize)
-{
-	DPF((DBG_MESSAGE, "This Texture Size:%d, Previous TextureSize:%d",
-						TexSize,local_projection_mat.LastTextureSize));
+sgl_bool RnGlobalLocalProjMatTextureIsValid(int TexSize) {
+    DPF((DBG_MESSAGE, "This Texture Size:%d, Previous TextureSize:%d",
+            TexSize, local_projection_mat.LastTextureSize));
 
-	return (sgl_bool)(local_projection_mat.LastTextureSize == TexSize);
+    return (sgl_bool) (local_projection_mat.LastTextureSize == TexSize);
 }
 
-LOCAL_PROJECTION_STRUCT	*RnGlobalGetLocalProjMat ()
-{
-	return &local_projection_mat;
+LOCAL_PROJECTION_STRUCT *RnGlobalGetLocalProjMat() {
+    return &local_projection_mat;
 }
 
-void RnGlobalCopyLocalProjMat (LOCAL_PROJECTION_STRUCT  *pLocalProjMat)
-{
-	*pLocalProjMat = local_projection_mat;
+void RnGlobalCopyLocalProjMat(LOCAL_PROJECTION_STRUCT *pLocalProjMat) {
+    *pLocalProjMat = local_projection_mat;
 }
 
 /**********************************************************************/
 
-void RnGlobalSetAbsoluteCoordTransform (TRANSFORM_STRUCT *pTransformState)
-{
-	absoluteCoordTransform = *pTransformState;
+void RnGlobalSetAbsoluteCoordTransform(TRANSFORM_STRUCT *pTransformState) {
+    absoluteCoordTransform = *pTransformState;
 }
 
-TRANSFORM_STRUCT *RnGlobalGetAbsoluteCoordTransform ()
-{
-	return &absoluteCoordTransform;
+TRANSFORM_STRUCT *RnGlobalGetAbsoluteCoordTransform() {
+    return &absoluteCoordTransform;
 }
 
 /**********************************************************************/
 
-void RnGlobalSetWrappingTransform (TRANSFORM_STRUCT *pTransformState)
-{
-	WrappingTransform = *pTransformState;
+void RnGlobalSetWrappingTransform(TRANSFORM_STRUCT *pTransformState) {
+    WrappingTransform = *pTransformState;
 }
 
-void RnGlobalCopyWrappingTransform (TRANSFORM_STRUCT *pTransformState)
-{
-	*pTransformState = WrappingTransform;
+void RnGlobalCopyWrappingTransform(TRANSFORM_STRUCT *pTransformState) {
+    *pTransformState = WrappingTransform;
 }
 
-TRANSFORM_STRUCT *RnGlobalGetWrappingTransform ()
-{
-	return &WrappingTransform;
+TRANSFORM_STRUCT *RnGlobalGetWrappingTransform() {
+    return &WrappingTransform;
 }
 
 /**************************************************************************
@@ -478,9 +464,8 @@ TRANSFORM_STRUCT *RnGlobalGetWrappingTransform ()
  *				   
  **************************************************************************/
 
-void RnGlobalSetCurrentLightSlot(int slot)
-{
-	gnCurrentLightSlot = slot;
+void RnGlobalSetCurrentLightSlot(int slot) {
+    gnCurrentLightSlot = slot;
 }
 
 /**************************************************************************
@@ -494,9 +479,8 @@ void RnGlobalSetCurrentLightSlot(int slot)
  *				   
  **************************************************************************/
 
-int RnGlobalGetCurrentLightSlot()
-{
-	return gnCurrentLightSlot;
+int RnGlobalGetCurrentLightSlot() {
+    return gnCurrentLightSlot;
 }
 
 /**************************************************************************
@@ -510,9 +494,8 @@ int RnGlobalGetCurrentLightSlot()
  *				   
  **************************************************************************/
 
-CAMERA_NODE_STRUCT *GetDefaultCamera()
-{
-	return(&DefaultCamera);
+CAMERA_NODE_STRUCT *GetDefaultCamera() {
+    return (&DefaultCamera);
 }
 
 #if !WIN32
@@ -532,7 +515,7 @@ extern sgl_bool CALL_CONV HWGetParamMemRefs (PVR_PARAM_BUFF *pPVRParamBuf);
 
 void GetParameterSpace(PVR_PARAM_BUFF pBuff[3])
 {
-	HWGetParamMemRefs (pBuff);
+    HWGetParamMemRefs (pBuff);
 }
 #endif
 
@@ -548,11 +531,11 @@ void GetParameterSpace(PVR_PARAM_BUFF pBuff[3])
 
 typedef PVRHANDLE HINSTANCE;
 
-DEVICE_TYPE_POWERVR		gDeviceType;
-DEVICEID		gDeviceID;
-HINSTANCE		gDllHandle;
-HLDEVICE        gHLogicalDev;
-PTEXAPI_IF		gpTextureIF;
+DEVICE_TYPE_POWERVR gDeviceType;
+DEVICEID gDeviceID;
+HINSTANCE gDllHandle;
+HLDEVICE gHLogicalDev;
+PTEXAPI_IF gpTextureIF;
 
 /*
 // the translucent control word is the TEXAS control word that
@@ -567,59 +550,49 @@ sgl_uint32 TranslucentControlWord;
 */
 sgl_uint32 VertexFogControlWord;
 
-void CALL_CONV SglSetGlobal (SGL_Globals eGlobal, void* pValue)
-{
-	switch (eGlobal)
-	{
-		case SGL_DeviceID:
-		{
-			gDeviceID = (DEVICEID) pValue;		
-			break;
-		}
-		case SGL_DllHandle:
-		{
-			DPF((DBG_WARNING,"Dll handle is being set!!"));
-			gDllHandle = (HINSTANCE) pValue;
-			break;
-		}
-		case SGL_DeviceType:
-		{
-			gDeviceType = (DEVICE_TYPE_POWERVR) pValue;
-			break;
-		}
-		case SGL_LogicalDev:
-		{
-			gHLogicalDev = (HLDEVICE) pValue;
-			ASSERT(gHLogicalDev->TexHeap == gpTextureIF->hTexHeap);
+void CALL_CONV SglSetGlobal(SGL_Globals eGlobal, void *pValue) {
+    switch (eGlobal) {
+        case SGL_DeviceID: {
+            gDeviceID = (DEVICEID) pValue;
+            break;
+        }
+        case SGL_DllHandle: {
+            DPF((DBG_WARNING, "Dll handle is being set!!"));
+            gDllHandle = (HINSTANCE) pValue;
+            break;
+        }
+        case SGL_DeviceType: {
+            gDeviceType = (DEVICE_TYPE_POWERVR) pValue;
+            break;
+        }
+        case SGL_LogicalDev: {
+            gHLogicalDev = (HLDEVICE) pValue;
+            ASSERT(gHLogicalDev->TexHeap == gpTextureIF->hTexHeap);
 
-			/*	the translucent pixel HAS to be set up after the
-				texture memory */
-			TranslucentControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->TranslucentControlWord;
+            /*	the translucent pixel HAS to be set up after the
+                texture memory */
+            TranslucentControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->TranslucentControlWord;
 
-			VertexFogControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->VertexFogControlWord;
+            VertexFogControlWord = ((HTEXHEAP) gHLogicalDev->TexHeap)->VertexFogControlWord;
 
-			HWSetupBunchOfISPRegs();
+            HWSetupBunchOfISPRegs();
 
-			break;
-		}
-		case SGL_TextureIF:
-		{
-			gpTextureIF = (PTEXAPI_IF) pValue;
-			break;
-		}
-		case SGL_APIDev:
-		{
-			if((sgl_uint32)pValue == API_DEV_MAGIC_NUM)
-			{
-				bExternalAPI = TRUE;
-			}
-		}
-		default:
-		{
-			DPF ((DBG_ERROR, "Invalid Global specified"));	
-			break;
-		}
-	}
+            break;
+        }
+        case SGL_TextureIF: {
+            gpTextureIF = (PTEXAPI_IF) pValue;
+            break;
+        }
+        case SGL_APIDev: {
+            if ((sgl_uint32) pValue == API_DEV_MAGIC_NUM) {
+                bExternalAPI = TRUE;
+            }
+        }
+        default: {
+            DPF ((DBG_ERROR, "Invalid Global specified"));
+            break;
+        }
+    }
 }
 
 /*--------------------------- End of File --------------------------------*/

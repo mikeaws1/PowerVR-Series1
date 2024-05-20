@@ -334,23 +334,27 @@
 #include <texapi.h>
 #include <parmbuff.h>
 #include <metrics.h>
-#include <txmops.h> 	/* JWF Added to fix missing prototypes */
-#include <sgl_math.h>	/* JWF */
+#include <txmops.h>    /* JWF Added to fix missing prototypes */
+#include <sgl_math.h>    /* JWF */
 #include <dvdevice.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
 #if WIN32 || DOS32
-    #include <version.h> /* auto-generated version number file */
-	#include <hwregs.h> /* For get_texture_memory_size */
-	#include <brdcfg.h>
-	#define DO_FPU_PRECISION TRUE
 
-	void SetupFPU (void);
-	void RestoreFPU (void);
+#include <version.h> /* auto-generated version number file */
+#include <hwregs.h> /* For get_texture_memory_size */
+#include <brdcfg.h>
+
+#define DO_FPU_PRECISION TRUE
+
+void SetupFPU(void);
+
+void RestoreFPU(void);
+
 #else
 
-	#define DO_FPU_PRECISION FALSE
+#define DO_FPU_PRECISION FALSE
 #endif
 
 
@@ -359,10 +363,10 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 #include "hwregs.h"
 #define SET_PROCESS_STATE(x) 
 #else
-#define SET_PROCESS_STATE(x) 
+#define SET_PROCESS_STATE(x)
 #endif
 
-#define WAIT_FOR_FRAME	0
+#define WAIT_FOR_FRAME    0
 
 /* Variable to fix the pixel offset problem. The value is added to
  * all vertices in D3D and SGL-Lite.
@@ -375,31 +379,33 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 float fAddToXY = -0.5f; /* must be the same as in pvrd.c */
 
 #if PCX2
-	extern sgl_bool PVROSFilteringOveride( void );
-	extern sgl_bool PVROSBilinearEnabled( void );
 
-	sgl_bool	bFilteringOverRide	= FALSE;
-	sgl_bool	bBilinearEnabled	= FALSE;
+extern sgl_bool PVROSFilteringOveride(void);
 
-	extern	sgl_bool	bFullMaskingPlane;
-	extern	sgl_bool	bSetMaskingBGColour;
-	static	sgl_bool	bUseMaskingPlane = FALSE;
+extern sgl_bool PVROSBilinearEnabled(void);
+
+sgl_bool bFilteringOverRide = FALSE;
+sgl_bool bBilinearEnabled = FALSE;
+
+extern sgl_bool bFullMaskingPlane;
+extern sgl_bool bSetMaskingBGColour;
+static sgl_bool bUseMaskingPlane = FALSE;
 #endif
 
-static	sgl_uint32	TSPBackgroundAddress = 0;
-static	sgl_uint32	uDithering		= 0x2;
+static sgl_uint32 TSPBackgroundAddress = 0;
+static sgl_uint32 uDithering = 0x2;
 
 /* No sort method, 1 fro no sort, 2 for reversed no sort, 3 for min Z sort */
-int gNoSortTransFaces= MINZ_SORT;
+int gNoSortTransFaces = MINZ_SORT;
 
 /* these used to be in sgltri.c but as they are only used here... */
 float gfBogusInvZ = 1.0f;
-sgl_bool FogUsed;					   
+sgl_bool FogUsed;
 
 /* This is maximum allowable translucent passes per tile.
  * Initialise to a crazy large value.
  */
-sgl_uint32	nMaxPassCount		= 0x0FFFFFFF;
+sgl_uint32 nMaxPassCount = 0x0FFFFFFF;
 
 #if ISPTSP
 #include "profile.h"
@@ -431,7 +437,7 @@ extern sgl_uint32 TranslucentControlWord;
 /*
 // Define the global editing variables
 */
-extern DL_USER_GLOBALS_STRUCT	dlUserGlobals;
+extern DL_USER_GLOBALS_STRUCT dlUserGlobals;
 
 /* extern definiton for the display current display handle.
  * Needed for the 2d callback function.
@@ -442,12 +448,12 @@ extern HDISPLAY hDisplayHandle;
  */
 int SglLiteInit(void);
 
-extern void DirectPolygons ( PVRHANDLE TexHeap,
-					  PSGLCONTEXT  pContext,
-						int  nNumFaces,
-					    int  pFaces[][3],
-						PSGLVERTEX  pVertices,
-						sgl_bool bQuads );
+extern void DirectPolygons(PVRHANDLE TexHeap,
+                           PSGLCONTEXT pContext,
+                           int nNumFaces,
+                           int pFaces[][3],
+                           PSGLVERTEX pVertices,
+                           sgl_bool bQuads);
 
 #if DEBUG
 extern void DrawRegionGrid(PSGLCONTEXT pContext);
@@ -471,173 +477,173 @@ extern sgl_uint32 nTotalPolygonsInFrame, nTransPolygonsInFrame, nOpaquePolygonsI
 
 void  GetFrameTime(void)
 {
-	static sgl_uint32 Time, LastTime=0;
+    static sgl_uint32 Time, LastTime=0;
 
-	__asm
-		{
-			push	eax
-			push	edx
+    __asm
+        {
+            push	eax
+            push	edx
 
-			_emit 0Fh
-			_emit 31h	
+            _emit 0Fh
+            _emit 31h
 
-			shrd	eax, edx, 4
+            shrd	eax, edx, 4
 
-			mov		Time, eax
-			pop		edx
-			pop		eax
-		}
+            mov		Time, eax
+            pop		edx
+            pop		eax
+        }
 
-	fTotalTimeInFrame = (Time - LastTime)*gfCPUSpeed;
+    fTotalTimeInFrame = (Time - LastTime)*gfCPUSpeed;
 
-	LastTime = Time;
+    LastTime = Time;
 }
 
 
 void OutputMetric(void)
-{  
+{
 #if TIMING
-	/* Dump out the data */ 
-   	DPFTIME(("%4d,      %5d,       %5d,       %5d",
-   		Times[TOTAL_RENDER_TIME].Count,
-		(int)(nPolygonsToAverage*gfInvsFrames),
-		(int)(nTransPolygonsToAverage*gfInvsFrames),
-		(int)(nOpaquePolygonsToAverage*gfInvsFrames) ));
+    /* Dump out the data */
+       DPFTIME(("%4d,      %5d,       %5d,       %5d",
+           Times[TOTAL_RENDER_TIME].Count,
+        (int)(nPolygonsToAverage*gfInvsFrames),
+        (int)(nTransPolygonsToAverage*gfInvsFrames),
+        (int)(nOpaquePolygonsToAverage*gfInvsFrames) ));
 
 #else
-	
-	/* Dump out the data */ 		
-   	DPFDEV((DBG_MESSAGE, "%4d,   %10.2f,       %10.2f,            %5d,          %5d,    %5d",
-		Times[TOTAL_RENDER_TIME].Count,
-		fTotalSWTimeToAverage*gfInvsFrames,
-		fTotalHWTimeToAverage*gfInvsFrames,
-		(int)(nPolygonsToAverage*gfInvsFrames),
-		(int)(nTransPolygonsToAverage*gfInvsFrames),
-		(int)(nOpaquePolygonsToAverage*gfInvsFrames) ));
+
+    /* Dump out the data */
+       DPFDEV((DBG_MESSAGE, "%4d,   %10.2f,       %10.2f,            %5d,          %5d,    %5d",
+        Times[TOTAL_RENDER_TIME].Count,
+        fTotalSWTimeToAverage*gfInvsFrames,
+        fTotalHWTimeToAverage*gfInvsFrames,
+        (int)(nPolygonsToAverage*gfInvsFrames),
+        (int)(nTransPolygonsToAverage*gfInvsFrames),
+        (int)(nOpaquePolygonsToAverage*gfInvsFrames) ));
 #endif
 }
 
 void OutputTotalMetric(void)
-{   
-	/* End recorded time */
-	SGL_TIME_STOP(TOTAL_APP_TIME)
+{
+    /* End recorded time */
+    SGL_TIME_STOP(TOTAL_APP_TIME)
 
-	/* Dump out the data */ 		
-   	if(Times[TOTAL_RENDER_TIME].Count)
-	{
+    /* Dump out the data */
+       if(Times[TOTAL_RENDER_TIME].Count)
+    {
 #if TIMING
 
-   		DPFTIME(("Total Frame                             %10d", 
-   			Times[TOTAL_RENDER_TIME].Count));
-		DPFTIME(("Average Frame Time                      %10.2f", 
-  			(fTotalTime/Times[TOTAL_RENDER_TIME].Count) ));
-		DPFTIME(("Average Software Time per Frame         %10.2f",
-			(fTotalSWTime+fTotalSWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
-		DPFTIME(("Average Waiting for Hardware            %10.2f", 
-  			(fTotalHWTime+fTotalHWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
-		DPFTIME(("Average Polygons per Frame              %10d", 
-			(nTotalPolygons+nPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
-		DPFTIME(("Average Translucent Polygons            %10d",
-			(nTotalTransPolygons+nTransPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
-		DPFTIME(("Average Opaque Polygons                 %10d",
-			(nTotalOpaquePolygons+nOpaquePolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));  	
+           DPFTIME(("Total Frame                             %10d",
+               Times[TOTAL_RENDER_TIME].Count));
+        DPFTIME(("Average Frame Time                      %10.2f",
+              (fTotalTime/Times[TOTAL_RENDER_TIME].Count) ));
+        DPFTIME(("Average Software Time per Frame         %10.2f",
+            (fTotalSWTime+fTotalSWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
+        DPFTIME(("Average Waiting for Hardware            %10.2f",
+              (fTotalHWTime+fTotalHWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
+        DPFTIME(("Average Polygons per Frame              %10d",
+            (nTotalPolygons+nPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
+        DPFTIME(("Average Translucent Polygons            %10d",
+            (nTotalTransPolygons+nTransPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
+        DPFTIME(("Average Opaque Polygons                 %10d",
+            (nTotalOpaquePolygons+nOpaquePolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
 
 #else
 
-		DPFDEV((DBG_FATAL, "Total Frame                             %10d", 
-   			Times[TOTAL_RENDER_TIME].Count));
-		DPFDEV((DBG_FATAL, "Average Frame Time                      %10.2f", 
-  			(fTotalTime/Times[TOTAL_RENDER_TIME].Count) ));
-		DPFDEV((DBG_FATAL, "Average Software Time per Frame         %10.2f",
-			(fTotalSWTime+fTotalSWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
-  		DPFDEV((DBG_FATAL, "Average Waiting for Hardware            %10.2f", 
-  			(fTotalHWTime+fTotalHWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
-		DPFDEV((DBG_FATAL, "Average Polygons per Frame              %10d", 
-			(nTotalPolygons+nPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
-		DPFDEV((DBG_FATAL, "Average Translucent Polygons            %10d",
-			(nTotalTransPolygons+nTransPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
-		DPFDEV((DBG_FATAL, "Average Opaque Polygons                 %10d",
-			(nTotalOpaquePolygons+nOpaquePolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));  	
+        DPFDEV((DBG_FATAL, "Total Frame                             %10d",
+               Times[TOTAL_RENDER_TIME].Count));
+        DPFDEV((DBG_FATAL, "Average Frame Time                      %10.2f",
+              (fTotalTime/Times[TOTAL_RENDER_TIME].Count) ));
+        DPFDEV((DBG_FATAL, "Average Software Time per Frame         %10.2f",
+            (fTotalSWTime+fTotalSWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
+          DPFDEV((DBG_FATAL, "Average Waiting for Hardware            %10.2f",
+              (fTotalHWTime+fTotalHWTimeToAverage)/Times[TOTAL_RENDER_TIME].Count ));
+        DPFDEV((DBG_FATAL, "Average Polygons per Frame              %10d",
+            (nTotalPolygons+nPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
+        DPFDEV((DBG_FATAL, "Average Translucent Polygons            %10d",
+            (nTotalTransPolygons+nTransPolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
+        DPFDEV((DBG_FATAL, "Average Opaque Polygons                 %10d",
+            (nTotalOpaquePolygons+nOpaquePolygonsToAverage)/Times[TOTAL_RENDER_TIME].Count));
 #endif
-		nRendersRecorded = -1;
-	}
+        nRendersRecorded = -1;
+    }
 }
 
 void DrawStateBar(PSGLCONTEXT pContext)
 {
-	SGLCONTEXT StateBarContext = *pContext;
-	SGLVERTEX Vertices[2];
-	sgl_uint16 pSprites[][2] = {0,1};
+    SGLCONTEXT StateBarContext = *pContext;
+    SGLVERTEX Vertices[2];
+    sgl_uint16 pSprites[][2] = {0,1};
 
-	/* make the context safe for flat shaded */
-	StateBarContext.u32Flags &= ~SGLTT_TEXTURE;
-	StateBarContext.u32Flags &= ~SGLTT_GOURAUD;
-	StateBarContext.u32Flags &= ~SGLTT_HIGHLIGHT;
-	StateBarContext.u32Flags &= ~SGLTT_VERTEXTRANS;
-	StateBarContext.u32Flags &= ~SGLTT_GLOBALTRANS;
-	StateBarContext.u32Flags &= ~SGLTT_DISABLEZBUFFER;
-	
-	Vertices[0].u32Colour = 0x00ffffff;
-	Vertices[1].u32Colour = 0x00ffffff;
+    /* make the context safe for flat shaded */
+    StateBarContext.u32Flags &= ~SGLTT_TEXTURE;
+    StateBarContext.u32Flags &= ~SGLTT_GOURAUD;
+    StateBarContext.u32Flags &= ~SGLTT_HIGHLIGHT;
+    StateBarContext.u32Flags &= ~SGLTT_VERTEXTRANS;
+    StateBarContext.u32Flags &= ~SGLTT_GLOBALTRANS;
+    StateBarContext.u32Flags &= ~SGLTT_DISABLEZBUFFER;
 
-	Vertices[0].fInvW = 10.0f;
-	Vertices[1].fInvW = 10.0f;
-	
-	/* draw bachground white bar */
-	Vertices[0].fX = 1.0f; 
-	Vertices[1].fX = (float)(DeviceX - 2);
-	Vertices[0].fY = (float)(DeviceY - 2);
-	Vertices[1].fY = (float)(DeviceY - 6);
-		
-	sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
+    Vertices[0].u32Colour = 0x00ffffff;
+    Vertices[1].u32Colour = 0x00ffffff;
 
-	/* draw state bar for Frame time */
-   	Vertices[0].u32Colour = 0x00ffff00;
-	Vertices[1].u32Colour = 0x00ffff00;
-	Vertices[0].fY = (float)(DeviceY - 3);
-	Vertices[1].fY = (float)(DeviceY - 5);
+    Vertices[0].fInvW = 10.0f;
+    Vertices[1].fInvW = 10.0f;
 
-	Vertices[0].fX = 2.0f;
-	Vertices[1].fX = 2.0f + fTotalTimeInFrame*fScale;
-	
-	if(Vertices[1].fX > (float)(DeviceX - 3))
-	{
-		Vertices[1].fX = (float)(DeviceX - 3);
-	}
-		
-	sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
+    /* draw bachground white bar */
+    Vertices[0].fX = 1.0f;
+    Vertices[1].fX = (float)(DeviceX - 2);
+    Vertices[0].fY = (float)(DeviceY - 2);
+    Vertices[1].fY = (float)(DeviceY - 6);
 
-	/* draw state bar for SW time */
-   	Vertices[0].u32Colour = 0x00ff00ff;
-	Vertices[1].u32Colour = 0x00ff00ff;
-	Vertices[0].fY = (float)(DeviceY - 3);
-	Vertices[1].fY = (float)(DeviceY - 5);
+    sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
 
-	Vertices[0].fX = 2.0f;
-	Vertices[1].fX = 2.0f + fTotalSWTimeInFrame*fScale;
-	
-	if(Vertices[1].fX > (float)(DeviceX - 3))
-	{
-		Vertices[1].fX = (float)(DeviceX - 3);
-	}
-		
-	sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
+    /* draw state bar for Frame time */
+       Vertices[0].u32Colour = 0x00ffff00;
+    Vertices[1].u32Colour = 0x00ffff00;
+    Vertices[0].fY = (float)(DeviceY - 3);
+    Vertices[1].fY = (float)(DeviceY - 5);
 
-	if(fTotalHWTimeInFrame >= 0.01)
-	{
-		/* draw state bar for HW time */
-		Vertices[0].u32Colour = 0x000000ff;
-		Vertices[1].u32Colour = 0x000000ff;
-		Vertices[0].fX = Vertices[1].fX; 
-		Vertices[1].fX = Vertices[0].fX + fTotalHWTimeInFrame*fScale;
+    Vertices[0].fX = 2.0f;
+    Vertices[1].fX = 2.0f + fTotalTimeInFrame*fScale;
 
-		if(Vertices[1].fX > (float)(DeviceX - 3))
-		{
-			Vertices[1].fX = (float)(DeviceX - 3);
-		}
-		
-		sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
-	}
+    if(Vertices[1].fX > (float)(DeviceX - 3))
+    {
+        Vertices[1].fX = (float)(DeviceX - 3);
+    }
+
+    sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
+
+    /* draw state bar for SW time */
+       Vertices[0].u32Colour = 0x00ff00ff;
+    Vertices[1].u32Colour = 0x00ff00ff;
+    Vertices[0].fY = (float)(DeviceY - 3);
+    Vertices[1].fY = (float)(DeviceY - 5);
+
+    Vertices[0].fX = 2.0f;
+    Vertices[1].fX = 2.0f + fTotalSWTimeInFrame*fScale;
+
+    if(Vertices[1].fX > (float)(DeviceX - 3))
+    {
+        Vertices[1].fX = (float)(DeviceX - 3);
+    }
+
+    sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
+
+    if(fTotalHWTimeInFrame >= 0.01)
+    {
+        /* draw state bar for HW time */
+        Vertices[0].u32Colour = 0x000000ff;
+        Vertices[1].u32Colour = 0x000000ff;
+        Vertices[0].fX = Vertices[1].fX;
+        Vertices[1].fX = Vertices[0].fX + fTotalHWTimeInFrame*fScale;
+
+        if(Vertices[1].fX > (float)(DeviceX - 3))
+        {
+            Vertices[1].fX = (float)(DeviceX - 3);
+        }
+
+        sgltri_sprites(&StateBarContext, 1, pSprites, Vertices);
+    }
 }
 
 #endif
@@ -652,9 +658,8 @@ void DrawStateBar(PSGLCONTEXT pContext)
  * Description    : Gets the name table for people who don't like too
  *					many header files in their lives
  **************************************************************************/
-P_NAMTAB_STRUCT GetNameTable (void)
-{
-	return (dlUserGlobals.pNamtab);
+P_NAMTAB_STRUCT GetNameTable(void) {
+    return (dlUserGlobals.pNamtab);
 }
 
 #ifdef SGLLITE
@@ -671,23 +676,23 @@ P_NAMTAB_STRUCT GetNameTable (void)
  *****************************************************************************/
 sgl_versions * CALL_CONV sgl_get_versions()
 {
-	static sgl_versions  versions;
+    static sgl_versions  versions;
 
-	versions.library = VER_LIB_TXT;
-	versions.required_header = SGL_HEADER_VERSION;
+    versions.library = VER_LIB_TXT;
+    versions.required_header = SGL_HEADER_VERSION;
 
-	return &versions;
+    return &versions;
 }
 
 /**************************************************************************
- * Function Name  : SglInitialise 
+ * Function Name  : SglInitialise
  * Description    : Dummy initialistion routine to link a 'lite' library
  *					routines.
  **************************************************************************/
 
 int SglInitialise(void)
 {
-	return SglLiteInit();
+    return SglLiteInit();
 }
 
 /**************************************************************************
@@ -702,119 +707,119 @@ int SglInitialise(void)
 
 int SglLiteInit(void)
 {
-	int result;
+    int result;
 
-	/*
-	// Assume success until proven otherwise
-	*/
-	result = 0;
+    /*
+    // Assume success until proven otherwise
+    */
+    result = 0;
 
-	/*
-	// If we havent initialised the system, do so
-	*/
-	if(sglSystemInitialised == 0)
-	{
-		#if !MAC
+    /*
+    // If we havent initialised the system, do so
+    */
+    if(sglSystemInitialised == 0)
+    {
+#if !MAC
 
-			/* The Mac driver gets loaded as required, so this
-			 * just causes an ugly console window to open every
-			 * time the user runs a Rave App
-			 */
-			PVROSPrintf("Initialising SGL Ver:%s\n", VER_LIB_TXT);
+            /* The Mac driver gets loaded as required, so this
+             * just causes an ugly console window to open every
+             * time the user runs a Rave App
+             */
+            PVROSPrintf("Initialising SGL Ver:%s\n", VER_LIB_TXT);
 
-		#endif
-		
-		#if WIN32 || DOS32
-
-			if (!InitEnvironment ())
-			{
-				exit (1);
-			}
-
-		#endif
-
-		#if DEBUG
-				DebugInit(DBGPRIV_WARNING);
-		#elif DEBUGDEV || TIMING
-				DebugInit(DBGPRIV_MESSAGE);
-	   	#endif
-
-		
-#if !WIN32		
-		/* get the render timeout in tenths of a second */
-		nTimeOutTenths = HWRdValFile( "RenderTimeout", 2);
-
-		HWReset(); /* this is a full on reset*/
-
-		#if ISPTSP
-			HWSetupBunchOfBRIDGERegs();
-		#endif
-		
-		HWSetupBunchOfISPRegs();
-
-		HWSetupBunchOfTSPRegs();
 #endif
-		/*
-		** Set up the name table
-		*/
-		result = InitNamtab( & dlUserGlobals.pNamtab);
-			
-		if(result == 0)
-		{
-			InitRegionDataL(); /* Previously in the  RnInitialise funcion */
-		}
+
+#if WIN32 || DOS32
+
+            if (!InitEnvironment ())
+            {
+                exit (1);
+            }
+
+#endif
+
+#if DEBUG
+                DebugInit(DBGPRIV_WARNING);
+#elif DEBUGDEV || TIMING
+                DebugInit(DBGPRIV_MESSAGE);
+#endif
+
 
 #if !WIN32
-		if(result==0)
-		{
-		  	/* read the size for the texture parameter space in 4k pages */
-		    TexParamSize = 1024*HWRdValFile( "TSPParamSize", (TEX_PARAM_SIZE/1024));
-			result = HWInitParamMem();
-		}
+        /* get the render timeout in tenths of a second */
+        nTimeOutTenths = HWRdValFile( "RenderTimeout", 2);
+
+        HWReset(); /* this is a full on reset*/
+
+#if ISPTSP
+            HWSetupBunchOfBRIDGERegs();
 #endif
 
-		/* Initialise the bit twiddling table IF SIMULATOR*/
+        HWSetupBunchOfISPRegs();
+
+        HWSetupBunchOfTSPRegs();
+#endif
+        /*
+        ** Set up the name table
+        */
+        result = InitNamtab( & dlUserGlobals.pNamtab);
+
+        if(result == 0)
+        {
+            InitRegionDataL(); /* Previously in the  RnInitialise funcion */
+        }
+
+#if !WIN32
+        if(result==0)
+        {
+              /* read the size for the texture parameter space in 4k pages */
+            TexParamSize = 1024*HWRdValFile( "TSPParamSize", (TEX_PARAM_SIZE/1024));
+            result = HWInitParamMem();
+        }
+#endif
+
+        /* Initialise the bit twiddling table IF SIMULATOR*/
 #if SIMULATOR
-		InitTwiddle();
+        InitTwiddle();
 #endif
 
-		/*
-		// Initialse the texture cache control structure
-		*/
-		InitCachedTextures();
+        /*
+        // Initialse the texture cache control structure
+        */
+        InitCachedTextures();
 #if !WIN32
 
-		/* this allocates the overflow area for sabre parameters.
-		** It HAS to be done in this position/
-		*/
+        /* this allocates the overflow area for sabre parameters.
+        ** It HAS to be done in this position/
+        */
 
-		SetupOverflowArea(TexParamSize);
+        SetupOverflowArea(TexParamSize);
 
-		/*	the translucent pixel HAS to be set up after the
-			texture memory */
-	
-		TranslucentControlWord=SetupTransPixel();
+        /*	the translucent pixel HAS to be set up after the
+            texture memory */
+
+        TranslucentControlWord=SetupTransPixel();
 #endif
 
-		/* init fast inverse sqrt lookup table */
+        /* init fast inverse sqrt lookup table */
 
-		MakeInvSqrtLookupTable ();
-		
-		if(result == 0)
-		{
-			sglSystemInitialised = 1;
-		}
+        MakeInvSqrtLookupTable ();
 
-		/*
-		// Initialise whether we are logging memory acesses
-		*/
+        if(result == 0)
+        {
+            sglSystemInitialised = 1;
+        }
+
+        /*
+        // Initialise whether we are logging memory acesses
+        */
 #if WIN32 && (DEBUG || LogRelease)
-			InitLogMemFile();
+            InitLogMemFile();
 #endif
-		
-	}/*End if system not initialised*/
 
-	return result;
+    }/*End if system not initialised*/
+
+    return result;
 }
 
 #endif
@@ -831,66 +836,63 @@ int SglLiteInit(void)
  *
  *****************************************************************************/
 
-float 	fMinInvZ = INVZ_DEFAULT_SCALE_VALUE;
+float fMinInvZ = INVZ_DEFAULT_SCALE_VALUE;
 int nNoSortAppHint;
 
-static void GetApplicationHints ()
-{
-	static sgl_uint32 GotHints = FALSE;
+static void GetApplicationHints() {
+    static sgl_uint32 GotHints = FALSE;
 
-	if (!GotHints)
-	{
-		#if WIN32
-		fMinInvZ = HWRdValFileFloat ("Near Z Clip", fMinInvZ);
+    if (!GotHints) {
+#if WIN32
+        fMinInvZ = HWRdValFileFloat("Near Z Clip", fMinInvZ);
 
-		/* Read the maximum allowable translucent passes per tile. Read default section first
-		 * and then read the app hint section.
-		 */
-		nMaxPassCount = HWRdValFileUInt ("MaxNumPasses", 0x0FFFFFFF);
+        /* Read the maximum allowable translucent passes per tile. Read default section first
+         * and then read the app hint section.
+         */
+        nMaxPassCount = HWRdValFileUInt("MaxNumPasses", 0x0FFFFFFF);
 
-		/* Read the dithering setting if present.
-		 */
-		uDithering = HWRdValFileUInt ("Dithering", uDithering);
+        /* Read the dithering setting if present.
+         */
+        uDithering = HWRdValFileUInt("Dithering", uDithering);
 
-		/* Read the no sort setting if present.	*/
-		nNoSortAppHint = HWRdValFileUInt ("SGLTRANSSORT", 0);
+        /* Read the no sort setting if present.	*/
+        nNoSortAppHint = HWRdValFileUInt("SGLTRANSSORT", 0);
 
 #if DEBUGDEV || TIMING
-		gnOutputToConsole = HWRdValFileUInt("OutputToConsole", 0);
-		gnFramesToAverage = HWRdValFileUInt("FramesToAverage", 100);
-		if(gnFramesToAverage)
-		{
-			gfInvsFrames = 1.0/gnFramesToAverage;
-		}
+        gnOutputToConsole = HWRdValFileUInt("OutputToConsole", 0);
+        gnFramesToAverage = HWRdValFileUInt("FramesToAverage", 100);
+        if(gnFramesToAverage)
+        {
+            gfInvsFrames = 1.0/gnFramesToAverage;
+        }
 #endif
-		
+
 #if PCX2
-		/* Do we allow the user the masking plane.
-		 */
-		bUseMaskingPlane = HWRdValFileUInt ( "UseMaskingPlane", 0);
+        /* Do we allow the user the masking plane.
+         */
+        bUseMaskingPlane = HWRdValFileUInt("UseMaskingPlane", 0);
 
-		if (bUseMaskingPlane)
-		{
-			/* Do we use the full masking plane or not. The full masking plane
-			 * is required to prevent sparkles in D3D applications when the
-			 * masking plane is being used. This is due to a bug in the hardware.
-			 * Should be fixed in PCX2-003. This has a side effect of some
-			 * applications running slower.
-			 * The default is with the minimum masking plane.
-			 */
-			bFullMaskingPlane =  HWRdValFileUInt( "FullMaskingPlane", 0);
+        if (bUseMaskingPlane) {
+            /* Do we use the full masking plane or not. The full masking plane
+             * is required to prevent sparkles in D3D applications when the
+             * masking plane is being used. This is due to a bug in the hardware.
+             * Should be fixed in PCX2-003. This has a side effect of some
+             * applications running slower.
+             * The default is with the minimum masking plane.
+             */
+            bFullMaskingPlane = HWRdValFileUInt("FullMaskingPlane", 0);
 
-			/* Do we allow the user to set the colour of the masking plane.
-			 */
-			bSetMaskingBGColour = HWRdValFileUInt("SetMaskingBGColour", 0);
-		}
+            /* Do we allow the user to set the colour of the masking plane.
+             */
+            bSetMaskingBGColour = HWRdValFileUInt("SetMaskingBGColour", 0);
+        }
 #endif
-		#else
-		#pragma message ("Application hints disabled!")
-		#endif
+#else
+#pragma message ("Application hints disabled!")
+#endif
 
-		GotHints = TRUE;
-	}
+        GotHints = TRUE;
+    }
 }
 
 /******************************************************************************
@@ -908,9 +910,8 @@ static void GetApplicationHints ()
  *****************************************************************************/
 static int gDeviceName = 0;
 
-void SaveDeviceName(int name)
-{
-	gDeviceName = name;
+void SaveDeviceName(int name) {
+    gDeviceName = name;
 }
 
 
@@ -926,254 +927,245 @@ void SaveDeviceName(int name)
  * Description    : see sgltri.h header file
  *****************************************************************************/
 /* used when getting parameter buffers */
-extern HLDEVICE        gHLogicalDev;
+extern HLDEVICE gHLogicalDev;
 
-extern void CALL_CONV sgltri_startofframe(PSGLCONTEXT pContext)
-{
-	DEVICE_REGION_INFO_STRUCT	RegionInfo;
-	REGIONS_RECT_STRUCT			RegionRect;
-	sgl_int32  						BackGroundStart;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	PVROSERR err ;									  
+extern void CALL_CONV sgltri_startofframe(PSGLCONTEXT pContext) {
+    DEVICE_REGION_INFO_STRUCT RegionInfo;
+    REGIONS_RECT_STRUCT RegionRect;
+    sgl_int32 BackGroundStart;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    PVROSERR err;
 
 #ifdef DLL_METRIC
-	if( ++nRendersRecorded == 0 )
-	{
-		/* Set it to zero the first frame */
-		memset( &Times, 0, NUM_TIMERS*sizeof(Temporal_Data) );
-		nTotalPolygons = nTotalTransPolygons = nTotalOpaquePolygons = 0;
-		nNumberOfFrames = 0;
-		nPolygonsToAverage = 0;
-		nTransPolygonsToAverage = 0;
-		nOpaquePolygonsToAverage = 0;
-		fTotalSWTimeToAverage = 0.0;
-		fTotalHWTimeToAverage = 0.0;
-		fTotalTime = 0.0;
-		fTotalSWTime = 0.0;
-		fTotalHWTime = 0.0;
-#if TIMING		
-		DPFTIME(("             Performence Frame Rate")); 
-		DPFTIME(("Frame,  Total Polygons,  Translucent,  Opaque")); 
-#elif DEBUGDEV		
-		DPFDEV((DBG_MESSAGE,"					  Performence Frame Rate                          ")); 
-		DPFDEV((DBG_MESSAGE,"Frame,  Software Time, Waiting for Hardware, Total Polygons, Translucent, Opaque")); 
+    if( ++nRendersRecorded == 0 )
+    {
+        /* Set it to zero the first frame */
+        memset( &Times, 0, NUM_TIMERS*sizeof(Temporal_Data) );
+        nTotalPolygons = nTotalTransPolygons = nTotalOpaquePolygons = 0;
+        nNumberOfFrames = 0;
+        nPolygonsToAverage = 0;
+        nTransPolygonsToAverage = 0;
+        nOpaquePolygonsToAverage = 0;
+        fTotalSWTimeToAverage = 0.0;
+        fTotalHWTimeToAverage = 0.0;
+        fTotalTime = 0.0;
+        fTotalSWTime = 0.0;
+        fTotalHWTime = 0.0;
+#if TIMING
+        DPFTIME(("             Performence Frame Rate"));
+        DPFTIME(("Frame,  Total Polygons,  Translucent,  Opaque"));
+#elif DEBUGDEV
+        DPFDEV((DBG_MESSAGE,"					  Performence Frame Rate                          "));
+        DPFDEV((DBG_MESSAGE,"Frame,  Software Time, Waiting for Hardware, Total Polygons, Translucent, Opaque"));
 #endif
-		GET_TICK_FREQ(gfCPUSpeed);
-		if(!gfCPUSpeed)
-		{
-			DPFDEV((DBG_MESSAGE, "Failed to get CPU Frequence"));
-		}
-		else
-		{
-			gfCPUSpeed = 1000.0f/gfCPUSpeed;
-		}
+        GET_TICK_FREQ(gfCPUSpeed);
+        if(!gfCPUSpeed)
+        {
+            DPFDEV((DBG_MESSAGE, "Failed to get CPU Frequence"));
+        }
+        else
+        {
+            gfCPUSpeed = 1000.0f/gfCPUSpeed;
+        }
 
-		/* Start recorded time */
-	   	SGL_TIME_START(TOTAL_APP_TIME)
-		GetFrameTime();
-	}
-	nTotalPolygonsInFrame = 0;
-	nTransPolygonsInFrame = 0;
-	nOpaquePolygonsInFrame = 0;
+        /* Start recorded time */
+           SGL_TIME_START(TOTAL_APP_TIME)
+        GetFrameTime();
+    }
+    nTotalPolygonsInFrame = 0;
+    nTransPolygonsInFrame = 0;
+    nOpaquePolygonsInFrame = 0;
 #endif
-	
-	SGL_TIME_START(SGLTRI_STARTOFFRAME1_TIME)
 
-	gu32UsedFlags |= pContext->u32Flags;
+    SGL_TIME_START(SGLTRI_STARTOFFRAME1_TIME)
+
+    gu32UsedFlags |= pContext->u32Flags;
 #if !WIN32
     if (SglInitialise ())
-	{
-		SglError (sgl_err_failed_init);
-		return;
-	}
+    {
+        SglError (sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	GetApplicationHints ();
+    GetApplicationHints();
 
-	/*
-	// Reset the region lists structures to be empty
-	*/
-	ResetRegionDataL (FALSE);
+    /*
+    // Reset the region lists structures to be empty
+    */
+    ResetRegionDataL(FALSE);
 
-	/*
-	// Get parameter memory, if available...
-	*/
-	
+    /*
+    // Get parameter memory, if available...
+    */
+
 #if WIN32
-	err = PVROSAssignVirtualBuffers(PVRParamBuffs, gHLogicalDev);
-	if(err!=PVROS_GROOVY)
-	{
-		SglError (sgl_err_failed_init);
-		return;
-	}
+    err = PVROSAssignVirtualBuffers(PVRParamBuffs, gHLogicalDev);
+    if (err != PVROS_GROOVY) {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #else
-	GetParameterSpace(PVRParamBuffs);
+    GetParameterSpace(PVRParamBuffs);
 #endif
-	
-	/*
-	// Reset the "fog used" global value auntil proven incorrect.
-	*/
-	FogUsed = 0;
+
+    /*
+    // Reset the "fog used" global value auntil proven incorrect.
+    */
+    FogUsed = 0;
 
 #if PCX2
-	bFilteringOverRide =  PVROSFilteringOveride();
-	bBilinearEnabled =  PVROSBilinearEnabled();
-#endif	
-
-#if PCX2 || PCX2_003
-	pProjMat->f32FixedClipDist = 1.0f;
-#else
-	pProjMat->n32FixedClipDist = 0x7FFFFFFF;
+    bFilteringOverRide = PVROSFilteringOveride();
+    bBilinearEnabled = PVROSBilinearEnabled();
 #endif
 
-	/* no sort method */
-	if(!nNoSortAppHint)
-	{
-		if(pContext->u32Flags & SGLTT_SELECTTRANSSORT)
-			gNoSortTransFaces = (int)pContext->eTransSortMethod;
-	}
-	else
-	{
-		gNoSortTransFaces = nNoSortAppHint;
-	}
-
-	/* //////////////////////////////////////////////////
-	/////////////////////////////////////////////////////
-	// Add some "special" objects direct to the parameter
-	// store. THESE SHOULD BE MOVED OUT AND SET UP ONCE ONLY
-	// DURING INTIALISATION (obviously the initial pointers would have
-	// to take account of these).
-	/////////////////////////////////////////////////////
-	////////////////////////////////////////////////// */
-	AddDummyPlanesL (pContext->eShadowLightVolMode);
-
-	/* device 0 for now
-	 */
-	HWGetRegionInfo (0, &RegionInfo);
-
-	RegionRect.FirstXRegion = 0;
-	RegionRect.FirstYRegion = 0;
-	RegionRect.LastXRegion = RegionInfo.NumXRegions - 1;
-	RegionRect.LastYRegion = RegionInfo.NumYRegions - 1;
-
-	BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-
-	#if PCX2 || PCX2_003
-	if (bExternalAPI && (pContext->u32Flags & SGLTT_TRANSBACKGROUND))
-	{
-		/**************************************************
-		 * When masking support is enabled fast fog must be
-		 * disabled. Currently the assumption is that fast
-		 * fogging will be disabled in the sglhw.ini or in
-		 * the registry settings.
-		 *
-		 * This is only relevant to PCX2 drivers (ie sglmid5)
-		 * since PCX1 drivers never have fast fog even when
-		 * using PCX2 hardware.
-		 **************************************************/
-
-		/* Pack a textured plane for the masking plane. The routine
-		 * PackTexasMask() automatically sets the TSP tag for the
-		 * masking plane to 2. ie no need to save and restore TSP tags.
-		 */
-		TSPBackgroundAddress = PackTexasMask (pContext->cBackgroundColour,
-											 FALSE, 
-											 FALSE);
-	}
-	else
-	#endif	/* #if PCX2	*/
-	{
-		/* Masking not required. No such thing in SGLDirect as it is only
-		 * needed for D3D.
-		 */
-		TSPBackgroundAddress = PackTexasFlat(pContext->cBackgroundColour, 
-											pContext->bFogOn, 
-											pContext->eShadowLightVolMode);
-	}
-
-	/* Add the background plane. The TSP tag used is either a flat
-	 * textured plane or a full textured masking plane.
-	 */
 #if PCX2 || PCX2_003
-	PackBackgroundPlane (TSPBackgroundAddress, 0.0f);
+    pProjMat->f32FixedClipDist = 1.0f;
 #else
-	PackBackgroundPlane (TSPBackgroundAddress, 0);
+    pProjMat->n32FixedClipDist = 0x7FFFFFFF;
 #endif
-	AddRegionOpaqueL (&RegionRect, BackGroundStart, 1);
 
+    /* no sort method */
+    if (!nNoSortAppHint) {
+        if (pContext->u32Flags & SGLTT_SELECTTRANSSORT)
+            gNoSortTransFaces = (int) pContext->eTransSortMethod;
+    } else {
+        gNoSortTransFaces = nNoSortAppHint;
+    }
 
-	/* Add the opaque pass flushing plane. Use a seperate flat textured
-	 * plane since if D3D a full textured plane may be specified in
-	 * TSPBackgroundAddress.
-	 */
-	BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+    /* //////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
+    // Add some "special" objects direct to the parameter
+    // store. THESE SHOULD BE MOVED OUT AND SET UP ONCE ONLY
+    // DURING INTIALISATION (obviously the initial pointers would have
+    // to take account of these).
+    /////////////////////////////////////////////////////
+    ////////////////////////////////////////////////// */
+    AddDummyPlanesL(pContext->eShadowLightVolMode);
+
+    /* device 0 for now
+     */
+    HWGetRegionInfo(0, &RegionInfo);
+
+    RegionRect.FirstXRegion = 0;
+    RegionRect.FirstYRegion = 0;
+    RegionRect.LastXRegion = RegionInfo.NumXRegions - 1;
+    RegionRect.LastYRegion = RegionInfo.NumYRegions - 1;
+
+    BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 #if PCX2 || PCX2_003
-	PackBackgroundPlane ( PackTexasFlat(pContext->cBackgroundColour, 
-											FALSE, FALSE), -1.0f);
-#else
-	PackBackgroundPlane ( PackTexasFlat(pContext->cBackgroundColour, 
-											FALSE, FALSE), -64);
-#endif
-	AddFlushingPlaneL (BackGroundStart);
+    if (bExternalAPI && (pContext->u32Flags & SGLTT_TRANSBACKGROUND)) {
+        /**************************************************
+         * When masking support is enabled fast fog must be
+         * disabled. Currently the assumption is that fast
+         * fogging will be disabled in the sglhw.ini or in
+         * the registry settings.
+         *
+         * This is only relevant to PCX2 drivers (ie sglmid5)
+         * since PCX1 drivers never have fast fog even when
+         * using PCX2 hardware.
+         **************************************************/
 
-		
-	/* Add translucent flushing plane.
-	 */
-	BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+        /* Pack a textured plane for the masking plane. The routine
+         * PackTexasMask() automatically sets the TSP tag for the
+         * masking plane to 2. ie no need to save and restore TSP tags.
+         */
+        TSPBackgroundAddress = PackTexasMask(pContext->cBackgroundColour,
+                                             FALSE,
+                                             FALSE);
+    } else
+#endif    /* #if PCX2	*/
+    {
+        /* Masking not required. No such thing in SGLDirect as it is only
+         * needed for D3D.
+         */
+        TSPBackgroundAddress = PackTexasFlat(pContext->cBackgroundColour,
+                                             pContext->bFogOn,
+                                             pContext->eShadowLightVolMode);
+    }
+
+    /* Add the background plane. The TSP tag used is either a flat
+     * textured plane or a full textured masking plane.
+     */
+#if PCX2 || PCX2_003
+    PackBackgroundPlane(TSPBackgroundAddress, 0.0f);
+#else
+    PackBackgroundPlane (TSPBackgroundAddress, 0);
+#endif
+    AddRegionOpaqueL(&RegionRect, BackGroundStart, 1);
+
+
+    /* Add the opaque pass flushing plane. Use a seperate flat textured
+     * plane since if D3D a full textured plane may be specified in
+     * TSPBackgroundAddress.
+     */
+    BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
 #if PCX2 || PCX2_003
-	PackBackgroundPlane (PackTexasTransparent (FALSE), -1.0f);
+    PackBackgroundPlane(PackTexasFlat(pContext->cBackgroundColour,
+                                      FALSE, FALSE), -1.0f);
 #else
-	PackBackgroundPlane (PackTexasTransparent (FALSE), -64);
+    PackBackgroundPlane ( PackTexasFlat(pContext->cBackgroundColour,
+                                            FALSE, FALSE), -64);
 #endif
-	AddTransFlushingPlaneL (BackGroundStart);
+    AddFlushingPlaneL(BackGroundStart);
 
-	pContext->FirstXRegion = RegionRect.FirstXRegion;
-	pContext->FirstYRegion = RegionRect.FirstYRegion;
-	pContext->LastXRegion = RegionRect.LastXRegion;
-	pContext->LastYRegion = RegionRect.LastYRegion;
 
-	pContext->invRegX = 1.0f / RegionInfo.XSize;
-	pContext->invRegY = 1.0f / RegionInfo.YSize;
+    /* Add translucent flushing plane.
+     */
+    BackGroundStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
 
-	if (pContext->eShadowLightVolMode == ENABLE_LIGHTVOLS)
-	{
-		AllowLightVolAdditionL (&RegionRect);
-	}
+#if PCX2 || PCX2_003
+    PackBackgroundPlane(PackTexasTransparent(FALSE), -1.0f);
+#else
+    PackBackgroundPlane (PackTexasTransparent (FALSE), -64);
+#endif
+    AddTransFlushingPlaneL(BackGroundStart);
 
-	gfBogusInvZ = 0.0f;
-	
+    pContext->FirstXRegion = RegionRect.FirstXRegion;
+    pContext->FirstYRegion = RegionRect.FirstYRegion;
+    pContext->LastXRegion = RegionRect.LastXRegion;
+    pContext->LastYRegion = RegionRect.LastYRegion;
+
+    pContext->invRegX = 1.0f / RegionInfo.XSize;
+    pContext->invRegY = 1.0f / RegionInfo.YSize;
+
+    if (pContext->eShadowLightVolMode == ENABLE_LIGHTVOLS) {
+        AllowLightVolAdditionL(&RegionRect);
+    }
+
+    gfBogusInvZ = 0.0f;
+
 #if PCX2_003
-	/* For PCX2-003 the filter selection is determined by both
-	 * eFilterType and SGLTT_BILINEAR flag. 
-	 */
+    /* For PCX2-003 the filter selection is determined by both
+     * eFilterType and SGLTT_BILINEAR flag.
+     */
 
-	if (pContext->u32Flags & SGLTT_BILINEAR)
-	{
-		pProjMat->eFilterType = pContext->eFilterType;
-	}
-	else
-	{
-		pProjMat->eFilterType = sgl_tf_point_sample;
-	}
+    if (pContext->u32Flags & SGLTT_BILINEAR)
+    {
+        pProjMat->eFilterType = pContext->eFilterType;
+    }
+    else
+    {
+        pProjMat->eFilterType = sgl_tf_point_sample;
+    }
 
 #elif PCX2
-	/* For PCX2-002 the filter selection is completely determined by
-	 * eFilterType. ie the SGLTT_BILINEAR flag is ignored.
-	 */
-	pProjMat->eFilterType = pContext->eFilterType;
+    /* For PCX2-002 the filter selection is completely determined by
+     * eFilterType. ie the SGLTT_BILINEAR flag is ignored.
+     */
+    pProjMat->eFilterType = pContext->eFilterType;
 
-	if (!bFilteringOverRide)
-	{
-		/* We haven't overriden the application settings so continue.
-		 * Bilinear enabled or not ????
-		 */
-		bBilinearEnabled = (pProjMat->eFilterType == sgl_tf_point_sample) ? FALSE : TRUE;
-	}
+    if (!bFilteringOverRide) {
+        /* We haven't overriden the application settings so continue.
+         * Bilinear enabled or not ????
+         */
+        bBilinearEnabled = (pProjMat->eFilterType == sgl_tf_point_sample) ? FALSE : TRUE;
+    }
 #endif /* #if PCX2_003	*/
 
-	SGL_TIME_STOP(SGLTRI_STARTOFFRAME2_TIME)
+    SGL_TIME_STOP(SGLTRI_STARTOFFRAME2_TIME)
 } /* sgltri_startofframe */
 
 
@@ -1190,370 +1182,354 @@ extern void CALL_CONV sgltri_startofframe(PSGLCONTEXT pContext)
  * Description    : see sgltri.h header file
  *****************************************************************************/
 
-extern void CALL_CONV sgltri_render (PSGLCONTEXT pContext)
-{
+extern void CALL_CONV sgltri_render(PSGLCONTEXT pContext) {
 #if !WIN32
-	sgl_uint32 				SabreRegionInfoStart;
+    sgl_uint32 				SabreRegionInfoStart;
 #endif
-	HDISPLAY hDisplay;
-	REGIONS_RECT_STRUCT	RegionRect;
-	sgl_bool			bRenderAllRegions;
-	DEVICE_NODE_STRUCT	*dNode;
+    HDISPLAY hDisplay;
+    REGIONS_RECT_STRUCT RegionRect;
+    sgl_bool bRenderAllRegions;
+    DEVICE_NODE_STRUCT *dNode;
 #if DEBUG
-	static int snDrawGrid = -1;
+    static int snDrawGrid = -1;
 #endif
 
 #if ISPTSP
-	int  nNumRegionsRendered;
+    int  nNumRegionsRendered;
 #endif
 #if PCX2 || PCX2_003
-	/* PCX2 Fast fog colour value. Set by SGL or SGL-Lite.
-	 */
-	sgl_colour	cFastFogColour = {0.0f, 0.0f, 0.0f};
+    /* PCX2 Fast fog colour value. Set by SGL or SGL-Lite.
+     */
+    sgl_colour cFastFogColour = {0.0f, 0.0f, 0.0f};
 
-	/* Needed to read the texture filtering setting.
-	 */
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+    /* Needed to read the texture filtering setting.
+     */
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 #endif
 
-	SGL_TIME_START(TOTAL_RENDER_TIME);
+    SGL_TIME_START(TOTAL_RENDER_TIME);
 
-	gu32UsedFlags |= pContext->u32Flags;
+    gu32UsedFlags |= pContext->u32Flags;
 
-	/*
-	// ---------------------------
-	// Ensure system is initialsed
-	// ---------------------------
-	*/
+    /*
+    // ---------------------------
+    // Ensure system is initialsed
+    // ---------------------------
+    */
 
-    if (SglInitialise ())
-	{
-		SglError (sgl_err_failed_init);
-		SGL_TIME_STOP(TOTAL_RENDER_TIME);
-		return;
+    if (SglInitialise()) {
+        SglError(sgl_err_failed_init);
+        SGL_TIME_STOP(TOTAL_RENDER_TIME);
+        return;
 
-	}
+    }
 
-	/*
-	// ---------------------------
-	// Execute the hardware render
-	// ---------------------------
-	*/
+    /*
+    // ---------------------------
+    // Execute the hardware render
+    // ---------------------------
+    */
 #if DEBUG
-	if(snDrawGrid == -1)
-	{
-		snDrawGrid = SglReadPrivateProfileInt ("DEBUG", "RegionGrid", 0, "sglhw.ini");
-	}
-	if(snDrawGrid == 1)
-	{
-		DrawRegionGrid(pContext);
-	}
+    if(snDrawGrid == -1)
+    {
+        snDrawGrid = SglReadPrivateProfileInt ("DEBUG", "RegionGrid", 0, "sglhw.ini");
+    }
+    if(snDrawGrid == 1)
+    {
+        DrawRegionGrid(pContext);
+    }
 #endif
 
 #ifdef DLL_METRIC
-	if(snStateBar == -1)
-	{
-		snStateBar = HWRdValFileUInt ("StateBar", 0);
-		if(snStateBar > 0)	 fScale = (float)((DeviceX - 4)/snStateBar);
-	}
-	if(snStateBar > 0)
-	{
-		DrawStateBar(pContext);
-	}
+    if(snStateBar == -1)
+    {
+        snStateBar = HWRdValFileUInt ("StateBar", 0);
+        if(snStateBar > 0)	 fScale = (float)((DeviceX - 4)/snStateBar);
+    }
+    if(snStateBar > 0)
+    {
+        DrawStateBar(pContext);
+    }
 #endif
 
-	RegionRect.FirstXRegion = pContext->FirstXRegion;
-	RegionRect.FirstYRegion = pContext->FirstYRegion;
-	RegionRect.LastXRegion = pContext->LastXRegion;
-	RegionRect.LastYRegion = pContext->LastYRegion;
+    RegionRect.FirstXRegion = pContext->FirstXRegion;
+    RegionRect.FirstYRegion = pContext->FirstYRegion;
+    RegionRect.LastXRegion = pContext->LastXRegion;
+    RegionRect.LastYRegion = pContext->LastYRegion;
 
 #if PCX2 || PCX2_003
-	/* Fast fogging. Pack a plane for fogging. Only used by PCX2.
-	 * Set colour of plane to FOG COLOUR !!!!
-	 */
-	{
-		sgl_uint32		nCurrentTSPAddr;
+    /* Fast fogging. Pack a plane for fogging. Only used by PCX2.
+     * Set colour of plane to FOG COLOUR !!!!
+     */
+    {
+        sgl_uint32 nCurrentTSPAddr;
 
-		cFastFogColour[0] =	pContext->fFogR;
-		cFastFogColour[1] =	pContext->fFogG;
-		cFastFogColour[2] =	pContext->fFogB;
+        cFastFogColour[0] = pContext->fFogR;
+        cFastFogColour[1] = pContext->fFogG;
+        cFastFogColour[2] = pContext->fFogB;
 
-		/* Save current TSP index.
-		 */
-		nCurrentTSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+        /* Save current TSP index.
+         */
+        nCurrentTSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
 
-		/* Tag ID of 2 (4/2) used for fogging.
-		 */
-		PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = 4;
-		
-		/* Pack a flat plane.
-		 */
-		PackTexasFlat (cFastFogColour, pContext->bFogOn, FALSE);
+        /* Tag ID of 2 (4/2) used for fogging.
+         */
+        PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = 4;
 
-		/* Restore the TSP index.
-		 */
-		PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = nCurrentTSPAddr;
-	}
+        /* Pack a flat plane.
+         */
+        PackTexasFlat(cFastFogColour, pContext->bFogOn, FALSE);
+
+        /* Restore the TSP index.
+         */
+        PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos = nCurrentTSPAddr;
+    }
 #endif
-   
-   	/*
-	// If we are called by Direct3D and there is no fog then render only those
-	// regions that contain objects, else render all regions in the device.
-	*/
+
+    /*
+ // If we are called by Direct3D and there is no fog then render only those
+ // regions that contain objects, else render all regions in the device.
+ */
 #if WIN32
-	if ((pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS) &&
-		(!FogUsed ||
-		 (
-		  (pContext->fFogR == pContext->cBackgroundColour[0]) &&
-		  (pContext->fFogG == pContext->cBackgroundColour[1]) &&
-		  (pContext->fFogB == pContext->cBackgroundColour[2])
-		 )
-		))
-	{
-		bRenderAllRegions = FALSE;
-	}
-	else
-	{
-		bRenderAllRegions = TRUE;
-	}
+    if ((pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS) &&
+        (!FogUsed ||
+         (
+                 (pContext->fFogR == pContext->cBackgroundColour[0]) &&
+                 (pContext->fFogG == pContext->cBackgroundColour[1]) &&
+                 (pContext->fFogB == pContext->cBackgroundColour[2])
+         )
+        )) {
+        bRenderAllRegions = FALSE;
+    } else {
+        bRenderAllRegions = TRUE;
+    }
 
 #else
-	/*
-	// Convert the regions lists to ones understood by Sabre.
-	// Remember where the pointer data begins though.
- 	*/
-	SabreRegionInfoStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-	
-	bRenderAllRegions = TRUE;
+    /*
+    // Convert the regions lists to ones understood by Sabre.
+    // Remember where the pointer data begins though.
+     */
+    SabreRegionInfoStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+
+    bRenderAllRegions = TRUE;
 
 #endif
 
-	SGL_TIME_SUSPEND(TOTAL_RENDER_TIME);
+    SGL_TIME_SUSPEND(TOTAL_RENDER_TIME);
     SGL_TIME_START(GENERATE_TIME);
 
 #if ISPTSP
-	nNumRegionsRendered = 
-#endif	
-	GenerateObjectPtrLite( &RegionRect, bRenderAllRegions );
+    nNumRegionsRendered =
+#endif
+    GenerateObjectPtrLite(&RegionRect, bRenderAllRegions);
 
     SGL_TIME_STOP(GENERATE_TIME);
-	SGL_TIME_RESUME(TOTAL_RENDER_TIME);
-	
-	/* //////////////////////////////////////////////////
-	// Wait till the hardware is available,
-	////////////////////////////////////////////////// */
+    SGL_TIME_RESUME(TOTAL_RENDER_TIME);
+
+    /* //////////////////////////////////////////////////
+    // Wait till the hardware is available,
+    ////////////////////////////////////////////////// */
 
 #if PCX2 || PCX2_003
-	/* Set the texture filtering register.
-	 * Need to wait for the hardware to become available.
-	 */
-	HWSetBilinearRegister(pProjMat->eFilterType);
+    /* Set the texture filtering register.
+     * Need to wait for the hardware to become available.
+     */
+    HWSetBilinearRegister(pProjMat->eFilterType);
 #endif /* #if PCX2	*/
 
-	/*
-	// Set up the hardware registers:
-	*/
+    /*
+    // Set up the hardware registers:
+    */
 
 #if !WIN32
-	/* Sabre pointer in windows builds set on virtual buffer allocation */
-	#if ISPTSP
-	HWSetRegionsRegister(nNumRegionsRendered);
-	#endif
-	HWSetSabPtrRegister(SabreRegionInfoStart, 0);
+    /* Sabre pointer in windows builds set on virtual buffer allocation */
+#if ISPTSP
+    HWSetRegionsRegister(nNumRegionsRendered);
 #endif
-	/*
-	// Convert the supplied fog colour ... providing it's valid,
-	// u32FogDensity is an unsigned int, so it's always >= 0
-	*/
-	if( (pContext->u32FogDensity<=31) &&
-		(pContext->fFogR >= 0.0f) &&
-		(pContext->fFogR <= 1.0f) &&
-		(pContext->fFogG >= 0.0f) &&
-		(pContext->fFogG <= 1.0f) &&
-		(pContext->fFogB >= 0.0f) &&
-		(pContext->fFogB <= 1.0f))
-	{
-		sgl_map_pixel  fogColour;
+    HWSetSabPtrRegister(SabreRegionInfoStart, 0);
+#endif
+    /*
+    // Convert the supplied fog colour ... providing it's valid,
+    // u32FogDensity is an unsigned int, so it's always >= 0
+    */
+    if ((pContext->u32FogDensity <= 31) &&
+        (pContext->fFogR >= 0.0f) &&
+        (pContext->fFogR <= 1.0f) &&
+        (pContext->fFogG >= 0.0f) &&
+        (pContext->fFogG <= 1.0f) &&
+        (pContext->fFogB >= 0.0f) &&
+        (pContext->fFogB <= 1.0f)) {
+        sgl_map_pixel fogColour;
 
-		HWSetFogRegister (pContext->u32FogDensity);
+        HWSetFogRegister(pContext->u32FogDensity);
 
-		fogColour.red	 =	(unsigned char)(pContext->fFogR * 255);
-		fogColour.green  =	(unsigned char)(pContext->fFogG * 255);
-		fogColour.blue	 =	(unsigned char)(pContext->fFogB * 255);
-		fogColour.alpha  =	0;
+        fogColour.red = (unsigned char) (pContext->fFogR * 255);
+        fogColour.green = (unsigned char) (pContext->fFogG * 255);
+        fogColour.blue = (unsigned char) (pContext->fFogB * 255);
+        fogColour.alpha = 0;
 
-		TexasSetFogColour (fogColour);
-	}
-	/*
-	// Else set the least dense, black fog
-	*/
-	else
-	{
-		sgl_map_pixel  fogColour;
+        TexasSetFogColour(fogColour);
+    }
+        /*
+        // Else set the least dense, black fog
+        */
+    else {
+        sgl_map_pixel fogColour;
 
-		HWSetFogRegister (0);
+        HWSetFogRegister(0);
 
-		fogColour.red	 =	0;
-		fogColour.green  =	0;
-		fogColour.blue	 =	0;
-		fogColour.alpha  =	0;
+        fogColour.red = 0;
+        fogColour.green = 0;
+        fogColour.blue = 0;
+        fogColour.alpha = 0;
 
-		TexasSetFogColour (fogColour);
-	}	
+        TexasSetFogColour(fogColour);
+    }
 
-	/*
-	// Set the texture scale flag: ****** TEXTURING NOT IMPLEMENTED YET ******
-	*/
-	TexasSetCFRScale(MAX_CFR_VALUE /*projection_mat.n32CFRValue*/);
-	DPF((DBG_MESSAGE, "CFR Scale is 0x%lX",
-	  (long)MAX_CFR_VALUE/*projection_mat.n32CFRValue*/));
+    /*
+    // Set the texture scale flag: ****** TEXTURING NOT IMPLEMENTED YET ******
+    */
+    TexasSetCFRScale(MAX_CFR_VALUE /*projection_mat.n32CFRValue*/);
+    DPF((DBG_MESSAGE, "CFR Scale is 0x%lX",
+            (long) MAX_CFR_VALUE/*projection_mat.n32CFRValue*/));
 
-	/*
-	// Device hardwired to 0 because I don't understand what is going on:
-	*/
-	{
-		int  nXDimension, nYDimension;
+    /*
+    // Device hardwired to 0 because I don't understand what is going on:
+    */
+    {
+        int nXDimension, nYDimension;
 
-		DPFOO((DBG_WARNING, "Device in RN render hardwired to 0"));
-		HWGetDeviceSize(0, &nXDimension,&nYDimension);
+        DPFOO((DBG_WARNING, "Device in RN render hardwired to 0"));
+        HWGetDeviceSize(0, &nXDimension, &nYDimension);
 #if PCX1 || PCX2 || PCX2_003
-	#if !MAC
-		/* Mac driver handles this differently at present */
-		HWSetXClip(FALSE, 0, TRUE, nXDimension+1);
-	#endif
+#if !MAC
+        /* Mac driver handles this differently at present */
+        HWSetXClip(FALSE, 0, TRUE, nXDimension + 1);
 #endif
-		TexasSetDim(nXDimension, nYDimension);
-	}
+#endif
+        TexasSetDim(nXDimension, nYDimension);
+    }
 
-	DPF((DBG_MESSAGE, "Calling HWStartRender"));	
+    DPF((DBG_MESSAGE, "Calling HWStartRender"));
 
-	/* Call the 2D callback function, using the stored device name */
+    /* Call the 2D callback function, using the stored device name */
 
     dNode = (PVRHANDLE) GetNamedItem(dlUserGlobals.pNamtab, gDeviceName);
-	
-	if (dNode)
-	{
-		hDisplay = (HDISPLAY)(dNode->PhDeviceID);
-	}
-	else
-	{
- 		DPFDEV ((DBG_ERROR, "Cant get device for 2D Callback")); 						
-	}
-			
+
+    if (dNode) {
+        hDisplay = (HDISPLAY) (dNode->PhDeviceID);
+    } else {
+        DPFDEV ((DBG_ERROR, "Cant get device for 2D Callback"));
+    }
+
 #if !WIN32
- 	/* If we had to use a software buffer for either sabre/texas (or both) then
-	   copy them into the correct buffer space. */
-	
-	PVROSCopyParamsIfRequired(PVRParamBuffs);
+    /* If we had to use a software buffer for either sabre/texas (or both) then
+      copy them into the correct buffer space. */
+
+   PVROSCopyParamsIfRequired(PVRParamBuffs);
 #endif
 
-	/************* RENDER IS STARED HERE ****************/
-	/* Set the pixel bit depth and whether dithering is enabled or not.
-	 * If the uDithering value is 0x2 then we don't want to override
-	 * the dithering setting.
-	 */
-	if (uDithering == 0x2)
-	{
-		if (pContext->u32Flags & SGLTT_DISABLEDITHERING)
-		{
-			/* Disable dithering.
-			 */
-			HWStartRender(TRUE, hDisplay, FALSE);
-		}
-		else
-		{
-			/* Enable dithering.
-			 */
-			HWStartRender(TRUE, hDisplay, TRUE);
-		}
-	}
-	else
-	{
-		/* Set dithering based on uDithering field.
-		 */
-		HWStartRender(TRUE, hDisplay, (sgl_bool) uDithering);
-	}
-	
-	DPF((DBG_MESSAGE, "Done HWStartRender !!!!"));
+    /************* RENDER IS STARED HERE ****************/
+    /* Set the pixel bit depth and whether dithering is enabled or not.
+     * If the uDithering value is 0x2 then we don't want to override
+     * the dithering setting.
+     */
+    if (uDithering == 0x2) {
+        if (pContext->u32Flags & SGLTT_DISABLEDITHERING) {
+            /* Disable dithering.
+             */
+            HWStartRender(TRUE, hDisplay, FALSE);
+        } else {
+            /* Enable dithering.
+             */
+            HWStartRender(TRUE, hDisplay, TRUE);
+        }
+    } else {
+        /* Set dithering based on uDithering field.
+         */
+        HWStartRender(TRUE, hDisplay, (sgl_bool) uDithering);
+    }
+
+    DPF((DBG_MESSAGE, "Done HWStartRender !!!!"));
 
 #if DUMP_PARAMS
-	/*
-	// For Sabre/Texas Debugging, output files of the parameter store contents.
-	*/
+    /*
+    // For Sabre/Texas Debugging, output files of the parameter store contents.
+    */
 #if DUMP_WHEN_FIXED
-	if (nFrameNum == FIX_FRAME_NUM)
+    if (nFrameNum == FIX_FRAME_NUM)
 #endif
-	if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferpos == 0)
-	{
-		DumpSabreAndTexas(
-		  SabreRegionInfoStart, PVRParamBuffs, MAX_CFR_VALUE);
-	}
+    if (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferpos == 0)
+    {
+        DumpSabreAndTexas(
+          SabreRegionInfoStart, PVRParamBuffs, MAX_CFR_VALUE);
+    }
 #endif /* DUMP_PARAMS */
 
-	/*
-	// Code to dump out all the hardware regsiters
-	*/
+    /*
+    // Code to dump out all the hardware regsiters
+    */
 #define DUMP_HW_REGS 0
 #if DUMP_HW_REGS && WIN32 && DEBUG
-	{
-		FILE * outfile;
+    {
+        FILE * outfile;
 
-		outfile = fopen("regdump.txt", "w");
-		
-		HWDumpRegisters(outfile);
+        outfile = fopen("regdump.txt", "w");
 
-		fclose(outfile);
-	}
+        HWDumpRegisters(outfile);
+
+        fclose(outfile);
+    }
 #endif
 
 #if WAIT_FOR_FRAME
 
-	SGL_TIME_SUSPEND(TOTAL_RENDER_TIME);
-	SGL_TIME_START(RENDER_WAITING_TIME);
+    SGL_TIME_SUSPEND(TOTAL_RENDER_TIME);
+    SGL_TIME_START(RENDER_WAITING_TIME);
 
-	while(!HWFinishedRender());
+    while(!HWFinishedRender());
 
-	SGL_TIME_STOP(RENDER_WAITING_TIME);
-	SGL_TIME_RESUME(TOTAL_RENDER_TIME);
+    SGL_TIME_STOP(RENDER_WAITING_TIME);
+    SGL_TIME_RESUME(TOTAL_RENDER_TIME);
 
 #endif
 
-	PVROSCallback (gHLogicalDev, CB_POST_RENDER, NULL);
-	
-	SglError(sgl_no_err);
-	SGL_TIME_STOP(TOTAL_RENDER_TIME);
-   
-#ifdef DLL_METRIC
-	
-	nPolygonsToAverage += nTotalPolygonsInFrame;
-	nTransPolygonsToAverage += nTransPolygonsInFrame;
-	nOpaquePolygonsToAverage += nOpaquePolygonsInFrame;
-	fTotalSWTimeInFrame = (Times[TOTAL_RENDER_TIME].Stop +  Times[GENERATE_TIME].Stop +
-		Times[SGLTRI_TRIANGLES_TIME].Stop +  Times[SGLTRI_STARTOFFRAME1_TIME].Stop +
-		Times[SGLTRI_STARTOFFRAME2_TIME].Stop +  Times[SGLTRI_PROCESS_TIME].Stop +
-		Times[SGLTRI_PACKTRI_TIME].Stop)*gfCPUSpeed;
-	fTotalHWTimeInFrame = (Times[RENDER_WAITING_TIME].Stop)*gfCPUSpeed;
-	GetFrameTime();	
-	fTotalTime += fTotalTimeInFrame;
-	fTotalSWTimeToAverage += fTotalSWTimeInFrame;
-	fTotalHWTimeToAverage += fTotalHWTimeInFrame;
-	nNumberOfFrames++;
+    PVROSCallback(gHLogicalDev, CB_POST_RENDER, NULL);
 
-	if(nNumberOfFrames == gnFramesToAverage)
-	{
-		nTotalPolygons += nPolygonsToAverage;
-   		nTotalTransPolygons += nTransPolygonsToAverage;
-   		nTotalOpaquePolygons += nOpaquePolygonsToAverage;
-		fTotalSWTime += fTotalSWTimeToAverage;
-		fTotalHWTime += fTotalHWTimeToAverage;
-		OutputMetric();
-		nPolygonsToAverage = 0;
-		nTransPolygonsToAverage = 0;
-		nOpaquePolygonsToAverage = 0;
-		fTotalSWTimeToAverage = 0.0;
-		fTotalHWTimeToAverage = 0.0;
-		nNumberOfFrames = 0;
-	}
+    SglError(sgl_no_err);
+    SGL_TIME_STOP(TOTAL_RENDER_TIME);
+
+#ifdef DLL_METRIC
+
+    nPolygonsToAverage += nTotalPolygonsInFrame;
+    nTransPolygonsToAverage += nTransPolygonsInFrame;
+    nOpaquePolygonsToAverage += nOpaquePolygonsInFrame;
+    fTotalSWTimeInFrame = (Times[TOTAL_RENDER_TIME].Stop +  Times[GENERATE_TIME].Stop +
+        Times[SGLTRI_TRIANGLES_TIME].Stop +  Times[SGLTRI_STARTOFFRAME1_TIME].Stop +
+        Times[SGLTRI_STARTOFFRAME2_TIME].Stop +  Times[SGLTRI_PROCESS_TIME].Stop +
+        Times[SGLTRI_PACKTRI_TIME].Stop)*gfCPUSpeed;
+    fTotalHWTimeInFrame = (Times[RENDER_WAITING_TIME].Stop)*gfCPUSpeed;
+    GetFrameTime();
+    fTotalTime += fTotalTimeInFrame;
+    fTotalSWTimeToAverage += fTotalSWTimeInFrame;
+    fTotalHWTimeToAverage += fTotalHWTimeInFrame;
+    nNumberOfFrames++;
+
+    if(nNumberOfFrames == gnFramesToAverage)
+    {
+        nTotalPolygons += nPolygonsToAverage;
+           nTotalTransPolygons += nTransPolygonsToAverage;
+           nTotalOpaquePolygons += nOpaquePolygonsToAverage;
+        fTotalSWTime += fTotalSWTimeToAverage;
+        fTotalHWTime += fTotalHWTimeToAverage;
+        OutputMetric();
+        nPolygonsToAverage = 0;
+        nTransPolygonsToAverage = 0;
+        nOpaquePolygonsToAverage = 0;
+        fTotalSWTimeToAverage = 0.0;
+        fTotalHWTimeToAverage = 0.0;
+        nNumberOfFrames = 0;
+    }
 #endif
 
 } /* sgltri_render */
@@ -1573,29 +1549,24 @@ extern void CALL_CONV sgltri_render (PSGLCONTEXT pContext)
  *					hardware performance for their benchmarks)
  *****************************************************************************/
 
-extern void CALL_CONV sgltri_rerender (PSGLCONTEXT pContext)
-{
-    if (SglInitialise ())
-	{
-		SglError(sgl_err_failed_init);
-		return;
-	}
-	
-	/************* RENDER IS STARED HERE ****************/
-	if (pContext->u32Flags & SGLTT_DISABLEDITHERING)
-	{
-		/* Disable dithering.
-		 */
-		HWStartRender(TRUE, NULL, FALSE);
-	}
-	else
-	{
-		/* Enable dithering.
-		 */
-		HWStartRender(TRUE, NULL, TRUE);
-	}
+extern void CALL_CONV sgltri_rerender(PSGLCONTEXT pContext) {
+    if (SglInitialise()) {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 
-	SglError(sgl_no_err);
+    /************* RENDER IS STARED HERE ****************/
+    if (pContext->u32Flags & SGLTT_DISABLEDITHERING) {
+        /* Disable dithering.
+         */
+        HWStartRender(TRUE, NULL, FALSE);
+    } else {
+        /* Enable dithering.
+         */
+        HWStartRender(TRUE, NULL, TRUE);
+    }
+
+    SglError(sgl_no_err);
 
 } /* sgltri_rerender */
 
@@ -1610,61 +1581,48 @@ extern void CALL_CONV sgltri_rerender (PSGLCONTEXT pContext)
  *
  * Description    : see sgltri.h header file
  *****************************************************************************/
-extern IRC_RESULT CALL_CONV sgltri_isrendercomplete (PSGLCONTEXT  pContext, 
-											  sgl_uint32 u32Timeout)
-{
-	gu32UsedFlags |= pContext->u32Flags;
+extern IRC_RESULT CALL_CONV sgltri_isrendercomplete(PSGLCONTEXT pContext,
+                                                    sgl_uint32 u32Timeout) {
+    gu32UsedFlags |= pContext->u32Flags;
 
-	if (u32Timeout > 0)
-	{
-		if (HWFinishedRender ())
-		{
-			return (IRC_RENDER_COMPLETE);
-		}
-		else
-		{
-			/* I'm going to do something horrible. Hee Hee. */
-			sgl_largeint LI;
-			
-			float fSh32Left = 256.0f*256.0f*256.0f*256.0f;
-			float fStartTime, fCurrentTime, fTimeout;
-			
-			PVROSQueryPerformanceCounter (&LI);
-			
-			fTimeout = ((fSh32Left * LI.HighPart) + LI.LowPart) * (1.0f/1000.0f);
-			
-			PVROSQueryPerformanceCounter (&LI);
+    if (u32Timeout > 0) {
+        if (HWFinishedRender()) {
+            return (IRC_RENDER_COMPLETE);
+        } else {
+            /* I'm going to do something horrible. Hee Hee. */
+            sgl_largeint LI;
 
-			fStartTime = (fSh32Left * LI.HighPart) + LI.LowPart;
+            float fSh32Left = 256.0f * 256.0f * 256.0f * 256.0f;
+            float fStartTime, fCurrentTime, fTimeout;
 
-			do
-			{
-				if (HWFinishedRender ())
-				{
-					return (IRC_RENDER_COMPLETE);
-				}
+            PVROSQueryPerformanceCounter(&LI);
 
-				PVROSQueryPerformanceCounter (&LI);
+            fTimeout = ((fSh32Left * LI.HighPart) + LI.LowPart) * (1.0f / 1000.0f);
 
-				fCurrentTime = (fSh32Left * LI.HighPart) + LI.LowPart;
-			}
-			while ((fCurrentTime - fStartTime) < fTimeout);
+            PVROSQueryPerformanceCounter(&LI);
 
-		}
-			
-		return (IRC_RENDER_TIMEOUT);
-	}
-	else
-	{
-		if (HWFinishedRender ())
-		{
-			return (IRC_RENDER_COMPLETE);
-		}
-		else
-		{
-			return (IRC_RENDER_NOT_COMPLETE);
-		}
-	}
+            fStartTime = (fSh32Left * LI.HighPart) + LI.LowPart;
+
+            do {
+                if (HWFinishedRender()) {
+                    return (IRC_RENDER_COMPLETE);
+                }
+
+                PVROSQueryPerformanceCounter(&LI);
+
+                fCurrentTime = (fSh32Left * LI.HighPart) + LI.LowPart;
+            } while ((fCurrentTime - fStartTime) < fTimeout);
+
+        }
+
+        return (IRC_RENDER_TIMEOUT);
+    } else {
+        if (HWFinishedRender()) {
+            return (IRC_RENDER_COMPLETE);
+        } else {
+            return (IRC_RENDER_NOT_COMPLETE);
+        }
+    }
 }
 
 /******************************************************************************
@@ -1679,330 +1637,300 @@ extern IRC_RESULT CALL_CONV sgltri_isrendercomplete (PSGLCONTEXT  pContext,
  * Description    : see sgltri.h header file
  *****************************************************************************/
 
-extern sgl_bool CALL_CONV sgltri_renderstrip (PSGLCONTEXT pContext, int nStrip, int nXExtent[2])
-{
-	REGIONS_RECT_STRUCT	RegionRect;
-	sgl_bool			bRenderAllRegions;
-	static DEVICE_REGION_INFO_STRUCT RegionInfo;
-	sgl_bool			fRet = FALSE;
+extern sgl_bool CALL_CONV sgltri_renderstrip(PSGLCONTEXT pContext, int nStrip, int nXExtent[2]) {
+    REGIONS_RECT_STRUCT RegionRect;
+    sgl_bool bRenderAllRegions;
+    static DEVICE_REGION_INFO_STRUCT RegionInfo;
+    sgl_bool fRet = FALSE;
 #if !WIN32
-	static sgl_uint32		SabreRegionInfoStart;
-#endif
-	
-	/*
-	// ---------------------------
-	// Ensure system is initialsed
-	// ---------------------------
-	*/
-
-    if (SglInitialise ())
-	{
-		SglError (sgl_err_failed_init);
-	}
-	else
-	{
-		SGL_TIME_START(TOTAL_RENDER_TIME);
-		
-		RegionRect.FirstXRegion = pContext->FirstXRegion;
-		RegionRect.FirstYRegion = pContext->FirstYRegion;
-		RegionRect.LastXRegion = pContext->LastXRegion;
-		RegionRect.LastYRegion = pContext->LastYRegion;
-	
-		if (nStrip == -1)
-		{
-			/*
-			// If we are called by Direct3D and there is no fog then render only those
-			// regions that contain objects, else render all regions in the device.
-			*/
-			#if WIN32
-	
-				if ((pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS) &&
-					(!FogUsed ||
-					 (
-					  (pContext->fFogR == pContext->cBackgroundColour[0]) &&
-					  (pContext->fFogG == pContext->cBackgroundColour[1]) &&
-					  (pContext->fFogB == pContext->cBackgroundColour[2])
-					 )
-					))
-				{
-					bRenderAllRegions = FALSE;
-				}
-				else
-				{
-					bRenderAllRegions = TRUE;
-				}
-	
-			#else
-				/* save the start of region data */
-				
-				SabreRegionInfoStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
-						
-				bRenderAllRegions = TRUE;
-	
-			#endif
-	
-			GenerateObjectPtrLiteStrip (&RegionRect, bRenderAllRegions);
-	
-			/* //////////////////////////////////////////////////
-			// Wait till the hardware is available,
-			////////////////////////////////////////////////// */
-			
-			/*
-			// Convert the supplied fog colour ... providing it's valid
-			*/
-			if(	(pContext->u32FogDensity<=31) &&
-				(pContext->fFogR >= 0.0f) &&
-				(pContext->fFogR <= 1.0f) &&
-				(pContext->fFogG >= 0.0f) &&
-				(pContext->fFogG <= 1.0f) &&
-				(pContext->fFogB >= 0.0f) &&
-				(pContext->fFogB <= 1.0f))
-			{
-				sgl_map_pixel  fogColour;
-	
-				HWSetFogRegister (pContext->u32FogDensity);
-	
-				fogColour.red	 =	(unsigned char)(pContext->fFogR * 255);
-				fogColour.green  =	(unsigned char)(pContext->fFogG * 255);
-				fogColour.blue	 =	(unsigned char)(pContext->fFogB * 255);
-				fogColour.alpha  =	0;
-	
-				TexasSetFogColour (fogColour);
-			}
-			/*
-			// Else set the least dense, black fog
-			*/
-			else
-			{
-				sgl_map_pixel  fogColour;
-	
-				HWSetFogRegister (0);
-	
-				fogColour.red	 =	0;
-				fogColour.green  =	0;
-				fogColour.blue	 =	0;
-				fogColour.alpha  =	0;
-		
-				TexasSetFogColour (fogColour);
-			}	
-	
-			/*
-			// Set the texture scale flag
-			*/
-			TexasSetCFRScale (MAX_CFR_VALUE);
-			DPF((DBG_MESSAGE, "CFR Scale is 0x%lX", (long) MAX_CFR_VALUE));
-	
-			/*
-			// Device hardwired to 0 because I don't understand what is going on:
-			*/
-			{
-				int  nXDimension, nYDimension;
-	
-				DPFOO ((DBG_MESSAGE, "Device in RN render hardwired to 0"));
-				HWGetDeviceSize (0, &nXDimension,&nYDimension);
-	#if PCX1 || PCX2 || PCX2_003
-		#if !MAC
-				/* Mac driver handles this differently at present */
-				HWSetXClip(FALSE, 0, TRUE, nXDimension+1);
-		#endif
-	#endif
-				TexasSetDim (nXDimension, nYDimension);
-			}
-			
-			/* device 0 for now */
-			HWGetRegionInfo (0, &RegionInfo);
-	
-			fRet = TRUE;
-		}
-		else
-		{
-			REGION_STRIP_DATA RegionStrip; 
-			REGION_STRIP_DATA *pRegionStrip = &RegionStrip;
-			#if ISPTSP
-				sgl_int32 nNumRegionsRendered;
-			#endif
-			pRegionStrip->fObjectsPresent = FALSE;
-				
-			#if ISPTSP
-			nNumRegionsRendered = 
-			#endif
-			SetupStripLite (nStrip, &RegionRect, pRegionStrip);
-	
-			if (pRegionStrip->fObjectsPresent)
-			{
-				PRE_RENDER_CB_STRUCT PRCS;
-				
-				/* //////////////////////////////////////////////////
-				// Wait till the hardware is available,
-				////////////////////////////////////////////////// */
-		
-				/*
-				// Set up the hardware registers:
-				*/
-#if !WIN32
-				/* Sabre pointer in windows builds set on virtual buffer allocation */
-				HWSetSabPtrRegister (SabreRegionInfoStart, pRegionStrip->FirstObjectOffset);
-			
-				#if ISPTSP
-					HWSetRegionsRegister( nNumRegionsRendered );
-				#endif
-#endif				
-				while (!HWFinishedRender ())
-				{
-					/* Do nothing */
-				}
-
-				DPF((DBG_VERBOSE, "Calling HWStartRender"));	
-	
-				PRCS.FlipRequested = FALSE;
-	
-				if (PVROSCallback (gHLogicalDev, CB_PRE_RENDER, &PRCS) != PVROS_GROOVY)
-				{
-					DPFDEV ((DBG_ERROR, "PVROSCallback failed"));
-				}
-				else
-				{
-					sgl_uint32 dwSOFScanlineOffset;
-					
-					if (pContext->u32Flags & SGLTT_DISABLEDITHERING)
-					{
-						/* Disable dithering.
-						 */
-						PVROSSetPCIPixelFormat ((sgl_uint16) PRCS.PhysRenderBufferBitsPerPixel,
-												FALSE);
-					}
-					else
-					{
-						/* Enable dithering.
-						 */
-						PVROSSetPCIPixelFormat ((sgl_uint16) PRCS.PhysRenderBufferBitsPerPixel,
-												TRUE);
-					}
-
-					dwSOFScanlineOffset = RegionInfo.YSize * PRCS.PhysRenderBufferStride * nStrip;
-	
-					ProgramSOFAddressReg (PRCS.PhysRenderBufferAddress - dwSOFScanlineOffset);
-	
-					ProgramStrideReg (PRCS.PhysRenderBufferStride);
-	
-					HWStartRenderStrip();
-					
-					DPF ((DBG_VERBOSE, "Done HWStartRender !!!!"));
-	
-					PVROSCallback (gHLogicalDev, CB_POST_RENDER, NULL);
-				
-					nXExtent[0] = pRegionStrip->nXExtents[0];
-					nXExtent[1] = pRegionStrip->nXExtents[1];
-				}
-				
-				fRet = TRUE;
-			}
-		}
-		
-		SglError(sgl_no_err);
-		SGL_TIME_STOP(TOTAL_RENDER_TIME);
-#ifdef DLL_METRIC   	
-	OutputMetric();
+    static sgl_uint32		SabreRegionInfoStart;
 #endif
 
-	}
-	return (fRet);
+    /*
+    // ---------------------------
+    // Ensure system is initialsed
+    // ---------------------------
+    */
+
+    if (SglInitialise()) {
+        SglError(sgl_err_failed_init);
+    } else {
+        SGL_TIME_START(TOTAL_RENDER_TIME);
+
+        RegionRect.FirstXRegion = pContext->FirstXRegion;
+        RegionRect.FirstYRegion = pContext->FirstYRegion;
+        RegionRect.LastXRegion = pContext->LastXRegion;
+        RegionRect.LastYRegion = pContext->LastYRegion;
+
+        if (nStrip == -1) {
+            /*
+            // If we are called by Direct3D and there is no fog then render only those
+            // regions that contain objects, else render all regions in the device.
+            */
+#if WIN32
+
+            if ((pContext->RenderRegions == DONT_RENDER_EMPTY_REGIONS) &&
+                (!FogUsed ||
+                 (
+                         (pContext->fFogR == pContext->cBackgroundColour[0]) &&
+                         (pContext->fFogG == pContext->cBackgroundColour[1]) &&
+                         (pContext->fFogB == pContext->cBackgroundColour[2])
+                 )
+                )) {
+                bRenderAllRegions = FALSE;
+            } else {
+                bRenderAllRegions = TRUE;
+            }
+
+#else
+            /* save the start of region data */
+
+            SabreRegionInfoStart = PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos;
+
+            bRenderAllRegions = TRUE;
+
+#endif
+
+            GenerateObjectPtrLiteStrip(&RegionRect, bRenderAllRegions);
+
+            /* //////////////////////////////////////////////////
+            // Wait till the hardware is available,
+            ////////////////////////////////////////////////// */
+
+            /*
+            // Convert the supplied fog colour ... providing it's valid
+            */
+            if ((pContext->u32FogDensity <= 31) &&
+                (pContext->fFogR >= 0.0f) &&
+                (pContext->fFogR <= 1.0f) &&
+                (pContext->fFogG >= 0.0f) &&
+                (pContext->fFogG <= 1.0f) &&
+                (pContext->fFogB >= 0.0f) &&
+                (pContext->fFogB <= 1.0f)) {
+                sgl_map_pixel fogColour;
+
+                HWSetFogRegister(pContext->u32FogDensity);
+
+                fogColour.red = (unsigned char) (pContext->fFogR * 255);
+                fogColour.green = (unsigned char) (pContext->fFogG * 255);
+                fogColour.blue = (unsigned char) (pContext->fFogB * 255);
+                fogColour.alpha = 0;
+
+                TexasSetFogColour(fogColour);
+            }
+                /*
+                // Else set the least dense, black fog
+                */
+            else {
+                sgl_map_pixel fogColour;
+
+                HWSetFogRegister(0);
+
+                fogColour.red = 0;
+                fogColour.green = 0;
+                fogColour.blue = 0;
+                fogColour.alpha = 0;
+
+                TexasSetFogColour(fogColour);
+            }
+
+            /*
+            // Set the texture scale flag
+            */
+            TexasSetCFRScale(MAX_CFR_VALUE);
+            DPF((DBG_MESSAGE, "CFR Scale is 0x%lX", (long) MAX_CFR_VALUE));
+
+            /*
+            // Device hardwired to 0 because I don't understand what is going on:
+            */
+            {
+                int nXDimension, nYDimension;
+
+                DPFOO ((DBG_MESSAGE, "Device in RN render hardwired to 0"));
+                HWGetDeviceSize(0, &nXDimension, &nYDimension);
+#if PCX1 || PCX2 || PCX2_003
+#if !MAC
+                /* Mac driver handles this differently at present */
+                HWSetXClip(FALSE, 0, TRUE, nXDimension + 1);
+#endif
+#endif
+                TexasSetDim(nXDimension, nYDimension);
+            }
+
+            /* device 0 for now */
+            HWGetRegionInfo(0, &RegionInfo);
+
+            fRet = TRUE;
+        } else {
+            REGION_STRIP_DATA RegionStrip;
+            REGION_STRIP_DATA *pRegionStrip = &RegionStrip;
+#if ISPTSP
+            sgl_int32 nNumRegionsRendered;
+#endif
+            pRegionStrip->fObjectsPresent = FALSE;
+
+#if ISPTSP
+            nNumRegionsRendered =
+#endif
+            SetupStripLite(nStrip, &RegionRect, pRegionStrip);
+
+            if (pRegionStrip->fObjectsPresent) {
+                PRE_RENDER_CB_STRUCT PRCS;
+
+                /* //////////////////////////////////////////////////
+                // Wait till the hardware is available,
+                ////////////////////////////////////////////////// */
+
+                /*
+                // Set up the hardware registers:
+                */
+#if !WIN32
+                /* Sabre pointer in windows builds set on virtual buffer allocation */
+                HWSetSabPtrRegister (SabreRegionInfoStart, pRegionStrip->FirstObjectOffset);
+
+#if ISPTSP
+                    HWSetRegionsRegister( nNumRegionsRendered );
+#endif
+#endif
+                while (!HWFinishedRender()) {
+                    /* Do nothing */
+                }
+
+                DPF((DBG_VERBOSE, "Calling HWStartRender"));
+
+                PRCS.FlipRequested = FALSE;
+
+                if (PVROSCallback(gHLogicalDev, CB_PRE_RENDER, &PRCS) != PVROS_GROOVY) {
+                    DPFDEV ((DBG_ERROR, "PVROSCallback failed"));
+                } else {
+                    sgl_uint32 dwSOFScanlineOffset;
+
+                    if (pContext->u32Flags & SGLTT_DISABLEDITHERING) {
+                        /* Disable dithering.
+                         */
+                        PVROSSetPCIPixelFormat((sgl_uint16) PRCS.PhysRenderBufferBitsPerPixel,
+                                               FALSE);
+                    } else {
+                        /* Enable dithering.
+                         */
+                        PVROSSetPCIPixelFormat((sgl_uint16) PRCS.PhysRenderBufferBitsPerPixel,
+                                               TRUE);
+                    }
+
+                    dwSOFScanlineOffset = RegionInfo.YSize * PRCS.PhysRenderBufferStride * nStrip;
+
+                    ProgramSOFAddressReg(PRCS.PhysRenderBufferAddress - dwSOFScanlineOffset);
+
+                    ProgramStrideReg(PRCS.PhysRenderBufferStride);
+
+                    HWStartRenderStrip();
+
+                    DPF ((DBG_VERBOSE, "Done HWStartRender !!!!"));
+
+                    PVROSCallback(gHLogicalDev, CB_POST_RENDER, NULL);
+
+                    nXExtent[0] = pRegionStrip->nXExtents[0];
+                    nXExtent[1] = pRegionStrip->nXExtents[1];
+                }
+
+                fRet = TRUE;
+            }
+        }
+
+        SglError(sgl_no_err);
+        SGL_TIME_STOP(TOTAL_RENDER_TIME);
+#ifdef DLL_METRIC
+        OutputMetric();
+#endif
+
+    }
+    return (fRet);
 
 } /* sgltri_renderstrip */
 
 /**********************************************************************/
 
-void CALL_CONV sgltri_triangles ( PSGLCONTEXT pContext,
-								  int nNumFaces,
-								  int pFaces[][3],
-								  PSGLVERTEX pVertices )
-{
-#ifdef DLL_METRIC   	
-   	nTotalPolygonsInFrame += nNumFaces;
+void CALL_CONV sgltri_triangles(PSGLCONTEXT pContext,
+                                int nNumFaces,
+                                int pFaces[][3],
+                                PSGLVERTEX pVertices) {
+#ifdef DLL_METRIC
+    nTotalPolygonsInFrame += nNumFaces;
 #endif
-		
-	SGL_TIME_START(SGLTRI_TRIANGLES_TIME);
 
-	gu32UsedFlags |= pContext->u32Flags;
+    SGL_TIME_START(SGLTRI_TRIANGLES_TIME);
 
-	/*
-	// ----------------------
-	// Check input parameters
-	// ----------------------
-	*/
+    gu32UsedFlags |= pContext->u32Flags;
 
-	if (nNumFaces == 0)
-	{
-		SglError(sgl_no_err);
-	}
-	else if (pContext == NULL || pFaces == NULL || pVertices == NULL || nNumFaces < 0)
-	{
-		DPFDEV ((DBG_ERROR, "sgltri_triangles: calling with bad parameter."));			
-		SglError(sgl_err_bad_parameter);
-	}
+    /*
+    // ----------------------
+    // Check input parameters
+    // ----------------------
+    */
+
+    if (nNumFaces == 0) {
+        SglError(sgl_no_err);
+    } else if (pContext == NULL || pFaces == NULL || pVertices == NULL || nNumFaces < 0) {
+        DPFDEV ((DBG_ERROR, "sgltri_triangles: calling with bad parameter."));
+        SglError(sgl_err_bad_parameter);
+    }
 #if !WIN32
-    else if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-	}
+        else if (SglInitialise())
+        {
+            SglError(sgl_err_failed_init);
+        }
 #endif
-	/* all parameters ok */
+        /* all parameters ok */
 
-	else
-	{
-		DirectPolygons (gHLogicalDev->TexHeap, pContext, nNumFaces, pFaces, pVertices, FALSE);
-		SglError(sgl_no_err);
-	}
+    else {
+        DirectPolygons(gHLogicalDev->TexHeap, pContext, nNumFaces, pFaces, pVertices, FALSE);
+        SglError(sgl_no_err);
+    }
 
-	SGL_TIME_STOP(SGLTRI_TRIANGLES_TIME)
+    SGL_TIME_STOP(SGLTRI_TRIANGLES_TIME)
 }
 
 
 /**********************************************************************/
 
-void CALL_CONV sgltri_quads ( PSGLCONTEXT  pContext,
-							  int nNumFaces,
-							  int pFaces[][4],
-							  PSGLVERTEX  pVertices )
-{
-#ifdef DLL_METRIC   	
-   	nTotalPolygonsInFrame += nNumFaces;
+void CALL_CONV sgltri_quads(PSGLCONTEXT pContext,
+                            int nNumFaces,
+                            int pFaces[][4],
+                            PSGLVERTEX pVertices) {
+#ifdef DLL_METRIC
+    nTotalPolygonsInFrame += nNumFaces;
 #endif
-	
-	SGL_TIME_START(SGLTRI_TRIANGLES_TIME);
 
-	gu32UsedFlags |= pContext->u32Flags;
-	/*
-	// ----------------------
-	// Check input parameters
-	// ----------------------
-	*/
+    SGL_TIME_START(SGLTRI_TRIANGLES_TIME);
 
-	if (nNumFaces == 0)
-	{
-		SglError(sgl_no_err);
-	}
-	else if (pContext == NULL || pFaces == NULL || pVertices == NULL || nNumFaces < 0)
-	{
-		DPFDEV ((DBG_ERROR, "sgltri_quads: calling with bad parameter."));				
-		SglError(sgl_err_bad_parameter);
-	}
+    gu32UsedFlags |= pContext->u32Flags;
+    /*
+    // ----------------------
+    // Check input parameters
+    // ----------------------
+    */
+
+    if (nNumFaces == 0) {
+        SglError(sgl_no_err);
+    } else if (pContext == NULL || pFaces == NULL || pVertices == NULL || nNumFaces < 0) {
+        DPFDEV ((DBG_ERROR, "sgltri_quads: calling with bad parameter."));
+        SglError(sgl_err_bad_parameter);
+    }
 #if !WIN32
-    else if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-	}
+        else if (SglInitialise())
+        {
+            SglError(sgl_err_failed_init);
+        }
 #endif
-	/* all parameters ok */
+        /* all parameters ok */
 
-	else
-	{
-		/* Mac requires a cast in the following param list */
-		DirectPolygons (gHLogicalDev->TexHeap, pContext, nNumFaces, (int(*)[3])pFaces, pVertices, TRUE);
-		SglError(sgl_no_err);
-	}
+    else {
+        /* Mac requires a cast in the following param list */
+        DirectPolygons(gHLogicalDev->TexHeap, pContext, nNumFaces, (int (*)[3]) pFaces, pVertices, TRUE);
+        SglError(sgl_no_err);
+    }
 
-	SGL_TIME_STOP(SGLTRI_TRIANGLES_TIME)
+    SGL_TIME_STOP(SGLTRI_TRIANGLES_TIME)
 }
 
 /*------------------------------- End of File -------------------------------*/

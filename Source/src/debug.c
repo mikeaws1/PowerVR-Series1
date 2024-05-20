@@ -228,7 +228,9 @@ RCS info:
 #define MODULE_ID MODID_DEBUG
 
 #ifdef WIN32
+
 #include <direct.h>
+
 #define getcwd _getcwd
 #endif
 
@@ -236,23 +238,23 @@ RCS info:
 #include <sgl_defs.h>
 #include <pvrosapi.h>
 #include <debug.h>
-#include <modauto.h>	/* auto-generated Module data definition */
+#include <modauto.h>    /* auto-generated Module data definition */
 #include <profile.h>
 
-static sgl_int32	snModuleDebugLevels[NUM_ITEMS_IN_MODULES_ARRAY];
-static char		*pszLevelStrings[] = {"Fatal: ", "Error: ", "Warning: ", "Message: ", ""};
+static sgl_int32 snModuleDebugLevels[NUM_ITEMS_IN_MODULES_ARRAY];
+static char *pszLevelStrings[] = {"Fatal: ", "Error: ", "Warning: ", "Message: ", ""};
 
 /* if use the log file(sgldebug.txt) for developer's DPFDEV messages or not*/
 #if DEBUGDEV || TIMING
-   	#define APPNAME "PVRDEBUG"
-	sgl_bool	gbUseLogFile = FALSE;
-    sgl_uint32 hwnd;
-	#define NUMBER_OF_SHARED_BUFFER 20
-	char *szSharedBuffer[NUMBER_OF_SHARED_BUFFER];
-	int gnOutputToConsole;
+#define APPNAME "PVRDEBUG"
+sgl_bool	gbUseLogFile = FALSE;
+sgl_uint32 hwnd;
+#define NUMBER_OF_SHARED_BUFFER 20
+char *szSharedBuffer[NUMBER_OF_SHARED_BUFFER];
+int gnOutputToConsole;
 #endif
 
-#if DEBUG || DEBUGDEV  || TIMING 
+#if DEBUG || DEBUGDEV || TIMING
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -265,7 +267,7 @@ extern char sDllName[];
 
 void PrintDLL()
 {
-	PVROSPrintf(sDllName);
+    PVROSPrintf(sDllName);
 }
 
 /*===========================================
@@ -284,99 +286,99 @@ void PrintDLL()
  *
  * Return:		Always TRUE
  *========================================================================================*/
-void dprintf ( sgl_int32 nCodeModule, 
-					  sgl_int32 nDebugLevel, 
-					  char *FileName,
-					  int  Line,
-					  char *pszFormat, ...)
+void dprintf ( sgl_int32 nCodeModule,
+                      sgl_int32 nDebugLevel,
+                      char *FileName,
+                      int  Line,
+                      char *pszFormat, ...)
 {
-	char *pLeafName;
-	
-	pLeafName = (char *)strrchr (FileName, '\\');
-	
-	if (pLeafName)
-	{
-		FileName = pLeafName;
-	}
-		
-	if (snModuleDebugLevels[nCodeModule] >= nDebugLevel)
-	{
-		va_list vaArgs;
-		char szBuffer[256];
+    char *pLeafName;
 
-		va_start (vaArgs, pszFormat);
+    pLeafName = (char *)strrchr (FileName, '\\');
 
-		strcpy (szBuffer, pszLevelStrings[nDebugLevel]);
+    if (pLeafName)
+    {
+        FileName = pLeafName;
+    }
+
+    if (snModuleDebugLevels[nCodeModule] >= nDebugLevel)
+    {
+        va_list vaArgs;
+        char szBuffer[256];
+
+        va_start (vaArgs, pszFormat);
+
+        strcpy (szBuffer, pszLevelStrings[nDebugLevel]);
 #if DOS32
-		vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, &vaArgs);
+        vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, &vaArgs);
 #else
-		vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, vaArgs);
+        vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, vaArgs);
 #endif
-		sprintf (&szBuffer[strlen(szBuffer)], " [%d, %s]\r\n", Line, FileName);
+        sprintf (&szBuffer[strlen(szBuffer)], " [%d, %s]\r\n", Line, FileName);
 
-		/* print the name of the module were in */
-		PrintDLL();
-		PVROSPrintf (szBuffer);
+        /* print the name of the module were in */
+        PrintDLL();
+        PVROSPrintf (szBuffer);
 
-		va_end (vaArgs);
-	}
+        va_end (vaArgs);
+    }
 }
 
 void dassert (char *szAssertText, char *szFileName, sgl_int32 nLine, int * ask)
 {
-	char *pLeafName;
-	
-	pLeafName = (char *)strrchr (szFileName, '\\');
-	
-	if (pLeafName)
-	{
-		szFileName = pLeafName;
-	}
-		
-	PVROSAssert( szAssertText, szFileName, nLine, ask);
+    char *pLeafName;
+
+    pLeafName = (char *)strrchr (szFileName, '\\');
+
+    if (pLeafName)
+    {
+        szFileName = pLeafName;
+    }
+
+    PVROSAssert( szAssertText, szFileName, nLine, ask);
 }
 
 void DebugSetDebugLevel (sgl_int32 nCodeModule, sgl_int32 nDebugLevel)
 {
-	snModuleDebugLevels[nCodeModule] = nDebugLevel;
-	SglWritePrivateProfileInt ("ModuleDebugLevels", Modules[nCodeModule].pszName, nDebugLevel, "SGL.INI");
+    snModuleDebugLevels[nCodeModule] = nDebugLevel;
+    SglWritePrivateProfileInt ("ModuleDebugLevels", Modules[nCodeModule].pszName, nDebugLevel, "SGL.INI");
 }
 
 void DebugInit (sgl_uint32 DebugLevel)
 {
-	int k;
-	char buffer[_MAX_PATH+16];
+    int k;
+    char buffer[_MAX_PATH+16];
 
-	/* Get the current working directory: */
-	if( getcwd( buffer, _MAX_PATH ) == NULL )
-	{
-		PVROSPrintf ("_getcwd error\n");
-	}	
-	else
-	{
-		strcat(buffer,"\\SGL.INI");
-	}
+    /* Get the current working directory: */
+    if( getcwd( buffer, _MAX_PATH ) == NULL )
+    {
+        PVROSPrintf ("_getcwd error\n");
+    }
+    else
+    {
+        strcat(buffer,"\\SGL.INI");
+    }
 
-	for (k = 0; k < NUM_ITEMS_IN_MODULES_ARRAY; ++k)
-	{
-		snModuleDebugLevels[k] = (int) SglReadPrivateProfileInt ("ModuleDebugLevels", Modules[k].pszName, DebugLevel, buffer);	
-	}
+    for (k = 0; k < NUM_ITEMS_IN_MODULES_ARRAY; ++k)
+    {
+        snModuleDebugLevels[k] = (int) SglReadPrivateProfileInt ("ModuleDebugLevels", Modules[k].pszName, DebugLevel, buffer);
+    }
 }
 
 
 void DebugDeinit ()
 {
-	int k;
+    int k;
 
-	/* save debug levels for modules */
-			
-	if (SglReadPrivateProfileInt ("Debug", "SaveSettings", 1, "SGL.INI"))
-	{
-		for (k = 0; k < NUM_ITEMS_IN_MODULES_ARRAY; ++k)
-		{
-			SglWritePrivateProfileInt ("ModuleDebugLevels", Modules[k].pszName, snModuleDebugLevels[k], "SGL.INI");
-		}
-	}
+    /* save debug levels for modules */
+
+    if (SglReadPrivateProfileInt ("Debug", "SaveSettings", 1, "SGL.INI"))
+    {
+        for (k = 0; k < NUM_ITEMS_IN_MODULES_ARRAY; ++k)
+        {
+            SglWritePrivateProfileInt ("ModuleDebugLevels", Modules[k].pszName, snModuleDebugLevels[k], "SGL.INI");
+        }
+    }
 }
 
 #endif
@@ -387,68 +389,68 @@ extern char sDllName[];
 
 void PrintDLL()
 {
-	PVROSPrintf(sDllName);
+    PVROSPrintf(sDllName);
 }
 
 void DebugInit (sgl_uint32 DebugLevel)
 {
-	int k;
-	char buffer[_MAX_PATH+16];
+    int k;
+    char buffer[_MAX_PATH+16];
 
-	/* Get the current working directory: */
-	if( getcwd( buffer, _MAX_PATH ) == NULL )
-	{
-		PVROSPrintf ("_getcwd error\n");
-	}	
-	else
-	{
-		strcat(buffer,"\\SGL.INI");
-	}
+    /* Get the current working directory: */
+    if( getcwd( buffer, _MAX_PATH ) == NULL )
+    {
+        PVROSPrintf ("_getcwd error\n");
+    }
+    else
+    {
+        strcat(buffer,"\\SGL.INI");
+    }
 
 
-	DebugLevel = (int) SglReadPrivateProfileInt ("DEBUG", "GlobalLevel", DebugLevel, buffer);	
+    DebugLevel = (int) SglReadPrivateProfileInt ("DEBUG", "GlobalLevel", DebugLevel, buffer);
 
-	for (k = 0; k < NUM_ITEMS_IN_MODULES_ARRAY; ++k)
-	{
-		snModuleDebugLevels[k] = (int) SglReadPrivateProfileInt ("ModuleDebugLevels", Modules[k].pszName, DebugLevel, buffer);	
-	}
+    for (k = 0; k < NUM_ITEMS_IN_MODULES_ARRAY; ++k)
+    {
+        snModuleDebugLevels[k] = (int) SglReadPrivateProfileInt ("ModuleDebugLevels", Modules[k].pszName, DebugLevel, buffer);
+    }
 
-	/* open the log file for DPFDEV */
-	gbUseLogFile = SglReadPrivateProfileInt ("DEBUG", "UseLogFile", 0, buffer);
+    /* open the log file for DPFDEV */
+    gbUseLogFile = SglReadPrivateProfileInt ("DEBUG", "UseLogFile", 0, buffer);
 
-	if(gbUseLogFile)
-	{
-		hwnd = (sgl_uint32)FindWindow (APPNAME, NULL);
-		if(!hwnd)
-		{  
-			PVROSPrintf("Fail to find PVRDEBUG!\n");
-			gbUseLogFile = FALSE;
-			return;
-		}
-		
-		for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
-		{
-			if (!szSharedBuffer[k])
-			{
-				szSharedBuffer[k] = PVROSDbgDevBuffer(k);
-			}
-			if(!((sgl_uint32)szSharedBuffer[k] & 0x80000000))
-			{
-				PVROSPrintf("Cant Get szSharedBuffer\n");
-				gbUseLogFile = FALSE;
-				return;
-			} 										
-		}
-		/* disable PVRDebug window */
-		PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)FALSE, (LPARAM)NULL);
-							
-	}
+    if(gbUseLogFile)
+    {
+        hwnd = (sgl_uint32)FindWindow (APPNAME, NULL);
+        if(!hwnd)
+        {
+            PVROSPrintf("Fail to find PVRDEBUG!\n");
+            gbUseLogFile = FALSE;
+            return;
+        }
+
+        for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
+        {
+            if (!szSharedBuffer[k])
+            {
+                szSharedBuffer[k] = PVROSDbgDevBuffer(k);
+            }
+            if(!((sgl_uint32)szSharedBuffer[k] & 0x80000000))
+            {
+                PVROSPrintf("Cant Get szSharedBuffer\n");
+                gbUseLogFile = FALSE;
+                return;
+            }
+        }
+        /* disable PVRDebug window */
+        PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)FALSE, (LPARAM)NULL);
+
+    }
 }
 
 void DebugDeinit ()
 {
-	/* enable PVRDebug window */
-	PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)TRUE, (LPARAM)NULL);
+    /* enable PVRDebug window */
+    PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)TRUE, (LPARAM)NULL);
 }
 
 /*===========================================
@@ -465,68 +467,68 @@ void DebugDeinit ()
  * 						...:			parameters
  *
  *========================================================================================*/
-void dfprintf ( sgl_int32 nCodeModule, 
-					  sgl_int32 nDebugLevel, 
-					  char *FileName,
-					  int  Line,
-					  char *pszFormat, ...)
+void dfprintf ( sgl_int32 nCodeModule,
+                      sgl_int32 nDebugLevel,
+                      char *FileName,
+                      int  Line,
+                      char *pszFormat, ...)
 {
-	char *pLeafName;
-	
-	pLeafName = (char *)strrchr (FileName, '\\');
-	
-	if (pLeafName)
-	{
-		FileName = pLeafName;
-	}
-	if (snModuleDebugLevels[nCodeModule] >= nDebugLevel)
-	{
-		va_list vaArgs;
-		char szBuffer[256];
-		int k, n=0;
-		   
-	   	strcpy(szBuffer,sDllName);
+    char *pLeafName;
 
-		va_start (vaArgs, pszFormat);
+    pLeafName = (char *)strrchr (FileName, '\\');
 
-		strcat (szBuffer, pszLevelStrings[nDebugLevel]);
+    if (pLeafName)
+    {
+        FileName = pLeafName;
+    }
+    if (snModuleDebugLevels[nCodeModule] >= nDebugLevel)
+    {
+        va_list vaArgs;
+        char szBuffer[256];
+        int k, n=0;
+
+           strcpy(szBuffer,sDllName);
+
+        va_start (vaArgs, pszFormat);
+
+        strcat (szBuffer, pszLevelStrings[nDebugLevel]);
 #if DOS32
-		vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, &vaArgs);
+        vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, &vaArgs);
 #else
-		vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, vaArgs);
+        vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, vaArgs);
 #endif
-		sprintf (&szBuffer[strlen(szBuffer)], " [%d, %s]\r\n", Line, FileName);
+        sprintf (&szBuffer[strlen(szBuffer)], " [%d, %s]\r\n", Line, FileName);
 
-		if(gnOutputToConsole)
-		{	
-			PVROSPrintf (szBuffer);
-		}
+        if(gnOutputToConsole)
+        {
+            PVROSPrintf (szBuffer);
+        }
 
-		if(gbUseLogFile && hwnd)
-		{		
-			while(n < 3)
-			{
-				for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
-				{
-					if(szSharedBuffer[k][0] == '8')
-					{
-						strcpy(szSharedBuffer[k], szBuffer);
-						PostMessage( (HWND)hwnd, WM_USER, 0, (LPARAM) szSharedBuffer[k]);
-						va_end (vaArgs);
-						return;
-					}
-				}
-				/* wait for a buffer to be ready */
-				n++;
-				Sleep(300);
-			}
-			/* give up to post messages */
-			PVROSPrintf("Time is up, give up to post messages to PVRDebug\n");
-			gbUseLogFile = FALSE;
-		}
+        if(gbUseLogFile && hwnd)
+        {
+            while(n < 3)
+            {
+                for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
+                {
+                    if(szSharedBuffer[k][0] == '8')
+                    {
+                        strcpy(szSharedBuffer[k], szBuffer);
+                        PostMessage( (HWND)hwnd, WM_USER, 0, (LPARAM) szSharedBuffer[k]);
+                        va_end (vaArgs);
+                        return;
+                    }
+                }
+                /* wait for a buffer to be ready */
+                n++;
+                Sleep(300);
+            }
+            /* give up to post messages */
+            PVROSPrintf("Time is up, give up to post messages to PVRDebug\n");
+            gbUseLogFile = FALSE;
+        }
 
-		va_end (vaArgs);
-	}
+        va_end (vaArgs);
+    }
 }
 
 #endif
@@ -535,55 +537,55 @@ void dfprintf ( sgl_int32 nCodeModule,
 
 void DebugInit (sgl_uint32 DebugLevel)
 {
-	int k;
-	char buffer[_MAX_PATH+16];
+    int k;
+    char buffer[_MAX_PATH+16];
 
-	/* Get the current working directory: */
-	if( getcwd( buffer, _MAX_PATH ) == NULL )
-	{
-		PVROSPrintf ("_getcwd error\n");
-	}	
-	else
-	{
-		strcat(buffer,"\\SGL.INI");
-	}
-	
-	/* open the log file for DPFTIME */
-	gbUseLogFile = SglReadPrivateProfileInt ("DEBUG", "UseLogFile", 0, buffer);
+    /* Get the current working directory: */
+    if( getcwd( buffer, _MAX_PATH ) == NULL )
+    {
+        PVROSPrintf ("_getcwd error\n");
+    }
+    else
+    {
+        strcat(buffer,"\\SGL.INI");
+    }
 
-	if(gbUseLogFile)
-	{
-		hwnd = (sgl_uint32)FindWindow (APPNAME, NULL);
-		if(!hwnd)
-		{  
-			PVROSPrintf("Fail to find PVRDEBUG!\n");
-			gbUseLogFile = FALSE;
-			return;
-		}
-		
-		for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
-		{
-			if (!szSharedBuffer[k])
-			{
-				szSharedBuffer[k] = PVROSDbgDevBuffer(k);
-			}
-			if(!((sgl_uint32)szSharedBuffer[k] & 0x80000000))
-			{
-				PVROSPrintf("Cant Get szSharedBuffer\n");
-				gbUseLogFile = FALSE;
-				return;
-			} 										
-		}
-		/* disable PVRDebug window */
-		PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)FALSE, (LPARAM)NULL);
-							
-	}
+    /* open the log file for DPFTIME */
+    gbUseLogFile = SglReadPrivateProfileInt ("DEBUG", "UseLogFile", 0, buffer);
+
+    if(gbUseLogFile)
+    {
+        hwnd = (sgl_uint32)FindWindow (APPNAME, NULL);
+        if(!hwnd)
+        {
+            PVROSPrintf("Fail to find PVRDEBUG!\n");
+            gbUseLogFile = FALSE;
+            return;
+        }
+
+        for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
+        {
+            if (!szSharedBuffer[k])
+            {
+                szSharedBuffer[k] = PVROSDbgDevBuffer(k);
+            }
+            if(!((sgl_uint32)szSharedBuffer[k] & 0x80000000))
+            {
+                PVROSPrintf("Cant Get szSharedBuffer\n");
+                gbUseLogFile = FALSE;
+                return;
+            }
+        }
+        /* disable PVRDebug window */
+        PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)FALSE, (LPARAM)NULL);
+
+    }
 }
 
 void DebugDeinit ()
 {
-	/* enable PVRDebug window */
-	PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)TRUE, (LPARAM)NULL);
+    /* enable PVRDebug window */
+    PostMessage( (HWND)hwnd, WM_ENABLE, (BOOL)TRUE, (LPARAM)NULL);
 }
 
 /*===========================================
@@ -598,58 +600,58 @@ void DebugDeinit ()
  *========================================================================================*/
 void dtprintf (char *pszFormat, ...)
 {
-	va_list vaArgs;
-	char szBuffer[256];
-	int k, n=0;
-		   
-	if(gnOutputToConsole || (gbUseLogFile && hwnd))
-	{
-		va_start (vaArgs, pszFormat);
+    va_list vaArgs;
+    char szBuffer[256];
+    int k, n=0;
 
-		strcpy(szBuffer, "");
+    if(gnOutputToConsole || (gbUseLogFile && hwnd))
+    {
+        va_start (vaArgs, pszFormat);
+
+        strcpy(szBuffer, "");
 #if DOS32
-   		vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, &vaArgs);
+           vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, &vaArgs);
 #else
-   		vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, vaArgs);
+           vsprintf (&szBuffer[strlen(szBuffer)], pszFormat, vaArgs);
 #endif
-  	 	sprintf (&szBuffer[strlen(szBuffer)], "\r\n");
+           sprintf (&szBuffer[strlen(szBuffer)], "\r\n");
 
-		if(gnOutputToConsole)
-		{	
-   			PVROSPrintf (szBuffer);
-		}
+        if(gnOutputToConsole)
+        {
+               PVROSPrintf (szBuffer);
+        }
 
-  	 	if(gbUseLogFile && hwnd)
-   		{		
-   			while(n < 3)
-   			{
-   				for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
-   				{
-   					if(szSharedBuffer[k][0] == '8')
-   					{
-   						strcpy(szSharedBuffer[k], szBuffer);
-   						PostMessage( (HWND)hwnd, WM_USER, 0, (LPARAM) szSharedBuffer[k]);
-   						va_end (vaArgs);
-   						return;
-   					}
-   				}
-   				/* wait for a buffer to be ready */
-   				n++;
-   				Sleep(300);
-   			}
-   			/* give up to post messages */
-   			PVROSPrintf("Time is up, give up to post messages to PVRDebug\n");
-   			gbUseLogFile = FALSE;
-  	 	}
-		va_end (vaArgs);
-	}
+           if(gbUseLogFile && hwnd)
+           {
+               while(n < 3)
+               {
+                   for(k=0; k<NUMBER_OF_SHARED_BUFFER; k++)
+                   {
+                       if(szSharedBuffer[k][0] == '8')
+                       {
+                           strcpy(szSharedBuffer[k], szBuffer);
+                           PostMessage( (HWND)hwnd, WM_USER, 0, (LPARAM) szSharedBuffer[k]);
+                           va_end (vaArgs);
+                           return;
+                       }
+                   }
+                   /* wait for a buffer to be ready */
+                   n++;
+                   Sleep(300);
+               }
+               /* give up to post messages */
+               PVROSPrintf("Time is up, give up to post messages to PVRDebug\n");
+               gbUseLogFile = FALSE;
+           }
+        va_end (vaArgs);
+    }
 }
 
 #endif
 
 #else
-void DebugInit (sgl_uint32 DebugLevel)
-{
+
+void DebugInit(sgl_uint32 DebugLevel) {
 
 }
 

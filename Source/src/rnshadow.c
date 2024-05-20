@@ -94,296 +94,275 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
  *				  NOTE: It won't generate more than SGL_MAX_PLANES planes. This
  *				  can happen if an object has a large number of planes.
  *****************************************************************************/
-void RnGenerateShadowVolume(CONVEX_NODE_STRUCT			 *pConvex,
-							const TRANS_PLANE_ARRAY_TYPE  Planes,
-							const TRANSFORM_STRUCT *pCurrentTransform,
-							const SHADOW_LIM_STRUCT *pShadowLimitPlanes,
-							const sgl_bool   bParallelLight,
-							const sgl_vector directionPosition,
-							TRANS_PLANE_ARRAY_TYPE 	ShadowPlanes,
-							int					   *pnNumShadowPlanes,
-							sgl_bool			   *pbLightInside,
-							int					   *pNumOrigObjPlanes)
-
-{
-	int nPlane,nEdge,nAxis, i;
+void RnGenerateShadowVolume(CONVEX_NODE_STRUCT *pConvex,
+                            const TRANS_PLANE_ARRAY_TYPE Planes,
+                            const TRANSFORM_STRUCT *pCurrentTransform,
+                            const SHADOW_LIM_STRUCT *pShadowLimitPlanes,
+                            const sgl_bool bParallelLight,
+                            const sgl_vector directionPosition,
+                            TRANS_PLANE_ARRAY_TYPE ShadowPlanes,
+                            int *pnNumShadowPlanes,
+                            sgl_bool *pbLightInside,
+                            int *pNumOrigObjPlanes) {
+    int nPlane, nEdge, nAxis, i;
 
 
-	/*
-	// Array to store which planes are forward and which are reverse (wrt the
-	// light).  Also store the dot product values.
-	*/
-	sgl_bool bForward[SGL_MAX_PLANES];
-	float	fDotProd[SGL_MAX_PLANES];
-	float *pfDotProd;
-	sgl_bool *pbForward;
+    /*
+    // Array to store which planes are forward and which are reverse (wrt the
+    // light).  Also store the dot product values.
+    */
+    sgl_bool bForward[SGL_MAX_PLANES];
+    float fDotProd[SGL_MAX_PLANES];
+    float *pfDotProd;
+    sgl_bool *pbForward;
 
 
-	EDGE_INFO_STRUCT *pEdgeInfo;
-	EDGE_DATA_STRUCT *pThisEdge;
+    EDGE_INFO_STRUCT *pEdgeInfo;
+    EDGE_DATA_STRUCT *pThisEdge;
 
-	/*
-	// Pointer to a particular shadow plane
-	*/
-	TRANSFORMED_PLANE_STRUCT *pThisShadowPlane;
+    /*
+    // Pointer to a particular shadow plane
+    */
+    TRANSFORMED_PLANE_STRUCT *pThisShadowPlane;
 
-	/*
-	// Pointers to the the forward and reverse planes that make up a silhoutte
-	// edge.
-	*/
-	const TRANSFORMED_PLANE_STRUCT *pForwardPlane,*pReversePlane;
-	const TRANSFORMED_PLANE_STRUCT *pPlane;
+    /*
+    // Pointers to the the forward and reverse planes that make up a silhoutte
+    // edge.
+    */
+    const TRANSFORMED_PLANE_STRUCT *pForwardPlane, *pReversePlane;
+    const TRANSFORMED_PLANE_STRUCT *pPlane;
 
-	/*
-	// Dot product values for the forward and reverse planes
-	*/
-	float fForwardDot,fReverseDot;
+    /*
+    // Dot product values for the forward and reverse planes
+    */
+    float fForwardDot, fReverseDot;
 
-	int nNumPlanes;
-
-
-	ASSERT(pConvex != NULL);
-	ASSERT(Planes != NULL);
-
-	SGL_TIME_START(SHADOW_VOL_TIME)
-
-	/* There was an extra parameter being passed in - to be used later ? */
-	*pNumOrigObjPlanes = *pNumOrigObjPlanes;
-
-	nNumPlanes = pConvex->u16_num_planes;
-
-	ASSERT(pCurrentTransform != NULL);
-	ASSERT(directionPosition != NULL);
-	ASSERT(ShadowPlanes != NULL);
-	ASSERT(pnNumShadowPlanes != NULL);
-	ASSERT(pbLightInside != NULL);
-
-	/*
-	// Step through the array of object planes, getting the dot product of the
-	// light direction/position and the normal to the plane, and classifying the
-	// planes into forward and reverse.
-	//
-	// NOTE if the light is a point source light, then the direction/position
-	// gives its position, BUT If it is a parallel light, then its the direction
-	// TO the light (this is the opposite to what is stated in the real-time
-	// shadow generation document).
-	//
-	// Deciding which planes are forward and which are reverse ALSO depends on 
-	// the type of the light.
-	*/
-	pPlane = Planes;
+    int nNumPlanes;
 
 
-	/*
-	// Initialise the list of shadow volume surfaces.
-	*/
-	*pnNumShadowPlanes = 0;
+    ASSERT(pConvex != NULL);
+    ASSERT(Planes != NULL);
 
-	/*
-	// Add all the forward planes to the list.
-	//
-	// If ALL the objects planes are 'reverse' planes wrt the light, then the
-	// light is inside the object. The shadow volume is then constructed
-	// slightly differently.
-	//
-	// Note that we don't have to check about overflowing the shadow array, as
-	// there can't be more forward planes than the max number of object planes.
-	*/
+    SGL_TIME_START(SHADOW_VOL_TIME)
 
-	*pbLightInside = TRUE;
+    /* There was an extra parameter being passed in - to be used later ? */
+    *pNumOrigObjPlanes = *pNumOrigObjPlanes;
 
-	/*
-	// If a parallel light
-	*/
-	if (bParallelLight)
-	{
-		for ( nPlane = nNumPlanes, pfDotProd=fDotProd, pbForward = bForward;
-			  nPlane!=0 ; nPlane--, pPlane ++, pfDotProd++, pbForward++)
-		{
-			/*
-			// Negate the dot prod as direction is opposite to original doc
-			*/
-			*pfDotProd =  -DotProd(directionPosition, pPlane->normal);
+    nNumPlanes = pConvex->u16_num_planes;
 
-			/*
-			// Determine if the plane is forward WRT the light
-			*/
-		 	
-			if (*pbForward = (*pfDotProd < 0.0f))
-			  {
-				*pbLightInside = FALSE; /*Light isn't inside object*/
-				ShadowPlanes[*pnNumShadowPlanes] = *pPlane; 
-				(*pnNumShadowPlanes)++;
-			  }
+    ASSERT(pCurrentTransform != NULL);
+    ASSERT(directionPosition != NULL);
+    ASSERT(ShadowPlanes != NULL);
+    ASSERT(pnNumShadowPlanes != NULL);
+    ASSERT(pbLightInside != NULL);
 
-		}/*end for*/
-	}
-	/*
-	// Otherwise it is a point source light.
-	*/
-	else
-	{
-		for ( nPlane = nNumPlanes, pfDotProd=fDotProd, pbForward = bForward;
-			  nPlane!=0 ; nPlane--, pPlane ++, pfDotProd++, pbForward++)
-		{
-			*pfDotProd = DotProd(directionPosition, pPlane->normal);
+    /*
+    // Step through the array of object planes, getting the dot product of the
+    // light direction/position and the normal to the plane, and classifying the
+    // planes into forward and reverse.
+    //
+    // NOTE if the light is a point source light, then the direction/position
+    // gives its position, BUT If it is a parallel light, then its the direction
+    // TO the light (this is the opposite to what is stated in the real-time
+    // shadow generation document).
+    //
+    // Deciding which planes are forward and which are reverse ALSO depends on
+    // the type of the light.
+    */
+    pPlane = Planes;
 
-			/*
-			// Determine if the plane is forward WRT the light
-			*/
 
-			if (*pbForward = (*pfDotProd > pPlane->d))
-			  {
-				*pbLightInside = FALSE; /*Light isn't inside object*/
-				ShadowPlanes[*pnNumShadowPlanes] = *pPlane; 
-				(*pnNumShadowPlanes)++;
-			  }
+    /*
+    // Initialise the list of shadow volume surfaces.
+    */
+    *pnNumShadowPlanes = 0;
 
-		}/*end for*/
-	}/*end if else light type*/
+    /*
+    // Add all the forward planes to the list.
+    //
+    // If ALL the objects planes are 'reverse' planes wrt the light, then the
+    // light is inside the object. The shadow volume is then constructed
+    // slightly differently.
+    //
+    // Note that we don't have to check about overflowing the shadow array, as
+    // there can't be more forward planes than the max number of object planes.
+    */
+
+    *pbLightInside = TRUE;
+
+    /*
+    // If a parallel light
+    */
+    if (bParallelLight) {
+        for (nPlane = nNumPlanes, pfDotProd = fDotProd, pbForward = bForward;
+             nPlane != 0; nPlane--, pPlane++, pfDotProd++, pbForward++) {
+            /*
+            // Negate the dot prod as direction is opposite to original doc
+            */
+            *pfDotProd = -DotProd(directionPosition, pPlane->normal);
+
+            /*
+            // Determine if the plane is forward WRT the light
+            */
+
+            if (*pbForward = (*pfDotProd < 0.0f)) {
+                *pbLightInside = FALSE; /*Light isn't inside object*/
+                ShadowPlanes[*pnNumShadowPlanes] = *pPlane;
+                (*pnNumShadowPlanes)++;
+            }
+
+        }/*end for*/
+    }
+        /*
+        // Otherwise it is a point source light.
+        */
+    else {
+        for (nPlane = nNumPlanes, pfDotProd = fDotProd, pbForward = bForward;
+             nPlane != 0; nPlane--, pPlane++, pfDotProd++, pbForward++) {
+            *pfDotProd = DotProd(directionPosition, pPlane->normal);
+
+            /*
+            // Determine if the plane is forward WRT the light
+            */
+
+            if (*pbForward = (*pfDotProd > pPlane->d)) {
+                *pbLightInside = FALSE; /*Light isn't inside object*/
+                ShadowPlanes[*pnNumShadowPlanes] = *pPlane;
+                (*pnNumShadowPlanes)++;
+            }
+
+        }/*end for*/
+    }/*end if else light type*/
 
     /*
 	// If there are shadow limit planes copy them to the shadow plane list
 	*/
-	if ( pShadowLimitPlanes->nNumShadLimPlanes > 0)
-	{
-	  for(i=0; i<pShadowLimitPlanes->nNumShadLimPlanes; i++)
-	  {
-		ShadowPlanes[*pnNumShadowPlanes] = 
-		  (pShadowLimitPlanes->TransShadLimPlanes[i]); 
-		(*pnNumShadowPlanes)++;
-	  }
-	}
+    if (pShadowLimitPlanes->nNumShadLimPlanes > 0) {
+        for (i = 0; i < pShadowLimitPlanes->nNumShadLimPlanes; i++) {
+            ShadowPlanes[*pnNumShadowPlanes] =
+                    (pShadowLimitPlanes->TransShadLimPlanes[i]);
+            (*pnNumShadowPlanes)++;
+        }
+    }
 
-	/*
-	// If the light is inside the object, then copy ALL the planes to the
-	// output.
-	*/
-	if (*pbLightInside)
-	{
-		pPlane = Planes;
-	 	for (nPlane=0; nPlane < nNumPlanes; nPlane++)
-		{
-			  ShadowPlanes[*pnNumShadowPlanes] = *pPlane; 
-			  (*pnNumShadowPlanes)++;
-		}
+    /*
+    // If the light is inside the object, then copy ALL the planes to the
+    // output.
+    */
+    if (*pbLightInside) {
+        pPlane = Planes;
+        for (nPlane = 0; nPlane < nNumPlanes; nPlane++) {
+            ShadowPlanes[*pnNumShadowPlanes] = *pPlane;
+            (*pnNumShadowPlanes)++;
+        }
 
-	}
-	/*
-	// Else process the silhoutte edges - if there are any. Note that
-	// a single plane does not generate edges, and no structure is stored
-	// in that case.
-	*/
-	else if(pConvex->edge_info != NULL)
-	{
-		/*
-		// Get access to the edge information
-		*/
-		pEdgeInfo = pConvex->edge_info;
+    }
+        /*
+        // Else process the silhoutte edges - if there are any. Note that
+        // a single plane does not generate edges, and no structure is stored
+        // in that case.
+        */
+    else if (pConvex->edge_info != NULL) {
+        /*
+        // Get access to the edge information
+        */
+        pEdgeInfo = pConvex->edge_info;
 
-		/*
-		// Now examine the edge information. Step through the edges, and create
-		// a shadow plane for each silhoutte edge. That is, where a forward and
-		// a reverse surface meet. Note that there are slightly different
-		// methods for parallel and point source lights.
-		//
-		// NOTE: Check that we don't overflow the max number of shadow planes.
-		*/
-		pThisEdge = pEdgeInfo->edges;
-		for (nEdge=0; nEdge < pEdgeInfo->num_edges; nEdge++, pThisEdge++)
-		{
-			/*
-			// Is this made from a forward and a reverse surface?
-			*/
-	  		if (bForward[pThisEdge->u16_plane1] != bForward[pThisEdge->u16_plane2])
-			{
-				pThisShadowPlane = & ShadowPlanes[*pnNumShadowPlanes];
-				(*pnNumShadowPlanes)++;
+        /*
+        // Now examine the edge information. Step through the edges, and create
+        // a shadow plane for each silhoutte edge. That is, where a forward and
+        // a reverse surface meet. Note that there are slightly different
+        // methods for parallel and point source lights.
+        //
+        // NOTE: Check that we don't overflow the max number of shadow planes.
+        */
+        pThisEdge = pEdgeInfo->edges;
+        for (nEdge = 0; nEdge < pEdgeInfo->num_edges; nEdge++, pThisEdge++) {
+            /*
+            // Is this made from a forward and a reverse surface?
+            */
+            if (bForward[pThisEdge->u16_plane1] != bForward[pThisEdge->u16_plane2]) {
+                pThisShadowPlane = &ShadowPlanes[*pnNumShadowPlanes];
+                (*pnNumShadowPlanes)++;
 
-				/*
-				// Set up the shadow plane's representative point, by getting
-				// the midpoint of the edge, and transforming it.
-				*/
-				TransformVector(pCurrentTransform, pThisEdge->mid_point, pThisShadowPlane->repPnt);
+                /*
+                // Set up the shadow plane's representative point, by getting
+                // the midpoint of the edge, and transforming it.
+                */
+                TransformVector(pCurrentTransform, pThisEdge->mid_point, pThisShadowPlane->repPnt);
 
-				/*
-				// Get which planes are the forward and reverse, and the dot product values
-				*/
-				if (bForward[pThisEdge->u16_plane1])
-				{
-					pForwardPlane = Planes + pThisEdge->u16_plane1;
-					fForwardDot   = fDotProd[pThisEdge->u16_plane1];
+                /*
+                // Get which planes are the forward and reverse, and the dot product values
+                */
+                if (bForward[pThisEdge->u16_plane1]) {
+                    pForwardPlane = Planes + pThisEdge->u16_plane1;
+                    fForwardDot = fDotProd[pThisEdge->u16_plane1];
 
-					pReversePlane = Planes + pThisEdge->u16_plane2;
-					fReverseDot   = fDotProd[pThisEdge->u16_plane2];
-				}
-				else
-				{
-					pForwardPlane = Planes + pThisEdge->u16_plane2;
-					fForwardDot   = fDotProd[pThisEdge->u16_plane2];
+                    pReversePlane = Planes + pThisEdge->u16_plane2;
+                    fReverseDot = fDotProd[pThisEdge->u16_plane2];
+                } else {
+                    pForwardPlane = Planes + pThisEdge->u16_plane2;
+                    fForwardDot = fDotProd[pThisEdge->u16_plane2];
 
-					pReversePlane = Planes + pThisEdge->u16_plane1;
-					fReverseDot   = fDotProd[pThisEdge->u16_plane1];
-				}
+                    pReversePlane = Planes + pThisEdge->u16_plane1;
+                    fReverseDot = fDotProd[pThisEdge->u16_plane1];
+                }
 
-				/*
-				// Handle point source and parallel lights differently
-				*/
-				if (bParallelLight)
-				{
-					/*
-					// Calculate the d value
-					*/
-					pThisShadowPlane->d = fReverseDot * pForwardPlane->d - fForwardDot * pReversePlane->d;
+                /*
+                // Handle point source and parallel lights differently
+                */
+                if (bParallelLight) {
+                    /*
+                    // Calculate the d value
+                    */
+                    pThisShadowPlane->d = fReverseDot * pForwardPlane->d - fForwardDot * pReversePlane->d;
 
-					/*
-					// Calculate the surface normal
-					*/
-					for (nAxis=0; nAxis < 3; nAxis++)
-						pThisShadowPlane->normal[nAxis] = fReverseDot * pForwardPlane->normal[nAxis] - 
-														  fForwardDot * pReversePlane->normal[nAxis];
-				}
-				/*
-				// else is a point source light
-				*/
-				else
-				{
-					/*
-					// Calculate the d value
-					*/
-					pThisShadowPlane->d = fForwardDot * pReversePlane->d - fReverseDot * pForwardPlane->d;
+                    /*
+                    // Calculate the surface normal
+                    */
+                    for (nAxis = 0; nAxis < 3; nAxis++)
+                        pThisShadowPlane->normal[nAxis] = fReverseDot * pForwardPlane->normal[nAxis] -
+                                                          fForwardDot * pReversePlane->normal[nAxis];
+                }
+                    /*
+                    // else is a point source light
+                    */
+                else {
+                    /*
+                    // Calculate the d value
+                    */
+                    pThisShadowPlane->d = fForwardDot * pReversePlane->d - fReverseDot * pForwardPlane->d;
 
-					/*
-					// Calculate the surface normal. For efficiency, redefine
-					// fReverseDot and fForwardDot (as we don't need them any
-					// more).
-					*/
-					fReverseDot = (pReversePlane->d - fReverseDot);
-					fForwardDot = (pForwardPlane->d - fForwardDot);
+                    /*
+                    // Calculate the surface normal. For efficiency, redefine
+                    // fReverseDot and fForwardDot (as we don't need them any
+                    // more).
+                    */
+                    fReverseDot = (pReversePlane->d - fReverseDot);
+                    fForwardDot = (pForwardPlane->d - fForwardDot);
 
-					for (nAxis=0; nAxis < 3; nAxis++)
-						pThisShadowPlane->normal[nAxis] = fReverseDot * pForwardPlane->normal[nAxis] - 
-						                                  fForwardDot * pReversePlane->normal[nAxis];
+                    for (nAxis = 0; nAxis < 3; nAxis++)
+                        pThisShadowPlane->normal[nAxis] = fReverseDot * pForwardPlane->normal[nAxis] -
+                                                          fForwardDot * pReversePlane->normal[nAxis];
 
-				}/*end if light type */
+                }/*end if light type */
 
 
-				/*
-				// Break out of the loop if we have the max number of shadow
-				// planes.
-				*/
-				if (*pnNumShadowPlanes == SGL_MAX_INTERNAL_PLANES)
-				{
-					break;
-				}
+                /*
+                // Break out of the loop if we have the max number of shadow
+                // planes.
+                */
+                if (*pnNumShadowPlanes == SGL_MAX_INTERNAL_PLANES) {
+                    break;
+                }
 
-			}/*end if silhoutte edge*/
+            }/*end if silhoutte edge*/
 
-		}/*end for i*/
+        }/*end for i*/
 
-	}/*end else*/
+    }/*end else*/
 
-	SGL_TIME_STOP(SHADOW_VOL_TIME)
+    SGL_TIME_STOP(SHADOW_VOL_TIME)
 
 }/*end function*/
 

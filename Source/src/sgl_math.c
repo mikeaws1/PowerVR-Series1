@@ -134,7 +134,7 @@
 // INCLUDE FUNCTIONS WHICH ARE OPTIONALLY INLINED WHEN WE AREN'T INLINING
 */
 #if !INLINING
-#define STATIC_IN 
+#define STATIC_IN
 
 #include "sgl_mat2.h"
 
@@ -152,31 +152,29 @@
  *
  **************************************************************************/
 
-void  TransformDirVector( const TRANSFORM_STRUCT * Matrix, 
-						  const sgl_vector Vec, 
-								sgl_vector Res)
+void TransformDirVector(const TRANSFORM_STRUCT *Matrix,
+                        const sgl_vector Vec,
+                        sgl_vector Res) {
+    /* local copy of Vec for when Vec and Res are same */
+    register float x, y, z;
 
-{
-	/* local copy of Vec for when Vec and Res are same */
-	register float x,y,z;
+    /*
+    // results: This makes the compiler realise there is no overlap between the
+    // matrix and the results, thus allowing greater overlap of operations.
+    */
+    float xres, yres, zres;
 
-	/*
-	// results: This makes the compiler realise there is no overlap between the
-	// matrix and the results, thus allowing greater overlap of operations.
-	*/
-	float xres,yres,zres; 
-						  
-	x = Vec[0];
-	y = Vec[1];
-	z = Vec[2];
+    x = Vec[0];
+    y = Vec[1];
+    z = Vec[2];
 
-	xres = x * Matrix->mat[0][0] + y * Matrix->mat[0][1] + z * Matrix->mat[0][2];
-	yres = x * Matrix->mat[1][0] + y * Matrix->mat[1][1] + z * Matrix->mat[1][2];
-	zres = x * Matrix->mat[2][0] + y * Matrix->mat[2][1] + z * Matrix->mat[2][2];
+    xres = x * Matrix->mat[0][0] + y * Matrix->mat[0][1] + z * Matrix->mat[0][2];
+    yres = x * Matrix->mat[1][0] + y * Matrix->mat[1][1] + z * Matrix->mat[1][2];
+    zres = x * Matrix->mat[2][0] + y * Matrix->mat[2][1] + z * Matrix->mat[2][2];
 
-	Res[0] = xres;
-	Res[1] = yres;
-	Res[2] = zres;
+    Res[0] = xres;
+    Res[1] = yres;
+    Res[2] = zres;
 }
 
 
@@ -191,31 +189,29 @@ void  TransformDirVector( const TRANSFORM_STRUCT * Matrix,
  *                  : Uses inverse of the transpose of the inverse, which is just the transpose.				
  **************************************************************************/
 
-void  InvTransformDirVector( const TRANSFORM_STRUCT * Matrix, 
-						  const sgl_vector Vec, 
-								sgl_vector Res)
+void InvTransformDirVector(const TRANSFORM_STRUCT *Matrix,
+                           const sgl_vector Vec,
+                           sgl_vector Res) {
+    register float x, y, z; /* local copy of Vec for when Vec and Res are same */
 
-{
-	register float x,y,z; /* local copy of Vec for when Vec and Res are same */
+    /*
+    // results: This makes the compiler realise there is no overlap between the
+    // matrix and the results, thus allowing greater overlap of operations.
+    */
+    float xres, yres, zres;
 
-	/*
-	// results: This makes the compiler realise there is no overlap between the
-	// matrix and the results, thus allowing greater overlap of operations.
-	*/
-	float xres,yres,zres; 
-
-	x = Vec[0];
-	y = Vec[1];
-	z = Vec[2];
+    x = Vec[0];
+    y = Vec[1];
+    z = Vec[2];
 
 
-	xres = x * Matrix->mat[0][0] + y * Matrix->mat[1][0] + z * Matrix->mat[2][0];
-	yres = x * Matrix->mat[0][1] + y * Matrix->mat[1][1] + z * Matrix->mat[2][1];
-	zres = x * Matrix->mat[0][2] + y * Matrix->mat[1][2] + z * Matrix->mat[2][2];
+    xres = x * Matrix->mat[0][0] + y * Matrix->mat[1][0] + z * Matrix->mat[2][0];
+    yres = x * Matrix->mat[0][1] + y * Matrix->mat[1][1] + z * Matrix->mat[2][1];
+    zres = x * Matrix->mat[0][2] + y * Matrix->mat[1][2] + z * Matrix->mat[2][2];
 
-	Res[0] = xres;
-	Res[1] = yres;
-	Res[2] = zres;
+    Res[0] = xres;
+    Res[1] = yres;
+    Res[2] = zres;
 
 }
 
@@ -231,33 +227,31 @@ void  InvTransformDirVector( const TRANSFORM_STRUCT * Matrix,
  *
  **************************************************************************/
 
-void  TransformVector( const TRANSFORM_STRUCT * Matrix, 
-					   const sgl_vector	Vec, 
-							 sgl_vector Res)
+void TransformVector(const TRANSFORM_STRUCT *Matrix,
+                     const sgl_vector Vec,
+                     sgl_vector Res) {
+    register float x, y, z; /* local copy of Vec for when Vec and Res are same */
 
-{
-	register float x,y,z; /* local copy of Vec for when Vec and Res are same */
+    /*
+    // results: This makes the compiler realise there is no overlap between the
+    // matrix and the results, thus allowing greater overlap of operations.
+    */
+    float xres, yres, zres;
 
-	/*
-	// results: This makes the compiler realise there is no overlap between the
-	// matrix and the results, thus allowing greater overlap of operations.
-	*/
-	float xres,yres,zres; 
+    x = Vec[0];
+    y = Vec[1];
+    z = Vec[2];
 
-	x = Vec[0];
-	y = Vec[1];
-	z = Vec[2];
+    xres = x * Matrix->mat[0][0] + y * Matrix->mat[0][1] + z * Matrix->mat[0][2]
+           + Matrix->mat[0][3];
+    yres = x * Matrix->mat[1][0] + y * Matrix->mat[1][1] + z * Matrix->mat[1][2]
+           + Matrix->mat[1][3];
+    zres = x * Matrix->mat[2][0] + y * Matrix->mat[2][1] + z * Matrix->mat[2][2]
+           + Matrix->mat[2][3];
 
-	xres = x * Matrix->mat[0][0] + y * Matrix->mat[0][1] + z * Matrix->mat[0][2]
-			 + Matrix->mat[0][3];
-	yres = x * Matrix->mat[1][0] + y * Matrix->mat[1][1] + z * Matrix->mat[1][2]
-			 + Matrix->mat[1][3];
-	zres = x * Matrix->mat[2][0] + y * Matrix->mat[2][1] + z * Matrix->mat[2][2]
-			 + Matrix->mat[2][3];
-
-	Res[0] = xres;
-	Res[1] = yres;
-	Res[2] = zres;
+    Res[0] = xres;
+    Res[1] = yres;
+    Res[2] = zres;
 }
 
 
@@ -272,33 +266,31 @@ void  TransformVector( const TRANSFORM_STRUCT * Matrix,
  *
  **************************************************************************/
 
-void  InvTransformVector( const TRANSFORM_STRUCT * Matrix, 
-					   const sgl_vector	Vec, 
-							 sgl_vector Res)
+void InvTransformVector(const TRANSFORM_STRUCT *Matrix,
+                        const sgl_vector Vec,
+                        sgl_vector Res) {
+    register float x, y, z; /* local copy of Vec for when Vec and Res are same */
 
-{
-	register float x,y,z; /* local copy of Vec for when Vec and Res are same */
+    /*
+    // results: This makes the compiler realise there is no overlap between the
+    // matrix and the results, thus allowing greater overlap of operations.
+    */
+    float xres, yres, zres;
 
-	/*
-	// results: This makes the compiler realise there is no overlap between the
-	// matrix and the results, thus allowing greater overlap of operations.
-	*/
-	float xres,yres,zres; 
+    x = Vec[0];
+    y = Vec[1];
+    z = Vec[2];
 
-	x = Vec[0];
-	y = Vec[1];
-	z = Vec[2];
+    xres = x * Matrix->inv[0][0] + y * Matrix->inv[0][1] + z * Matrix->inv[0][2]
+           + Matrix->inv[0][3];
+    yres = x * Matrix->inv[1][0] + y * Matrix->inv[1][1] + z * Matrix->inv[1][2]
+           + Matrix->inv[1][3];
+    zres = x * Matrix->inv[2][0] + y * Matrix->inv[2][1] + z * Matrix->inv[2][2]
+           + Matrix->inv[2][3];
 
-	xres = x * Matrix->inv[0][0] + y * Matrix->inv[0][1] + z * Matrix->inv[0][2]
-			 + Matrix->inv[0][3];
-	yres = x * Matrix->inv[1][0] + y * Matrix->inv[1][1] + z * Matrix->inv[1][2]
-			 + Matrix->inv[1][3];
-	zres = x * Matrix->inv[2][0] + y * Matrix->inv[2][1] + z * Matrix->inv[2][2]
-			 + Matrix->inv[2][3];
-
-	Res[0] = xres;
-	Res[1] = yres;
-	Res[2] = zres;
+    Res[0] = xres;
+    Res[1] = yres;
+    Res[2] = zres;
 
 }
 
@@ -315,214 +307,200 @@ void  InvTransformVector( const TRANSFORM_STRUCT * Matrix,
  *					matrices.
  *
  **************************************************************************/
-extern	void	TransformMultiply( const TRANSFORM_STRUCT * Trans1, 
-								   const TRANSFORM_STRUCT * Trans2,
-										 TRANSFORM_STRUCT * Result)
+extern void TransformMultiply(const TRANSFORM_STRUCT *Trans1,
+                              const TRANSFORM_STRUCT *Trans2,
+                              TRANSFORM_STRUCT *Result) {
+    /*
+    // Row and Column Index Counters
+    */
+    int Row, Col;
 
-{
-	/*
-	// Row and Column Index Counters
-	*/
-	int Row, Col;
-
-	/*
-	// 	local values used to prevent destruction of the input values
-	// 	as we overwrite them.
- 	*/
-	TRANSFORM_STRUCT  Local;
+    /*
+    // 	local values used to prevent destruction of the input values
+    // 	as we overwrite them.
+     */
+    TRANSFORM_STRUCT Local;
 
 
-	
-	/*
-	// Store values that are used multiple times in loops locally.
-	// Hopefully these will be put in registers, or at least somewhere
-	// quick to access
-	*/
-	#if MULTI_FP_REG
-	float Trans1Mat_Row_0,  Trans1Mat_Row_1, Trans1Mat_Row_2;
-	float Trans2Inv_Row_0,	Trans2Inv_Row_1, Trans2Inv_Row_2;
-	#endif
 
-	/*
-	// Keep track of the scaling behaviour of the matrix
-	*/
-	Local.has_neg_scaling = Trans1->has_neg_scaling ^ Trans2->has_neg_scaling;
+    /*
+    // Store values that are used multiple times in loops locally.
+    // Hopefully these will be put in registers, or at least somewhere
+    // quick to access
+    */
+#if MULTI_FP_REG
+    float Trans1Mat_Row_0,  Trans1Mat_Row_1, Trans1Mat_Row_2;
+    float Trans2Inv_Row_0,	Trans2Inv_Row_1, Trans2Inv_Row_2;
+#endif
 
-	switch(Trans1->scale_flag)
-	{
-		/*
-		// If arbitrary scale, then the result must have arbitrary scaling
-		*/
-		case arbitrary_scale:
-			 	 /* we dont care about rescale!!! */
-				Local.scale_flag=arbitrary_scale;
-			break;
+    /*
+    // Keep track of the scaling behaviour of the matrix
+    */
+    Local.has_neg_scaling = Trans1->has_neg_scaling ^ Trans2->has_neg_scaling;
 
-		/* 
-		// transform 1 has uniform scale 
-		*/
-		case uniform_scale:
+    switch (Trans1->scale_flag) {
+        /*
+        // If arbitrary scale, then the result must have arbitrary scaling
+        */
+        case arbitrary_scale:
+            /* we dont care about rescale!!! */
+            Local.scale_flag = arbitrary_scale;
+            break;
 
-			/* 
-			// given transform has arbitrary scaling 
-			*/
- 			if (Trans2->scale_flag==arbitrary_scale) 	
-			{
-				Local.scale_flag=arbitrary_scale;
-			}
-			else if (Trans2->scale_flag==uniform_scale)			
-			{
-				/* given transform also has uniform scaling */
-				Local.rescale	= Trans1->rescale * Trans2->rescale;
-				Local.invrescale= Trans1->invrescale * Trans2->invrescale;
-				Local.scale_flag=uniform_scale;
-  			} 
-			/* Transform 2 has no scale */
-			else
-			{
-				Local.rescale	=Trans1->rescale;
-				Local.invrescale=Trans1->invrescale;
-				Local.scale_flag=uniform_scale;
-			}
-			break;
-			
-		/* 
-		// transform 1 has NO scale 
-		*/
-	 	case no_scale:
-			if (Trans2->scale_flag==arbitrary_scale) 
-			{
-				/* given transform has arbitrary scaling */
-				Local.scale_flag=arbitrary_scale;
-			}
-			else if (Trans2->scale_flag==uniform_scale)			
-			{
-				Local.scale_flag = uniform_scale;
-				Local.rescale	 = Trans2->rescale;
-				Local.invrescale = Trans2->invrescale;
-			}
-			else
-			{
-				Local.rescale	=1.0f;
-				Local.invrescale=1.0f;
-				Local.scale_flag=no_scale;
-			}
-			
-			break;
+            /*
+            // transform 1 has uniform scale
+            */
+        case uniform_scale:
+
+            /*
+            // given transform has arbitrary scaling
+            */
+            if (Trans2->scale_flag == arbitrary_scale) {
+                Local.scale_flag = arbitrary_scale;
+            } else if (Trans2->scale_flag == uniform_scale) {
+                /* given transform also has uniform scaling */
+                Local.rescale = Trans1->rescale * Trans2->rescale;
+                Local.invrescale = Trans1->invrescale * Trans2->invrescale;
+                Local.scale_flag = uniform_scale;
+            }
+                /* Transform 2 has no scale */
+            else {
+                Local.rescale = Trans1->rescale;
+                Local.invrescale = Trans1->invrescale;
+                Local.scale_flag = uniform_scale;
+            }
+            break;
+
+            /*
+            // transform 1 has NO scale
+            */
+        case no_scale:
+            if (Trans2->scale_flag == arbitrary_scale) {
+                /* given transform has arbitrary scaling */
+                Local.scale_flag = arbitrary_scale;
+            } else if (Trans2->scale_flag == uniform_scale) {
+                Local.scale_flag = uniform_scale;
+                Local.rescale = Trans2->rescale;
+                Local.invrescale = Trans2->invrescale;
+            } else {
+                Local.rescale = 1.0f;
+                Local.invrescale = 1.0f;
+                Local.scale_flag = no_scale;
+            }
+
+            break;
 
 #if DEBUG
-		default:
-			ASSERT(FALSE); /*this is an illegal value!*/
-			break;
+            default:
+                ASSERT(FALSE); /*this is an illegal value!*/
+                break;
 #endif /*DEBUG*/
 
-	} /*end switch*/
+    } /*end switch*/
 
-	/*
-	// Do the actual matrix multiplication
-	*/
-	for(Row = 0; Row < 3; Row ++)
-	{
-	#if MULTI_FP_REG
-		/*
-		// Load up commonly used values
-		*/
-		Trans1Mat_Row_0 =  Trans1->mat[Row][0];
-		Trans1Mat_Row_1 =  Trans1->mat[Row][1];
-		Trans1Mat_Row_2 =  Trans1->mat[Row][2];
+    /*
+    // Do the actual matrix multiplication
+    */
+    for (Row = 0; Row < 3; Row++) {
+#if MULTI_FP_REG
+        /*
+        // Load up commonly used values
+        */
+        Trans1Mat_Row_0 =  Trans1->mat[Row][0];
+        Trans1Mat_Row_1 =  Trans1->mat[Row][1];
+        Trans1Mat_Row_2 =  Trans1->mat[Row][2];
 
-		Trans2Inv_Row_0 = Trans2->inv[Row][0];
-		Trans2Inv_Row_1 = Trans2->inv[Row][1];
-		Trans2Inv_Row_2 = Trans2->inv[Row][2];
-	#else
-		/*
-		// If on Pentium, creating local FP values is
-		// probably pointless - #define them instead
-		*/
-		#define Trans1Mat_Row_0  Trans1->mat[Row][0]
-		#define Trans1Mat_Row_1  Trans1->mat[Row][1]
-		#define Trans1Mat_Row_2  Trans1->mat[Row][2]
+        Trans2Inv_Row_0 = Trans2->inv[Row][0];
+        Trans2Inv_Row_1 = Trans2->inv[Row][1];
+        Trans2Inv_Row_2 = Trans2->inv[Row][2];
+#else
+        /*
+        // If on Pentium, creating local FP values is
+        // probably pointless - #define them instead
+        */
+#define Trans1Mat_Row_0  Trans1->mat[Row][0]
+#define Trans1Mat_Row_1  Trans1->mat[Row][1]
+#define Trans1Mat_Row_2  Trans1->mat[Row][2]
 
-		#define Trans2Inv_Row_0	 Trans2->inv[Row][0]
-		#define Trans2Inv_Row_1  Trans2->inv[Row][1]
-		#define Trans2Inv_Row_2  Trans2->inv[Row][2]
-		 
-	#endif
+#define Trans2Inv_Row_0     Trans2->inv[Row][0]
+#define Trans2Inv_Row_1  Trans2->inv[Row][1]
+#define Trans2Inv_Row_2  Trans2->inv[Row][2]
 
-		for(Col = 0; Col < 3; Col ++)
-		{
-			/*
-			//Define local variables so compiler knows there can
-			//be no memory aliasing
-			*/
-			float tmp1, tmp2;
+#endif
 
-			/*
-				unroll the innermost loop to do scale/rotation part
-				and for inverse as well
+        for (Col = 0; Col < 3; Col++) {
+            /*
+            //Define local variables so compiler knows there can
+            //be no memory aliasing
+            */
+            float tmp1, tmp2;
 
-				NOTE: Because the local mat is "local" the compiler should
-				know it can overlap the two calculations.
-			*/
+            /*
+                unroll the innermost loop to do scale/rotation part
+                and for inverse as well
 
-			tmp1 = 
-				 Trans1Mat_Row_0 * Trans2->mat[0][Col] +
-				 Trans1Mat_Row_1 * Trans2->mat[1][Col] +
-				 Trans1Mat_Row_2 * Trans2->mat[2][Col];
+                NOTE: Because the local mat is "local" the compiler should
+                know it can overlap the two calculations.
+            */
+
+            tmp1 =
+                    Trans1Mat_Row_0 * Trans2->mat[0][Col] +
+                    Trans1Mat_Row_1 * Trans2->mat[1][Col] +
+                    Trans1Mat_Row_2 * Trans2->mat[2][Col];
 
 
-			tmp2 = 
-				 Trans2Inv_Row_0 * Trans1->inv[0][Col] +
-				 Trans2Inv_Row_1 * Trans1->inv[1][Col] +
-				 Trans2Inv_Row_2 * Trans1->inv[2][Col];
+            tmp2 =
+                    Trans2Inv_Row_0 * Trans1->inv[0][Col] +
+                    Trans2Inv_Row_1 * Trans1->inv[1][Col] +
+                    Trans2Inv_Row_2 * Trans1->inv[2][Col];
 
-			Local.mat[Row][Col] = tmp1;
-			Local.inv[Row][Col] = tmp2;
-		}; /*end for Col*/
+            Local.mat[Row][Col] = tmp1;
+            Local.inv[Row][Col] = tmp2;
+        }; /*end for Col*/
 
 
 
-		/*
-			Do the translation part
-		*/
-		Local.mat[Row][3] = 
-			 Trans1Mat_Row_0 * Trans2->mat[0][3] +
- 			 Trans1Mat_Row_1 * Trans2->mat[1][3] +
-			 Trans1Mat_Row_2 * Trans2->mat[2][3] +
-			 Trans1->mat[Row][3];
+        /*
+            Do the translation part
+        */
+        Local.mat[Row][3] =
+                Trans1Mat_Row_0 * Trans2->mat[0][3] +
+                Trans1Mat_Row_1 * Trans2->mat[1][3] +
+                Trans1Mat_Row_2 * Trans2->mat[2][3] +
+                Trans1->mat[Row][3];
 
 
-		/*
-			***************************************************
-			And the inverse translation
-			But this may not be needed !!!!!!!!!!
-			***************************************************
-		*/
+        /*
+            ***************************************************
+            And the inverse translation
+            But this may not be needed !!!!!!!!!!
+            ***************************************************
+        */
 
-		Local.inv[Row][3] = 
-			Trans2Inv_Row_0 * Trans1->inv[0][3] +
-			Trans2Inv_Row_1 * Trans1->inv[1][3] +
-			Trans2Inv_Row_2 * Trans1->inv[2][3] +
-			Trans2->inv[Row][3];
+        Local.inv[Row][3] =
+                Trans2Inv_Row_0 * Trans1->inv[0][3] +
+                Trans2Inv_Row_1 * Trans1->inv[1][3] +
+                Trans2Inv_Row_2 * Trans1->inv[2][3] +
+                Trans2->inv[Row][3];
 
-		#if ! MULTI_FP_REG
-		#undef Trans1Mat_Row_0
-		#undef Trans1Mat_Row_1
-		#undef Trans1Mat_Row_2
+#if !MULTI_FP_REG
+#undef Trans1Mat_Row_0
+#undef Trans1Mat_Row_1
+#undef Trans1Mat_Row_2
 
-		#undef Trans2Inv_Row_0
-		#undef Trans2Inv_Row_1
-		#undef Trans2Inv_Row_2
-		#endif
+#undef Trans2Inv_Row_0
+#undef Trans2Inv_Row_1
+#undef Trans2Inv_Row_2
+#endif
 
-	} /*end for Row */
+    } /*end for Row */
 
 
-	/*
-	//	now copy the local into the result structure.
-	*/
+    /*
+    //	now copy the local into the result structure.
+    */
 
-	*Result = Local;
+    *Result = Local;
 
 }
 
@@ -536,42 +514,40 @@ extern	void	TransformMultiply( const TRANSFORM_STRUCT * Trans1,
  * Description    : Takes a matrix and inverts it.
  *
  **************************************************************************/
-extern void TransformInvert(TRANSFORM_STRUCT * Mat)
-{
-	float a,b,c,d;
-	int i;
+extern void TransformInvert(TRANSFORM_STRUCT *Mat) {
+    float a, b, c, d;
+    int i;
 
 
-	/*
-	// Swap over the matrix and inverse matrix bits of the transform
-	*/
-	for(i = 0; i < 3; i++)
-	{
-		a = Mat->mat[i][0];
-		b = Mat->mat[i][1];
-		c = Mat->mat[i][2];
-		d = Mat->mat[i][3];
+    /*
+    // Swap over the matrix and inverse matrix bits of the transform
+    */
+    for (i = 0; i < 3; i++) {
+        a = Mat->mat[i][0];
+        b = Mat->mat[i][1];
+        c = Mat->mat[i][2];
+        d = Mat->mat[i][3];
 
 
-		Mat->mat[i][0]= Mat->inv[i][0];
-		Mat->mat[i][1]= Mat->inv[i][1];
-		Mat->mat[i][2]= Mat->inv[i][2];
-		Mat->mat[i][3]= Mat->inv[i][3];
+        Mat->mat[i][0] = Mat->inv[i][0];
+        Mat->mat[i][1] = Mat->inv[i][1];
+        Mat->mat[i][2] = Mat->inv[i][2];
+        Mat->mat[i][3] = Mat->inv[i][3];
 
 
-		Mat->inv[i][0] = a;
-		Mat->inv[i][1] = b;
-		Mat->inv[i][2] = c;
-		Mat->inv[i][3] = d;
-	}/*end for*/
+        Mat->inv[i][0] = a;
+        Mat->inv[i][1] = b;
+        Mat->inv[i][2] = c;
+        Mat->inv[i][3] = d;
+    }/*end for*/
 
 
-	/*
-	// swap the rescale values - the scale_flag stays the same
-	*/
-	a = Mat->rescale;
-	Mat->rescale = Mat->invrescale;
-	Mat->invrescale = a;
+    /*
+    // swap the rescale values - the scale_flag stays the same
+    */
+    a = Mat->rescale;
+    Mat->rescale = Mat->invrescale;
+    Mat->invrescale = a;
 
 }
 
@@ -587,94 +563,91 @@ extern void TransformInvert(TRANSFORM_STRUCT * Mat)
  *					except for reflections
  *
  **************************************************************************/
-extern	void	TransformDescale(TRANSFORM_STRUCT * Mat)
-{
+extern void TransformDescale(TRANSFORM_STRUCT *Mat) {
 
-	/*
-	// squares of the x,y & Z "columns"
-	*/
-	float XSq, YSq, ZSq;
+    /*
+    // squares of the x,y & Z "columns"
+    */
+    float XSq, YSq, ZSq;
 
-	/*
-	// the "roots" of the above
-	*/
-	float XMag, YMag, ZMag;
+    /*
+    // the "roots" of the above
+    */
+    float XMag, YMag, ZMag;
 
-	/*
-	// the inverses of the above
-	*/
-	float InvXMag, InvYMag, InvZMag;
+    /*
+    // the inverses of the above
+    */
+    float InvXMag, InvYMag, InvZMag;
 
-	int i;
+    int i;
 
-	/*
-	// Clear out the scaling flag and rescale values
-	*/
-	Mat->scale_flag = no_scale;
-	Mat->rescale	= 1.0f;
-	Mat->invrescale = 1.0f;
+    /*
+    // Clear out the scaling flag and rescale values
+    */
+    Mat->scale_flag = no_scale;
+    Mat->rescale = 1.0f;
+    Mat->invrescale = 1.0f;
 
-	/*
-	// Get the scaling factors
-	*/
-	#define SQ(x) ((x)*(x))
+    /*
+    // Get the scaling factors
+    */
+#define SQ(x) ((x)*(x))
 
-	XSq = SQ(Mat->mat[0][0]) + SQ(Mat->mat[1][0]) + SQ(Mat->mat[2][0]);
-	YSq = SQ(Mat->mat[0][1]) + SQ(Mat->mat[1][1]) + SQ(Mat->mat[2][1]);
-	ZSq = SQ(Mat->mat[0][2]) + SQ(Mat->mat[1][2]) + SQ(Mat->mat[2][2]);
+    XSq = SQ(Mat->mat[0][0]) + SQ(Mat->mat[1][0]) + SQ(Mat->mat[2][0]);
+    YSq = SQ(Mat->mat[0][1]) + SQ(Mat->mat[1][1]) + SQ(Mat->mat[2][1]);
+    ZSq = SQ(Mat->mat[0][2]) + SQ(Mat->mat[1][2]) + SQ(Mat->mat[2][2]);
 
-	#undef SQ
+#undef SQ
 
-	/*
-	// Get the square roots and inverses of these.
-	//
-	// NOTE: If there is an efficient inverse square root function, then
-	// it is more efficient to use that instead... 
-	*/
-	#if defined(INVSQRT)
-		InvXMag = sInvsqrt(XSq);
-		InvYMag = sInvsqrt(YSq);
-		InvZMag = sInvsqrt(ZSq);
+    /*
+    // Get the square roots and inverses of these.
+    //
+    // NOTE: If there is an efficient inverse square root function, then
+    // it is more efficient to use that instead...
+    */
+#if defined(INVSQRT)
+    InvXMag = sInvsqrt(XSq);
+    InvYMag = sInvsqrt(YSq);
+    InvZMag = sInvsqrt(ZSq);
 
-		XMag = XSq * InvXMag;
-		YMag = YSq * InvYMag;
-		ZMag = ZSq * InvZMag;
-		
-	#else
-		XMag = ssqrt(XSq);
-		YMag = ssqrt(YSq);
-		ZMag = ssqrt(ZSq);
+    XMag = XSq * InvXMag;
+    YMag = YSq * InvYMag;
+    ZMag = ZSq * InvZMag;
 
-		InvXMag = 1.0f / XMag;
-		InvYMag = 1.0f / YMag;
-		InvZMag = 1.0f / ZMag;
+#else
+    XMag = ssqrt(XSq);
+    YMag = ssqrt(YSq);
+    ZMag = ssqrt(ZSq);
 
-	#endif
+    InvXMag = 1.0f / XMag;
+    InvYMag = 1.0f / YMag;
+    InvZMag = 1.0f / ZMag;
 
-	/*
-	// Multiply the matrix by the x,y & z scaling factors
-	*/
-	for(i = 0; i < 3; i++)
-	{
-		Mat->mat[i][0] *= InvXMag;
-		Mat->mat[i][1] *= InvYMag;
-		Mat->mat[i][2] *= InvZMag;
+#endif
 
-		Mat->inv[0][i] *= XMag;
-		Mat->inv[1][i] *= YMag;
-		Mat->inv[2][i] *= ZMag;
+    /*
+    // Multiply the matrix by the x,y & z scaling factors
+    */
+    for (i = 0; i < 3; i++) {
+        Mat->mat[i][0] *= InvXMag;
+        Mat->mat[i][1] *= InvYMag;
+        Mat->mat[i][2] *= InvZMag;
 
-	}/*end for*/
+        Mat->inv[0][i] *= XMag;
+        Mat->inv[1][i] *= YMag;
+        Mat->inv[2][i] *= ZMag;
 
-	/*
-	// Do the translation bit of the inverse as well
-	*/
-	Mat->inv[0][3] *= XMag;
-	Mat->inv[1][3] *= YMag;
-	Mat->inv[2][3] *= ZMag;
+    }/*end for*/
+
+    /*
+    // Do the translation bit of the inverse as well
+    */
+    Mat->inv[0][3] *= XMag;
+    Mat->inv[1][3] *= YMag;
+    Mat->inv[2][3] *= ZMag;
 
 
-	
 }/*end function*/
 
 
@@ -692,157 +665,155 @@ extern	void	TransformDescale(TRANSFORM_STRUCT * Mat)
  *					is more convenient after transformation.
  *
  **************************************************************************/
-extern	void	TransformBBox( const TRANSFORM_STRUCT * Matrix, 
-							   const BBOX_CENT_STRUCT * BBox,
-									 BBOX_MINMAX_STRUCT * Result)
-
-{
+extern void TransformBBox(const TRANSFORM_STRUCT *Matrix,
+                          const BBOX_CENT_STRUCT *BBox,
+                          BBOX_MINMAX_STRUCT *Result) {
 
 #if !MULTI_FP_REG
-	/*
-	//		 Use FP registers (where available) to speed it up.
-	*/
-	#define centreX (BBox->boxCentre[0])
-	#define centreY (BBox->boxCentre[1])
-	#define centreZ (BBox->boxCentre[2])
-	#define offsetX (BBox->boxOffsets[0])
-	#define offsetY (BBox->boxOffsets[1])
-	#define offsetZ (BBox->boxOffsets[2])
-	#define matXA   (Matrix->mat[0][0])
-	#define matXB   (Matrix->mat[0][1])
-	#define matXC   (Matrix->mat[0][2])
-	#define matYA   (Matrix->mat[1][0])
-	#define matYB   (Matrix->mat[1][1])
-	#define matYC   (Matrix->mat[1][2])
-	#define matZA   (Matrix->mat[2][0])
-	#define matZB   (Matrix->mat[2][1])
-	#define matZC   (Matrix->mat[2][2])
+    /*
+    //		 Use FP registers (where available) to speed it up.
+    */
+#define centreX (BBox->boxCentre[0])
+#define centreY (BBox->boxCentre[1])
+#define centreZ (BBox->boxCentre[2])
+#define offsetX (BBox->boxOffsets[0])
+#define offsetY (BBox->boxOffsets[1])
+#define offsetZ (BBox->boxOffsets[2])
+#define matXA   (Matrix->mat[0][0])
+#define matXB   (Matrix->mat[0][1])
+#define matXC   (Matrix->mat[0][2])
+#define matYA   (Matrix->mat[1][0])
+#define matYB   (Matrix->mat[1][1])
+#define matYC   (Matrix->mat[1][2])
+#define matZA   (Matrix->mat[2][0])
+#define matZB   (Matrix->mat[2][1])
+#define matZC   (Matrix->mat[2][2])
 
-	float ResultCentre, ResultOffset;
+    float ResultCentre, ResultOffset;
 
-	/*
-	// Do the X components
-	*/
-	ResultCentre = centreX * matXA +  centreY * matXB + centreZ * matXC +
-							 Matrix->mat[0][3];
-	ResultOffset = sfabs(offsetX * matXA) +  sfabs(offsetY * matXB) + 
-							sfabs(offsetZ * matXC);
+    /*
+    // Do the X components
+    */
+    ResultCentre = centreX * matXA + centreY * matXB + centreZ * matXC +
+                   Matrix->mat[0][3];
+    ResultOffset = sfabs(offsetX * matXA) + sfabs(offsetY * matXB) +
+                   sfabs(offsetZ * matXC);
 
-	Result->boxMin[0]  = ResultCentre - ResultOffset;
-	Result->boxMax[0]  = ResultCentre + ResultOffset;
+    Result->boxMin[0] = ResultCentre - ResultOffset;
+    Result->boxMax[0] = ResultCentre + ResultOffset;
 
 
-	/*
-	// Do the Y components
-	*/
-	ResultCentre  = centreX * matYA +  centreY * matYB + centreZ * matYC +
-							 Matrix->mat[1][3];
+    /*
+    // Do the Y components
+    */
+    ResultCentre = centreX * matYA + centreY * matYB + centreZ * matYC +
+                   Matrix->mat[1][3];
 
-	ResultOffset = sfabs(offsetX * matYA) +  sfabs(offsetY * matYB) + 
-							sfabs(offsetZ * matYC);
+    ResultOffset = sfabs(offsetX * matYA) + sfabs(offsetY * matYB) +
+                   sfabs(offsetZ * matYC);
 
-	Result->boxMin[1]  = ResultCentre - ResultOffset;
-	Result->boxMax[1]  = ResultCentre + ResultOffset;
+    Result->boxMin[1] = ResultCentre - ResultOffset;
+    Result->boxMax[1] = ResultCentre + ResultOffset;
 
-	/*
-	// Do the Z components
-	*/
-	ResultCentre  = centreX * matZA +  centreY * matZB + centreZ * matZC +
-							 Matrix->mat[2][3];
+    /*
+    // Do the Z components
+    */
+    ResultCentre = centreX * matZA + centreY * matZB + centreZ * matZC +
+                   Matrix->mat[2][3];
 
-	ResultOffset = sfabs(offsetX * matZA) +  sfabs(offsetY * matZB) + 
-							sfabs(offsetZ * matZC);
+    ResultOffset = sfabs(offsetX * matZA) + sfabs(offsetY * matZB) +
+                   sfabs(offsetZ * matZC);
 
-	Result->boxMin[2]  = ResultCentre - ResultOffset;
-	Result->boxMax[2]  = ResultCentre + ResultOffset;
+    Result->boxMin[2] = ResultCentre - ResultOffset;
+    Result->boxMax[2] = ResultCentre + ResultOffset;
 
-	#undef centreX 
-	#undef centreY 
-	#undef centreZ 
-	#undef offsetX 
-	#undef offsetY 
-	#undef offsetZ 
-	#undef matXA   
-	#undef matXB   
-	#undef matXC   
-	#undef matYA   
-	#undef matYB   
-	#undef maYYC   
-	#undef matZA   
-	#undef matZB   
-	#undef matZC   
+#undef centreX
+#undef centreY
+#undef centreZ
+#undef offsetX
+#undef offsetY
+#undef offsetZ
+#undef matXA
+#undef matXB
+#undef matXC
+#undef matYA
+#undef matYB
+#undef maYYC
+#undef matZA
+#undef matZB
+#undef matZC
 
 #else
-	/*
-	// local "copies" of the bounding box values to
-	//		 1) prevent overwriting when the result and the BBox are the same
-	//		 2) use FP registers (where available) to speed it up.
-	*/
-	float centreX, centreY, centreZ;
-	float offsetX, offsetY, offsetZ;
+    /*
+    // local "copies" of the bounding box values to
+    //		 1) prevent overwriting when the result and the BBox are the same
+    //		 2) use FP registers (where available) to speed it up.
+    */
+    float centreX, centreY, centreZ;
+    float offsetX, offsetY, offsetZ;
 
-	float ResultCentre, ResultOffset;
+    float ResultCentre, ResultOffset;
 
-	/*
-	// local copy of some of the matrix values, as these get used twice
-	*/
-	float matA, matB, matC;
-	
-	centreX = BBox->boxCentre[0];
-	centreY = BBox->boxCentre[1];
-	centreZ = BBox->boxCentre[2];
+    /*
+    // local copy of some of the matrix values, as these get used twice
+    */
+    float matA, matB, matC;
 
-	offsetX = BBox->boxOffsets[0];
-	offsetY = BBox->boxOffsets[1];
-	offsetZ = BBox->boxOffsets[2];
+    centreX = BBox->boxCentre[0];
+    centreY = BBox->boxCentre[1];
+    centreZ = BBox->boxCentre[2];
 
-	/*
-	// Do the X components
-	*/
-	matA = Matrix->mat[0][0];
-	matB = Matrix->mat[0][1];
-	matC = Matrix->mat[0][2];
+    offsetX = BBox->boxOffsets[0];
+    offsetY = BBox->boxOffsets[1];
+    offsetZ = BBox->boxOffsets[2];
 
-	ResultCentre = centreX * matA +  centreY * matB + centreZ * matC +
-							 Matrix->mat[0][3];
-	ResultOffset = sfabs(offsetX * matA) +  sfabs(offsetY * matB) + 
-							sfabs(offsetZ * matC);
+    /*
+    // Do the X components
+    */
+    matA = Matrix->mat[0][0];
+    matB = Matrix->mat[0][1];
+    matC = Matrix->mat[0][2];
 
-	Result->boxMin[0]  = ResultCentre - ResultOffset;
-	Result->boxMax[0]  = ResultCentre + ResultOffset;
+    ResultCentre = centreX * matA +  centreY * matB + centreZ * matC +
+                             Matrix->mat[0][3];
+    ResultOffset = sfabs(offsetX * matA) +  sfabs(offsetY * matB) +
+                            sfabs(offsetZ * matC);
+
+    Result->boxMin[0]  = ResultCentre - ResultOffset;
+    Result->boxMax[0]  = ResultCentre + ResultOffset;
 
 
-	/*
-	// Do the Y components
-	*/
-	matA = Matrix->mat[1][0];
-	matB = Matrix->mat[1][1];
-	matC = Matrix->mat[1][2];
+    /*
+    // Do the Y components
+    */
+    matA = Matrix->mat[1][0];
+    matB = Matrix->mat[1][1];
+    matC = Matrix->mat[1][2];
 
-	ResultCentre  = centreX * matA +  centreY * matB + centreZ * matC +
-							 Matrix->mat[1][3];
+    ResultCentre  = centreX * matA +  centreY * matB + centreZ * matC +
+                             Matrix->mat[1][3];
 
-	ResultOffset = sfabs(offsetX * matA) +  sfabs(offsetY * matB) + 
-							sfabs(offsetZ * matC);
+    ResultOffset = sfabs(offsetX * matA) +  sfabs(offsetY * matB) +
+                            sfabs(offsetZ * matC);
 
-	Result->boxMin[1]  = ResultCentre - ResultOffset;
-	Result->boxMax[1]  = ResultCentre + ResultOffset;
+    Result->boxMin[1]  = ResultCentre - ResultOffset;
+    Result->boxMax[1]  = ResultCentre + ResultOffset;
 
-	/*
-	// Do the Z components
-	*/
-	matA = Matrix->mat[2][0];
-	matB = Matrix->mat[2][1];
-	matC = Matrix->mat[2][2];
+    /*
+    // Do the Z components
+    */
+    matA = Matrix->mat[2][0];
+    matB = Matrix->mat[2][1];
+    matC = Matrix->mat[2][2];
 
-	ResultCentre  = centreX * matA +  centreY * matB + centreZ * matC +
-							 Matrix->mat[2][3];
+    ResultCentre  = centreX * matA +  centreY * matB + centreZ * matC +
+                             Matrix->mat[2][3];
 
-	ResultOffset = sfabs(offsetX * matA) +  sfabs(offsetY * matB) + 
-							sfabs(offsetZ * matC);
+    ResultOffset = sfabs(offsetX * matA) +  sfabs(offsetY * matB) +
+                            sfabs(offsetZ * matC);
 
-	Result->boxMin[2]  = ResultCentre - ResultOffset;
-	Result->boxMax[2]  = ResultCentre + ResultOffset;
+    Result->boxMin[2]  = ResultCentre - ResultOffset;
+    Result->boxMax[2]  = ResultCentre + ResultOffset;
 #endif
 
 }
@@ -858,17 +829,16 @@ extern	void	TransformBBox( const TRANSFORM_STRUCT * Matrix,
  *				  clipping plane this routine clips the box so that it is
  *				  completely beyond (but touching) the clipping plane.
  *****************************************************************************/
-extern	void	ClipMMBBox( BBOX_MINMAX_STRUCT *pBox, float fClipFrontZ)
-{
-	/* Ensure we have a bounding box that crosses the clipping plane: */
-	ASSERT(pBox->boxMin[2] < fClipFrontZ &&
-		   pBox->boxMax[2] > fClipFrontZ);
+extern void ClipMMBBox(BBOX_MINMAX_STRUCT *pBox, float fClipFrontZ) {
+    /* Ensure we have a bounding box that crosses the clipping plane: */
+    ASSERT(pBox->boxMin[2] < fClipFrontZ &&
+           pBox->boxMax[2] > fClipFrontZ);
 
-	pBox->boxMin[2] = fClipFrontZ;
+    pBox->boxMin[2] = fClipFrontZ;
 }
 
 
-static sgl_uint32 RandomNumber=0; /* the random number generator's state variable*/
+static sgl_uint32 RandomNumber = 0; /* the random number generator's state variable*/
 
 /******************************************************************************
  * Function Name: sgl_rand
@@ -886,13 +856,12 @@ static sgl_uint32 RandomNumber=0; /* the random number generator's state variabl
  *				  INTERNALLY! To make it easier to use, we mask off the top
  *				  bit so that we can return it as a positive signed integer.
  *****************************************************************************/
-extern long CALL_CONV sgl_rand()
-{
-	const long TOPBIT = 0x80000000L;
+extern long CALL_CONV sgl_rand() {
+    const long TOPBIT = 0x80000000L;
 
-	RandomNumber=1664525UL*RandomNumber + 1013904223UL;
+    RandomNumber = 1664525UL * RandomNumber + 1013904223UL;
 
-	return(RandomNumber & ~TOPBIT);
+    return (RandomNumber & ~TOPBIT);
 }
 
 /******************************************************************************
@@ -905,9 +874,8 @@ extern long CALL_CONV sgl_rand()
  *
  * Description  : Seeds the random number generator. It can take any value
  *****************************************************************************/
-extern void CALL_CONV sgl_srand(unsigned long Seed)
-{	
-	RandomNumber=Seed;
+extern void CALL_CONV sgl_srand(unsigned long Seed) {
+    RandomNumber = Seed;
 }
 
 /******************************************************************************/
@@ -930,34 +898,31 @@ unsigned char *iSqrt = NULL;
  *
  * Description  : prepares the InvSqrt lookup table
  *****************************************************************************/
-void MakeInvSqrtLookupTable (void)
-{
+void MakeInvSqrtLookupTable(void) {
     register long f;
     register unsigned char *h;
-    union
-	{
-		sgl_int32 i;
-		float f;
-	} fi, fo;
+    union {
+        sgl_int32 i;
+        float f;
+    } fi, fo;
 
     iSqrt = SGLMalloc (TABLE_SIZE);
 
-	ASSERT (iSqrt);
-	
+    ASSERT (iSqrt);
+
     h = iSqrt;
 
-    for (f = 0, h = iSqrt; f < TABLE_SIZE; f++)
-	{
-        fi.i = ((EXP_BIAS-1) << EXP_POS) | (f << LOOKUP_POS);
-	  #if defined (MIDAS_ARCADE)
+    for (f = 0, h = iSqrt; f < TABLE_SIZE; f++) {
+        fi.i = ((EXP_BIAS - 1) << EXP_POS) | (f << LOOKUP_POS);
+#if defined (MIDAS_ARCADE)
         fo.f = 1.0f / ssqrt(fi.f);
-	  #else
-        fo.f = 1.0f / (float)sqrt(fi.f);
-	  #endif
-        *h++ = ((fo.i + (1<<(SEED_POS-2))) >> SEED_POS) & 0xFF; /* rounding */
+#else
+        fo.f = 1.0f / (float) sqrt(fi.f);
+#endif
+        *h++ = ((fo.i + (1 << (SEED_POS - 2))) >> SEED_POS) & 0xFF; /* rounding */
     }
 
-	iSqrt[TABLE_SIZE / 2] = 0xFF;    /* Special case for 1.0 */
+    iSqrt[TABLE_SIZE / 2] = 0xFF;    /* Special case for 1.0 */
 }
 
 /*---------------------------- End of File -------------------------------*/

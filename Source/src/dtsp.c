@@ -89,9 +89,9 @@ extern sgl_uint32 TranslucentControlWord;
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
 
-static INLINE void ConvertD3DColtoFractions (sgl_uint32 Colour, 
-											 float f24, float f16, 
-											 sgl_uint32 *p24, sgl_uint32 *p16);
+static INLINE void ConvertD3DColtoFractions(sgl_uint32 Colour,
+                                            float f24, float f16,
+                                            sgl_uint32 *p24, sgl_uint32 *p16);
 
 /**********************************************************************
 ** Various flat shading options follow, the first versions
@@ -109,136 +109,128 @@ static INLINE void ConvertD3DColtoFractions (sgl_uint32 Colour,
 **
 **********************************************************************/
 
-void PackFlatAndStore (PITRI pTri, PIMATERIAL pMat, int numTriangles)
-{
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		sgl_uint32 uBaseColour = pTri->BaseColour;
-		pMat->Shading.u.WriteBack.ModControl = 
-			pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF);
-		pMat->Shading.u.WriteBack.ModBaseCol = uBaseColour << 16;
-		pTri++;
-		pMat++;
-	}/*end for*/
+void PackFlatAndStore(PITRI pTri, PIMATERIAL pMat, int numTriangles) {
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        sgl_uint32 uBaseColour = pTri->BaseColour;
+        pMat->Shading.u.WriteBack.ModControl =
+                pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF);
+        pMat->Shading.u.WriteBack.ModBaseCol = uBaseColour << 16;
+        pTri++;
+        pMat++;
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 
-void PackFlatDecalAndStore (PITRI pTri, PIMATERIAL pMat, int numTriangles)
-{
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+void PackFlatDecalAndStore(PITRI pTri, PIMATERIAL pMat, int numTriangles) {
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// There's some scope for optimising this, but decal should not be used
-	// very much as it does no lighting.
-	*/
+    /*
+    // There's some scope for optimising this, but decal should not be used
+    // very much as it does no lighting.
+    */
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		pMat->Shading.u.WriteBack.ModControl = 
-			pTri->TSPControlWord | ((0x00ffffff >> 16) & 0x000000FF);
-		pMat->Shading.u.WriteBack.ModBaseCol = (sgl_uint32) (0x00ffffff << 16);
-		
-		pTri++;
-		pMat++;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        pMat->Shading.u.WriteBack.ModControl =
+                pTri->TSPControlWord | ((0x00ffffff >> 16) & 0x000000FF);
+        pMat->Shading.u.WriteBack.ModBaseCol = (sgl_uint32) (0x00ffffff << 16);
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        pTri++;
+        pMat++;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 
-void PackFlatShadAndStore (PITRI pTri, PIMATERIAL pMat, int numTriangles)
-{	
-	float fShadowCoeff = pMat->v.ShadowBrightness;
-	float fNonShadowCoeff = 1.0f - fShadowCoeff;
+void PackFlatShadAndStore(PITRI pTri, PIMATERIAL pMat, int numTriangles) {
+    float fShadowCoeff = pMat->v.ShadowBrightness;
+    float fNonShadowCoeff = 1.0f - fShadowCoeff;
 
-	sgl_uint32 uFlat0Col24, uFlat1Col16;
+    sgl_uint32 uFlat0Col24, uFlat1Col16;
 
- 	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
-								 &uFlat0Col24, &uFlat1Col16);
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-		pMat->Shading.u.WriteBack.ModControl = 
-			pTri->TSPControlWord | ((uFlat0Col24 >> 16) & 0x000000FF);
-		pMat->Shading.u.WriteBack.ModBaseCol = uFlat0Col24 << 16 | uFlat1Col16;
-		
-		pTri++;
-		pMat++;
-		
-	}/*end for*/
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
+                                 &uFlat0Col24, &uFlat1Col16);
+
+        pMat->Shading.u.WriteBack.ModControl =
+                pTri->TSPControlWord | ((uFlat0Col24 >> 16) & 0x000000FF);
+        pMat->Shading.u.WriteBack.ModBaseCol = uFlat0Col24 << 16 | uFlat1Col16;
+
+        pTri++;
+        pMat++;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 
-void PackFlatLiVolAndStore (PITRI pTri, PIMATERIAL pMat, int numTriangles)
-{
-	sgl_uint32	nFlat1Col16;
+void PackFlatLiVolAndStore(PITRI pTri, PIMATERIAL pMat, int numTriangles) {
+    sgl_uint32 nFlat1Col16;
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
-				  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
-				  ((pMat->v.LightVolCol & 0x000000F8) << 7);
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		pMat->Shading.u.WriteBack.ModControl = 
-			pTri->TSPControlWord | ((uBaseColour >> 16)& 0x000000FF);
-		pMat->Shading.u.WriteBack.ModBaseCol =  uBaseColour << 16 | nFlat1Col16;
-		
-		pTri++;
-		pMat++;
-		
-	}/*end for*/
+    nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
+                  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
+                  ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
+
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        pMat->Shading.u.WriteBack.ModControl =
+                pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF);
+        pMat->Shading.u.WriteBack.ModBaseCol = uBaseColour << 16 | nFlat1Col16;
+
+        pTri++;
+        pMat++;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /**********************************************************************
@@ -252,299 +244,284 @@ void PackFlatLiVolAndStore (PITRI pTri, PIMATERIAL pMat, int numTriangles)
 **
 **********************************************************************/
 
-void PackTSPFlat (PITRI pTri, PIMATERIAL pMat, 
-				  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16));
-		
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+void PackTSPFlat(PITRI pTri, PIMATERIAL pMat,
+                 int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
+
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16));
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
-void PackTSPFlatDecal (PITRI pTri, PIMATERIAL pMat, 
-					   int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+void PackTSPFlatDecal(PITRI pTri, PIMATERIAL pMat,
+                      int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// There's some scope for optimising this, but decal should not be used
-	// very much as it does no lighting.
-	*/
+    /*
+    // There's some scope for optimising this, but decal should not be used
+    // very much as it does no lighting.
+    */
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		IW( pTSP, 0, (pTri->TSPControlWord | ((0x00ffffff >> 16) & 0x000000FF)));
-		IW( pTSP, 1, (sgl_uint32) (0x00ffffff << 16));
-		
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        IW(pTSP, 0, (pTri->TSPControlWord | ((0x00ffffff >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (sgl_uint32) (0x00ffffff << 16));
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
-void PackTSPHigh (PITRI pTri, PIMATERIAL pMat, 
-				  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32 HighlightOffset;
+void PackTSPHigh(PITRI pTri, PIMATERIAL pMat,
+                 int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 HighlightOffset;
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16));
+    HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
 
-		IW( pTSP, HighlightOffset, (pMat->Shading.u.Highlight));
-				
-		pTri ++;
-		pMat ++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16));
+
+        IW(pTSP, HighlightOffset, (pMat->Shading.u.Highlight));
+
+        pTri++;
+        pMat++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 /*            Shadow Equivalents of Above                              */
 /***********************************************************************/
 
-static INLINE void ConvertD3DColtoFractions (sgl_uint32 Colour, 
-											 float f24, float f16, 
-											 sgl_uint32 *p24, sgl_uint32 *p16)
-{
+static INLINE void ConvertD3DColtoFractions(sgl_uint32 Colour,
+                                            float f24, float f16,
+                                            sgl_uint32 *p24, sgl_uint32 *p16) {
 
-	float Red =   (float)((Colour & 0x00FF0000) >> 16);
-	float Green = (float)((Colour & 0x0000FF00) >> 8);
-	float Blue =  (float)(Colour & 0x000000FF);
-	
-	f16 *= (31.0f / 255.0f);
+    float Red = (float) ((Colour & 0x00FF0000) >> 16);
+    float Green = (float) ((Colour & 0x0000FF00) >> 8);
+    float Blue = (float) (Colour & 0x000000FF);
 
-	/*
-	// NOTE: Convert first to SIGNED int as this is MUCH quicker
-	// (generally) than conversion straight to UNSIGNED
-	*/
-	*p24= (sgl_uint32) ( ((sgl_int32)(Blue*f24)) | 
-					(((sgl_int32)(Green*f24))<<8) |
-					(((sgl_int32)(Red*f24))<<16)
-				   );
+    f16 *= (31.0f / 255.0f);
 
-	*p16= (sgl_uint32) ( ((sgl_int32)(Blue*f16)) | 
-					(((sgl_int32)(Green*f16))<<5) |
-					(((sgl_int32)(Red*f16))<<10)
-				   );
+    /*
+    // NOTE: Convert first to SIGNED int as this is MUCH quicker
+    // (generally) than conversion straight to UNSIGNED
+    */
+    *p24 = (sgl_uint32) (((sgl_int32) (Blue * f24)) |
+                         (((sgl_int32) (Green * f24)) << 8) |
+                         (((sgl_int32) (Red * f24)) << 16)
+    );
+
+    *p16 = (sgl_uint32) (((sgl_int32) (Blue * f16)) |
+                         (((sgl_int32) (Green * f16)) << 5) |
+                         (((sgl_int32) (Red * f16)) << 10)
+    );
 }
 
 /***********************************************************************/
 
-void PackTSPFlatShad (PITRI pTri, PIMATERIAL pMat, 
-					  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{	
-	float fShadowCoeff = pMat->v.ShadowBrightness;
-	float fNonShadowCoeff = 1.0f - fShadowCoeff;
+void PackTSPFlatShad(PITRI pTri, PIMATERIAL pMat,
+                     int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    float fShadowCoeff = pMat->v.ShadowBrightness;
+    float fNonShadowCoeff = 1.0f - fShadowCoeff;
 
-	sgl_uint32 uFlat0Col24, uFlat1Col16;
+    sgl_uint32 uFlat0Col24, uFlat1Col16;
 
- 	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
-								 &uFlat0Col24, &uFlat1Col16);
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
-		
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
+                                 &uFlat0Col24, &uFlat1Col16);
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /**********************************************************************/
 
-void PackTSPHighShad (PITRI pTri, PIMATERIAL pMat, 
-					  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32 HighlightOffset;
+void PackTSPHighShad(PITRI pTri, PIMATERIAL pMat,
+                     int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 HighlightOffset;
 
-	float fShadowCoeff = pMat->v.ShadowBrightness;
-	float fNonShadowCoeff = 1.0f - fShadowCoeff;
+    float fShadowCoeff = pMat->v.ShadowBrightness;
+    float fNonShadowCoeff = 1.0f - fShadowCoeff;
 
-	sgl_uint32 uFlat0Col24, uFlat1Col16;
+    sgl_uint32 uFlat0Col24, uFlat1Col16;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
-								 &uFlat0Col24, &uFlat1Col16);
+    HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
 
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
-		
-		IW( pTSP, HighlightOffset, (pMat->Shading.u.Highlight));
-				
-		pTri ++;
-		pMat ++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
+                                 &uFlat0Col24, &uFlat1Col16);
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
+
+        IW(pTSP, HighlightOffset, (pMat->Shading.u.Highlight));
+
+        pTri++;
+        pMat++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 /*                Light Volume Equivalents of Above                    */
 /***********************************************************************/
 
-void PackTSPFlatLiVol (PITRI pTri, PIMATERIAL pMat, 
-					   int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32	nFlat1Col16;
+void PackTSPFlatLiVol(PITRI pTri, PIMATERIAL pMat,
+                      int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 nFlat1Col16;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
-				  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
-				  ((pMat->v.LightVolCol & 0x000000F8) << 7);
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
-		
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
+                  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
+                  ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
+
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /**********************************************************************/
 
-void PackTSPHighLiVol (PITRI pTri, PIMATERIAL pMat, 
-					   int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32 HighlightOffset;
-	sgl_uint32	nFlat1Col16;
+void PackTSPHighLiVol(PITRI pTri, PIMATERIAL pMat,
+                      int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 HighlightOffset;
+    sgl_uint32 nFlat1Col16;
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	
-	nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
-				  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
-				  ((pMat->v.LightVolCol & 0x000000F8) << 7);
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
 
-		IW( pTSP, HighlightOffset, (pMat->Shading.u.Highlight));
-				
-		pTri ++;
-		pMat ++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
+                  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
+                  ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+    HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
+
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
+
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
+
+        IW(pTSP, HighlightOffset, (pMat->Shading.u.Highlight));
+
+        pTri++;
+        pMat++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************
@@ -553,308 +530,296 @@ void PackTSPHighLiVol (PITRI pTri, PIMATERIAL pMat,
 **
 ************************************************************************/
 
-void PackTSPFlatTrans (PITRI pTri, PIMATERIAL pMat, 
-				  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32 TexAddr;
+void PackTSPFlatTrans(PITRI pTri, PIMATERIAL pMat,
+                      int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 TexAddr;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	TexAddr = TranslucentControlWord;
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16));
+    TexAddr = TranslucentControlWord;
 
-		IW( pTSP, 2, 1);						/* r */
-		IW( pTSP, 3, 0);						/* q<<16 | p */
-		IW( pTSP, 4, (TexAddr << 16));			/* addr<16 | c */
-		IW( pTSP, 5, 0);						/* b<<16 | a */
-		IW( pTSP, 6, (TexAddr & 0xFFFF0000));	/* addr&FFFF0000 | f */
-		IW( pTSP, 7, 0);						/* e<<16 | d */
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16));
+
+        IW(pTSP, 2, 1);                        /* r */
+        IW(pTSP, 3, 0);                        /* q<<16 | p */
+        IW(pTSP, 4, (TexAddr << 16));            /* addr<16 | c */
+        IW(pTSP, 5, 0);                        /* b<<16 | a */
+        IW(pTSP, 6, (TexAddr & 0xFFFF0000));    /* addr&FFFF0000 | f */
+        IW(pTSP, 7, 0);                        /* e<<16 | d */
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /**********************************************************************/
 
-void PackTSPHighTrans (PITRI pTri, PIMATERIAL pMat, 
-				  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32 Highlight, TexAddr;
-	int HighlightOffset;
+void PackTSPHighTrans(PITRI pTri, PIMATERIAL pMat,
+                      int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 Highlight, TexAddr;
+    int HighlightOffset;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	Highlight = (pMat->Shading.u.Highlight & 0xFFFF0000);
-	TexAddr = TranslucentControlWord;
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16));
+    Highlight = (pMat->Shading.u.Highlight & 0xFFFF0000);
+    TexAddr = TranslucentControlWord;
 
-		IW( pTSP, 2, 1);						/* r */
-		IW( pTSP, 3, 0);						/* q<<16 | p */
-		IW( pTSP, 4, (TexAddr << 16));			/* addr<16 | c */
-		IW( pTSP, 5, 0);						/* b<<16 | a */
-		IW( pTSP, 6, (TexAddr & 0xFFFF0000));	    /* addr&FFFF0000 | f */
-		IW( pTSP, 7, 0);						/* e<<16 | d */
+    HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-		IW( pTSP, HighlightOffset, Highlight);
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
 
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16));
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        IW(pTSP, 2, 1);                        /* r */
+        IW(pTSP, 3, 0);                        /* q<<16 | p */
+        IW(pTSP, 4, (TexAddr << 16));            /* addr<16 | c */
+        IW(pTSP, 5, 0);                        /* b<<16 | a */
+        IW(pTSP, 6, (TexAddr & 0xFFFF0000));        /* addr&FFFF0000 | f */
+        IW(pTSP, 7, 0);                        /* e<<16 | d */
+
+        IW(pTSP, HighlightOffset, Highlight);
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 /*                Shadow Equivalents of Above                          */
 /***********************************************************************/
 
-void PackTSPFlatTransShad (PITRI pTri, PIMATERIAL pMat, 
-					  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32 uFlat0Col24, uFlat1Col16;
-	sgl_uint32 TexAddr;
+void PackTSPFlatTransShad(PITRI pTri, PIMATERIAL pMat,
+                          int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 uFlat0Col24, uFlat1Col16;
+    sgl_uint32 TexAddr;
 
-	float fShadowCoeff = pMat->v.ShadowBrightness;
-	float fNonShadowCoeff = 1.0f - fShadowCoeff;
+    float fShadowCoeff = pMat->v.ShadowBrightness;
+    float fNonShadowCoeff = 1.0f - fShadowCoeff;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	TexAddr = TranslucentControlWord;
+    TexAddr = TranslucentControlWord;
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
-								 &uFlat0Col24, &uFlat1Col16);
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
-		
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
 
-		IW( pTSP, 2, 1);						/* r */
-		IW( pTSP, 3, 0);						/* q<<16 | p */
-		IW( pTSP, 4, (TexAddr << 16));			/* addr<16 | c */
-		IW( pTSP, 5, 0);						/* b<<16 | a */
-		IW( pTSP, 6, (TexAddr & 0xFFFF0000));	/* addr&FFFF0000 | f */
-		IW( pTSP, 7, 0);						/* e<<16 | d */
+        ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
+                                 &uFlat0Col24, &uFlat1Col16);
 
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+
+        IW(pTSP, 2, 1);                        /* r */
+        IW(pTSP, 3, 0);                        /* q<<16 | p */
+        IW(pTSP, 4, (TexAddr << 16));            /* addr<16 | c */
+        IW(pTSP, 5, 0);                        /* b<<16 | a */
+        IW(pTSP, 6, (TexAddr & 0xFFFF0000));    /* addr&FFFF0000 | f */
+        IW(pTSP, 7, 0);                        /* e<<16 | d */
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /**********************************************************************/
 
-void PackTSPHighTransShad (PITRI pTri, PIMATERIAL pMat, 
-					  int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	int HighlightOffset;
-	sgl_uint32 Highlight, TexAddr;
-	sgl_uint32 uFlat0Col24, uFlat1Col16;
+void PackTSPHighTransShad(PITRI pTri, PIMATERIAL pMat,
+                          int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    int HighlightOffset;
+    sgl_uint32 Highlight, TexAddr;
+    sgl_uint32 uFlat0Col24, uFlat1Col16;
 
-	float fShadowCoeff = pMat->v.ShadowBrightness;
-	float fNonShadowCoeff = 1.0f - fShadowCoeff;
+    float fShadowCoeff = pMat->v.ShadowBrightness;
+    float fNonShadowCoeff = 1.0f - fShadowCoeff;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	Highlight = (pMat->Shading.u.Highlight & 0xFFFF0000);
-	TexAddr = TranslucentControlWord;
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
-								 &uFlat0Col24, &uFlat1Col16);
+    Highlight = (pMat->Shading.u.Highlight & 0xFFFF0000);
+    TexAddr = TranslucentControlWord;
 
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
-		
-		IW( pTSP, 2, 1);						/* r */
-		IW( pTSP, 3, 0);						/* q<<16 | p */
-		IW( pTSP, 4, (TexAddr << 16));			/* addr<16 | c */
-		IW( pTSP, 5, 0);						/* b<<16 | a */
-		IW( pTSP, 6, (TexAddr & 0xFFFF0000));	/* addr&FFFF0000 | f */
-		IW( pTSP, 7, 0);						/* e<<16 | d */
+    HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
 
-		IW( pTSP, HighlightOffset, Highlight);
-				
-		pTri ++;
-		pMat ++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        ConvertD3DColtoFractions(uBaseColour, fShadowCoeff, fNonShadowCoeff,
+                                 &uFlat0Col24, &uFlat1Col16);
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uFlat0Col24 >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uFlat0Col24 << 16 | uFlat1Col16));
+
+        IW(pTSP, 2, 1);                        /* r */
+        IW(pTSP, 3, 0);                        /* q<<16 | p */
+        IW(pTSP, 4, (TexAddr << 16));            /* addr<16 | c */
+        IW(pTSP, 5, 0);                        /* b<<16 | a */
+        IW(pTSP, 6, (TexAddr & 0xFFFF0000));    /* addr&FFFF0000 | f */
+        IW(pTSP, 7, 0);                        /* e<<16 | d */
+
+        IW(pTSP, HighlightOffset, Highlight);
+
+        pTri++;
+        pMat++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /***********************************************************************/
 /*                Light Volume Equivalents of Above                    */
 /***********************************************************************/
 
-void PackTSPFlatTransLiVol (PITRI pTri, PIMATERIAL pMat, 
-					   int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	sgl_uint32	nFlat1Col16;
-	sgl_uint32  TexAddr;
+void PackTSPFlatTransLiVol(PITRI pTri, PIMATERIAL pMat,
+                           int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    sgl_uint32 nFlat1Col16;
+    sgl_uint32 TexAddr;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	TexAddr = TranslucentControlWord;
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
-				  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
-				  ((pMat->v.LightVolCol & 0x000000F8) << 7);
+    TexAddr = TranslucentControlWord;
 
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
-		
-		IW( pTSP, 2, 1);						/* r */
-		IW( pTSP, 3, 0);						/* q<<16 | p */
-		IW( pTSP, 4, (TexAddr << 16));			/* addr<16 | c */
-		IW( pTSP, 5, 0);						/* b<<16 | a */
-		IW( pTSP, 6, (TexAddr & 0xFFFF0000));	/* addr&FFFF0000 | f */
-		IW( pTSP, 7, 0);						/* e<<16 | d */
+    nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
+                  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
+                  ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
-		pTri++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
+
+        IW(pTSP, 2, 1);                        /* r */
+        IW(pTSP, 3, 0);                        /* q<<16 | p */
+        IW(pTSP, 4, (TexAddr << 16));            /* addr<16 | c */
+        IW(pTSP, 5, 0);                        /* b<<16 | a */
+        IW(pTSP, 6, (TexAddr & 0xFFFF0000));    /* addr&FFFF0000 | f */
+        IW(pTSP, 7, 0);                        /* e<<16 | d */
+
+        pTri++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /**********************************************************************/
 
-void PackTSPHighTransLiVol (PITRI pTri, PIMATERIAL pMat, 
-					   int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP)
-{
-	int HighlightOffset;
-	sgl_uint32	nFlat1Col16;
-	sgl_uint32 Highlight, TexAddr;
+void PackTSPHighTransLiVol(PITRI pTri, PIMATERIAL pMat,
+                           int numTriangles, int nTSPIncrement, sgl_uint32 *pTSP) {
+    int HighlightOffset;
+    sgl_uint32 nFlat1Col16;
+    sgl_uint32 Highlight, TexAddr;
 
 
-	SGL_TIME_START(PACK_TEXAS_TRI_TIME)
-	
-	Highlight = (pMat->Shading.u.Highlight & 0xFFFF0000);
-	TexAddr = TranslucentControlWord;
+    SGL_TIME_START(PACK_TEXAS_TRI_TIME)
 
-	nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
-				  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
-				  ((pMat->v.LightVolCol & 0x000000F8) << 7);
+    Highlight = (pMat->Shading.u.Highlight & 0xFFFF0000);
+    TexAddr = TranslucentControlWord;
 
-	HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
-	
-	/*
-	// Go through the planes. Move on to the next shading results and
-	// and next plane pointer (NOTE Planes is array of pointers)
-	*/
-	while (numTriangles--)
-	{
-		sgl_uint32 uBaseColour;
-		
-		/*
-		** Put the index in the projected plane structure.
-		*/
-		uBaseColour = pTri->BaseColour;
-		
-		IW( pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16)& 0x000000FF)));
-		IW( pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
+    nFlat1Col16 = ((pMat->v.LightVolCol & 0x00F80000) >> 19) |
+                  ((pMat->v.LightVolCol & 0x0000F800) >> 6) |
+                  ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
-		IW( pTSP, 2, 1);						/* r */
-		IW( pTSP, 3, 0);						/* q<<16 | p */
-		IW( pTSP, 4, (TexAddr << 16));			/* addr<16 | c */
-		IW( pTSP, 5, 0);						/* b<<16 | a */
-		IW( pTSP, 6, (TexAddr & 0xFFFF0000));	/* addr&FFFF0000 | f */
-		IW( pTSP, 7, 0);						/* e<<16 | d */
+    HighlightOffset = (sgl_uint32) nTSPIncrement - 2;
 
-		IW( pTSP, HighlightOffset, Highlight);
-				
-		pTri ++;
-		pMat ++;
-		pTSP += nTSPIncrement;
-		
-	}/*end for*/
+    /*
+    // Go through the planes. Move on to the next shading results and
+    // and next plane pointer (NOTE Planes is array of pointers)
+    */
+    while (numTriangles--) {
+        sgl_uint32 uBaseColour;
 
-	SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
+        /*
+        ** Put the index in the projected plane structure.
+        */
+        uBaseColour = pTri->BaseColour;
+
+        IW(pTSP, 0, (pTri->TSPControlWord | ((uBaseColour >> 16) & 0x000000FF)));
+        IW(pTSP, 1, (uBaseColour << 16 | nFlat1Col16));
+
+        IW(pTSP, 2, 1);                        /* r */
+        IW(pTSP, 3, 0);                        /* q<<16 | p */
+        IW(pTSP, 4, (TexAddr << 16));            /* addr<16 | c */
+        IW(pTSP, 5, 0);                        /* b<<16 | a */
+        IW(pTSP, 6, (TexAddr & 0xFFFF0000));    /* addr&FFFF0000 | f */
+        IW(pTSP, 7, 0);                        /* e<<16 | d */
+
+        IW(pTSP, HighlightOffset, Highlight);
+
+        pTri++;
+        pMat++;
+        pTSP += nTSPIncrement;
+
+    }/*end for*/
+
+    SGL_TIME_STOP(PACK_TEXAS_TRI_TIME)
 }
 
 /* end of $RCSfile: dtsp.c,v $ */

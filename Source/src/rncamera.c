@@ -190,524 +190,504 @@
 
 #define CD_SCALE_FACTOR (1.0f / 10.0f)
 
-void	RnSetupProjectionMatrix(const CAMERA_NODE_STRUCT *pCamera, 
-							 const VIEWPORT_NODE_STRUCT *pViewport)
-{
-	float Cd;
-	int	  CdPower;
-	int   FogShift;
+void RnSetupProjectionMatrix(const CAMERA_NODE_STRUCT *pCamera,
+                             const VIEWPORT_NODE_STRUCT *pViewport) {
+    float Cd;
+    int CdPower;
+    int FogShift;
 
-	float CamXSize, CamYSize;
-	float CamXCentre, CamYCentre;
+    float CamXSize, CamYSize;
+    float CamXCentre, CamYCentre;
 
-	float DevXMid, DevYMid;
-	float AScale, BScale, AOffset, BOffset;
+    float DevXMid, DevYMid;
+    float AScale, BScale, AOffset, BOffset;
 
-	int MinPixels;
-	int nNumRescaleShifts;
+    int MinPixels;
+    int nNumRescaleShifts;
 
-	PROJECTION_MATRIX_STRUCT proj_mat;
+    PROJECTION_MATRIX_STRUCT proj_mat;
 
-	/*////////////////////////
-	// Do some safety checks
- 	//////////////////////// */
-	ASSERT(pCamera->zoom_factor > 0.0001f);
-	ASSERT(pCamera->foreground_dist > 1.0E-9f); /*Better not be too small*/
-
-
-	/* get a copy of the current local proj mat
-	** we will stuff all the values in when were finished
-	*/
-	RnGlobalCopyProjMat(&proj_mat);
-
-	/*////////////////////////////////
-	// Because the A&B parameters of the hardware are restricted on their
-	// magnitude (compared to C) we have to scale the projection values
-	// when we are rendering too few pixels. (NOTE: This is based on the
-	// PSEUDO rendered rectangle..)
-	//
-	// Basically,  PARAM_PRECISION_DIFF says how many bits smaller 
-	// (in magnitude) the A&B parameters can be, which governs the
-	// the rate of change of the planes. If there are too few pixels,
-	// we may overflow, so we scale the range of depths by a power of
-	// two accordingly...
-	//
-	// I.E. C ranges from -1<C<1, so can change by 2, while A&B are at most
-	//					-PARAM_PREC..
-	//	(in Magnitude) 2			 so make sure we dont exceed this
-	// limit. I.E get the min dimensions, and produce a scaling value
-	// so we dont' overflow...
-	//
-	// So that the fogging is also correctly modified, we need to count
-	// how many bits down we effectively shift numbers.
-	//////////////////////////////// */
-	MinPixels = MIN( pViewport->pParentDevice->xDim,
-					 pViewport->pParentDevice->yDim);
-
-	proj_mat.fOverflowRescale = 1.0f;
-	nNumRescaleShifts = 0;
-	while(MinPixels < (1<<(PARAM_PRECISION_DIFF +1)))
-	{
-		proj_mat.fOverflowRescale *= 0.5f;
-		MinPixels *= 2;
-		nNumRescaleShifts ++;
-	}/*end while*/
+    /*////////////////////////
+    // Do some safety checks
+     //////////////////////// */
+    ASSERT(pCamera->zoom_factor > 0.0001f);
+    ASSERT(pCamera->foreground_dist > 1.0E-9f); /*Better not be too small*/
 
 
-	/* ////////////////////////
-	// Calculate the Camera D value, which controls "Z scaling".
-	// and the gradual changes in fogging. First let it be a fraction of
-	// the foreground clipping distance.
-	//////////////////////// */
-	Cd = pCamera->foreground_dist * CD_SCALE_FACTOR;
+    /* get a copy of the current local proj mat
+    ** we will stuff all the values in when were finished
+    */
+    RnGlobalCopyProjMat(&proj_mat);
 
-	/*
-	// Extract the power of 2
-	*/
-	frexp(Cd, &CdPower);
+    /*////////////////////////////////
+    // Because the A&B parameters of the hardware are restricted on their
+    // magnitude (compared to C) we have to scale the projection values
+    // when we are rendering too few pixels. (NOTE: This is based on the
+    // PSEUDO rendered rectangle..)
+    //
+    // Basically,  PARAM_PRECISION_DIFF says how many bits smaller
+    // (in magnitude) the A&B parameters can be, which governs the
+    // the rate of change of the planes. If there are too few pixels,
+    // we may overflow, so we scale the range of depths by a power of
+    // two accordingly...
+    //
+    // I.E. C ranges from -1<C<1, so can change by 2, while A&B are at most
+    //					-PARAM_PREC..
+    //	(in Magnitude) 2			 so make sure we dont exceed this
+    // limit. I.E get the min dimensions, and produce a scaling value
+    // so we dont' overflow...
+    //
+    // So that the fogging is also correctly modified, we need to count
+    // how many bits down we effectively shift numbers.
+    //////////////////////////////// */
+    MinPixels = MIN(pViewport->pParentDevice->xDim,
+                    pViewport->pParentDevice->yDim);
 
-	/*
-	// Adjust the Cd value based on the fog, and compute the fog
-	// shift value based on the Cd and the fog denisty
-	*/
-	ASSERT(pCamera->invlogfogFraction >= 1.0f);
-	ASSERT(pCamera->invlogfogFraction <= 2.0f);
-
-	/*
-	// Modify Cd by the fogging fraction
-	*/
-	Cd *= pCamera->invlogfogFraction;
-
-
-	/*
-	// Define how much we should shift up by so that the depth
-	// range of the fog function is sort of in the right range.
-	// 
-	// The fog function works on the lower 10 bits of the depth
-	// value (which I believe in Sabre will be 32 bits at that point)
-	// so calculate how much to shift down so we get 0-1 in a 10 bit
-	// number.
-	*/
-	#define FOG_OFFSET (32 - 10)
-
-	/*
-	// Calculate how much shifting we have to do, but clamp to the
-	// legal range.
-	//
-	// Need to add the Cd (binary) order of magnitude to the cameras fog,
-	// add the overall offset for where the fog function is computed from
-	// but take off the rescaling that gets done during projection.
-	*/
-	FogShift = CdPower + pCamera->logfogPower + FOG_OFFSET - nNumRescaleShifts;
-
-	/*
-	// If there is no (or virtually no) fogging, turn it off completely
-	*/
-	if(FogShift < 0)
-	{
-		proj_mat.FogShift = 0;
-		proj_mat.FogOn = FALSE;
-	}
-	else
-	{
-		proj_mat.FogShift = MIN(FogShift, 31);
-		proj_mat.FogOn = TRUE;
-	}
-
-	DPF((DBG_MESSAGE, "Cd Power:%d  FogPower:%d",CdPower, pCamera->logfogPower));
-	DPF((DBG_MESSAGE, "Fog Fraction:%f", pCamera->invlogfogFraction));
-	DPF((DBG_MESSAGE, "Shift Value %d", proj_mat.FogShift));
-	DPF((DBG_MESSAGE, "FOG ON?: %d", proj_mat.FogOn));
-	
-	/*
-	// Also, don't allow the camera rectangle to be too small..
-	// dont let the dimensions get less than a 1/10th of a pixel (say)
-	// (note negative direction on y)
-	*/
-	CamXSize =  MAX(0.1f, pViewport->fCamRight - pViewport->fCamLeft);
-	CamYSize =  MAX(0.1f, pViewport->fCamBottom - pViewport->fCamTop);
-	CamXCentre =(pViewport->fCamRight + pViewport->fCamLeft) *0.5f;
-	CamYCentre =(pViewport->fCamBottom + pViewport->fCamTop) *0.5f;
-	 
-	/*
-	// Compute the global projection matrix values...
-	*/
-	proj_mat.SxDash=  pCamera->zoom_factor * 0.5f * CamXSize;
-	proj_mat.SyDash= -pCamera->zoom_factor * 0.5f * CamYSize; 
-	proj_mat.OxDash= CamXCentre;
-	proj_mat.OyDash= CamYCentre;
+    proj_mat.fOverflowRescale = 1.0f;
+    nNumRescaleShifts = 0;
+    while (MinPixels < (1 << (PARAM_PRECISION_DIFF + 1))) {
+        proj_mat.fOverflowRescale *= 0.5f;
+        MinPixels *= 2;
+        nNumRescaleShifts++;
+    }/*end while*/
 
 
-	/*
-	// get device dimensions
-	*/
-	proj_mat.fDevXMax = ((float)pViewport->pParentDevice->xDim) - 1.0f;
-	proj_mat.fDevYMax = ((float)pViewport->pParentDevice->yDim) - 1.0f;
+    /* ////////////////////////
+    // Calculate the Camera D value, which controls "Z scaling".
+    // and the gradual changes in fogging. First let it be a fraction of
+    // the foreground clipping distance.
+    //////////////////////// */
+    Cd = pCamera->foreground_dist * CD_SCALE_FACTOR;
+
+    /*
+    // Extract the power of 2
+    */
+    frexp(Cd, &CdPower);
+
+    /*
+    // Adjust the Cd value based on the fog, and compute the fog
+    // shift value based on the Cd and the fog denisty
+    */
+    ASSERT(pCamera->invlogfogFraction >= 1.0f);
+    ASSERT(pCamera->invlogfogFraction <= 2.0f);
+
+    /*
+    // Modify Cd by the fogging fraction
+    */
+    Cd *= pCamera->invlogfogFraction;
 
 
-	/*
-	// Compute the values needed to project the infinite planes...
-	//
-	// get the "mid point" of the device (Note the "odd" pixel
-	// coordinate system)
-	*/
-	DevXMid = proj_mat.fDevXMax * 0.5f;
-	DevYMid = proj_mat.fDevYMax * 0.5f;
+    /*
+    // Define how much we should shift up by so that the depth
+    // range of the fog function is sort of in the right range.
+    //
+    // The fog function works on the lower 10 bits of the depth
+    // value (which I believe in Sabre will be 32 bits at that point)
+    // so calculate how much to shift down so we get 0-1 in a 10 bit
+    // number.
+    */
+#define FOG_OFFSET (32 - 10)
 
-	AScale =  (2.0f * Cd) /(CamXSize * pCamera->zoom_factor);
-	AOffset= -(2.0f * CamXCentre * Cd) / (CamXSize * pCamera->zoom_factor);
+    /*
+    // Calculate how much shifting we have to do, but clamp to the
+    // legal range.
+    //
+    // Need to add the Cd (binary) order of magnitude to the cameras fog,
+    // add the overall offset for where the fog function is computed from
+    // but take off the rescaling that gets done during projection.
+    */
+    FogShift = CdPower + pCamera->logfogPower + FOG_OFFSET - nNumRescaleShifts;
 
-	BScale = -(2.0f * Cd) /(CamYSize * pCamera->zoom_factor);
-	BOffset=  (2.0f * CamYCentre * Cd) / (CamYSize * pCamera->zoom_factor);
-		
-	/*
-	// Store the distances between pixels...
-	*/
-	proj_mat.xPerPixel =AScale; 
-	proj_mat.yPerPixel =BScale;
-	
-	/*
-	// Compute the distance from the centre to the corners
-	*/
-	proj_mat.xToCorner = AScale * DevXMid;
-	proj_mat.yToCorner = BScale * DevYMid;
+    /*
+    // If there is no (or virtually no) fogging, turn it off completely
+    */
+    if (FogShift < 0) {
+        proj_mat.FogShift = 0;
+        proj_mat.FogOn = FALSE;
+    } else {
+        proj_mat.FogShift = MIN(FogShift, 31);
+        proj_mat.FogOn = TRUE;
+    }
 
-	/*
-	// get the vector from the origin to the centre point (in World Coords)
-	*/
-	proj_mat.RCentre[0] = DevXMid * AScale + AOffset;
-	proj_mat.RCentre[1] = DevYMid * BScale + BOffset;
-	proj_mat.RCentre[2] = Cd;
+    DPF((DBG_MESSAGE, "Cd Power:%d  FogPower:%d", CdPower, pCamera->logfogPower));
+    DPF((DBG_MESSAGE, "Fog Fraction:%f", pCamera->invlogfogFraction));
+    DPF((DBG_MESSAGE, "Shift Value %d", proj_mat.FogShift));
+    DPF((DBG_MESSAGE, "FOG ON?: %d", proj_mat.FogOn));
+
+    /*
+    // Also, don't allow the camera rectangle to be too small..
+    // dont let the dimensions get less than a 1/10th of a pixel (say)
+    // (note negative direction on y)
+    */
+    CamXSize = MAX(0.1f, pViewport->fCamRight - pViewport->fCamLeft);
+    CamYSize = MAX(0.1f, pViewport->fCamBottom - pViewport->fCamTop);
+    CamXCentre = (pViewport->fCamRight + pViewport->fCamLeft) * 0.5f;
+    CamYCentre = (pViewport->fCamBottom + pViewport->fCamTop) * 0.5f;
+
+    /*
+    // Compute the global projection matrix values...
+    */
+    proj_mat.SxDash = pCamera->zoom_factor * 0.5f * CamXSize;
+    proj_mat.SyDash = -pCamera->zoom_factor * 0.5f * CamYSize;
+    proj_mat.OxDash = CamXCentre;
+    proj_mat.OyDash = CamYCentre;
+
+
+    /*
+    // get device dimensions
+    */
+    proj_mat.fDevXMax = ((float) pViewport->pParentDevice->xDim) - 1.0f;
+    proj_mat.fDevYMax = ((float) pViewport->pParentDevice->yDim) - 1.0f;
+
+
+    /*
+    // Compute the values needed to project the infinite planes...
+    //
+    // get the "mid point" of the device (Note the "odd" pixel
+    // coordinate system)
+    */
+    DevXMid = proj_mat.fDevXMax * 0.5f;
+    DevYMid = proj_mat.fDevYMax * 0.5f;
+
+    AScale = (2.0f * Cd) / (CamXSize * pCamera->zoom_factor);
+    AOffset = -(2.0f * CamXCentre * Cd) / (CamXSize * pCamera->zoom_factor);
+
+    BScale = -(2.0f * Cd) / (CamYSize * pCamera->zoom_factor);
+    BOffset = (2.0f * CamYCentre * Cd) / (CamYSize * pCamera->zoom_factor);
+
+    /*
+    // Store the distances between pixels...
+    */
+    proj_mat.xPerPixel = AScale;
+    proj_mat.yPerPixel = BScale;
+
+    /*
+    // Compute the distance from the centre to the corners
+    */
+    proj_mat.xToCorner = AScale * DevXMid;
+    proj_mat.yToCorner = BScale * DevYMid;
+
+    /*
+    // get the vector from the origin to the centre point (in World Coords)
+    */
+    proj_mat.RCentre[0] = DevXMid * AScale + AOffset;
+    proj_mat.RCentre[1] = DevYMid * BScale + BOffset;
+    proj_mat.RCentre[2] = Cd;
 
 
 
-	/*////////////////////////
-	//
-	// Compute "Normals" for the planes which form the edges of the
-	// viewing Pyramid,
-	//
-	// These are computed by taking cross prods of vectors in the planes.
-	// Since the origin is in the planes, then the vectors to the corners
-	// of the screen are suitable.
-	//
-	// This could be much more efficient, but who cares...
-	//////////////////////// */
-	{
-		sgl_vector Corners[4];
-		int i;
+    /*////////////////////////
+    //
+    // Compute "Normals" for the planes which form the edges of the
+    // viewing Pyramid,
+    //
+    // These are computed by taking cross prods of vectors in the planes.
+    // Since the origin is in the planes, then the vectors to the corners
+    // of the screen are suitable.
+    //
+    // This could be much more efficient, but who cares...
+    //////////////////////// */
+    {
+        sgl_vector Corners[4];
+        int i;
 
-		for(i=0; i < 4; i++)
-		{
-			Corners[i][0] = proj_mat.RCentre[0];
-			Corners[i][1] = proj_mat.RCentre[1];
-			Corners[i][2] = proj_mat.RCentre[2];
-		}
+        for (i = 0; i < 4; i++) {
+            Corners[i][0] = proj_mat.RCentre[0];
+            Corners[i][1] = proj_mat.RCentre[1];
+            Corners[i][2] = proj_mat.RCentre[2];
+        }
 
-		/*
-		// Do the X offsets
-		*/
-		Corners[0][0] -= proj_mat.xToCorner;
-		Corners[1][0] += proj_mat.xToCorner;
-		Corners[2][0] += proj_mat.xToCorner;
-		Corners[3][0] -= proj_mat.xToCorner;
+        /*
+        // Do the X offsets
+        */
+        Corners[0][0] -= proj_mat.xToCorner;
+        Corners[1][0] += proj_mat.xToCorner;
+        Corners[2][0] += proj_mat.xToCorner;
+        Corners[3][0] -= proj_mat.xToCorner;
 
-		/*
-		// Do the Y offsets
-		*/
-		Corners[0][1] += proj_mat.yToCorner;
-		Corners[1][1] += proj_mat.yToCorner;
-		Corners[2][1] -= proj_mat.yToCorner;
-		Corners[3][1] -= proj_mat.yToCorner;
-		
-		/*
-		// Compute the normals, and normalise, so that all are
-		// "fair" when we compare which is most suitable
-		*/
-		CrossProd(Corners[0], Corners[1], proj_mat.EdgeNormals[0]);
-		CrossProd(Corners[1], Corners[2], proj_mat.EdgeNormals[1]);
-		CrossProd(Corners[2], Corners[3], proj_mat.EdgeNormals[2]);
-		CrossProd(Corners[3], Corners[0], proj_mat.EdgeNormals[3]);
+        /*
+        // Do the Y offsets
+        */
+        Corners[0][1] += proj_mat.yToCorner;
+        Corners[1][1] += proj_mat.yToCorner;
+        Corners[2][1] -= proj_mat.yToCorner;
+        Corners[3][1] -= proj_mat.yToCorner;
 
-		VecNormalise(proj_mat.EdgeNormals[0]);
-		VecNormalise(proj_mat.EdgeNormals[1]);
-		VecNormalise(proj_mat.EdgeNormals[2]);
-		VecNormalise(proj_mat.EdgeNormals[3]);
-	}
+        /*
+        // Compute the normals, and normalise, so that all are
+        // "fair" when we compare which is most suitable
+        */
+        CrossProd(Corners[0], Corners[1], proj_mat.EdgeNormals[0]);
+        CrossProd(Corners[1], Corners[2], proj_mat.EdgeNormals[1]);
+        CrossProd(Corners[2], Corners[3], proj_mat.EdgeNormals[2]);
+        CrossProd(Corners[3], Corners[0], proj_mat.EdgeNormals[3]);
 
-
-	/*////////////////////////
-	//
-	//  Compute specialised foreground and background distances.
-	//
-	//////////////////////// */
-	/*
-	// Store the foreground and background distances, so that we don't
-	// have to go looking for them again.
-	// Check if it is safe to take the inverse of the background distance,
-	// else choose a V Large number instead.
-	*/
-	ASSERT(pCamera->foreground_dist >= 0.0f)
-	ASSERT(pCamera->inv_background_dist >= 0.0f)
-
-	proj_mat.foregroundDistance	 = pCamera->foreground_dist;
-	if(proj_mat.foregroundDistance < 1.0E-10f)
-	{
-		proj_mat.invForegroundDistance= 1.0E10f;
-	}
-	else
-	{
-		proj_mat.invForegroundDistance= 
-				1.0f /proj_mat.foregroundDistance;
-	}
+        VecNormalise(proj_mat.EdgeNormals[0]);
+        VecNormalise(proj_mat.EdgeNormals[1]);
+        VecNormalise(proj_mat.EdgeNormals[2]);
+        VecNormalise(proj_mat.EdgeNormals[3]);
+    }
 
 
-	proj_mat.invBackgroundDistance = pCamera->inv_background_dist;
+    /*////////////////////////
+    //
+    //  Compute specialised foreground and background distances.
+    //
+    //////////////////////// */
+    /*
+    // Store the foreground and background distances, so that we don't
+    // have to go looking for them again.
+    // Check if it is safe to take the inverse of the background distance,
+    // else choose a V Large number instead.
+    */
+    ASSERT(pCamera->foreground_dist >= 0.0f)
+    ASSERT(pCamera->inv_background_dist >= 0.0f)
 
-	if(proj_mat.invBackgroundDistance != 0.0f)
-	{
-		proj_mat.BackgroundDistance = 
-			1.0f / proj_mat.invBackgroundDistance;
-	}
-	else
-	{
-		proj_mat.BackgroundDistance = FLT_MAX;
-	}
-
-	/* The projected background distance for rnreject.c: */
-	proj_mat.fProjectedBackground =
-	  proj_mat.RCentre[2] * proj_mat.invBackgroundDistance;
+    proj_mat.foregroundDistance = pCamera->foreground_dist;
+    if (proj_mat.foregroundDistance < 1.0E-10f) {
+        proj_mat.invForegroundDistance = 1.0E10f;
+    } else {
+        proj_mat.invForegroundDistance =
+                1.0f / proj_mat.foregroundDistance;
+    }
 
 
-	/*
-	// Compute the distance to the foreground clipping plane in projected
-	// distance, and also store this in fixed point format.
-	*/
-	ASSERT(pCamera->foreground_dist > Cd);
-	proj_mat.fProjectedClipDist = Cd / pCamera->foreground_dist *
-									  proj_mat.fOverflowRescale;
+    proj_mat.invBackgroundDistance = pCamera->inv_background_dist;
 
-	ASSERT(proj_mat.fProjectedClipDist > 0.0f);
+    if (proj_mat.invBackgroundDistance != 0.0f) {
+        proj_mat.BackgroundDistance =
+                1.0f / proj_mat.invBackgroundDistance;
+    } else {
+        proj_mat.BackgroundDistance = FLT_MAX;
+    }
+
+    /* The projected background distance for rnreject.c: */
+    proj_mat.fProjectedBackground =
+            proj_mat.RCentre[2] * proj_mat.invBackgroundDistance;
+
+
+    /*
+    // Compute the distance to the foreground clipping plane in projected
+    // distance, and also store this in fixed point format.
+    */
+    ASSERT(pCamera->foreground_dist > Cd);
+    proj_mat.fProjectedClipDist = Cd / pCamera->foreground_dist *
+                                  proj_mat.fOverflowRescale;
+
+    ASSERT(proj_mat.fProjectedClipDist > 0.0f);
 
 #if PCX2 || PCX2_003
-	/* Use floating point numbers for PCX2 family */
-	proj_mat.f32FixedClipDist = proj_mat.fProjectedClipDist;
+    /* Use floating point numbers for PCX2 family */
+    proj_mat.f32FixedClipDist = proj_mat.fProjectedClipDist;
 
-	DPF((DBG_MESSAGE, "Fixed clip Dist:%f", proj_mat.f32FixedClipDist));
+    DPF((DBG_MESSAGE, "Fixed clip Dist:%f", proj_mat.f32FixedClipDist));
 
-	proj_mat.f32FixedProjBackDist = 
-				(Cd * pCamera->inv_background_dist * proj_mat.fOverflowRescale);
+    proj_mat.f32FixedProjBackDist =
+            (Cd * pCamera->inv_background_dist * proj_mat.fOverflowRescale);
 #else
-	proj_mat.n32FixedClipDist = 
-				(sgl_int32)(proj_mat.fProjectedClipDist * FLOAT_TO_FIXED);
+    proj_mat.n32FixedClipDist =
+                (sgl_int32)(proj_mat.fProjectedClipDist * FLOAT_TO_FIXED);
 
-	DPF((DBG_MESSAGE, "Fixed clip Dist:%lx", proj_mat.n32FixedClipDist));
+    DPF((DBG_MESSAGE, "Fixed clip Dist:%lx", proj_mat.n32FixedClipDist));
 
-	proj_mat.n32FixedProjBackDist = 
-				(sgl_int32)(Cd * pCamera->inv_background_dist 
-				 * proj_mat.fOverflowRescale* FLOAT_TO_FIXED);
+    proj_mat.n32FixedProjBackDist =
+                (sgl_int32)(Cd * pCamera->inv_background_dist
+                 * proj_mat.fOverflowRescale* FLOAT_TO_FIXED);
 #endif
 
-	/*////////////////////////
-	// Work out where the viewport maps to on the z=1 plane
-	// in world space. This is used by the bounding box rejection
-	// code.
-	//
-	// This is can computed from the inverse of the 
-	// descaled projection matrix... as given in TRDD027x.doc
-	// (This code could be more efficient, but its only run
-	// once per scene...) (Simon Fenney)
-	//
-	//////////////////////// */
-	proj_mat.fViewportMinX = 
-					(((float)pViewport->Left) - proj_mat.OxDash)
-					/ proj_mat.SxDash;
+    /*////////////////////////
+    // Work out where the viewport maps to on the z=1 plane
+    // in world space. This is used by the bounding box rejection
+    // code.
+    //
+    // This is can computed from the inverse of the
+    // descaled projection matrix... as given in TRDD027x.doc
+    // (This code could be more efficient, but its only run
+    // once per scene...) (Simon Fenney)
+    //
+    //////////////////////// */
+    proj_mat.fViewportMinX =
+            (((float) pViewport->Left) - proj_mat.OxDash)
+            / proj_mat.SxDash;
 
-	proj_mat.fViewportMaxX = 
-					(((float)pViewport->Right) - proj_mat.OxDash)
-					/ proj_mat.SxDash;
+    proj_mat.fViewportMaxX =
+            (((float) pViewport->Right) - proj_mat.OxDash)
+            / proj_mat.SxDash;
 
-	proj_mat.fViewportMinY = 
-					(((float)pViewport->Bottom) - proj_mat.OyDash)
-					/ proj_mat.SyDash;
+    proj_mat.fViewportMinY =
+            (((float) pViewport->Bottom) - proj_mat.OyDash)
+            / proj_mat.SyDash;
 
-	proj_mat.fViewportMaxY = 
-					(((float)pViewport->Top) - proj_mat.OyDash)
-					/ proj_mat.SyDash;
-	/*
-	// Make sure the Y's are around the right way (note change
-	// of direction
-	*/
-	ASSERT(proj_mat.fViewportMinY < proj_mat.fViewportMaxY)
+    proj_mat.fViewportMaxY =
+            (((float) pViewport->Top) - proj_mat.OyDash)
+            / proj_mat.SyDash;
+    /*
+    // Make sure the Y's are around the right way (note change
+    // of direction
+    */
+    ASSERT(proj_mat.fViewportMinY < proj_mat.fViewportMaxY)
 
-	/*
-	// For efficiency in the bounding box rejection code, calculate an index
-	// into an array of 2 Z values (Min and Max). This depends on the sign
-	// of the values
-	//
-	// In most cases, the view pyramid goes round the Z axis, so
-	// note that as a special case, and optimise it.
-	*/
-	proj_mat.VPAroundCentre = TRUE;
-	if(proj_mat.fViewportMinX <= 0.0f)
-		proj_mat.VPMinXZI = TB_USE_ZMAX;
-	else
-	{
-		proj_mat.VPMinXZI = TB_USE_ZMIN;
-		proj_mat.VPAroundCentre = FALSE;
-	}
+    /*
+    // For efficiency in the bounding box rejection code, calculate an index
+    // into an array of 2 Z values (Min and Max). This depends on the sign
+    // of the values
+    //
+    // In most cases, the view pyramid goes round the Z axis, so
+    // note that as a special case, and optimise it.
+    */
+    proj_mat.VPAroundCentre = TRUE;
+    if (proj_mat.fViewportMinX <= 0.0f)
+        proj_mat.VPMinXZI = TB_USE_ZMAX;
+    else {
+        proj_mat.VPMinXZI = TB_USE_ZMIN;
+        proj_mat.VPAroundCentre = FALSE;
+    }
 
-	if(proj_mat.fViewportMaxX <= 0.0f)
-	{
-		proj_mat.VPMaxXZI = TB_USE_ZMIN;
-		proj_mat.VPAroundCentre = FALSE;
-	}
-	else
-		proj_mat.VPMaxXZI = TB_USE_ZMAX;
+    if (proj_mat.fViewportMaxX <= 0.0f) {
+        proj_mat.VPMaxXZI = TB_USE_ZMIN;
+        proj_mat.VPAroundCentre = FALSE;
+    } else
+        proj_mat.VPMaxXZI = TB_USE_ZMAX;
 
 
-	if(proj_mat.fViewportMinY <= 0.0f)
-		proj_mat.VPMinYZI = TB_USE_ZMAX;
-	else
-	{
-		proj_mat.VPMinYZI = TB_USE_ZMIN;
-		proj_mat.VPAroundCentre = FALSE;
-	}
+    if (proj_mat.fViewportMinY <= 0.0f)
+        proj_mat.VPMinYZI = TB_USE_ZMAX;
+    else {
+        proj_mat.VPMinYZI = TB_USE_ZMIN;
+        proj_mat.VPAroundCentre = FALSE;
+    }
 
-	if(proj_mat.fViewportMaxY <= 0.0f)
-	{
-		proj_mat.VPMaxYZI = TB_USE_ZMIN;
-		proj_mat.VPAroundCentre = FALSE;
-	}
-	else
-		proj_mat.VPMaxYZI = TB_USE_ZMAX;
+    if (proj_mat.fViewportMaxY <= 0.0f) {
+        proj_mat.VPMaxYZI = TB_USE_ZMIN;
+        proj_mat.VPAroundCentre = FALSE;
+    } else
+        proj_mat.VPMaxYZI = TB_USE_ZMAX;
 
 
+    proj_mat.VpCentre[0] =
+            (proj_mat.fViewportMinX + proj_mat.fViewportMaxX) * 0.5f;
 
+    proj_mat.VpCentre[1] =
+            (proj_mat.fViewportMinY + proj_mat.fViewportMaxY) * 0.5f;
 
-	proj_mat.VpCentre[0] = 
-		(proj_mat.fViewportMinX + proj_mat.fViewportMaxX) * 0.5f;
+    proj_mat.VpOffset[0] =
+            (proj_mat.fViewportMaxX - proj_mat.fViewportMinX) * 0.5f;
 
-	proj_mat.VpCentre[1] = 
-		(proj_mat.fViewportMinY + proj_mat.fViewportMaxY) * 0.5f;
+    proj_mat.VpOffset[1] =
+            (proj_mat.fViewportMaxY - proj_mat.fViewportMinY) * 0.5f;
 
-	proj_mat.VpOffset[0] = 
-	  	(proj_mat.fViewportMaxX - proj_mat.fViewportMinX) * 0.5f;
+    proj_mat.VpHalfWidth[0] =
+            proj_mat.VpCentre[0] - proj_mat.fViewportMinX;
 
-	proj_mat.VpOffset[1] = 
-	  	(proj_mat.fViewportMaxY - proj_mat.fViewportMinY) * 0.5f;
+    proj_mat.VpHalfWidth[1] =
+            proj_mat.VpCentre[1] - proj_mat.fViewportMinY;
 
-	proj_mat.VpHalfWidth[0] =
-	  proj_mat.VpCentre[0] - proj_mat.fViewportMinX;
+    /* ////////////////////////
+    // Grab the region info for this device
+    //////////////////////// */
+    HWGetRegionInfo(pViewport->pParentDevice->PhDeviceID,
+                    &proj_mat.RegionInfo);
 
-	proj_mat.VpHalfWidth[1] =
-	  proj_mat.VpCentre[1] - proj_mat.fViewportMinY;
+    /*
+    // Using this data, compute the regions for the viewport
+    */
+    proj_mat.FirstXRegion = pViewport->Left / proj_mat.RegionInfo.XSize;
+    proj_mat.LastXRegion = pViewport->Right / proj_mat.RegionInfo.XSize;
 
-	/* ////////////////////////
-	// Grab the region info for this device
-	//////////////////////// */
-	HWGetRegionInfo(pViewport->pParentDevice->PhDeviceID,
-					&proj_mat.RegionInfo);
+    proj_mat.FirstYRegion = pViewport->Top / proj_mat.RegionInfo.YSize;
+    proj_mat.LastYRegion = pViewport->Bottom / proj_mat.RegionInfo.YSize;
+    proj_mat.RegionsRect.FirstXRegion = proj_mat.FirstXRegion;
+    proj_mat.RegionsRect.LastXRegion = proj_mat.LastXRegion;
+    proj_mat.RegionsRect.FirstYRegion = proj_mat.FirstYRegion;
+    proj_mat.RegionsRect.LastYRegion = proj_mat.LastYRegion;
 
-	/*
-	// Using this data, compute the regions for the viewport
-	*/
-	proj_mat.FirstXRegion= pViewport->Left / proj_mat.RegionInfo.XSize;
-	proj_mat.LastXRegion = pViewport->Right/ proj_mat.RegionInfo.XSize;
+    /*
+    // Also work out projection from world space to region space...
+    // Just divide the SxDash etc values by the respective size of regions
+    // in pixels..
+    */
+    proj_mat.SxToRegions = proj_mat.SxDash /
+                           (float) proj_mat.RegionInfo.XSize;
+    proj_mat.OxToRegions = proj_mat.OxDash /
+                           (float) proj_mat.RegionInfo.XSize;
 
-	proj_mat.FirstYRegion= pViewport->Top / proj_mat.RegionInfo.YSize;
-	proj_mat.LastYRegion = pViewport->Bottom/ proj_mat.RegionInfo.YSize;
-	proj_mat.RegionsRect.FirstXRegion = proj_mat.FirstXRegion;
-	proj_mat.RegionsRect.LastXRegion  = proj_mat.LastXRegion;
-	proj_mat.RegionsRect.FirstYRegion = proj_mat.FirstYRegion;
-	proj_mat.RegionsRect.LastYRegion  = proj_mat.LastYRegion;
+    proj_mat.SyToRegions = proj_mat.SyDash /
+                           (float) proj_mat.RegionInfo.YSize;
+    proj_mat.OyToRegions = proj_mat.OyDash /
+                           (float) proj_mat.RegionInfo.YSize;
 
-	/*
-	// Also work out projection from world space to region space...
-	// Just divide the SxDash etc values by the respective size of regions
-	// in pixels..
-	*/
-	proj_mat.SxToRegions =  proj_mat.SxDash / 
-							(float) proj_mat.RegionInfo.XSize;
-	proj_mat.OxToRegions = proj_mat.OxDash / 
-							(float) proj_mat.RegionInfo.XSize;
+    /* For optimisation new variables are required. These are
+     * in absolute co-ordinates and are used to calculate the Y
+     * position in absolute co-ordinates. This is required by the
+     * the optimised AddRdegionX..() routines.
+     */
+    proj_mat.SyToRegionsExact = proj_mat.SyDash;
+    proj_mat.OyToRegionsExact = proj_mat.OyDash;
 
-	proj_mat.SyToRegions =  proj_mat.SyDash /
-							(float) proj_mat.RegionInfo.YSize;
-	proj_mat.OyToRegions = proj_mat.OyDash / 
-							(float) proj_mat.RegionInfo.YSize;
+    proj_mat.FirstYRegionExact = proj_mat.FirstYRegion *
+                                 proj_mat.RegionInfo.YSize;
+    proj_mat.LastYRegionExact = ((proj_mat.LastYRegion + 1) *
+                                 proj_mat.RegionInfo.YSize) - 1;
 
-	/* For optimisation new variables are required. These are
-	 * in absolute co-ordinates and are used to calculate the Y
-	 * position in absolute co-ordinates. This is required by the
-	 * the optimised AddRdegionX..() routines.
-	 */
-	proj_mat.SyToRegionsExact = proj_mat.SyDash;
-	proj_mat.OyToRegionsExact = proj_mat.OyDash;
-	
-	proj_mat.FirstYRegionExact = 	proj_mat.FirstYRegion *
-										proj_mat.RegionInfo.YSize;
-	proj_mat.LastYRegionExact	= ((proj_mat.LastYRegion + 1) *
-										proj_mat.RegionInfo.YSize) - 1;
+    /*
+    // Converting region space into projected world space:
+    */
+    proj_mat.fRegionHalfWidth = 0.5f / proj_mat.SxToRegions;
+    proj_mat.fRegionHalfHeight = 0.5f / proj_mat.SyToRegions;
+    proj_mat.fRegion00CentreX =
+            (0.5f - proj_mat.OxToRegions) / proj_mat.SxToRegions;
+    proj_mat.fRegion00CentreY =
+            (0.5f - proj_mat.OyToRegions) / proj_mat.SyToRegions;
 
-	/*
-	// Converting region space into projected world space:
-	*/
-	proj_mat.fRegionHalfWidth = 0.5f / proj_mat.SxToRegions;
-	proj_mat.fRegionHalfHeight = 0.5f / proj_mat.SyToRegions;
-	proj_mat.fRegion00CentreX =
-	  (0.5f - proj_mat.OxToRegions) / proj_mat.SxToRegions;
-	proj_mat.fRegion00CentreY =
-	  (0.5f - proj_mat.OyToRegions) / proj_mat.SyToRegions;
+    /**************************
+    // Compute values needed by the texturing..
+    //
+    // It effectively wants how far from the "screen" the viewpoint is,
+    // measured in pixels, to use as a scaling factor on the parameters so
+    // that they are approximately in the right range.
+    // I THINK that I should get the average dimension of the camera rectangle,
+    // and multiply that by the zoom factor to get the best approx distance.
+    // PLUS got to clip to the allowed range.
+    **************************/
+    proj_mat.n32CFRValue =
+            CLAMP((sgl_int32) (((CamXSize + CamYSize) / 4.0f) * pCamera->zoom_factor),
+                  1L, MAX_CFR_VALUE);
 
-	/**************************
-	// Compute values needed by the texturing..
-	//
-	// It effectively wants how far from the "screen" the viewpoint is, 
-	// measured in pixels, to use as a scaling factor on the parameters so
-	// that they are approximately in the right range.
-	// I THINK that I should get the average dimension of the camera rectangle,
-	// and multiply that by the zoom factor to get the best approx distance.
-	// PLUS got to clip to the allowed range.
-	**************************/
-	proj_mat.n32CFRValue = 
-			CLAMP( (sgl_int32)( ((CamXSize + CamYSize) / 4.0f) * pCamera->zoom_factor),
-					 1L, MAX_CFR_VALUE);
-							   
-	proj_mat.CFRreciprocal = 1.0f /((float)proj_mat.n32CFRValue);
+    proj_mat.CFRreciprocal = 1.0f / ((float) proj_mat.n32CFRValue);
 
-	/**************************
-	// Approximate single pixel value for level of detail selection.  See
-	// comments in rnlod.c
-	//
-	// Assumes that the pixel width is much shorter than RCentre[2] because its
-	// angle to the camera tends to PI/2 as the pixel size tends to infinity
-	// instead of tending to PI.  (For 'normal' small pixels the angle will be
-	// accurate.)
-	//
-	// Since the value we require is very close to 1.0 we store the difference
-	// from 1.0 (which must be calculated using double precision) instead of
-	// the actual value to enable sufficient precision in the float.  Values
-	// close to zero can benefit from the exponent whereas values close to 1.0
-	// cannot.
-	//
-	// The corresponding values for other pixel sizes are found using the fact
-	// that for small angles the shape of the cosine curve is close to an
-	// inverted square function which is much faster to calculate.  The offset
-	// from 1.0 for the cosine of the angle is approximated by the value
-	// calculated below for one pixel multiplied by the square of the number of
-	// pixels.
-	**************************/
-	proj_mat.fCosAnglePerCentralPixel = (float)(1.0 - cos(atan2(
-	  (double)proj_mat.xPerPixel, (double)proj_mat.RCentre[2] )));
+    /**************************
+    // Approximate single pixel value for level of detail selection.  See
+    // comments in rnlod.c
+    //
+    // Assumes that the pixel width is much shorter than RCentre[2] because its
+    // angle to the camera tends to PI/2 as the pixel size tends to infinity
+    // instead of tending to PI.  (For 'normal' small pixels the angle will be
+    // accurate.)
+    //
+    // Since the value we require is very close to 1.0 we store the difference
+    // from 1.0 (which must be calculated using double precision) instead of
+    // the actual value to enable sufficient precision in the float.  Values
+    // close to zero can benefit from the exponent whereas values close to 1.0
+    // cannot.
+    //
+    // The corresponding values for other pixel sizes are found using the fact
+    // that for small angles the shape of the cosine curve is close to an
+    // inverted square function which is much faster to calculate.  The offset
+    // from 1.0 for the cosine of the angle is approximated by the value
+    // calculated below for one pixel multiplied by the square of the number of
+    // pixels.
+    **************************/
+    proj_mat.fCosAnglePerCentralPixel = (float) (1.0 - cos(atan2(
+            (double) proj_mat.xPerPixel, (double) proj_mat.RCentre[2])));
 
-	/*
-	// set filter type to a default value
-	*/
-	proj_mat.eFilterType = sgl_tf_point_sample;
+    /*
+    // set filter type to a default value
+    */
+    proj_mat.eFilterType = sgl_tf_point_sample;
 
-	RnGlobalSetProjMat(&proj_mat);
+    RnGlobalSetProjMat(&proj_mat);
 
-	DPF((DBG_MESSAGE, "Done Projection Matrix set up"));
+    DPF((DBG_MESSAGE, "Done Projection Matrix set up"));
 }
 
 /**************************************************************************
@@ -724,59 +704,56 @@ void	RnSetupProjectionMatrix(const CAMERA_NODE_STRUCT *pCamera,
  *					
  **************************************************************************/
 
-void RnSetupDefaultCamera(CAMERA_NODE_STRUCT *pDefaultCamera)
-{
-	/*
-	// Set up header info. We don't want this accidently appearing
-	// in any display lists, so put illegal values in...
-	*/
-	#if DEBUG
-		pDefaultCamera->node_hdr.n16_node_type = -1;
-		pDefaultCamera->node_hdr.n16_name = -1;
-		pDefaultCamera->node_hdr.next_node = NULL;
-	#endif
-	
-
-	/*
-	// no parent pointer so set this to null also
-	*/
-	#if DEBUG
-		pDefaultCamera->pparent = NULL;
-	#endif
-	
-
-	/*
-	// Define the fields needed for a basic camera
-	*/
-	pDefaultCamera->zoom_factor = 4.0f; /* as specified by SGL */
-	
-	pDefaultCamera->foreground_dist = 1.0f;
-	pDefaultCamera->inv_background_dist = 0.0f;
-
-	/*
-	// Background colour
-	*/
-	pDefaultCamera->backgroundColour[0] = 0.5f;
-	pDefaultCamera->backgroundColour[1] = 0.5f;
-	pDefaultCamera->backgroundColour[2] = 0.5f;
+void RnSetupDefaultCamera(CAMERA_NODE_STRUCT *pDefaultCamera) {
+    /*
+    // Set up header info. We don't want this accidently appearing
+    // in any display lists, so put illegal values in...
+    */
+#if DEBUG
+    pDefaultCamera->node_hdr.n16_node_type = -1;
+    pDefaultCamera->node_hdr.n16_name = -1;
+    pDefaultCamera->node_hdr.next_node = NULL;
+#endif
 
 
-	/*
-	// Fog parameters:
-	*/
-	pDefaultCamera->FogCol.red    =  0;
-	pDefaultCamera->FogCol.green  =  0;
-	pDefaultCamera->FogCol.blue   =  0;
-
-	/* the following should indicate no fog */
-	pDefaultCamera->invlogfogFraction = 1.0f;                
-	pDefaultCamera->logfogPower = -1000;
+    /*
+    // no parent pointer so set this to null also
+    */
+#if DEBUG
+    pDefaultCamera->pparent = NULL;
+#endif
 
 
-	DPF((DBG_MESSAGE, "Set up Default Camera"));
+    /*
+    // Define the fields needed for a basic camera
+    */
+    pDefaultCamera->zoom_factor = 4.0f; /* as specified by SGL */
+
+    pDefaultCamera->foreground_dist = 1.0f;
+    pDefaultCamera->inv_background_dist = 0.0f;
+
+    /*
+    // Background colour
+    */
+    pDefaultCamera->backgroundColour[0] = 0.5f;
+    pDefaultCamera->backgroundColour[1] = 0.5f;
+    pDefaultCamera->backgroundColour[2] = 0.5f;
+
+
+    /*
+    // Fog parameters:
+    */
+    pDefaultCamera->FogCol.red = 0;
+    pDefaultCamera->FogCol.green = 0;
+    pDefaultCamera->FogCol.blue = 0;
+
+    /* the following should indicate no fog */
+    pDefaultCamera->invlogfogFraction = 1.0f;
+    pDefaultCamera->logfogPower = -1000;
+
+
+    DPF((DBG_MESSAGE, "Set up Default Camera"));
 }
-
-
 
 
 /**************************************************************************
@@ -794,70 +771,66 @@ void RnSetupDefaultCamera(CAMERA_NODE_STRUCT *pDefaultCamera)
  *					to map 0..1 textures into the correct size for each
  *					resolution texture.
  **************************************************************************/
-void RnUpdateLocalProjectionMatrix(const TRANSFORM_STRUCT *pTransform)
-{
-	
-	float Scale, Offset;
-	int i;
-	LOCAL_PROJECTION_STRUCT  LocalProjMat,*pLocalProjMat;
-	PROJECTION_MATRIX_STRUCT *pProjMat;
+void RnUpdateLocalProjectionMatrix(const TRANSFORM_STRUCT *pTransform) {
 
-	pLocalProjMat = RnGlobalGetLocalProjMat();
-	pProjMat = RnGlobalGetProjMat();
+    float Scale, Offset;
+    int i;
+    LOCAL_PROJECTION_STRUCT LocalProjMat, *pLocalProjMat;
+    PROJECTION_MATRIX_STRUCT *pProjMat;
 
-	LocalProjMat.LastTextureSize = pLocalProjMat->LastTextureSize;
+    pLocalProjMat = RnGlobalGetLocalProjMat();
+    pProjMat = RnGlobalGetProjMat();
 
-	/*
-	// Do the first row... 
-	*/
-	Scale =  pProjMat->SxDash;
-	Offset = pProjMat->OxDash;
+    LocalProjMat.LastTextureSize = pLocalProjMat->LastTextureSize;
 
-	/*
-	// Leave it up to the compiler to unroll this loop...
-	*/
-	for(i = 0; i < 4; i ++)
-	{
-		LocalProjMat.sr[0][i] = 
-			Scale  * pTransform->mat[0][i] +
-			Offset * pTransform->mat[2][i];
-	}
+    /*
+    // Do the first row...
+    */
+    Scale = pProjMat->SxDash;
+    Offset = pProjMat->OxDash;
 
-	/*
-	// Do row 2
-	*/
-	Scale =  pProjMat->SyDash;
-	Offset = pProjMat->OyDash;
+    /*
+    // Leave it up to the compiler to unroll this loop...
+    */
+    for (i = 0; i < 4; i++) {
+        LocalProjMat.sr[0][i] =
+                Scale * pTransform->mat[0][i] +
+                Offset * pTransform->mat[2][i];
+    }
 
-	/*
-	// Leave it up to the compiler to unroll this loop as well
-	*/
-	for(i = 0; i < 4; i ++)
-	{
-		LocalProjMat.sr[1][i] = 
-			Scale  * pTransform->mat[1][i] +
-			Offset * pTransform->mat[2][i];
-	}
+    /*
+    // Do row 2
+    */
+    Scale = pProjMat->SyDash;
+    Offset = pProjMat->OyDash;
 
-	/*
-	// mark the local proj matrix as valid.
-	*/	
-	LocalProjMat.valid = TRUE;
+    /*
+    // Leave it up to the compiler to unroll this loop as well
+    */
+    for (i = 0; i < 4; i++) {
+        LocalProjMat.sr[1][i] =
+                Scale * pTransform->mat[1][i] +
+                Offset * pTransform->mat[2][i];
+    }
+
+    /*
+    // mark the local proj matrix as valid.
+    */
+    LocalProjMat.valid = TRUE;
 
 
-	/*
-	// Update the special texture matrix as well
-	*/
-	Scale = 1.0f / (float) LocalProjMat.LastTextureSize;
+    /*
+    // Update the special texture matrix as well
+    */
+    Scale = 1.0f / (float) LocalProjMat.LastTextureSize;
 
-	for(i = 0; i < 3; i++)
-	{
-		LocalProjMat.textureSR[0][i] = Scale * LocalProjMat.sr[0][i];
-		LocalProjMat.textureSR[1][i] = Scale * LocalProjMat.sr[1][i];
-		LocalProjMat.textureSR[2][i] = Scale * pTransform->mat[2][i];
-	}
+    for (i = 0; i < 3; i++) {
+        LocalProjMat.textureSR[0][i] = Scale * LocalProjMat.sr[0][i];
+        LocalProjMat.textureSR[1][i] = Scale * LocalProjMat.sr[1][i];
+        LocalProjMat.textureSR[2][i] = Scale * pTransform->mat[2][i];
+    }
 
-	RnGlobalSetLocalProjMat(&LocalProjMat);
+    RnGlobalSetLocalProjMat(&LocalProjMat);
 }
 
 /**************************************************************************
@@ -870,34 +843,32 @@ void RnUpdateLocalProjectionMatrix(const TRANSFORM_STRUCT *pTransform)
  *					projecting bit of the local projection matrix.
  **************************************************************************/
 void RnRescaleLocalProjectionTexture(const int TextureSize,
-						const TRANSFORM_STRUCT *pTransform)
-{
-	
-	float Scale;
-	int i;
+                                     const TRANSFORM_STRUCT *pTransform) {
 
-	/*
-	// Update the special texture matrix
-	*/
-	LOCAL_PROJECTION_STRUCT  *pLocalProjMat;
+    float Scale;
+    int i;
 
-	pLocalProjMat = RnGlobalGetLocalProjMat();
+    /*
+    // Update the special texture matrix
+    */
+    LOCAL_PROJECTION_STRUCT *pLocalProjMat;
 
-	pLocalProjMat->LastTextureSize = TextureSize;
+    pLocalProjMat = RnGlobalGetLocalProjMat();
 
-	Scale = 1.0f / (float) TextureSize;
+    pLocalProjMat->LastTextureSize = TextureSize;
 
-	for(i = 0; i < 3; i++)
-	{
-		pLocalProjMat->textureSR[0][i] = 
-						Scale * pLocalProjMat->sr[0][i];
+    Scale = 1.0f / (float) TextureSize;
 
-		pLocalProjMat->textureSR[1][i] = 
-						Scale * pLocalProjMat->sr[1][i];
+    for (i = 0; i < 3; i++) {
+        pLocalProjMat->textureSR[0][i] =
+                Scale * pLocalProjMat->sr[0][i];
 
-		pLocalProjMat->textureSR[2][i] = 
-						Scale * pTransform->mat[2][i];
-	}
+        pLocalProjMat->textureSR[1][i] =
+                Scale * pLocalProjMat->sr[1][i];
+
+        pLocalProjMat->textureSR[2][i] =
+                Scale * pTransform->mat[2][i];
+    }
 }
 
 

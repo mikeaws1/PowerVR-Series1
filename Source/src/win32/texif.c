@@ -100,9 +100,13 @@
 #define MODULE_ID MODID_TEXIF
 
 #include <windows.h>
+
 #define API_TYPESONLY
+
 #include <sgl.h>
+
 #undef API_TYPESONLY
+
 #include <pvrosapi.h>
 #include <sgl_defs.h>
 #include <texapi.h>
@@ -117,321 +121,300 @@
 #pragma data_seg(".onetime")
 
 
-static TexHeapStruct TexHeaps[NO_OF_TEX_HEAPS] = {0}; 
+static TexHeapStruct TexHeaps[NO_OF_TEX_HEAPS] = {0};
 
 #pragma data_seg()
 
 
-void ResetTexHeap(HTEXHEAP hTexHeap)
-{
-	int i;
-		
-	for(i=0; i<NO_OF_TEX_HEAPS; i++)
-	{
-		if(&(TexHeaps[i].TexHeap) == hTexHeap)
-		{
-			TexHeaps[i].TexHeap.hDeviceID = 0;
-   		}
-	}
+void ResetTexHeap(HTEXHEAP hTexHeap) {
+    int i;
+
+    for (i = 0; i < NO_OF_TEX_HEAPS; i++) {
+        if (&(TexHeaps[i].TexHeap) == hTexHeap) {
+            TexHeaps[i].TexHeap.hDeviceID = 0;
+        }
+    }
 }
 
 /****************************************************************************/
 
-TexHeapStruct* FindOldTexHeap(HTEXHEAP hTexHeap)
-{
-	int i;
-		
-	for(i=0; i<NO_OF_TEX_HEAPS; i++)
-	{
-		if(&(TexHeaps[i].TexHeap) == hTexHeap)
-		{
-			return(&TexHeaps[i]);
-		}
-	}
-	return (NULL);
+TexHeapStruct *FindOldTexHeap(HTEXHEAP hTexHeap) {
+    int i;
+
+    for (i = 0; i < NO_OF_TEX_HEAPS; i++) {
+        if (&(TexHeaps[i].TexHeap) == hTexHeap) {
+            return (&TexHeaps[i]);
+        }
+    }
+    return (NULL);
 }
 
 /*****************************************************************************/
 
-TexHeapStruct* FindTexHeap(HDEVICE hDeviceID)
-{
-	int i;
-		
-	for(i=0; i<NO_OF_TEX_HEAPS; i++)
-	{
-		if(TexHeaps[i].TexHeap.hDeviceID == hDeviceID)
-		{
-			return(&TexHeaps[i]);
-		}
-	}
+TexHeapStruct *FindTexHeap(HDEVICE hDeviceID) {
+    int i;
 
-		
-	for(i=0; i<NO_OF_TEX_HEAPS; i++)
-	{
-		if (TexHeaps[i].TexHeap.hDeviceID == 0)
-		{
-			return(&TexHeaps[i]);
-		}
-	}	
-	return(NULL);
+    for (i = 0; i < NO_OF_TEX_HEAPS; i++) {
+        if (TexHeaps[i].TexHeap.hDeviceID == hDeviceID) {
+            return (&TexHeaps[i]);
+        }
+    }
+
+
+    for (i = 0; i < NO_OF_TEX_HEAPS; i++) {
+        if (TexHeaps[i].TexHeap.hDeviceID == 0) {
+            return (&TexHeaps[i]);
+        }
+    }
+    return (NULL);
 }
 
 /*****************************************************************************/
 
-void SetupOverflowArea (TexHeapStruct* pt)
-{
-	/*
-		this function sets up the texture memory
-		as below:
+void SetupOverflowArea(TexHeapStruct *pt) {
+    /*
+        this function sets up the texture memory
+        as below:
 
-		LOW texture memory
-		_____________________
-		| TSP prm | ISP ooc | 160000 bytes
-		| TSP prm | t/pixel |	   4 bytes
-		| TSP prm | free!!  | TSP param size - 160004 bytes
-		| free!!  | free!!  | remainder
-		---------------------
-		HIGH texture memory
-	*/
+        LOW texture memory
+        _____________________
+        | TSP prm | ISP ooc | 160000 bytes
+        | TSP prm | t/pixel |	   4 bytes
+        | TSP prm | free!!  | TSP param size - 160004 bytes
+        | free!!  | free!!  | remainder
+        ---------------------
+        HIGH texture memory
+    */
 
-	sgl_uint32 AllExceptTSPParams;
-	sgl_uint32 Size = pt->TexHeap.TexParamSize;
-	sgl_uint32 OutOffCachePlanes;
-	sgl_uint32 AllChunks, Chunk, k;
-	HTEXHEAP hTexHeap = &pt->TexHeap;
-	sgl_uint32 TextureAddress;
-	sgl_uint32 *VertFogTexAddr;
-	sgl_uint32 x,y;
-	sgl_uint32 OffsetX,OffsetY,totaloff;
-
-	
-	#define BODY_BANK_A	0
-	#define BODY_BANK_B	1
-	#define TRANS_PIXEL_BANK_A	2
-	#define TRANS_PIXEL_BANK_B	3
-	#define VERT_FOG_TEX_BANK_A 4
-	#define VERT_FOG_TEX_BANK_B 5
-	#define OUT_OF_CACHE_BANK_A	6
-	#define OUT_OF_CACHE_BANK_B	7
-	#define TSP_DATA_BANK_A	8
-	#define TSP_DATA_BANK_B	9
-	
-	/* Set up special textures for cache overflow and TSP parameters */
-	if(pt->TexHeap.DeviceType==MIDAS4)
-	{
-		/* DONT USE PVRLIMS.H for these values as they both will
-		** end up compiled to be the same dependingf on if its 
-		** a pcx1 or pcx2 build
-		*/
-		OutOffCachePlanes = 3730 - 1024;
-	}
-	else
-	{
-		OutOffCachePlanes = 11000 - 1024;
-	}
-	
-	/* force the TSP param space to be big enough for OOCP */
-	if(Size < OutOffCachePlanes*4*4 + 4 + 32*32*2)
-	{
-		Size = pt->TexHeap.TexParamSize = OutOffCachePlanes*4*4 + 4 + 32*32*2;
-	} 
-
-	AllExceptTSPParams = ((4*1024*1024) >> 1) - Size;
-
-	TMalloc (AllExceptTSPParams, hTexHeap, &pt->MemBlock[BODY_BANK_A]);
-	ASSERT (pt->MemBlock[BODY_BANK_A].Status != -1);		
-	TMalloc (AllExceptTSPParams, hTexHeap, &pt->MemBlock[BODY_BANK_B]);
-	ASSERT (pt->MemBlock[BODY_BANK_B].Status != -1);		
-
-	/* the part that is now left is the cache overflow area/tsp param block */
-	/* allocate the part that is TSP params but not cache overflow */
-	/* and leave a tiny gap for the tans opaque pixel */
+    sgl_uint32 AllExceptTSPParams;
+    sgl_uint32 Size = pt->TexHeap.TexParamSize;
+    sgl_uint32 OutOffCachePlanes;
+    sgl_uint32 AllChunks, Chunk, k;
+    HTEXHEAP hTexHeap = &pt->TexHeap;
+    sgl_uint32 TextureAddress;
+    sgl_uint32 *VertFogTexAddr;
+    sgl_uint32 x, y;
+    sgl_uint32 OffsetX, OffsetY, totaloff;
 
 
-	Chunk = 0;
-	AllChunks = Size - OutOffCachePlanes*4*4 - 4 - 32*32*2;
-	
+#define BODY_BANK_A    0
+#define BODY_BANK_B    1
+#define TRANS_PIXEL_BANK_A    2
+#define TRANS_PIXEL_BANK_B    3
+#define VERT_FOG_TEX_BANK_A 4
+#define VERT_FOG_TEX_BANK_B 5
+#define OUT_OF_CACHE_BANK_A    6
+#define OUT_OF_CACHE_BANK_B    7
+#define TSP_DATA_BANK_A    8
+#define TSP_DATA_BANK_B    9
 
-	while (AllChunks)
-	{
-		sgl_uint32 ThisChunk;
-		
-	#if 0
+    /* Set up special textures for cache overflow and TSP parameters */
+    if (pt->TexHeap.DeviceType == MIDAS4) {
+        /* DONT USE PVRLIMS.H for these values as they both will
+        ** end up compiled to be the same dependingf on if its
+        ** a pcx1 or pcx2 build
+        */
+        OutOffCachePlanes = 3730 - 1024;
+    } else {
+        OutOffCachePlanes = 11000 - 1024;
+    }
 
-		/* this code slices the remainder up into chunks so
-		   that applications can make use of the TSP data block's
-		   buddy. At the moment this prevents us from extending
-		   (adaptively) more than the smallest block's size
-		*/
+    /* force the TSP param space to be big enough for OOCP */
+    if (Size < OutOffCachePlanes * 4 * 4 + 4 + 32 * 32 * 2) {
+        Size = pt->TexHeap.TexParamSize = OutOffCachePlanes * 4 * 4 + 4 + 32 * 32 * 2;
+    }
 
-		if (AllChunks > 256*256*2)
-		{
-			ThisChunk = 256*256*2;
-		}
-		else if (AllChunks > 128*128*2)
-		{
-			ThisChunk = 128*128*2;
-		}
-		else if (AllChunks > 64*64*2)
-		{
-			ThisChunk = 64*64*2;
-		}
-		else if (AllChunks > 32*32*2)
-		{
-			ThisChunk = 32*32*2;
-		}
-		else if (AllChunks > 0)
-		{
-			ThisChunk = AllChunks;
-		}
-		else
-		{
-			break;
-		}
-		
-	#else
-	
-		ThisChunk = AllChunks;
-	
-	#endif
-	
-		AllChunks -= ThisChunk;
-		
-		TMalloc (ThisChunk, hTexHeap, &pt->MemBlock[Chunk+TSP_DATA_BANK_A]);
-		ASSERT (pt->MemBlock[Chunk+TSP_DATA_BANK_A].Status != -1);		
-		TMalloc (ThisChunk, hTexHeap, &pt->MemBlock[Chunk+TSP_DATA_BANK_B]);
-		ASSERT (pt->MemBlock[Chunk+TSP_DATA_BANK_B].Status != -1);		
+    AllExceptTSPParams = ((4 * 1024 * 1024) >> 1) - Size;
 
-		pt->MemBlock[Chunk+TSP_DATA_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
-		pt->MemBlock[Chunk+TSP_DATA_BANK_B].MNode->BlockType = TSP_PARAM_BLOCK;
-		
-		Chunk += 2;
-	}
-	
-	/* allocate a pixel's worth in both banks */
+    TMalloc(AllExceptTSPParams, hTexHeap, &pt->MemBlock[BODY_BANK_A]);
+    ASSERT (pt->MemBlock[BODY_BANK_A].Status != -1);
+    TMalloc(AllExceptTSPParams, hTexHeap, &pt->MemBlock[BODY_BANK_B]);
+    ASSERT (pt->MemBlock[BODY_BANK_B].Status != -1);
 
-	TMalloc (4, hTexHeap, &pt->MemBlock[TRANS_PIXEL_BANK_A]);
-	ASSERT (pt->MemBlock[TRANS_PIXEL_BANK_A].Status != -1);		
-	TMalloc (4, hTexHeap, &pt->MemBlock[TRANS_PIXEL_BANK_B]);
-	ASSERT (pt->MemBlock[TRANS_PIXEL_BANK_B].Status != -1);		
+    /* the part that is now left is the cache overflow area/tsp param block */
+    /* allocate the part that is TSP params but not cache overflow */
+    /* and leave a tiny gap for the tans opaque pixel */
 
-	pt->MemBlock[TRANS_PIXEL_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
-	pt->MemBlock[TRANS_PIXEL_BANK_B].MNode->BlockType = TSP_PARAM_BLOCK;
 
-	/* use bank B for special pixel */
-	/* from bytes to 16Bit words*/
-	TextureAddress = (pt->MemBlock[TRANS_PIXEL_BANK_B].MNode->MemoryAddress >> 1) | BIG_BANK; 
+    Chunk = 0;
+    AllChunks = Size - OutOffCachePlanes * 4 * 4 - 4 - 32 * 32 * 2;
 
-	/* Write Opaque white pixels */
-	*((sgl_uint32*) hTexHeap->pTextureMemory + (TextureAddress >> 1)) = 0x7fff7fff; 
 
-	hTexHeap->TranslucentControlWord = TextureAddress | MASK_8_16_MAPS;
-	
+    while (AllChunks) {
+        sgl_uint32 ThisChunk;
 
-	/* Create and store the translucent texture for fog per vertex */
+#if 0
 
-	TMalloc (32*32*2, hTexHeap, &pt->MemBlock[VERT_FOG_TEX_BANK_A]);
-	ASSERT (pt->MemBlock[VERT_FOG_TEX_BANK_A].Status != -1);		
-	TMalloc (32*32*2, hTexHeap, &pt->MemBlock[VERT_FOG_TEX_BANK_B]);
-	ASSERT (pt->MemBlock[VERT_FOG_TEX_BANK_B].Status != -1);		
+        /* this code slices the remainder up into chunks so
+           that applications can make use of the TSP data block's
+           buddy. At the moment this prevents us from extending
+           (adaptively) more than the smallest block's size
+        */
 
-	pt->MemBlock[VERT_FOG_TEX_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
-	pt->MemBlock[VERT_FOG_TEX_BANK_B].MNode->BlockType = TSP_PARAM_BLOCK;
+        if (AllChunks > 256*256*2)
+        {
+            ThisChunk = 256*256*2;
+        }
+        else if (AllChunks > 128*128*2)
+        {
+            ThisChunk = 128*128*2;
+        }
+        else if (AllChunks > 64*64*2)
+        {
+            ThisChunk = 64*64*2;
+        }
+        else if (AllChunks > 32*32*2)
+        {
+            ThisChunk = 32*32*2;
+        }
+        else if (AllChunks > 0)
+        {
+            ThisChunk = AllChunks;
+        }
+        else
+        {
+            break;
+        }
 
-	/* use bank B for texture */
-	TextureAddress = (pt->MemBlock[VERT_FOG_TEX_BANK_B].MNode->MemoryAddress >> 1) | BIG_BANK; 
+#else
 
-	VertFogTexAddr = ((sgl_uint32*) (hTexHeap->pTextureMemory) + (TextureAddress >> 1));
+        ThisChunk = AllChunks;
 
-	OffsetX = 0;
-	OffsetY = 0;
-
-	for (y=0; y<32; y++)
-	{
-		for (x=0; x<32; x++)
-		{
-			totaloff = (OffsetX | OffsetY) >> 1;
-			VertFogTexAddr[totaloff] = 0x0FFF0FFF | ((15-(x>>1))<<12) | ((15-(x>>1))<<28);
-			OffsetX += 0x5556;
-			OffsetX &= 0xAAAA;
-		}			
-		OffsetX  = 0;
-		OffsetY += 0x2AAB;
-		OffsetY &= 0x5555;
-	}
-
-	hTexHeap->VertexFogControlWord = TextureAddress | MASK_8_16_MAPS | MASK_4444_555;
-
-	/* allocate the part that is cache overflow. This will always be allocated in
-	   banks A and B, so don't deallocate again */
-
-	TMalloc(OutOffCachePlanes*4*4, hTexHeap, &pt->MemBlock[OUT_OF_CACHE_BANK_A]);
-	ASSERT (pt->MemBlock[OUT_OF_CACHE_BANK_A].Status != -1);		
-	TMalloc(OutOffCachePlanes*4*4, hTexHeap, &pt->MemBlock[OUT_OF_CACHE_BANK_B]);
-	ASSERT (pt->MemBlock[OUT_OF_CACHE_BANK_B].Status != -1);		
-
-	pt->MemBlock[OUT_OF_CACHE_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
-	pt->MemBlock[OUT_OF_CACHE_BANK_B].MNode->BlockType = ISP_OUT_OF_CACHE_BLOCK;
-
-	/* deallocate the bank B part of the remainder */
-
-	for (k = 0; k < Chunk; k += 2)
-	{
-		TFree (&pt->MemBlock[k+TSP_DATA_BANK_B], hTexHeap);
-	}
-
-	/* deallocate the rest of the texture memory */
-
-	TFree (&pt->MemBlock[BODY_BANK_A], hTexHeap);
-	TFree (&pt->MemBlock[BODY_BANK_B], hTexHeap);
-
-	PVROSSetTSPHighWaterMark (hTexHeap, Size, FALSE);
-}
-
-/*****************************************************************************/
-
-#if 0 
-sgl_uint32 SetupTransPixel(HTEXHEAP hTexHeap)
-{
-	sgl_uint32	TextureControl,TextureAddress;
-	MNODE_BLOCK MemBlock;
-
-	/*try and allocate the space*/
-
-	/* 4 bytes because the base address of a texture has to be two word aligned
-	 */
-	TMalloc(4, hTexHeap, &MemBlock);
-
-#if DEBUG
-	if(MemBlock.Status==-1)
-	{
-		/*this condition should not happen! */
-		ASSERT(FALSE);
-	}
 #endif
 
-	/*calculate the texture address*/
+        AllChunks -= ThisChunk;
 
-	TextureAddress=MemBlock.MNode->MemoryAddress>>1; 
-	/* from bytes to 16Bit words*/
-	if(MemBlock.Status==B_BANK)
-		TextureAddress|=BIG_BANK;
+        TMalloc(ThisChunk, hTexHeap, &pt->MemBlock[Chunk + TSP_DATA_BANK_A]);
+        ASSERT (pt->MemBlock[Chunk + TSP_DATA_BANK_A].Status != -1);
+        TMalloc(ThisChunk, hTexHeap, &pt->MemBlock[Chunk + TSP_DATA_BANK_B]);
+        ASSERT (pt->MemBlock[Chunk + TSP_DATA_BANK_B].Status != -1);
 
-	/* Write Opaque white pixels */
-	*((sgl_uint32*)hTexHeap->pTextureMemory + (TextureAddress>>1)) = 0xffffffff; 
+        pt->MemBlock[Chunk + TSP_DATA_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
+        pt->MemBlock[Chunk + TSP_DATA_BANK_B].MNode->BlockType = TSP_PARAM_BLOCK;
 
-	TextureControl = TextureAddress | MASK_8_16_MAPS;
+        Chunk += 2;
+    }
 
-	return(TextureControl);
+    /* allocate a pixel's worth in both banks */
+
+    TMalloc(4, hTexHeap, &pt->MemBlock[TRANS_PIXEL_BANK_A]);
+    ASSERT (pt->MemBlock[TRANS_PIXEL_BANK_A].Status != -1);
+    TMalloc(4, hTexHeap, &pt->MemBlock[TRANS_PIXEL_BANK_B]);
+    ASSERT (pt->MemBlock[TRANS_PIXEL_BANK_B].Status != -1);
+
+    pt->MemBlock[TRANS_PIXEL_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
+    pt->MemBlock[TRANS_PIXEL_BANK_B].MNode->BlockType = TSP_PARAM_BLOCK;
+
+    /* use bank B for special pixel */
+    /* from bytes to 16Bit words*/
+    TextureAddress = (pt->MemBlock[TRANS_PIXEL_BANK_B].MNode->MemoryAddress >> 1) | BIG_BANK;
+
+    /* Write Opaque white pixels */
+    *((sgl_uint32 *) hTexHeap->pTextureMemory + (TextureAddress >> 1)) = 0x7fff7fff;
+
+    hTexHeap->TranslucentControlWord = TextureAddress | MASK_8_16_MAPS;
+
+
+    /* Create and store the translucent texture for fog per vertex */
+
+    TMalloc(32 * 32 * 2, hTexHeap, &pt->MemBlock[VERT_FOG_TEX_BANK_A]);
+    ASSERT (pt->MemBlock[VERT_FOG_TEX_BANK_A].Status != -1);
+    TMalloc(32 * 32 * 2, hTexHeap, &pt->MemBlock[VERT_FOG_TEX_BANK_B]);
+    ASSERT (pt->MemBlock[VERT_FOG_TEX_BANK_B].Status != -1);
+
+    pt->MemBlock[VERT_FOG_TEX_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
+    pt->MemBlock[VERT_FOG_TEX_BANK_B].MNode->BlockType = TSP_PARAM_BLOCK;
+
+    /* use bank B for texture */
+    TextureAddress = (pt->MemBlock[VERT_FOG_TEX_BANK_B].MNode->MemoryAddress >> 1) | BIG_BANK;
+
+    VertFogTexAddr = ((sgl_uint32 *) (hTexHeap->pTextureMemory) + (TextureAddress >> 1));
+
+    OffsetX = 0;
+    OffsetY = 0;
+
+    for (y = 0; y < 32; y++) {
+        for (x = 0; x < 32; x++) {
+            totaloff = (OffsetX | OffsetY) >> 1;
+            VertFogTexAddr[totaloff] = 0x0FFF0FFF | ((15 - (x >> 1)) << 12) | ((15 - (x >> 1)) << 28);
+            OffsetX += 0x5556;
+            OffsetX &= 0xAAAA;
+        }
+        OffsetX = 0;
+        OffsetY += 0x2AAB;
+        OffsetY &= 0x5555;
+    }
+
+    hTexHeap->VertexFogControlWord = TextureAddress | MASK_8_16_MAPS | MASK_4444_555;
+
+    /* allocate the part that is cache overflow. This will always be allocated in
+       banks A and B, so don't deallocate again */
+
+    TMalloc(OutOffCachePlanes * 4 * 4, hTexHeap, &pt->MemBlock[OUT_OF_CACHE_BANK_A]);
+    ASSERT (pt->MemBlock[OUT_OF_CACHE_BANK_A].Status != -1);
+    TMalloc(OutOffCachePlanes * 4 * 4, hTexHeap, &pt->MemBlock[OUT_OF_CACHE_BANK_B]);
+    ASSERT (pt->MemBlock[OUT_OF_CACHE_BANK_B].Status != -1);
+
+    pt->MemBlock[OUT_OF_CACHE_BANK_A].MNode->BlockType = TSP_PARAM_BLOCK;
+    pt->MemBlock[OUT_OF_CACHE_BANK_B].MNode->BlockType = ISP_OUT_OF_CACHE_BLOCK;
+
+    /* deallocate the bank B part of the remainder */
+
+    for (k = 0; k < Chunk; k += 2) {
+        TFree(&pt->MemBlock[k + TSP_DATA_BANK_B], hTexHeap);
+    }
+
+    /* deallocate the rest of the texture memory */
+
+    TFree(&pt->MemBlock[BODY_BANK_A], hTexHeap);
+    TFree(&pt->MemBlock[BODY_BANK_B], hTexHeap);
+
+    PVROSSetTSPHighWaterMark(hTexHeap, Size, FALSE);
+}
+
+/*****************************************************************************/
+
+#if 0
+sgl_uint32 SetupTransPixel(HTEXHEAP hTexHeap)
+{
+    sgl_uint32	TextureControl,TextureAddress;
+    MNODE_BLOCK MemBlock;
+
+    /*try and allocate the space*/
+
+    /* 4 bytes because the base address of a texture has to be two word aligned
+     */
+    TMalloc(4, hTexHeap, &MemBlock);
+
+#if DEBUG
+    if(MemBlock.Status==-1)
+    {
+        /*this condition should not happen! */
+        ASSERT(FALSE);
+    }
+#endif
+
+    /*calculate the texture address*/
+
+    TextureAddress=MemBlock.MNode->MemoryAddress>>1;
+    /* from bytes to 16Bit words*/
+    if(MemBlock.Status==B_BANK)
+        TextureAddress|=BIG_BANK;
+
+    /* Write Opaque white pixels */
+    *((sgl_uint32*)hTexHeap->pTextureMemory + (TextureAddress>>1)) = 0xffffffff;
+
+    TextureControl = TextureAddress | MASK_8_16_MAPS;
+
+    return(TextureControl);
 }
 #endif
 
 /***********************************************************************/
 /* Internals for sgl_get_free_texture_mem */
 
-sgl_uint32 CALL_CONV TextureGetFreeMemory(HTEXHEAP hTexHeap)
-{
-	return (((MNODE*)hTexHeap->pMemoryRoot)->MemoryLeft);	
+sgl_uint32 CALL_CONV TextureGetFreeMemory(HTEXHEAP hTexHeap) {
+    return (((MNODE *) hTexHeap->pMemoryRoot)->MemoryLeft);
 }
 
 /******************************************************************************
@@ -447,246 +430,230 @@ sgl_uint32 CALL_CONV TextureGetFreeMemory(HTEXHEAP hTexHeap)
  *				  corresponding to the given size.
  *****************************************************************************/
 
-static void AddBuddyInfo (sgl_texture_mem_info *pInfo, sgl_uint32 u32Size)
-{
-	switch (u32Size)
-	{
-		case 32*32*1: pInfo->free32_8bit++; break;
-		case 64*64*1: pInfo->free64_8bit++; break;
-		case 128*128*1: pInfo->free128_8bit++; break;
-		case 256*256*1: pInfo->free256_8bit++; break;
+static void AddBuddyInfo(sgl_texture_mem_info *pInfo, sgl_uint32 u32Size) {
+    switch (u32Size) {
+        case 32 * 32 * 1:
+            pInfo->free32_8bit++;
+            break;
+        case 64 * 64 * 1:
+            pInfo->free64_8bit++;
+            break;
+        case 128 * 128 * 1:
+            pInfo->free128_8bit++;
+            break;
+        case 256 * 256 * 1:
+            pInfo->free256_8bit++;
+            break;
 
-		case 32*32*2: pInfo->free32_16bit++; break;
-		case 64*64*2: pInfo->free64_16bit++; break;
-		case 128*128*2: pInfo->free128_16bit++; break;
-		case 256*256*2: pInfo->free256_16bit++; break;
+        case 32 * 32 * 2:
+            pInfo->free32_16bit++;
+            break;
+        case 64 * 64 * 2:
+            pInfo->free64_16bit++;
+            break;
+        case 128 * 128 * 2:
+            pInfo->free128_16bit++;
+            break;
+        case 256 * 256 * 2:
+            pInfo->free256_16bit++;
+            break;
 
-		default:
-		{
-			if (u32Size > 256*256*2)
-			{
-				pInfo->free256_16bit_mipmap++;
-			}
-			else if (u32Size > 128*128*2)
-			{
-				pInfo->free128_16bit_mipmap++;
-			}
-			else if (u32Size > 64*64*2)
-			{
-				pInfo->free64_16bit_mipmap++;
-			}
-			else if (u32Size > 32*32*2)
-			{
-				pInfo->free32_16bit_mipmap++;
-			}
-		}
+        default: {
+            if (u32Size > 256 * 256 * 2) {
+                pInfo->free256_16bit_mipmap++;
+            } else if (u32Size > 128 * 128 * 2) {
+                pInfo->free128_16bit_mipmap++;
+            } else if (u32Size > 64 * 64 * 2) {
+                pInfo->free64_16bit_mipmap++;
+            } else if (u32Size > 32 * 32 * 2) {
+                pInfo->free32_16bit_mipmap++;
+            }
+        }
 
-	} /* switch (u32Size) */
+    } /* switch (u32Size) */
 
 } /* AddBuddyInfo */
 
 /***********************************************************************/
 /* Internals for sgl_get_free_texture_mem_info */
 
-void CALL_CONV TextureGetFreeMemoryInfo( HTEXHEAP hTexHeap,
-									  	 sgl_texture_mem_info *pInfo )
-{
-	MNODE *MemWalk;
+void CALL_CONV TextureGetFreeMemoryInfo(HTEXHEAP hTexHeap,
+                                        sgl_texture_mem_info *pInfo) {
+    MNODE *MemWalk;
 
-	if (pInfo == NULL) 
-	{
-		return;
-	}
+    if (pInfo == NULL) {
+        return;
+    }
 
-	/*
-	// BUDDY MEMORY
-	*/
+    /*
+    // BUDDY MEMORY
+    */
 
-	/*
-	// Note: If we add any new members to the structure we must read
-	// pInfo->u32StructSize, and not overwrite application memory beyond the
-	// size it has allocated for the structure.
-	*/
-	pInfo->free32_8bit = 0;
-	pInfo->free64_8bit = 0;
-	pInfo->free128_8bit = 0;
-	pInfo->free256_8bit = 0;
+    /*
+    // Note: If we add any new members to the structure we must read
+    // pInfo->u32StructSize, and not overwrite application memory beyond the
+    // size it has allocated for the structure.
+    */
+    pInfo->free32_8bit = 0;
+    pInfo->free64_8bit = 0;
+    pInfo->free128_8bit = 0;
+    pInfo->free256_8bit = 0;
 
-	pInfo->free32_16bit = 0;
-	pInfo->free64_16bit = 0;
-	pInfo->free128_16bit = 0;
-	pInfo->free256_16bit = 0;
+    pInfo->free32_16bit = 0;
+    pInfo->free64_16bit = 0;
+    pInfo->free128_16bit = 0;
+    pInfo->free256_16bit = 0;
 
-	pInfo->free32_16bit_mipmap = 0;
-	pInfo->free64_16bit_mipmap = 0;
-	pInfo->free128_16bit_mipmap = 0;
-	pInfo->free256_16bit_mipmap = 0;
+    pInfo->free32_16bit_mipmap = 0;
+    pInfo->free64_16bit_mipmap = 0;
+    pInfo->free128_16bit_mipmap = 0;
+    pInfo->free256_16bit_mipmap = 0;
 
-	if ( (((MNODE*)hTexHeap->pMemoryRoot)->UsedStatus == A_BANK) || 
-		 (((MNODE*)hTexHeap->pMemoryRoot)->UsedStatus == B_BANK) )
-	{
-		AddBuddyInfo(pInfo,((MNODE*)hTexHeap->pMemoryRoot)->BlockSize);
-	}
+    if ((((MNODE *) hTexHeap->pMemoryRoot)->UsedStatus == A_BANK) ||
+        (((MNODE *) hTexHeap->pMemoryRoot)->UsedStatus == B_BANK)) {
+        AddBuddyInfo(pInfo, ((MNODE *) hTexHeap->pMemoryRoot)->BlockSize);
+    }
 
-	MemWalk = hTexHeap->pMemoryRoot;
+    MemWalk = hTexHeap->pMemoryRoot;
 
-	while (MemWalk->NextBuddy != NULL)
-	{
-		MemWalk = MemWalk->NextBuddy;
+    while (MemWalk->NextBuddy != NULL) {
+        MemWalk = MemWalk->NextBuddy;
 
-		AddBuddyInfo(pInfo,MemWalk->BlockSize);
-		
-		ASSERT(MemWalk->PrevBuddy->NextBuddy == MemWalk);
+        AddBuddyInfo(pInfo, MemWalk->BlockSize);
 
-		if (MemWalk->NextBuddy != NULL)
-		{
-			ASSERT(MemWalk->NextBuddy->PrevBuddy == MemWalk);
-		}     
-	}
+        ASSERT(MemWalk->PrevBuddy->NextBuddy == MemWalk);
 
-	/*
-	// NON-BUDDY MEMORY
-	*/
+        if (MemWalk->NextBuddy != NULL) {
+            ASSERT(MemWalk->NextBuddy->PrevBuddy == MemWalk);
+        }
+    }
 
-	pInfo->u32OtherFreeMem = 0;
-	pInfo->u32LargestOtherFreeMem = 0;
+    /*
+    // NON-BUDDY MEMORY
+    */
 
-	if ( ((MNODE*)hTexHeap->pMemoryRoot)->UsedStatus == 0 )
-	{
-		pInfo->u32OtherFreeMem = (((MNODE*)hTexHeap->pMemoryRoot)->BlockSize) << 1;
-		pInfo->u32LargestOtherFreeMem = ((MNODE*)hTexHeap->pMemoryRoot)->BlockSize;
-	}
+    pInfo->u32OtherFreeMem = 0;
+    pInfo->u32LargestOtherFreeMem = 0;
 
-	MemWalk = hTexHeap->pMemoryRoot;
+    if (((MNODE *) hTexHeap->pMemoryRoot)->UsedStatus == 0) {
+        pInfo->u32OtherFreeMem = (((MNODE *) hTexHeap->pMemoryRoot)->BlockSize) << 1;
+        pInfo->u32LargestOtherFreeMem = ((MNODE *) hTexHeap->pMemoryRoot)->BlockSize;
+    }
 
-	while (MemWalk->NextFree != NULL)
-	{
-		MemWalk = MemWalk->NextFree;
+    MemWalk = hTexHeap->pMemoryRoot;
 
-		pInfo->u32OtherFreeMem += MemWalk->BlockSize*2;
+    while (MemWalk->NextFree != NULL) {
+        MemWalk = MemWalk->NextFree;
 
-		if (MemWalk->BlockSize > pInfo->u32LargestOtherFreeMem)
-		{
-			pInfo->u32LargestOtherFreeMem = MemWalk->BlockSize;
-		}
+        pInfo->u32OtherFreeMem += MemWalk->BlockSize * 2;
 
-		/*
-		// Ensure the 'free' block has not been used.
-		*/
-		ASSERT(MemWalk->UsedStatus == 0);
+        if (MemWalk->BlockSize > pInfo->u32LargestOtherFreeMem) {
+            pInfo->u32LargestOtherFreeMem = MemWalk->BlockSize;
+        }
 
-		ASSERT(MemWalk->PrevFree->NextFree == MemWalk);
+        /*
+        // Ensure the 'free' block has not been used.
+        */
+        ASSERT(MemWalk->UsedStatus == 0);
 
-		if (MemWalk->NextFree != NULL)
-		{
-			ASSERT(MemWalk->NextFree->PrevFree == MemWalk);
-		}
+        ASSERT(MemWalk->PrevFree->NextFree == MemWalk);
 
-	} /* while (MemWalk->NextFree != NULL) */
+        if (MemWalk->NextFree != NULL) {
+            ASSERT(MemWalk->NextFree->PrevFree == MemWalk);
+        }
+
+    } /* while (MemWalk->NextFree != NULL) */
 
 }
 
 /*****************************************************************************/
 
-sgl_uint32 CALL_CONV PVROSGetTexInterface (HDEVICE hDeviceID, void **ppIF)
-{
-	TexHeapStruct* pt;
+sgl_uint32 CALL_CONV PVROSGetTexInterface(HDEVICE hDeviceID, void **ppIF) {
+    TexHeapStruct *pt;
 
-	pt = FindTexHeap(hDeviceID);
+    pt = FindTexHeap(hDeviceID);
 
-	if (pt == NULL)
-	{	
-		DPF((DBG_ERROR,"Couldn't find texture heap"));
-	}
-	else
-	{
-		pt->TexIF.hTexHeap = &pt->TexHeap;
-		
-		pt->TexIF.pfnTextureEnumerateFormats	= (void *) TextureEnumerateFormats ;
-		pt->TexIF.pfnTextureCreate				= (void *) TextureCreate;
-		pt->TexIF.pfnTextureLoad				= (void *) TextureLoad;
-		pt->TexIF.pfnTextureCopy				= (void *) TextureCopy;
-		pt->TexIF.pfnAutoMipmap					= (void *) AutoMipmap;
-	 	pt->TexIF.pfnTextureFree				= (void *) TextureFree;
-		pt->TexIF.pfnTextureGetFreeMemory	 	= (void *) TextureGetFreeMemory;
-		pt->TexIF.pfnTextureGetFreeMemoryInfo 	= (void *) TextureGetFreeMemoryInfo;
-				
-		*ppIF = (void *) &pt->TexIF;
-		
-		return (sizeof (pt->TexIF));
-	}
+    if (pt == NULL) {
+        DPF((DBG_ERROR, "Couldn't find texture heap"));
+    } else {
+        pt->TexIF.hTexHeap = &pt->TexHeap;
 
-	return (0);
+        pt->TexIF.pfnTextureEnumerateFormats = (void *) TextureEnumerateFormats;
+        pt->TexIF.pfnTextureCreate = (void *) TextureCreate;
+        pt->TexIF.pfnTextureLoad = (void *) TextureLoad;
+        pt->TexIF.pfnTextureCopy = (void *) TextureCopy;
+        pt->TexIF.pfnAutoMipmap = (void *) AutoMipmap;
+        pt->TexIF.pfnTextureFree = (void *) TextureFree;
+        pt->TexIF.pfnTextureGetFreeMemory = (void *) TextureGetFreeMemory;
+        pt->TexIF.pfnTextureGetFreeMemoryInfo = (void *) TextureGetFreeMemoryInfo;
+
+        *ppIF = (void *) &pt->TexIF;
+
+        return (sizeof(pt->TexIF));
+    }
+
+    return (0);
 }
 
 /*****************************************************************************/
 
-PVRHANDLE CALL_CONV PVROSCreateTexHeap(HDEVICE hDeviceID)
-{
-	TexHeapStruct* pt;
+PVRHANDLE CALL_CONV PVROSCreateTexHeap(HDEVICE hDeviceID) {
+    TexHeapStruct *pt;
 
-	pt = FindTexHeap(hDeviceID);
-	
-	if (pt == NULL)
-	{	
-	    DPF((DBG_ERROR,"Couldn't allocate texture heap"));
-		return (NULL);
-	}
-	else if (pt->TexHeap.hDeviceID == 0)
-	{
-		BoardDataBlock	pb;
+    pt = FindTexHeap(hDeviceID);
 
-		pt->TexHeap.hDeviceID = hDeviceID;			
-		pt->RefCounter = 0;
+    if (pt == NULL) {
+        DPF((DBG_ERROR, "Couldn't allocate texture heap"));
+        return (NULL);
+    } else if (pt->TexHeap.hDeviceID == 0) {
+        BoardDataBlock pb;
 
-		PVROSGetPCIDeviceInfo (hDeviceID, &pb);
+        pt->TexHeap.hDeviceID = hDeviceID;
+        pt->RefCounter = 0;
 
-		pt->TexHeap.pMemoryRoot		= &(pt->MemoryRoot);
-	 	pt->TexHeap.pTextureMemory	= (void*) pb.LinearMemWindows[1];
-		
-		/* Read the size for the texture parameter space in bytes */
-	    pt->TexHeap.TexParamSize = 1024 * HWRdValFileUInt("TSPParamSize", (TEX_PARAM_SIZE/1024));
-		pt->TexHeap.DeviceType = pb.DeviceType;
+        PVROSGetPCIDeviceInfo(hDeviceID, &pb);
 
-		InitTextureMemory(4*1024*1024, &(pt->TexHeap));
+        pt->TexHeap.pMemoryRoot = &(pt->MemoryRoot);
+        pt->TexHeap.pTextureMemory = (void *) pb.LinearMemWindows[1];
 
-		/* set up the texture memory for cache overflow and TSP params */
-		SetupOverflowArea (pt);
+        /* Read the size for the texture parameter space in bytes */
+        pt->TexHeap.TexParamSize = 1024 * HWRdValFileUInt("TSPParamSize", (TEX_PARAM_SIZE / 1024));
+        pt->TexHeap.DeviceType = pb.DeviceType;
 
-	#if 0 /* now done in SetupOverflowArea */
-		/* The translucent pixel HAS to be set up after the texture memory */
-	
-		pt->TexHeap.TranslucentControlWord = SetupTransPixel (&pt->TexHeap);
-	#endif
+        InitTextureMemory(4 * 1024 * 1024, &(pt->TexHeap));
 
-		/* set stuff up for texture load serialising */
+        /* set up the texture memory for cache overflow and TSP params */
+        SetupOverflowArea(pt);
+
+#if 0 /* now done in SetupOverflowArea */
+        /* The translucent pixel HAS to be set up after the texture memory */
+
+        pt->TexHeap.TranslucentControlWord = SetupTransPixel (&pt->TexHeap);
+#endif
+
+        /* set stuff up for texture load serialising */
 
 
-	}
+    }
 
-	pt->RefCounter++;
+    pt->RefCounter++;
 
-	return(&pt->TexHeap);
+    return (&pt->TexHeap);
 }
 
 /*****************************************************************************/
 
-void CALL_CONV PVROSDestroyTexHeap(PVRHANDLE TexHeap)
-{	
-	TexHeapStruct* pt;
+void CALL_CONV PVROSDestroyTexHeap(PVRHANDLE TexHeap) {
+    TexHeapStruct *pt;
 
-	pt = FindOldTexHeap(TexHeap);
-	
-	if(pt != NULL)
-	{
-		if((--(pt->RefCounter)) == 0)
-		{
-			ResetTexHeap(TexHeap);
-		}
-	}
-	else
-	{
-		DPF((DBG_ERROR,"Attempt to Destroy Invalid Texture Heap"));
-	}							
+    pt = FindOldTexHeap(TexHeap);
+
+    if (pt != NULL) {
+        if ((--(pt->RefCounter)) == 0) {
+            ResetTexHeap(TexHeap);
+        }
+    } else {
+        DPF((DBG_ERROR, "Attempt to Destroy Invalid Texture Heap"));
+    }
 }
 /* -==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==--==- */

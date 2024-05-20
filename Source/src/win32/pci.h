@@ -45,23 +45,35 @@
  *;--
  *****************************************************************************/
 
-int  __cdecl PCIFindBoard	(sgl_int8 *bBusIDNum, sgl_int8 *bDevFncID, sgl_int16 vendor, sgl_int16   device);
-int  __cdecl PCIRead8		(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int8  *Data);
-int  __cdecl PCIRead16		(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int16  *Data);
-int  __cdecl PCIRead32		(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int32 *Data);
-int  __cdecl PCIRead32Hack	(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int32 *Data);
-int  __cdecl PCIWrite8		(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int8   Data);
-int  __cdecl PCIWrite16		(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int16   Data);
-int  __cdecl PCIWrite32		(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int32  Data);
-int  __cdecl PCIWrite32Hack	(sgl_int8  bBusIDNum, sgl_int8  bDevFncID, sgl_int16 wReg,   sgl_int32  Data);
+int __cdecl PCIFindBoard(sgl_int8 *bBusIDNum, sgl_int8 *bDevFncID, sgl_int16 vendor, sgl_int16 device);
 
-void __cdecl OutByte		(sgl_int16 port, sgl_int8 value);
-void __cdecl OutWord		(sgl_int16 port, sgl_int16 value);
-void __cdecl OutDword		(sgl_int16 port, sgl_int32 value);
+int __cdecl PCIRead8(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int8 *Data);
 
-sgl_int8	__cdecl InByte	(sgl_int16 port);
-sgl_int16	__cdecl InWord	(sgl_int16 port);
-sgl_int32	__cdecl InDword	(sgl_int16 port);
+int __cdecl PCIRead16(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int16 *Data);
+
+int __cdecl PCIRead32(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int32 *Data);
+
+int __cdecl PCIRead32Hack(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int32 *Data);
+
+int __cdecl PCIWrite8(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int8 Data);
+
+int __cdecl PCIWrite16(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int16 Data);
+
+int __cdecl PCIWrite32(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int32 Data);
+
+int __cdecl PCIWrite32Hack(sgl_int8 bBusIDNum, sgl_int8 bDevFncID, sgl_int16 wReg, sgl_int32 Data);
+
+void __cdecl OutByte(sgl_int16 port, sgl_int8 value);
+
+void __cdecl OutWord(sgl_int16 port, sgl_int16 value);
+
+void __cdecl OutDword(sgl_int16 port, sgl_int32 value);
+
+sgl_int8    __cdecl InByte(sgl_int16 port);
+
+sgl_int16    __cdecl InWord(sgl_int16 port);
+
+sgl_int32    __cdecl InDword(sgl_int16 port);
 
 extern sgl_int16 wIsPC98;
 

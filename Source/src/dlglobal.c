@@ -56,7 +56,7 @@
 /*
 // Define the global editing variables
 */
-extern DL_USER_GLOBALS_STRUCT	dlUserGlobals;
+extern DL_USER_GLOBALS_STRUCT dlUserGlobals;
 
 /**************************************************************************
  * Function Name  : InitDisplayLists
@@ -70,57 +70,52 @@ extern DL_USER_GLOBALS_STRUCT	dlUserGlobals;
  *					modified to support multi process users..
  **************************************************************************/
 
-int InitDisplayLists(void)
-{
-	int result;
-	
-	/*
-	// Assume all is OK until proven otherwise
-	*/
-	result = 0;
+int InitDisplayLists(void) {
+    int result;
 
-	/*
-	// intialise the various fields in the User Globals structure
-	// (This "globals" structure really applies to one user process.
-	//
-	// Create and initialise a default list
-	*/
-	dlUserGlobals.pDefaultList = NEW(LIST_NODE_STRUCT);
-	if(dlUserGlobals.pDefaultList == NULL)
-	{
-		/*
-		// WHOOPS an error has occurred
-		*/
-		result = -1;
-	}
-	else
-	{
-		InitListNode(dlUserGlobals.pDefaultList, NM_INVALID_NAME, NULL);
-	}
+    /*
+    // Assume all is OK until proven otherwise
+    */
+    result = 0;
+
+    /*
+    // intialise the various fields in the User Globals structure
+    // (This "globals" structure really applies to one user process.
+    //
+    // Create and initialise a default list
+    */
+    dlUserGlobals.pDefaultList = NEW(LIST_NODE_STRUCT);
+    if (dlUserGlobals.pDefaultList == NULL) {
+        /*
+        // WHOOPS an error has occurred
+        */
+        result = -1;
+    } else {
+        InitListNode(dlUserGlobals.pDefaultList, NM_INVALID_NAME, NULL);
+    }
 
 
-	/*
-	// create the name table (if the last bit was successfull
-	*/
-	if(result == 0)
-	{
-		/*
-		// Create and initialise the name table (for this client....)
-		*/
-		result = InitNamtab( & dlUserGlobals.pNamtab);
-	}
+    /*
+    // create the name table (if the last bit was successfull
+    */
+    if (result == 0) {
+        /*
+        // Create and initialise the name table (for this client....)
+        */
+        result = InitNamtab(&dlUserGlobals.pNamtab);
+    }
 
 
-	/*
-	// Fill in the other fields (regardless of error status)
-	*/
-	dlUserGlobals.pCurrentList = dlUserGlobals.pDefaultList;
-	dlUserGlobals.pCurrentConvex = NULL;
-	dlUserGlobals.pCurrentTransform = NULL;
-	dlUserGlobals.pCurrentMaterial = NULL;
-	dlUserGlobals.pCurrentMesh = NULL;
+    /*
+    // Fill in the other fields (regardless of error status)
+    */
+    dlUserGlobals.pCurrentList = dlUserGlobals.pDefaultList;
+    dlUserGlobals.pCurrentConvex = NULL;
+    dlUserGlobals.pCurrentTransform = NULL;
+    dlUserGlobals.pCurrentMaterial = NULL;
+    dlUserGlobals.pCurrentMesh = NULL;
 
-	return result;
+    return result;
 }
 
 

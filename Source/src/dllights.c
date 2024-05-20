@@ -139,51 +139,43 @@
 
 
 
-void 	DlDeleteLightPosNodeRefs(DL_NODE_STRUCT	 * pNode)
-{
-	LIGHT_NODE_STRUCT 		* litNode;
-	LIGHT_POS_NODE_STRUCT 	* posNode;
-	int	name;
+void DlDeleteLightPosNodeRefs(DL_NODE_STRUCT *pNode) {
+    LIGHT_NODE_STRUCT *litNode;
+    LIGHT_POS_NODE_STRUCT *posNode;
+    int name;
 
 
-	/*
-		get easier access to the list pos node...
-	*/
-	posNode = (LIGHT_POS_NODE_STRUCT *) pNode;
+    /*
+        get easier access to the list pos node...
+    */
+    posNode = (LIGHT_POS_NODE_STRUCT *) pNode;
 
-	name = posNode->light_name;
+    name = posNode->light_name;
 
 
-	/* an invalid name means this position node has been overridden
-	   by a later defined position node */
+    /* an invalid name means this position node has been overridden
+       by a later defined position node */
 
-	if (name!=NM_INVALID_NAME)
-	{
-		/* a valid name means that the light node contains a reference to this node
-		   and it must be set to null */
-			
+    if (name != NM_INVALID_NAME) {
+        /* a valid name means that the light node contains a reference to this node
+           and it must be set to null */
 
-		/* Make sure that the name in light pos node is the name of a light */
 
-    	ASSERT ( GetNamedItemType(dlUserGlobals.pNamtab, name) == nt_light )
-	 
-	
+        /* Make sure that the name in light pos node is the name of a light */
 
-		/*	get reference to named light from the name table
-			and set light position reference to NULL */
+        ASSERT (GetNamedItemType(dlUserGlobals.pNamtab, name) == nt_light)
 
-    	litNode = GetNamedItem(dlUserGlobals.pNamtab, name);
 
-		litNode->plight_position=NULL;
 
-	}
+        /*	get reference to named light from the name table
+            and set light position reference to NULL */
+
+        litNode = GetNamedItem(dlUserGlobals.pNamtab, name);
+
+        litNode->plight_position = NULL;
+
+    }
 }
-
-
-
-
-
-
 
 
 /**************************************************************************
@@ -200,23 +192,21 @@ void 	DlDeleteLightPosNodeRefs(DL_NODE_STRUCT	 * pNode)
  **************************************************************************/
 
 
-void	DlDeleteLightSwitchNodeRefs(DL_NODE_STRUCT	 * pNode)
-{
-	LIGHT_SWITCH_NODE_STRUCT	* lsNode;
+void DlDeleteLightSwitchNodeRefs(DL_NODE_STRUCT *pNode) {
+    LIGHT_SWITCH_NODE_STRUCT *lsNode;
 
-	/*
-		get easier access to the light switch node...
-	*/
-	lsNode = (LIGHT_SWITCH_NODE_STRUCT *) pNode;
+    /*
+        get easier access to the light switch node...
+    */
+    lsNode = (LIGHT_SWITCH_NODE_STRUCT *) pNode;
 
-	/*
-		decrement the usage count for this light
-	*/
-	DecNamedItemUsage(dlUserGlobals.pNamtab,
-					lsNode->light_name);
-	
+    /*
+        decrement the usage count for this light
+    */
+    DecNamedItemUsage(dlUserGlobals.pNamtab,
+                      lsNode->light_name);
+
 }
-
 
 
 /**************************************************************************
@@ -234,33 +224,27 @@ void	DlDeleteLightSwitchNodeRefs(DL_NODE_STRUCT	 * pNode)
  **************************************************************************/
 
 
-void	DlDeleteLightNodeRefs(DL_NODE_STRUCT	* pNode)
-{
-	LIGHT_NODE_STRUCT 		* litNode;
+void DlDeleteLightNodeRefs(DL_NODE_STRUCT *pNode) {
+    LIGHT_NODE_STRUCT *litNode;
 
 
-	/*
-		get easier access to the light switch node...
-	*/
-	litNode = (LIGHT_NODE_STRUCT *) pNode;
+    /*
+        get easier access to the light switch node...
+    */
+    litNode = (LIGHT_NODE_STRUCT *) pNode;
 
 
-	if (litNode->plight_position!=NULL)
-	{
-		/* must nullify the currently defined position node
-		   so that it can be deleted cleanly */
+    if (litNode->plight_position != NULL) {
+        /* must nullify the currently defined position node
+           so that it can be deleted cleanly */
 
-		litNode->plight_position->light_name=NM_INVALID_NAME;
-	}
+        litNode->plight_position->light_name = NM_INVALID_NAME;
+    }
 
-	/* NOTE : a much cleaner way would be to actually delete the position node
-	   but what the heck! wait for version 1.1 !!! */
-	
+    /* NOTE : a much cleaner way would be to actually delete the position node
+       but what the heck! wait for version 1.1 !!! */
+
 }
-
-
-
-
 
 
 /**************************************************************************
@@ -277,38 +261,34 @@ void	DlDeleteLightNodeRefs(DL_NODE_STRUCT	* pNode)
  *				   
  **************************************************************************/
 
-static void SetAmbientLight( LIGHT_NODE_STRUCT * pLightNode,
-							 int name, 
-							 sgl_colour colour, 
-							 sgl_bool Relative,
-							 sgl_bool StoreHeader)
-{
-	int Rel,Col;
+static void SetAmbientLight(LIGHT_NODE_STRUCT *pLightNode,
+                            int name,
+                            sgl_colour colour,
+                            sgl_bool Relative,
+                            sgl_bool StoreHeader) {
+    int Rel, Col;
 
 
-	/* store header information  */
+    /* store header information  */
 
-	if (StoreHeader)
-	{
-		pLightNode->node_hdr.n16_node_type = (sgl_int16) nt_light;
-		pLightNode->node_hdr.n16_name	  = (sgl_int16) name;
-		pLightNode->node_hdr.next_node	  = NULL;
-	}
+    if (StoreHeader) {
+        pLightNode->node_hdr.n16_node_type = (sgl_int16) nt_light;
+        pLightNode->node_hdr.n16_name = (sgl_int16) name;
+        pLightNode->node_hdr.next_node = NULL;
+    }
 
-	/* store light info */
+    /* store light info */
 
-	Rel = (Relative) ? ambient_relative : 0 ;
-	Col = (colour[0] == colour[1] && colour[1] == colour[2]) ? 0 : coloured;
+    Rel = (Relative) ? ambient_relative : 0;
+    Col = (colour[0] == colour[1] && colour[1] == colour[2]) ? 0 : coloured;
 
-	pLightNode->flags = (ambient_light_type | Rel ) | Col;
+    pLightNode->flags = (ambient_light_type | Rel) | Col;
 
-	pLightNode->colour[0]= CLAMP(colour[0], 0.0f, COLOUR_CLAMP);
-	pLightNode->colour[1]= CLAMP(colour[1], 0.0f, COLOUR_CLAMP);
-	pLightNode->colour[2]= CLAMP(colour[2], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[0] = CLAMP(colour[0], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[1] = CLAMP(colour[1], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[2] = CLAMP(colour[2], 0.0f, COLOUR_CLAMP);
 
 }
-
-
 
 
 /**************************************************************************
@@ -330,49 +310,44 @@ static void SetAmbientLight( LIGHT_NODE_STRUCT * pLightNode,
  *				   
  **************************************************************************/
 
-static void SetParallelLight( LIGHT_NODE_STRUCT * pLightNode,
-							  int name, 
-							  sgl_colour colour, 
-							  sgl_vector direction,
-							  sgl_bool Shadows, 
-							  sgl_bool Highlights, 
-							  sgl_bool StoreHeader)
-{
-	int Col;
-	int Shd;
-	int Hlt;
+static void SetParallelLight(LIGHT_NODE_STRUCT *pLightNode,
+                             int name,
+                             sgl_colour colour,
+                             sgl_vector direction,
+                             sgl_bool Shadows,
+                             sgl_bool Highlights,
+                             sgl_bool StoreHeader) {
+    int Col;
+    int Shd;
+    int Hlt;
 
-	/* store header information  */
+    /* store header information  */
 
-	if (StoreHeader)
-	{
-		pLightNode->node_hdr.n16_node_type = (sgl_int16) nt_light;
-		pLightNode->node_hdr.n16_name	  = (sgl_int16) name;
-		pLightNode->node_hdr.next_node	  = NULL;
-	}
+    if (StoreHeader) {
+        pLightNode->node_hdr.n16_node_type = (sgl_int16) nt_light;
+        pLightNode->node_hdr.n16_name = (sgl_int16) name;
+        pLightNode->node_hdr.next_node = NULL;
+    }
 
-	/* store light info */
+    /* store light info */
 
-	Shd = (Shadows) ? casts_shadows : 0;
-	Col = (colour[0] == colour[1] && colour[1] == colour[2]) ? 0 : coloured;
-	Hlt = (Highlights) ? smooth_highlights : 0;
+    Shd = (Shadows) ? casts_shadows : 0;
+    Col = (colour[0] == colour[1] && colour[1] == colour[2]) ? 0 : coloured;
+    Hlt = (Highlights) ? smooth_highlights : 0;
 
-	pLightNode->flags = ( ( ( parallel_light_type | Shd ) | Col ) | Hlt);
+    pLightNode->flags = (((parallel_light_type | Shd) | Col) | Hlt);
 
-	pLightNode->colour[0]= CLAMP(colour[0], 0.0f, COLOUR_CLAMP);
-	pLightNode->colour[1]= CLAMP(colour[1], 0.0f, COLOUR_CLAMP);
-	pLightNode->colour[2]= CLAMP(colour[2], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[0] = CLAMP(colour[0], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[1] = CLAMP(colour[1], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[2] = CLAMP(colour[2], 0.0f, COLOUR_CLAMP);
 
-	VecNormalise(direction);
+    VecNormalise(direction);
 
-	pLightNode->direction[0]=direction[0];
-	pLightNode->direction[1]=direction[1];
-	pLightNode->direction[2]=direction[2];
+    pLightNode->direction[0] = direction[0];
+    pLightNode->direction[1] = direction[1];
+    pLightNode->direction[2] = direction[2];
 
 }
-
-
-
 
 
 /**************************************************************************
@@ -396,83 +371,77 @@ static void SetParallelLight( LIGHT_NODE_STRUCT * pLightNode,
  *				   
  **************************************************************************/
 
-static void SetPointLight( LIGHT_NODE_STRUCT * pLightNode,
-						   int name, 
-						   sgl_colour colour, 
-						   sgl_vector direction,
-						   sgl_vector position, 
-						   int concentration, 
-						   sgl_bool Shadows, 
-						   sgl_bool Highlights, 
-						   sgl_bool StoreHeader)
-{
-	int Col;
-	int Shd;
-	int Hlt;
+static void SetPointLight(LIGHT_NODE_STRUCT *pLightNode,
+                          int name,
+                          sgl_colour colour,
+                          sgl_vector direction,
+                          sgl_vector position,
+                          int concentration,
+                          sgl_bool Shadows,
+                          sgl_bool Highlights,
+                          sgl_bool StoreHeader) {
+    int Col;
+    int Shd;
+    int Hlt;
 
-	/* store header information  */
+    /* store header information  */
 
-   	if (StoreHeader)
-	{
-		pLightNode->node_hdr.n16_node_type = (sgl_int16) nt_light;
-		pLightNode->node_hdr.n16_name	  = (sgl_int16) name;
-		pLightNode->node_hdr.next_node	  = NULL;
-	}
+    if (StoreHeader) {
+        pLightNode->node_hdr.n16_node_type = (sgl_int16) nt_light;
+        pLightNode->node_hdr.n16_name = (sgl_int16) name;
+        pLightNode->node_hdr.next_node = NULL;
+    }
 
-	/* store light info */
+    /* store light info */
 
-	Shd = (Shadows) ? casts_shadows : 0;
-	Col = (colour[0] == colour[1] && colour[1] == colour[2]) ? 0 : coloured;
-	Hlt = (Highlights) ? smooth_highlights : 0;
+    Shd = (Shadows) ? casts_shadows : 0;
+    Col = (colour[0] == colour[1] && colour[1] == colour[2]) ? 0 : coloured;
+    Hlt = (Highlights) ? smooth_highlights : 0;
 
-	pLightNode->flags =  point_light_type | Shd  | Col | Hlt;
+    pLightNode->flags = point_light_type | Shd | Col | Hlt;
 
-	pLightNode->colour[0]= CLAMP(colour[0], 0.0f, COLOUR_CLAMP);
-	pLightNode->colour[1]= CLAMP(colour[1], 0.0f, COLOUR_CLAMP);
-	pLightNode->colour[2]= CLAMP(colour[2], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[0] = CLAMP(colour[0], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[1] = CLAMP(colour[1], 0.0f, COLOUR_CLAMP);
+    pLightNode->colour[2] = CLAMP(colour[2], 0.0f, COLOUR_CLAMP);
 
-	VecNormalise(direction);
+    VecNormalise(direction);
 
-	pLightNode->direction[0]=direction[0];
-	pLightNode->direction[1]=direction[1];
-	pLightNode->direction[2]=direction[2];
+    pLightNode->direction[0] = direction[0];
+    pLightNode->direction[1] = direction[1];
+    pLightNode->direction[2] = direction[2];
 
-	pLightNode->position[0]=position[0];
-	pLightNode->position[1]=position[1];
-	pLightNode->position[2]=position[2];
+    pLightNode->position[0] = position[0];
+    pLightNode->position[1] = position[1];
+    pLightNode->position[2] = position[2];
 
-	/*
-	// If the light shines everywhere
-	*/
-	if(concentration<=0)
-	{
-		pLightNode->concentration=0;
-	}
-	/*
-	// else if the concentration is 1, then we dont have to raise the
-	// anything to power function.. in fact our approximation doesn't
-	// work, so handle as a special case.
-	*/
-	else if(concentration==1)
-	{
-		pLightNode->concentration=1;
-	}
-	/*
-	// Else there is a reasnable concentration factor. Compute an
-	// "equivalent" multiplier for our approximation of the 
-	// power function
-	*/
-	else
-	{
-		pLightNode->concentration=concentration;
+    /*
+    // If the light shines everywhere
+    */
+    if (concentration <= 0) {
+        pLightNode->concentration = 0;
+    }
+        /*
+        // else if the concentration is 1, then we dont have to raise the
+        // anything to power function.. in fact our approximation doesn't
+        // work, so handle as a special case.
+        */
+    else if (concentration == 1) {
+        pLightNode->concentration = 1;
+    }
+        /*
+        // Else there is a reasnable concentration factor. Compute an
+        // "equivalent" multiplier for our approximation of the
+        // power function
+        */
+    else {
+        pLightNode->concentration = concentration;
 
-		pLightNode->log2concentration = (float)log(concentration) / (float)log(2.0f);
+        pLightNode->log2concentration = (float) log(concentration) / (float) log(2.0f);
 
-	}/*end if concentration*/
-		
+    }/*end if concentration*/
+
 
 }
-
 
 
 /**************************************************************************
@@ -492,102 +461,94 @@ static void SetPointLight( LIGHT_NODE_STRUCT * pLightNode,
  **************************************************************************/
 
 
-int	CALL_CONV sgl_create_ambient_light( sgl_bool generate_name,
-							  			sgl_colour colour,
-										sgl_bool relative )
-{
-	int error = sgl_no_err;
-	int name  = NM_INVALID_NAME;
+int CALL_CONV sgl_create_ambient_light(sgl_bool generate_name,
+                                       sgl_colour colour,
+                                       sgl_bool relative) {
+    int error = sgl_no_err;
+    int name = NM_INVALID_NAME;
 
-	LIGHT_NODE_STRUCT * pNode;
+    LIGHT_NODE_STRUCT *pNode;
 
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
 
-		error = sgl_err_failed_init;
-		SglError(error);
+        error = sgl_err_failed_init;
+        SglError(error);
 
-		return error;
-	}
+        return error;
+    }
 #endif
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
-	/* 
-		Create light node 
-	*/
-
-
-	pNode = NEW(LIGHT_NODE_STRUCT);
-
-	if(pNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		error = sgl_err_no_mem;
-		SglError(error);
-
-		return error;
-	} 
+    /*
+        Create light node
+    */
 
 
-	/*
- 		If we need a name, generate one, adding the item to
-		the name table at the same time.
-	*/
+    pNode = NEW(LIGHT_NODE_STRUCT);
 
-	if (generate_name)
-	{
-		name = AddNamedItem(dlUserGlobals.pNamtab,
-			   				pNode,
-							nt_light);
-		/*
-		 	If there were no free spaces, then the name will
-		 	contain an error value (i.e.negative)
-		
-			In this situation TIDY UP and ABORT.
-		*/
-		if(name < 0)
-		{
-			error = name;
-			name = NM_INVALID_NAME;
+    if (pNode == NULL) {
+        /*
+            Abort
+        */
+        error = sgl_err_no_mem;
+        SglError(error);
 
-			SGLFree(pNode);
-			SglError(error);
-			return error;
-		}
-	} /*end if generate name */
+        return error;
+    }
 
 
-	SetAmbientLight(pNode, name, colour, relative, TRUE);
+    /*
+         If we need a name, generate one, adding the item to
+        the name table at the same time.
+    */
 
-	pNode->plight_position=NULL;
+    if (generate_name) {
+        name = AddNamedItem(dlUserGlobals.pNamtab,
+                            pNode,
+                            nt_light);
+        /*
+             If there were no free spaces, then the name will
+             contain an error value (i.e.negative)
 
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+            In this situation TIDY UP and ABORT.
+        */
+        if (name < 0) {
+            error = name;
+            name = NM_INVALID_NAME;
+
+            SGLFree(pNode);
+            SglError(error);
+            return error;
+        }
+    } /*end if generate name */
 
 
-	SglError(error);
+    SetAmbientLight(pNode, name, colour, relative, TRUE);
 
-	return name;
+    pNode->plight_position = NULL;
+
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+
+
+    SglError(error);
+
+    return name;
 }
-
-
-
-
 
 
 /**************************************************************************
@@ -610,101 +571,96 @@ int	CALL_CONV sgl_create_ambient_light( sgl_bool generate_name,
  *
  **************************************************************************/
 
-int	CALL_CONV sgl_create_parallel_light( sgl_bool generate_name,
-										 sgl_colour colour,
-										 sgl_vector direction,
-										 sgl_bool casts_shadows,
-										 sgl_bool smooth_highlights )
-{
-	int error = sgl_no_err;
-	int name  = NM_INVALID_NAME;
+int CALL_CONV sgl_create_parallel_light(sgl_bool generate_name,
+                                        sgl_colour colour,
+                                        sgl_vector direction,
+                                        sgl_bool casts_shadows,
+                                        sgl_bool smooth_highlights) {
+    int error = sgl_no_err;
+    int name = NM_INVALID_NAME;
 
-	LIGHT_NODE_STRUCT * pNode;
+    LIGHT_NODE_STRUCT *pNode;
 
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
 
-		error = sgl_err_failed_init;
-		SglError(error);
+        error = sgl_err_failed_init;
+        SglError(error);
 
-		return error;
-	}
+        return error;
+    }
 #endif
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
-	/* 
-		Create light node 
-	*/
-
-
-	pNode = NEW(LIGHT_NODE_STRUCT);
-
-	if(pNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		error = sgl_err_no_mem;
-		SglError(error);
-
-		return error;
-	} 
+    /*
+        Create light node
+    */
 
 
-	/*
- 		If we need a name, generate one, adding the item to
-		the name table at the same time.
-	*/
+    pNode = NEW(LIGHT_NODE_STRUCT);
 
-	if (generate_name)
-	{
-		name = AddNamedItem(dlUserGlobals.pNamtab,
-			   				pNode,
-							nt_light);
-		/*
-		 	If there were no free spaces, then the name will
-		 	contain an error value (i.e.negative)
-		
-			In this situation TIDY UP and ABORT.
-		*/
-		if(name < 0)
-		{
-			error = name;
-			name = NM_INVALID_NAME;
+    if (pNode == NULL) {
+        /*
+            Abort
+        */
+        error = sgl_err_no_mem;
+        SglError(error);
 
-			SGLFree(pNode);
-			SglError(error);
-			return error;
-		}
-	} /*end if generate name */
-
-	SetParallelLight(pNode, name, colour, direction, casts_shadows, smooth_highlights, TRUE);
+        return error;
+    }
 
 
-	pNode->plight_position=NULL;
+    /*
+         If we need a name, generate one, adding the item to
+        the name table at the same time.
+    */
+
+    if (generate_name) {
+        name = AddNamedItem(dlUserGlobals.pNamtab,
+                            pNode,
+                            nt_light);
+        /*
+             If there were no free spaces, then the name will
+             contain an error value (i.e.negative)
+
+            In this situation TIDY UP and ABORT.
+        */
+        if (name < 0) {
+            error = name;
+            name = NM_INVALID_NAME;
+
+            SGLFree(pNode);
+            SglError(error);
+            return error;
+        }
+    } /*end if generate name */
+
+    SetParallelLight(pNode, name, colour, direction, casts_shadows, smooth_highlights, TRUE);
 
 
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    pNode->plight_position = NULL;
 
-	SglError(error);
 
-	return name;
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+
+    SglError(error);
+
+    return name;
 }
-
 
 
 /**************************************************************************
@@ -730,102 +686,96 @@ int	CALL_CONV sgl_create_parallel_light( sgl_bool generate_name,
  **************************************************************************/
 
 
-int	CALL_CONV sgl_create_point_light( sgl_bool generate_name,
-									  sgl_colour colour,
-									  sgl_vector direction,
-									  sgl_vector position,
-									  int concentration,
-									  sgl_bool casts_shadows,
-									  sgl_bool smooth_highlights )
-{
-	int error = sgl_no_err;
-	int name  = NM_INVALID_NAME;
+int CALL_CONV sgl_create_point_light(sgl_bool generate_name,
+                                     sgl_colour colour,
+                                     sgl_vector direction,
+                                     sgl_vector position,
+                                     int concentration,
+                                     sgl_bool casts_shadows,
+                                     sgl_bool smooth_highlights) {
+    int error = sgl_no_err;
+    int name = NM_INVALID_NAME;
 
-	LIGHT_NODE_STRUCT * pNode;
+    LIGHT_NODE_STRUCT *pNode;
 
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
 
-		error = sgl_err_failed_init;
-		SglError(error);
+        error = sgl_err_failed_init;
+        SglError(error);
 
-		return error;
-	}
+        return error;
+    }
 #endif
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
-	/* 
-		Create light node 
-	*/
-
-
-	pNode = NEW(LIGHT_NODE_STRUCT);
-
-	if(pNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		error = sgl_err_no_mem;
-		SglError(error);
-
-		return error;
-	} 
+    /*
+        Create light node
+    */
 
 
-	/*
- 		If we need a name, generate one, adding the item to
-		the name table at the same time.
-	*/
+    pNode = NEW(LIGHT_NODE_STRUCT);
 
-	if (generate_name)
-	{
-		name = AddNamedItem(dlUserGlobals.pNamtab,
-			   				pNode,
-							nt_light);
-		/*
-		 	If there were no free spaces, then the name will
-		 	contain an error value (i.e.negative)
-		
-			In this situation TIDY UP and ABORT.
-		*/
-		if(name < 0)
-		{
-			error = name;
-			name = NM_INVALID_NAME;
+    if (pNode == NULL) {
+        /*
+            Abort
+        */
+        error = sgl_err_no_mem;
+        SglError(error);
 
-			SGLFree(pNode);
-			SglError(error);
-			return error;
-		}
-	} /*end if generate name */
+        return error;
+    }
 
-	SetPointLight(pNode, name, colour, direction, position, concentration, casts_shadows, smooth_highlights, TRUE);
 
-	pNode->plight_position=NULL;
+    /*
+         If we need a name, generate one, adding the item to
+        the name table at the same time.
+    */
 
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    if (generate_name) {
+        name = AddNamedItem(dlUserGlobals.pNamtab,
+                            pNode,
+                            nt_light);
+        /*
+             If there were no free spaces, then the name will
+             contain an error value (i.e.negative)
 
-	SglError(error);
+            In this situation TIDY UP and ABORT.
+        */
+        if (name < 0) {
+            error = name;
+            name = NM_INVALID_NAME;
 
-	return name;
+            SGLFree(pNode);
+            SglError(error);
+            return error;
+        }
+    } /*end if generate name */
+
+    SetPointLight(pNode, name, colour, direction, position, concentration, casts_shadows, smooth_highlights, TRUE);
+
+    pNode->plight_position = NULL;
+
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+
+    SglError(error);
+
+    return name;
 }
-
-
 
 
 /**************************************************************************
@@ -843,58 +793,55 @@ int	CALL_CONV sgl_create_point_light( sgl_bool generate_name,
  **************************************************************************/
 
 
-void CALL_CONV sgl_set_ambient_light( int name, sgl_colour colour,
-									  sgl_bool relative )
-{
-	LIGHT_NODE_STRUCT * pNode;
+void CALL_CONV sgl_set_ambient_light(int name, sgl_colour colour,
+                                     sgl_bool relative) {
+    LIGHT_NODE_STRUCT *pNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
 
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
-
-
-
-	/* Make sure that given name is the name of a light */
-
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light )
-	{
-		/* the given name is invalid */
-
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
 
-	/*	get reference to light from the name table */
+
+    /* Make sure that given name is the name of a light */
+
+    if (GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light) {
+        /* the given name is invalid */
+
+        SglError(sgl_err_bad_name);
+        return;
+    }
+
+
+    /*	get reference to light from the name table */
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, name);
 
-	SetAmbientLight(pNode, name, colour, relative, FALSE);
+    SetAmbientLight(pNode, name, colour, relative, FALSE);
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 
 }
-
 
 
 /**************************************************************************
@@ -916,55 +863,53 @@ void CALL_CONV sgl_set_ambient_light( int name, sgl_colour colour,
  **************************************************************************/
 
 
-void CALL_CONV sgl_set_parallel_light( int name, sgl_colour colour,
-									   sgl_vector direction,
-							  		   sgl_bool casts_shadows,
-									   sgl_bool smooth_highlights )
-{
-	LIGHT_NODE_STRUCT * pNode;
+void CALL_CONV sgl_set_parallel_light(int name, sgl_colour colour,
+                                      sgl_vector direction,
+                                      sgl_bool casts_shadows,
+                                      sgl_bool smooth_highlights) {
+    LIGHT_NODE_STRUCT *pNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
-
-
-
-	/* Make sure that given name is the name of a light */
-
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light )
-	{
-		/* the given name is invalid */
-
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
 
-	/*	get reference to light from the name table */
+
+    /* Make sure that given name is the name of a light */
+
+    if (GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light) {
+        /* the given name is invalid */
+
+        SglError(sgl_err_bad_name);
+        return;
+    }
+
+
+    /*	get reference to light from the name table */
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, name);
 
-	SetParallelLight(pNode, name, colour, direction, casts_shadows, smooth_highlights,FALSE);
+    SetParallelLight(pNode, name, colour, direction, casts_shadows, smooth_highlights, FALSE);
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 
 }
 
@@ -989,57 +934,54 @@ void CALL_CONV sgl_set_parallel_light( int name, sgl_colour colour,
  *
  **************************************************************************/
 
-void CALL_CONV sgl_set_point_light( int name, sgl_colour colour,
-									sgl_vector direction,
-					  				sgl_vector position,									int concentration,
-									sgl_bool casts_shadows,
-									sgl_bool smooth_highlights )
-{
-	LIGHT_NODE_STRUCT * pNode;
+void CALL_CONV sgl_set_point_light(int name, sgl_colour colour,
+                                   sgl_vector direction,
+                                   sgl_vector position, int concentration,
+                                   sgl_bool casts_shadows,
+                                   sgl_bool smooth_highlights) {
+    LIGHT_NODE_STRUCT *pNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
-	/* Make sure that given name is the name of a light */
+    /* Make sure that given name is the name of a light */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
 
-	/*	get reference to light from the name table */
+    /*	get reference to light from the name table */
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, name);
 
-	SetPointLight(pNode, name, colour, direction, position, concentration, casts_shadows, smooth_highlights, FALSE);
+    SetPointLight(pNode, name, colour, direction, position, concentration, casts_shadows, smooth_highlights, FALSE);
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 }
-
 
 
 /**************************************************************************
@@ -1054,200 +996,188 @@ void CALL_CONV sgl_set_point_light( int name, sgl_colour colour,
  **************************************************************************/
 
 
-void CALL_CONV sgl_position_light( int name )
-{
-	LIGHT_NODE_STRUCT 		* litNode;
-	LIGHT_POS_NODE_STRUCT 	* posNode;
+void CALL_CONV sgl_position_light(int name) {
+    LIGHT_NODE_STRUCT *litNode;
+    LIGHT_POS_NODE_STRUCT *posNode;
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
-
-
-
-	/* Make sure that given name is the name of a light */
-
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light )
-	{
-		/* the given name is invalid */
-
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
 
-	/* 
-		Create a light pos node 
-	*/
 
-	posNode = NEW(LIGHT_POS_NODE_STRUCT);
+    /* Make sure that given name is the name of a light */
 
-	if(posNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		SglError(sgl_err_no_mem);
+    if (GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light) {
+        /* the given name is invalid */
 
-		return;
-	} 
-
-	/* store header information  */
-
-	posNode->node_hdr.n16_node_type = (sgl_int16) nt_light_pos;
-	posNode->node_hdr.n16_name	  = (sgl_int16) NM_INVALID_NAME;
-	posNode->node_hdr.next_node	  = NULL;
-
-	posNode->light_name=name;
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
 
-	/* set reference to point to the current list so
-	   that we can backtrack up the list during traversal */
+    /*
+        Create a light pos node
+    */
 
-	posNode->pparent_list=dlUserGlobals.pCurrentList; 
+    posNode = NEW(LIGHT_POS_NODE_STRUCT);
+
+    if (posNode == NULL) {
+        /*
+            Abort
+        */
+        SglError(sgl_err_no_mem);
+
+        return;
+    }
+
+    /* store header information  */
+
+    posNode->node_hdr.n16_node_type = (sgl_int16) nt_light_pos;
+    posNode->node_hdr.n16_name = (sgl_int16) NM_INVALID_NAME;
+    posNode->node_hdr.next_node = NULL;
+
+    posNode->light_name = name;
 
 
-	AppendNodeToList(dlUserGlobals.pCurrentList, posNode);
+    /* set reference to point to the current list so
+       that we can backtrack up the list during traversal */
+
+    posNode->pparent_list = dlUserGlobals.pCurrentList;
 
 
-	/*	get reference to named light from the name table
-		and set light position reference to point
-		to newly creating position node  */
+    AppendNodeToList(dlUserGlobals.pCurrentList, posNode);
+
+
+    /*	get reference to named light from the name table
+        and set light position reference to point
+        to newly creating position node  */
 
     litNode = GetNamedItem(dlUserGlobals.pNamtab, name);
 
 
-	if (litNode->plight_position!=NULL)
-	{
-		/* must nullify the previously defined position node
-		   so that it can be deleted cleanly */
+    if (litNode->plight_position != NULL) {
+        /* must nullify the previously defined position node
+           so that it can be deleted cleanly */
 
-		litNode->plight_position->light_name=NM_INVALID_NAME;
-	}
-
-
-   	litNode->plight_position=posNode;
+        litNode->plight_position->light_name = NM_INVALID_NAME;
+    }
 
 
-	SglError(sgl_no_err);
+    litNode->plight_position = posNode;
+
+
+    SglError(sgl_no_err);
 }
 
 
+void CALL_CONV sgl_switch_light(int name,
+                                sgl_bool on,
+                                sgl_bool casts_shadows,
+                                sgl_bool smooth_highlights) {
+    int LiOn, ShOn, HiOn;
 
-void CALL_CONV sgl_switch_light( int name,
-								 sgl_bool on,
-								 sgl_bool casts_shadows,
-								 sgl_bool smooth_highlights )
-{
-	int LiOn,ShOn,HiOn;
+    LIGHT_SWITCH_NODE_STRUCT *pNode;
+    LIGHT_SWITCH_NODE_STRUCT *pLast;
 
-	LIGHT_SWITCH_NODE_STRUCT * pNode;
-	LIGHT_SWITCH_NODE_STRUCT *pLast;
-
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
- 
-	/* Make sure that given name is the name of a light */
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light )
-	{
-		/* the given name is invalid */
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
+    /* Make sure that given name is the name of a light */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_light) {
+        /* the given name is invalid */
 
-	/* if the previous node in this list is a light switch node 
-	** and if it refers to the same light rather than creating 
-	** a new node just modify the previous one
-	*/
-	pLast = NULL;
-	if(dlUserGlobals.pCurrentList)
-	{
-		if(dlUserGlobals.pCurrentList->plast)
-		{
-			pLast = (LIGHT_SWITCH_NODE_STRUCT *)dlUserGlobals.pCurrentList->plast;
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
-		}
-	}
+    /* if the previous node in this list is a light switch node
+    ** and if it refers to the same light rather than creating
+    ** a new node just modify the previous one
+    */
+    pLast = NULL;
+    if (dlUserGlobals.pCurrentList) {
+        if (dlUserGlobals.pCurrentList->plast) {
+            pLast = (LIGHT_SWITCH_NODE_STRUCT *) dlUserGlobals.pCurrentList->plast;
 
-	if( (pLast!=NULL) && 
-		(pLast->node_hdr.n16_node_type == (sgl_int16) nt_light_switch) &&
-	    (( (LIGHT_SWITCH_NODE_STRUCT *)pLast)->light_name==name ))
-	{
-		LiOn = (on) ? switch_light_on : 0 ;
-		ShOn = (casts_shadows) ? switch_shadows_on : 0 ;
-		HiOn = (smooth_highlights) ? switch_highlights_on : 0;
+        }
+    }
 
-		pLast->light_switches = LiOn | ShOn | HiOn;
-	}
-	else
-	{
-		/*
-		  increment the usage count for the named light
-		  */
-		IncNamedItemUsage(dlUserGlobals.pNamtab, name);
+    if ((pLast != NULL) &&
+        (pLast->node_hdr.n16_node_type == (sgl_int16) nt_light_switch) &&
+        (((LIGHT_SWITCH_NODE_STRUCT *) pLast)->light_name == name)) {
+        LiOn = (on) ? switch_light_on : 0;
+        ShOn = (casts_shadows) ? switch_shadows_on : 0;
+        HiOn = (smooth_highlights) ? switch_highlights_on : 0;
 
-		pNode = NEW(LIGHT_SWITCH_NODE_STRUCT);
-		
-		/* store header information  */
+        pLast->light_switches = LiOn | ShOn | HiOn;
+    } else {
+        /*
+          increment the usage count for the named light
+          */
+        IncNamedItemUsage(dlUserGlobals.pNamtab, name);
 
-		pNode->node_hdr.n16_node_type = (sgl_int16) nt_light_switch;
-		pNode->node_hdr.n16_name	  = (sgl_int16) NM_INVALID_NAME;
-		pNode->node_hdr.next_node	  = NULL;
+        pNode = NEW(LIGHT_SWITCH_NODE_STRUCT);
 
-		pNode->light_name=name;
+        /* store header information  */
+
+        pNode->node_hdr.n16_node_type = (sgl_int16) nt_light_switch;
+        pNode->node_hdr.n16_name = (sgl_int16) NM_INVALID_NAME;
+        pNode->node_hdr.next_node = NULL;
+
+        pNode->light_name = name;
 
 
-		LiOn = (on) ? switch_light_on : 0 ;
-		ShOn = (casts_shadows) ? switch_shadows_on : 0 ;
-		HiOn = (smooth_highlights) ? switch_highlights_on : 0;
+        LiOn = (on) ? switch_light_on : 0;
+        ShOn = (casts_shadows) ? switch_shadows_on : 0;
+        HiOn = (smooth_highlights) ? switch_highlights_on : 0;
 
-		pNode->light_switches = LiOn | ShOn | HiOn;
+        pNode->light_switches = LiOn | ShOn | HiOn;
 
 
-		AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+        AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
-	}
-	SglError(sgl_no_err);
+    }
+    SglError(sgl_no_err);
 
 }
 
@@ -1263,69 +1193,67 @@ void CALL_CONV sgl_switch_light( int name,
  *
  **************************************************************************/
 
-void CALL_CONV sgl_pseudo_multishadows ( sgl_bool enable,
-							   			 sgl_colour colour )
-{
-	MULTI_SHADOW_NODE_STRUCT * pNode;
+void CALL_CONV sgl_pseudo_multishadows(sgl_bool enable,
+                                       sgl_colour colour) {
+    MULTI_SHADOW_NODE_STRUCT *pNode;
 
-  	/*	
-	//	Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+  //	Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-		//	We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+        //	We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
-	/*
-	//   Tidy up current transforms etc...
-	*/
+    /*
+    //   Tidy up current transforms etc...
+    */
 
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
-	
-	/*
-	// Allocate the node
-	*/
-	pNode = NEW(MULTI_SHADOW_NODE_STRUCT);
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
+
+    /*
+    // Allocate the node
+    */
+    pNode = NEW(MULTI_SHADOW_NODE_STRUCT);
 
 
-	if(pNode == NULL)
-	{
-		/*
-		//Abort	   
-		*/
-		SglError(sgl_err_no_mem);
-	} 
+    if (pNode == NULL) {
+        /*
+        //Abort
+        */
+        SglError(sgl_err_no_mem);
+    }
 
-	/*
-	// Fill in the header details
-	*/
-	pNode->node_hdr.n16_node_type = (sgl_int16) nt_multi_shadow;
-	pNode->node_hdr.n16_name	  = NM_INVALID_NAME;
-	
-	/*
-	// Store the supplied values
-	*/
-	pNode->Enable = enable;
-	VecCopy(colour, pNode->colour);
+    /*
+    // Fill in the header details
+    */
+    pNode->node_hdr.n16_node_type = (sgl_int16) nt_multi_shadow;
+    pNode->node_hdr.n16_name = NM_INVALID_NAME;
 
-	/*
-	// Add it to the end of the current list
-	*/
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
-	
+    /*
+    // Store the supplied values
+    */
+    pNode->Enable = enable;
+    VecCopy(colour, pNode->colour);
 
-	/*
-	// All OK
-	*/
-	SglError(sgl_no_err);
+    /*
+    // Add it to the end of the current list
+    */
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+
+
+    /*
+    // All OK
+    */
+    SglError(sgl_no_err);
 }
 
 /*---------------------------- End of File -------------------------------*/

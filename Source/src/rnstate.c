@@ -81,13 +81,12 @@
 // during a render traversal. Possibly it would be best to abort the render
 // and restart it...
 */
-typedef MATERIAL_STATE_STRUCT	material_stack_type[MAX_MATERIAL_STATE_STACK];
-typedef TRANSFORM_STRUCT		transform_stack_type[MAX_TRANSFORM_STATE_STACK];
-typedef LIGHTS_STATE_STRUCT		lights_stack_type[MAX_LIGHTS_STATE_STACK];
-typedef QUALITY_STATE_STRUCT	quality_stack_type[MAX_QUALITY_STATE_STACK];
-typedef COLLISION_STATE_STRUCT	collision_stack_type[MAX_COLLISION_STATE_STACK];
-typedef INSTANCE_SUBS_STATE_STRUCT	instance_subs_stack_type[MAX_INSTANCE_SUBS_STATE_STACK];
-
+typedef MATERIAL_STATE_STRUCT material_stack_type[MAX_MATERIAL_STATE_STACK];
+typedef TRANSFORM_STRUCT transform_stack_type[MAX_TRANSFORM_STATE_STACK];
+typedef LIGHTS_STATE_STRUCT lights_stack_type[MAX_LIGHTS_STATE_STACK];
+typedef QUALITY_STATE_STRUCT quality_stack_type[MAX_QUALITY_STATE_STACK];
+typedef COLLISION_STATE_STRUCT collision_stack_type[MAX_COLLISION_STATE_STACK];
+typedef INSTANCE_SUBS_STATE_STRUCT instance_subs_stack_type[MAX_INSTANCE_SUBS_STATE_STACK];
 
 
 /*
@@ -95,25 +94,23 @@ typedef INSTANCE_SUBS_STATE_STRUCT	instance_subs_stack_type[MAX_INSTANCE_SUBS_ST
 // of the (current) top of stack is done within the display traversal.
 */
 
-MATERIAL_STATE_STRUCT	*pMaterialStackBase = NULL;
-MATERIAL_STATE_STRUCT	*pMaterialStackLast = NULL;
+MATERIAL_STATE_STRUCT *pMaterialStackBase = NULL;
+MATERIAL_STATE_STRUCT *pMaterialStackLast = NULL;
 
-TRANSFORM_STRUCT		*pTransformStackBase = NULL;
-TRANSFORM_STRUCT		*pTransformStackLast = NULL;
+TRANSFORM_STRUCT *pTransformStackBase = NULL;
+TRANSFORM_STRUCT *pTransformStackLast = NULL;
 
-LIGHTS_STATE_STRUCT		*pLightsStackBase = NULL;
-LIGHTS_STATE_STRUCT		*pLightsStackLast = NULL;
+LIGHTS_STATE_STRUCT *pLightsStackBase = NULL;
+LIGHTS_STATE_STRUCT *pLightsStackLast = NULL;
 
-QUALITY_STATE_STRUCT	*pQualityStackBase = NULL;
-QUALITY_STATE_STRUCT	*pQualityStackLast = NULL;
+QUALITY_STATE_STRUCT *pQualityStackBase = NULL;
+QUALITY_STATE_STRUCT *pQualityStackLast = NULL;
 
-COLLISION_STATE_STRUCT	*pCollisionStackBase = NULL;
-COLLISION_STATE_STRUCT	*pCollisionStackLast = NULL;
+COLLISION_STATE_STRUCT *pCollisionStackBase = NULL;
+COLLISION_STATE_STRUCT *pCollisionStackLast = NULL;
 
-INSTANCE_SUBS_STATE_STRUCT	*pInstanceSubStackBase = NULL;
-INSTANCE_SUBS_STATE_STRUCT	*pInstanceSubStackLast = NULL;
-
-
+INSTANCE_SUBS_STATE_STRUCT *pInstanceSubStackBase = NULL;
+INSTANCE_SUBS_STATE_STRUCT *pInstanceSubStackLast = NULL;
 
 
 /**************************************************************************
@@ -125,112 +122,92 @@ INSTANCE_SUBS_STATE_STRUCT	*pInstanceSubStackLast = NULL;
  * Description    : Allocates space for the various state variable stacks.
  *					ands sets up the pointers to their extremes.
  **************************************************************************/
-int InitStateStacks(void)
-{
-	int err = 0;
+int InitStateStacks(void) {
+    int err = 0;
 
-	pMaterialStackBase = (MATERIAL_STATE_STRUCT*) NEW(material_stack_type);
-	if(pMaterialStackBase!=NULL)
-	{
-		memset (pMaterialStackBase, 0, sizeof (material_stack_type));
-		pMaterialStackLast = pMaterialStackBase + (MAX_MATERIAL_STATE_STACK -1);
-	}
-	else
-	{
-		err = 1;
-	}
+    pMaterialStackBase = (MATERIAL_STATE_STRUCT *) NEW(material_stack_type);
+    if (pMaterialStackBase != NULL) {
+        memset(pMaterialStackBase, 0, sizeof(material_stack_type));
+        pMaterialStackLast = pMaterialStackBase + (MAX_MATERIAL_STATE_STACK - 1);
+    } else {
+        err = 1;
+    }
 
 
-	pTransformStackBase = (TRANSFORM_STRUCT *) NEW(transform_stack_type);
-	if(pTransformStackBase !=NULL)
-	{
-		memset (pTransformStackBase, 0, sizeof (transform_stack_type));
-		pTransformStackLast = pTransformStackBase + (MAX_TRANSFORM_STATE_STACK -1);
-	}
-	else
-	{
-		err = 1;
-	}
+    pTransformStackBase = (TRANSFORM_STRUCT *) NEW(transform_stack_type);
+    if (pTransformStackBase != NULL) {
+        memset(pTransformStackBase, 0, sizeof(transform_stack_type));
+        pTransformStackLast = pTransformStackBase + (MAX_TRANSFORM_STATE_STACK - 1);
+    } else {
+        err = 1;
+    }
 
 
-	pLightsStackBase = (LIGHTS_STATE_STRUCT *) NEW(lights_stack_type);
-	if(pLightsStackBase != NULL)
-	{
-		memset (pLightsStackBase, 0, sizeof (lights_stack_type));
-		pLightsStackLast = pLightsStackBase + (MAX_LIGHTS_STATE_STACK -1);
-	}
-	else
-	{
-		err = 1;
-	}
+    pLightsStackBase = (LIGHTS_STATE_STRUCT *) NEW(lights_stack_type);
+    if (pLightsStackBase != NULL) {
+        memset(pLightsStackBase, 0, sizeof(lights_stack_type));
+        pLightsStackLast = pLightsStackBase + (MAX_LIGHTS_STATE_STACK - 1);
+    } else {
+        err = 1;
+    }
 
 
-	pQualityStackBase = (QUALITY_STATE_STRUCT *) NEW(quality_stack_type);
-	if(pQualityStackBase != NULL)
-	{
-		memset (pQualityStackBase, 0, sizeof (quality_stack_type));
-		pQualityStackLast = pQualityStackBase + (MAX_QUALITY_STATE_STACK -1);
-	}
-	else
-	{
-		err = 1;
-	}
+    pQualityStackBase = (QUALITY_STATE_STRUCT *) NEW(quality_stack_type);
+    if (pQualityStackBase != NULL) {
+        memset(pQualityStackBase, 0, sizeof(quality_stack_type));
+        pQualityStackLast = pQualityStackBase + (MAX_QUALITY_STATE_STACK - 1);
+    } else {
+        err = 1;
+    }
 
-	pCollisionStackBase = (COLLISION_STATE_STRUCT *) NEW(collision_stack_type);
-	if(pCollisionStackBase != NULL)
-	{
-		memset (pCollisionStackBase, 0, sizeof (collision_stack_type));
-		pCollisionStackLast = pCollisionStackBase + (MAX_COLLISION_STATE_STACK -1);
-	}
-	else
-	{
-		err = 1;
-	}
+    pCollisionStackBase = (COLLISION_STATE_STRUCT *) NEW(collision_stack_type);
+    if (pCollisionStackBase != NULL) {
+        memset(pCollisionStackBase, 0, sizeof(collision_stack_type));
+        pCollisionStackLast = pCollisionStackBase + (MAX_COLLISION_STATE_STACK - 1);
+    } else {
+        err = 1;
+    }
 
 
-	pInstanceSubStackBase = (INSTANCE_SUBS_STATE_STRUCT *) NEW(instance_subs_stack_type);
-	if(pInstanceSubStackBase!= NULL)
-	{
-		memset (pInstanceSubStackBase, 0, sizeof (instance_subs_stack_type));
-		pInstanceSubStackLast = pInstanceSubStackBase + (MAX_INSTANCE_SUBS_STATE_STACK -1);
-	}
-	else
-	{
-		err = 1;
-	}
+    pInstanceSubStackBase = (INSTANCE_SUBS_STATE_STRUCT *) NEW(instance_subs_stack_type);
+    if (pInstanceSubStackBase != NULL) {
+        memset(pInstanceSubStackBase, 0, sizeof(instance_subs_stack_type));
+        pInstanceSubStackLast = pInstanceSubStackBase + (MAX_INSTANCE_SUBS_STATE_STACK - 1);
+    } else {
+        err = 1;
+    }
 
 
 
-	/*
-	// Check for an error, and clean up if something went wrong
-	// Note ANSI states that free(NULL) does nothing.
-	*/
-	if(err)
-	{
-		SGLFree(pMaterialStackBase);
-		SGLFree(pTransformStackBase);
-		SGLFree(pLightsStackBase);
-		SGLFree(pQualityStackBase);
-		SGLFree(pCollisionStackBase);
-		SGLFree(pInstanceSubStackBase);
+    /*
+    // Check for an error, and clean up if something went wrong
+    // Note ANSI states that free(NULL) does nothing.
+    */
+    if (err) {
+        SGLFree(pMaterialStackBase);
+        SGLFree(pTransformStackBase);
+        SGLFree(pLightsStackBase);
+        SGLFree(pQualityStackBase);
+        SGLFree(pCollisionStackBase);
+        SGLFree(pInstanceSubStackBase);
 
-		pMaterialStackBase = NULL;        
-		pMaterialStackLast = NULL;        
-		pTransformStackBase = NULL;       
-		pTransformStackLast = NULL;       
-		pLightsStackBase = NULL;          
-		pLightsStackLast = NULL;          
-		pQualityStackBase = NULL;         
-		pQualityStackLast = NULL;         
-		pCollisionStackBase = NULL;       
-		pCollisionStackLast = NULL;       
-		pInstanceSubStackBase = NULL;
-		pInstanceSubStackLast = NULL;
-	} /* end if */
-
+        pMaterialStackBase = NULL;
+        pMaterialStackLast = NULL;
+        pTransformStackBase = NULL;
+        pTransformStackLast = NULL;
+        pLightsStackBase = NULL;
+        pLightsStackLast = NULL;
+        pQualityStackBase = NULL;
+        pQualityStackLast = NULL;
+        pCollisionStackBase = NULL;
+        pCollisionStackLast = NULL;
+        pInstanceSubStackBase = NULL;
+        pInstanceSubStackLast = NULL;
+    } /* end if */
 
 
-	return(err);
+
+    return (err);
 }
 
 

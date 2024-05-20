@@ -125,43 +125,41 @@
  *****************************************************************************/
 
 #define MODULE_ID MODID_DLTRANSF
-#define DECLARING_AXES			/* we need this to make sgl.h work properly */
+#define DECLARING_AXES            /* we need this to make sgl.h work properly */
 
 #include <sgl_defs.h>
 #include <dlnodes.h>
 #include <sgl_math.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
-#include <sgl_init.h>
 
 /* 
 // globally define the x, y and z axis
-*/ 
+*/
 
 #if 0
 
-	#ifdef WIN32
-	#define DLLExport extern __declspec (dllexport)
-	#else
-	#define DLLExport
-	#endif
+#ifdef WIN32
+#define DLLExport extern __declspec (dllexport)
+#else
+#define DLLExport
+#endif
 
-	DLLExport sgl_vector sgl_x_axis = {(float) 1.0, (float) 0.0, (float) 0.0};
-	DLLExport sgl_vector sgl_y_axis = {(float) 0.0, (float) 1.0, (float) 0.0};
-	DLLExport sgl_vector sgl_z_axis = {(float) 0.0, (float) 0.0, (float) 1.0};
+DLLExport sgl_vector sgl_x_axis = {(float) 1.0, (float) 0.0, (float) 0.0};
+DLLExport sgl_vector sgl_y_axis = {(float) 0.0, (float) 1.0, (float) 0.0};
+DLLExport sgl_vector sgl_z_axis = {(float) 0.0, (float) 0.0, (float) 1.0};
 
 #else
 
-	#if WIN32
-	#else
+#if WIN32
+#else
 
-		sgl_vector sgl_x_axis = {(float) 1.0, (float) 0.0, (float) 0.0};
-		sgl_vector sgl_y_axis = {(float) 0.0, (float) 1.0, (float) 0.0};
-		sgl_vector sgl_z_axis = {(float) 0.0, (float) 0.0, (float) 1.0};
+sgl_vector sgl_x_axis = {(float) 1.0, (float) 0.0, (float) 0.0};
+sgl_vector sgl_y_axis = {(float) 0.0, (float) 1.0, (float) 0.0};
+sgl_vector sgl_z_axis = {(float) 0.0, (float) 0.0, (float) 1.0};
 
-	#endif
+#endif
 
 #endif
 
@@ -179,57 +177,57 @@
 #if DEBUG
 int		CheckMatrix(TRANSFORM_STRUCT * Mat)
 {
-	int Result;
+    int Result;
 
-	int i, j, k;
+    int i, j, k;
 
-	float sum;
+    float sum;
 
-	Result = TRUE;
+    Result = TRUE;
 
-	/*
-	   Check the rotation part of the
-	   matrix
-	*/
-	for(i = 0; i < 3; i ++)
-		for(j = 0; j < 3; j ++)
-		{
-			sum = 0.0f;
+    /*
+       Check the rotation part of the
+       matrix
+    */
+    for(i = 0; i < 3; i ++)
+        for(j = 0; j < 3; j ++)
+        {
+            sum = 0.0f;
 
-			for(k = 0; k < 3; k ++)
-			 	sum +=  Mat->mat[i][k] * Mat->inv[k][j];
+            for(k = 0; k < 3; k ++)
+                 sum +=  Mat->mat[i][k] * Mat->inv[k][j];
 
-			if(i==j)
-				Result = Result && (sfabs(sum - 1.0f) < 0.001f); /* have multiplied error by ten because we now use only floats */
-			else
-				Result = Result && (sfabs(sum) < 0.001f); /* same here */
+            if(i==j)
+                Result = Result && (sfabs(sum - 1.0f) < 0.001f); /* have multiplied error by ten because we now use only floats */
+            else
+                Result = Result && (sfabs(sum) < 0.001f); /* same here */
 
-		}
+        }
 
-	if (!Result)
-		sum =0.0f; /* dummy*/
+    if (!Result)
+        sum =0.0f; /* dummy*/
 
-	/*
-	   check the scaling part
-	*/
+    /*
+       check the scaling part
+    */
 
-	for(i = 0; i < 3; i ++)
-	{
-			sum = 0.0f;
+    for(i = 0; i < 3; i ++)
+    {
+            sum = 0.0f;
 
-			for(k = 0; k < 3; k ++)
-				sum += Mat->mat[i][k]* Mat->inv[k][3];
+            for(k = 0; k < 3; k ++)
+                sum += Mat->mat[i][k]* Mat->inv[k][3];
 
-			sum += Mat->mat[i][3];
+            sum += Mat->mat[i][3];
 
-			Result = Result && (sfabs(sum) < 0.001f); /* and here !! */
+            Result = Result && (sfabs(sum) < 0.001f); /* and here !! */
 
-	}
+    }
 
-	if (!Result)
-		sum =0.0f; /* dummy*/
+    if (!Result)
+        sum =0.0f; /* dummy*/
 
-	return Result;
+    return Result;
 }
 
 #endif
@@ -249,11 +247,9 @@ int		CheckMatrix(TRANSFORM_STRUCT * Mat)
  *
  **************************************************************************/
 
-void DlCompleteCurrentTransform(void)
-{
-	dlUserGlobals.pCurrentTransform = NULL;
+void DlCompleteCurrentTransform(void) {
+    dlUserGlobals.pCurrentTransform = NULL;
 }
-
 
 
 /**************************************************************************
@@ -268,36 +264,34 @@ void DlCompleteCurrentTransform(void)
  *				   
  **************************************************************************/
 
-void SetIdentityMatrix(TRANSFORM_STRUCT * Mat)
-{
+void SetIdentityMatrix(TRANSFORM_STRUCT *Mat) {
 
-	static TRANSFORM_STRUCT  Identity =   
-	{
-		/* set scale flag to no_scale */ 	
-		no_scale,
-		/* set rescale values to Unity*/ 
-		1.0f, 1.0f,
+    static TRANSFORM_STRUCT Identity =
+            {
+                    /* set scale flag to no_scale */
+                    no_scale,
+                    /* set rescale values to Unity*/
+                    1.0f, 1.0f,
 
-		/* hasn't had any negative scaling applied ...*/
-		0,
+                    /* hasn't had any negative scaling applied ...*/
+                    0,
 
-		/*
-		// Define the matrices
-		*/
-		{ { 1.0f, 0.0f, 0.0f, 0.0f},
-		  { 0.0f, 1.0f, 0.0f, 0.0f},
-		  {0.0f, 0.0f, 1.0f, 0.0f}},
+                    /*
+                    // Define the matrices
+                    */
+                    {{1.0f, 0.0f, 0.0f, 0.0f},
+                     {0.0f, 1.0f, 0.0f, 0.0f},
+                     {0.0f, 0.0f, 1.0f, 0.0f}},
 
-		/* inverse of matrix */
-		{ { 1.0f, 0.0f, 0.0f, 0.0f}, 
-		  { 0.0f, 1.0f, 0.0f, 0.0f},
-		  { 0.0f, 0.0f, 1.0f, 0.0f}}
+                    /* inverse of matrix */
+                    {{1.0f, 0.0f, 0.0f, 0.0f},
+                     {0.0f, 1.0f, 0.0f, 0.0f},
+                     {0.0f, 0.0f, 1.0f, 0.0f}}
 
-	};
-	
-	*Mat = Identity;
+            };
+
+    *Mat = Identity;
 }
-
 
 
 /**************************************************************************
@@ -313,17 +307,16 @@ void SetIdentityMatrix(TRANSFORM_STRUCT * Mat)
  *				   
  **************************************************************************/
 
-static void Translate(float x, float y, float z, TRANSFORM_STRUCT * Mat)
-{
+static void Translate(float x, float y, float z, TRANSFORM_STRUCT *Mat) {
 
-	Mat->mat[0][3] += Mat->mat[0][0] * x + Mat->mat[0][1] * y + Mat->mat[0][2] * z;	
-	Mat->mat[1][3] += Mat->mat[1][0] * x + Mat->mat[1][1] * y + Mat->mat[1][2] * z;	
-	Mat->mat[2][3] += Mat->mat[2][0] * x + Mat->mat[2][1] * y + Mat->mat[2][2] * z;	
+    Mat->mat[0][3] += Mat->mat[0][0] * x + Mat->mat[0][1] * y + Mat->mat[0][2] * z;
+    Mat->mat[1][3] += Mat->mat[1][0] * x + Mat->mat[1][1] * y + Mat->mat[1][2] * z;
+    Mat->mat[2][3] += Mat->mat[2][0] * x + Mat->mat[2][1] * y + Mat->mat[2][2] * z;
 
 
-	Mat->inv[0][3] -= x;	
-	Mat->inv[1][3] -= y;	
-	Mat->inv[2][3] -= z;	
+    Mat->inv[0][3] -= x;
+    Mat->inv[1][3] -= y;
+    Mat->inv[2][3] -= z;
 
 }
 
@@ -349,42 +342,34 @@ static void Translate(float x, float y, float z, TRANSFORM_STRUCT * Mat)
 #define  MinScaleVals (1.0E-9f)
 
 
-static float RangeCheck(float x)
-{
+static float RangeCheck(float x) {
 
-	if(x > MaxScaleVals)
-	{
-		/*
-		 check the ranges of the values
-		 if too large
-		*/
+    if (x > MaxScaleVals) {
+        /*
+         check the ranges of the values
+         if too large
+        */
 
-		x =  MaxScaleVals;
-	}
-	else if(x < - MaxScaleVals)
-	{
-		/*
-		  if too large and negative
-		*/
+        x = MaxScaleVals;
+    } else if (x < -MaxScaleVals) {
+        /*
+          if too large and negative
+        */
 
-		x = - MaxScaleVals;
-	}
-	else if(( x < MinScaleVals) && (x > -MinScaleVals))
-	{
-		/*
-		   if too close to zero
-		*/
+        x = -MaxScaleVals;
+    } else if ((x < MinScaleVals) && (x > -MinScaleVals)) {
+        /*
+           if too close to zero
+        */
 
-		if(x < 0.0f)
-			x = - MinScaleVals;
-		else
-			x = MinScaleVals;
-	}
+        if (x < 0.0f)
+            x = -MinScaleVals;
+        else
+            x = MinScaleVals;
+    }
 
-	return (float) x;
+    return (float) x;
 }
-
-
 
 
 /**************************************************************************
@@ -404,140 +389,127 @@ static float RangeCheck(float x)
  *				   
  **************************************************************************/
 
-static void Scale(float x, float y,  float z,TRANSFORM_STRUCT * Mat)
-{
+static void Scale(float x, float y, float z, TRANSFORM_STRUCT *Mat) {
 
-	int i;
-	float invX, invY, invZ;
-	float	xfab,yfab,zfab;
-	sgl_bool has_neg_scaling;
+    int i;
+    float invX, invY, invZ;
+    float xfab, yfab, zfab;
+    sgl_bool has_neg_scaling;
 
-	/* make sure scale values aren't ridiculously large */
+    /* make sure scale values aren't ridiculously large */
 
-	x = RangeCheck(x);
-	y = RangeCheck(y);
-	z = RangeCheck(z);
+    x = RangeCheck(x);
+    y = RangeCheck(y);
+    z = RangeCheck(z);
 
-	/*
-	// Determine if the scaling flips one of the axes. Note we are
-	// only interested if there are an ODD number of negative
-	// scales.
-	*/
-	has_neg_scaling =  (x < 0.0f);
-	has_neg_scaling ^= (y < 0.0f);
-	has_neg_scaling ^= (z < 0.0f);
+    /*
+    // Determine if the scaling flips one of the axes. Note we are
+    // only interested if there are an ODD number of negative
+    // scales.
+    */
+    has_neg_scaling = (x < 0.0f);
+    has_neg_scaling ^= (y < 0.0f);
+    has_neg_scaling ^= (z < 0.0f);
 
-	Mat->has_neg_scaling ^= has_neg_scaling;
+    Mat->has_neg_scaling ^= has_neg_scaling;
 
-	/*
-	   	optimising division, when it has to be done
-       	by an inverse and a multiply anyway....
-	*/
+    /*
+           optimising division, when it has to be done
+           by an inverse and a multiply anyway....
+    */
 
-	invX = 1.0f / x;
-	invY = 1.0f / y;
-	invZ = 1.0f / z;
+    invX = 1.0f / x;
+    invY = 1.0f / y;
+    invZ = 1.0f / z;
 
-	/*
-	   	step through the columns, scaling the scale/rotation part of the
-		matrix, by the relevant amounts
-	*/
+    /*
+           step through the columns, scaling the scale/rotation part of the
+        matrix, by the relevant amounts
+    */
 
-	for(i = 0; i < 3; i ++)
-	{
-	 	Mat->mat[i][0] *= x;
-	 	Mat->mat[i][1] *= y;
-	 	Mat->mat[i][2] *= z;
+    for (i = 0; i < 3; i++) {
+        Mat->mat[i][0] *= x;
+        Mat->mat[i][1] *= y;
+        Mat->mat[i][2] *= z;
 
-	 	Mat->inv[0][i] *= invX;
-	 	Mat->inv[1][i] *= invY;
-	 	Mat->inv[2][i] *= invZ;
-	}
+        Mat->inv[0][i] *= invX;
+        Mat->inv[1][i] *= invY;
+        Mat->inv[2][i] *= invZ;
+    }
 
-	/* translation part if inverse matrix */
+    /* translation part if inverse matrix */
 
-	Mat->inv[0][3] *= invX;
-	Mat->inv[1][3] *= invY;
-	Mat->inv[2][3] *= invZ;
+    Mat->inv[0][3] *= invX;
+    Mat->inv[1][3] *= invY;
+    Mat->inv[2][3] *= invZ;
 
 
 
-	/*
-		add scaling information to current martix
-	*/
-	
-	switch (Mat->scale_flag)
-	{
-		case arbitrary_scale: 	 
-			/*
-				matrix already contains non-uniform scaling 
-			*/
-			break;
+    /*
+        add scaling information to current martix
+    */
 
-		case uniform_scale:
+    switch (Mat->scale_flag) {
+        case arbitrary_scale:
+            /*
+                matrix already contains non-uniform scaling
+            */
+            break;
 
-			xfab=sfabs(x);	
-			yfab=sfabs(y);	
-			zfab=sfabs(z);	
+        case uniform_scale:
 
-			if ( ((xfab==yfab) && (xfab==zfab)) &&
-				!( ((sgl_uint32) x | (sgl_uint32) y | (sgl_uint32) z) & 0x80000000))
-			{
-				/* uniform, non-negative, scaling values have been given */
-				
-				/* 
-				// rescale is inverse of scaling value 
-				// We are not intereseted in sign
-				*/
-	   			Mat->rescale/=xfab;
-	   			Mat->invrescale*=xfab;
-			}
-			else
-			{
-				/* non-uniform scaling values have been given */		
+            xfab = sfabs(x);
+            yfab = sfabs(y);
+            zfab = sfabs(z);
 
-				Mat->scale_flag = arbitrary_scale;
-			}
+            if (((xfab == yfab) && (xfab == zfab)) &&
+                !(((sgl_uint32) x | (sgl_uint32) y | (sgl_uint32) z) & 0x80000000)) {
+                /* uniform, non-negative, scaling values have been given */
 
-			break;
+                /*
+                // rescale is inverse of scaling value
+                // We are not intereseted in sign
+                */
+                Mat->rescale /= xfab;
+                Mat->invrescale *= xfab;
+            } else {
+                /* non-uniform scaling values have been given */
 
- 		case no_scale:
+                Mat->scale_flag = arbitrary_scale;
+            }
 
-			xfab = sfabs(x);				
-			yfab = sfabs(y);	
-			zfab = sfabs(z);	
+            break;
 
-			if ((xfab==yfab) && (xfab==zfab))
-			{
-			/* uniform scaling, non-negative, values have been given */
-									
-				if (xfab != 1.0f)
-				{				
-	   				Mat->scale_flag = uniform_scale;					 
-	   				Mat->rescale	= 1.0f / xfab;
-	   				Mat->invrescale	= xfab;
-				} 
+        case no_scale:
 
-			/*
-			// otherwise all values have a magnitude if 1.0 and we do nothing 
-			*/
-			}
-			else
-			{
-				/* non-uniform scaling vaues have been given */		
+            xfab = sfabs(x);
+            yfab = sfabs(y);
+            zfab = sfabs(z);
 
-				Mat->scale_flag = arbitrary_scale;
-			}
+            if ((xfab == yfab) && (xfab == zfab)) {
+                /* uniform scaling, non-negative, values have been given */
 
-			break;
+                if (xfab != 1.0f) {
+                    Mat->scale_flag = uniform_scale;
+                    Mat->rescale = 1.0f / xfab;
+                    Mat->invrescale = xfab;
+                }
 
-	}
+                /*
+                // otherwise all values have a magnitude if 1.0 and we do nothing
+                */
+            } else {
+                /* non-uniform scaling vaues have been given */
+
+                Mat->scale_flag = arbitrary_scale;
+            }
+
+            break;
+
+    }
 
 
 }
-
-
-
 
 
 /**************************************************************************
@@ -556,83 +528,79 @@ static void Scale(float x, float y,  float z,TRANSFORM_STRUCT * Mat)
  **************************************************************************/
 
 
-static void InternalMultiply(TRANSFORM_STRUCT * Result, /*result*/
+static void InternalMultiply(TRANSFORM_STRUCT *Result, /*result*/
 
-						 float rot[3][3],
-						 float irot[3][3],
+                             float rot[3][3],
+                             float irot[3][3],
 
-						 TRANSFORM_STRUCT * Source)   /*source*/
+                             TRANSFORM_STRUCT *Source)   /*source*/
 {
-	int Row, Col;
-	/*
-	   	local values used to prevent aliasing problems - eg
-		if the result is also one of the operands. Thus we
-		put the result in here, and then copy it to the real
-		result matrix.
- 	*/
+    int Row, Col;
+    /*
+           local values used to prevent aliasing problems - eg
+        if the result is also one of the operands. Thus we
+        put the result in here, and then copy it to the real
+        result matrix.
+     */
 
-	TRANSFORM_STRUCT  Local;
+    TRANSFORM_STRUCT Local;
 
-	for(Row = 0; Row < 3; Row ++)
-	{
-		for(Col = 0; Col < 3; Col ++)
-		{
-			/*
-				unroll the innermost loop to do sr bit
-			*/
+    for (Row = 0; Row < 3; Row++) {
+        for (Col = 0; Col < 3; Col++) {
+            /*
+                unroll the innermost loop to do sr bit
+            */
 
-			Local.mat[Row][Col]=
-				Source->mat[Row][0] * rot[0][Col] +
-				Source->mat[Row][1] * rot[1][Col] +
-				Source->mat[Row][2] * rot[2][Col];
+            Local.mat[Row][Col] =
+                    Source->mat[Row][0] * rot[0][Col] +
+                    Source->mat[Row][1] * rot[1][Col] +
+                    Source->mat[Row][2] * rot[2][Col];
 
 
-			/*
-				and also for inverse as well
-			*/
-			Local.inv[Row][Col] =
-				irot[Row][0] * Source->inv[0][Col] +
-				irot[Row][1] * Source->inv[1][Col] +
-				irot[Row][2] * Source->inv[2][Col];
+            /*
+                and also for inverse as well
+            */
+            Local.inv[Row][Col] =
+                    irot[Row][0] * Source->inv[0][Col] +
+                    irot[Row][1] * Source->inv[1][Col] +
+                    irot[Row][2] * Source->inv[2][Col];
 
-		};
+        };
 
-		/*
-			Do the translation part. The rotation doesn't affect
-			the translation.
-		*/
+        /*
+            Do the translation part. The rotation doesn't affect
+            the translation.
+        */
 
-		Local.mat[Row][3] = Source->mat[Row][3];
+        Local.mat[Row][3] = Source->mat[Row][3];
 
-		/*
-			And the inverse translation
-		*/
+        /*
+            And the inverse translation
+        */
 
-		Local.inv[Row][3] = 
-   			irot[Row][0] * Source->inv[0][3] +
-			irot[Row][1] * Source->inv[1][3] +
-			irot[Row][2] * Source->inv[2][3];
-
-
-	}
+        Local.inv[Row][3] =
+                irot[Row][0] * Source->inv[0][3] +
+                irot[Row][1] * Source->inv[1][3] +
+                irot[Row][2] * Source->inv[2][3];
 
 
-	Local.rescale 	= Source->rescale;
-	Local.invrescale= Source->invrescale;
-	Local.has_neg_scaling = Source->has_neg_scaling;
-	Local.scale_flag = Source->scale_flag;
+    }
 
 
-	/*
-		now copy these back to the original params
-		(we can do this because it is a structure)
-	*/
+    Local.rescale = Source->rescale;
+    Local.invrescale = Source->invrescale;
+    Local.has_neg_scaling = Source->has_neg_scaling;
+    Local.scale_flag = Source->scale_flag;
 
-	*Result = Local;
+
+    /*
+        now copy these back to the original params
+        (we can do this because it is a structure)
+    */
+
+    *Result = Local;
 
 }
-
-
 
 
 /**************************************************************************
@@ -653,106 +621,103 @@ static void InternalMultiply(TRANSFORM_STRUCT * Result, /*result*/
  **************************************************************************/
 
 
-static void Rotate(sgl_vector axis, float theta, TRANSFORM_STRUCT * Mat)
-{
+static void Rotate(sgl_vector axis, float theta, TRANSFORM_STRUCT *Mat) {
 
-	float halfTheta;
+    float halfTheta;
 
- 	float  sinHalfTheta;
- 	float  cosHalfTheta;
+    float sinHalfTheta;
+    float cosHalfTheta;
 
-	float rot[3][3]; 
-	float irot[3][3];
-
-	
-	float W,X,Y,Z;
-
-	float Tm1,Tm2,Tm3,Tm4,Tm5,TmNorm;
-
-	/* convert to quaternian */
-
-	halfTheta=theta*0.5f;
+    float rot[3][3];
+    float irot[3][3];
 
 
+    float W, X, Y, Z;
 
-	/*	Using double sin and cos  */ 
+    float Tm1, Tm2, Tm3, Tm4, Tm5, TmNorm;
+
+    /* convert to quaternian */
+
+    halfTheta = theta * 0.5f;
+
+
+
+    /*	Using double sin and cos  */
 /*	cosHalfTheta = (float) cos(halfTheta);
 	sinHalfTheta = (float) sin(halfTheta);
 */
 
 
-	/* using simons groovy sincos function */ 
+    /* using simons groovy sincos function */
 
-	s_sincos(halfTheta,&sinHalfTheta,&cosHalfTheta);
-
-
-	W = cosHalfTheta;
-	X = sinHalfTheta*axis[0];
-	Y = sinHalfTheta*axis[1];
-	Z = sinHalfTheta*axis[2];
-	
-
-	/* convert quaternian into Matrix form */ 
-
-	Tm1 = X*X;
-	Tm2 = Y*Y;
-	Tm3 = Z*Z;
-	Tm4 = Tm2+Tm3;
-
-	TmNorm=W*W + Tm1 + Tm4;  /* Normalising term */
-
-	if (TmNorm!=0.0f)
-		Tm5 = 2.0f / TmNorm; 
-	else
-		Tm5 = 0.0f;	
+    s_sincos(halfTheta, &sinHalfTheta, &cosHalfTheta);
 
 
-	rot[0][0] = 1.0f - Tm5*Tm4;
-	rot[1][1] = 1.0f - Tm5*(Tm1+Tm3);    
-	rot[2][2] = 1.0f - Tm5*(Tm1+Tm2);
-
-	Tm1 = Tm5*X;
-	Tm2 = Tm5*Y;
-	Tm4 = Tm5*Z*W;
-	Tm5 = Tm1*Y; 
-
-	rot[0][1] = Tm5 - Tm4;
-	rot[1][0] = Tm5 + Tm4;
-
-	Tm4 = Tm2*W;
-	Tm5 = Tm1*Z;
-
-	rot[0][2] = Tm5 + Tm4;
-	rot[2][0] = Tm5 - Tm4;
+    W = cosHalfTheta;
+    X = sinHalfTheta * axis[0];
+    Y = sinHalfTheta * axis[1];
+    Z = sinHalfTheta * axis[2];
 
 
-	Tm4 = Tm1*W; 
-	Tm5 = Tm2*Z;
+    /* convert quaternian into Matrix form */
 
-	rot[1][2] = Tm5 - Tm4;
-	rot[2][1] = Tm5 + Tm4;
+    Tm1 = X * X;
+    Tm2 = Y * Y;
+    Tm3 = Z * Z;
+    Tm4 = Tm2 + Tm3;
 
+    TmNorm = W * W + Tm1 + Tm4;  /* Normalising term */
 
-	/* the inverse of a rotation matrix is its transpose */
-
-	irot[0][0] = rot[0][0];
-	irot[1][0] = rot[0][1];
-	irot[2][0] = rot[0][2];
-
-	irot[0][1] = rot[1][0];
-	irot[1][1] = rot[1][1];
-	irot[2][1] = rot[1][2];
-
-	irot[0][2] = rot[2][0];
-	irot[1][2] = rot[2][1];
-	irot[2][2] = rot[2][2];
+    if (TmNorm != 0.0f)
+        Tm5 = 2.0f / TmNorm;
+    else
+        Tm5 = 0.0f;
 
 
-	InternalMultiply (Mat,  rot, irot, Mat);				 
-	
+    rot[0][0] = 1.0f - Tm5 * Tm4;
+    rot[1][1] = 1.0f - Tm5 * (Tm1 + Tm3);
+    rot[2][2] = 1.0f - Tm5 * (Tm1 + Tm2);
+
+    Tm1 = Tm5 * X;
+    Tm2 = Tm5 * Y;
+    Tm4 = Tm5 * Z * W;
+    Tm5 = Tm1 * Y;
+
+    rot[0][1] = Tm5 - Tm4;
+    rot[1][0] = Tm5 + Tm4;
+
+    Tm4 = Tm2 * W;
+    Tm5 = Tm1 * Z;
+
+    rot[0][2] = Tm5 + Tm4;
+    rot[2][0] = Tm5 - Tm4;
+
+
+    Tm4 = Tm1 * W;
+    Tm5 = Tm2 * Z;
+
+    rot[1][2] = Tm5 - Tm4;
+    rot[2][1] = Tm5 + Tm4;
+
+
+    /* the inverse of a rotation matrix is its transpose */
+
+    irot[0][0] = rot[0][0];
+    irot[1][0] = rot[0][1];
+    irot[2][0] = rot[0][2];
+
+    irot[0][1] = rot[1][0];
+    irot[1][1] = rot[1][1];
+    irot[2][1] = rot[1][2];
+
+    irot[0][2] = rot[2][0];
+    irot[1][2] = rot[2][1];
+    irot[2][2] = rot[2][2];
+
+
+    InternalMultiply(Mat, rot, irot, Mat);
+
 }
-
-
 
 
 /**************************************************************************
@@ -769,19 +734,15 @@ static void Rotate(sgl_vector axis, float theta, TRANSFORM_STRUCT * Mat)
 
 
 
-void InitTransformNode(TRANSFORM_NODE_STRUCT * pTranNode,int name)
-{
+void InitTransformNode(TRANSFORM_NODE_STRUCT *pTranNode, int name) {
 
-	pTranNode->node_hdr.n16_node_type = (sgl_int16) nt_transform;
-	pTranNode->node_hdr.n16_name	  = (sgl_int16) name;
-	pTranNode->node_hdr.next_node	  = NULL;
+    pTranNode->node_hdr.n16_node_type = (sgl_int16) nt_transform;
+    pTranNode->node_hdr.n16_name = (sgl_int16) name;
+    pTranNode->node_hdr.next_node = NULL;
 
-	SetIdentityMatrix(&(pTranNode->transform));
+    SetIdentityMatrix(&(pTranNode->transform));
 
 }
-
-
-
 
 
 /**************************************************************************
@@ -799,98 +760,93 @@ void InitTransformNode(TRANSFORM_NODE_STRUCT * pTranNode,int name)
  **************************************************************************/
 
 
-int	CALL_CONV sgl_create_transform( sgl_bool generate_name )
-{
-	int error = sgl_no_err;
-	int name  = NM_INVALID_NAME;
+int CALL_CONV sgl_create_transform(sgl_bool generate_name) {
+    int error = sgl_no_err;
+    int name = NM_INVALID_NAME;
 
-	TRANSFORM_NODE_STRUCT * pNode;
+    TRANSFORM_NODE_STRUCT *pNode;
 
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
 
-		error = sgl_err_failed_init;
-		SglError(error);
+        error = sgl_err_failed_init;
+        SglError(error);
 
-		return error;
-	}
+        return error;
+    }
 #endif
-	/*
-	   Tidy up current transforms etc...
-	*/
+    /*
+       Tidy up current transforms etc...
+    */
 /*	DlCompleteCurrentMaterial() */
 
-	DlCompleteCurrentConvex();
+    DlCompleteCurrentConvex();
 
-	/* 
-		Create transform node 
-	*/
-
-
-	pNode = NEW(TRANSFORM_NODE_STRUCT);
-	if(pNode == NULL)
-	{
-		/*
-			Abort	   
-		*/
-		error = sgl_err_no_mem;
-		SglError(error);
-
-		return error;
-	} 
+    /*
+        Create transform node
+    */
 
 
-	/*
-		If we need a name, generate one, adding the item to
-		the name table at the same time.
-	*/
+    pNode = NEW(TRANSFORM_NODE_STRUCT);
+    if (pNode == NULL) {
+        /*
+            Abort
+        */
+        error = sgl_err_no_mem;
+        SglError(error);
 
-	if (generate_name)
-	{
-		name = AddNamedItem(dlUserGlobals.pNamtab,
-			   				pNode,
-							nt_transform);
-		/*
-		 	If there were no free spaces, then the name will
-		 	contain an error value (i.e.negative)
-		
-			In this situation TIDY UP and ABORT.
-		*/
-		if(name < 0)
-		{
-			error = name;
-			name = NM_INVALID_NAME;
+        return error;
+    }
 
-			SGLFree(pNode);
-			SglError(error);
-			return error;
-		}
-	} /*end if generate name */
+
+    /*
+        If we need a name, generate one, adding the item to
+        the name table at the same time.
+    */
+
+    if (generate_name) {
+        name = AddNamedItem(dlUserGlobals.pNamtab,
+                            pNode,
+                            nt_transform);
+        /*
+             If there were no free spaces, then the name will
+             contain an error value (i.e.negative)
+
+            In this situation TIDY UP and ABORT.
+        */
+        if (name < 0) {
+            error = name;
+            name = NM_INVALID_NAME;
+
+            SGLFree(pNode);
+            SglError(error);
+            return error;
+        }
+    } /*end if generate name */
 
 
 
-	InitTransformNode(pNode, name);
+    InitTransformNode(pNode, name);
 
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
-
-
-	/* Newly created transform node becomes the current transform */
-
-	dlUserGlobals.pCurrentTransform = pNode;
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
 
-	SglError(error);
+    /* Newly created transform node becomes the current transform */
 
-	return name;
+    dlUserGlobals.pCurrentTransform = pNode;
+
+
+    SglError(error);
+
+    return name;
 }
-
 
 
 /**************************************************************************
@@ -906,66 +862,61 @@ int	CALL_CONV sgl_create_transform( sgl_bool generate_name )
 					operations are applid to. 
  *
  **************************************************************************/
- 
-void CALL_CONV sgl_modify_transform( int name, sgl_bool clear_transform )
-{
 
-	TRANSFORM_NODE_STRUCT * pNode;
+void CALL_CONV sgl_modify_transform(int name, sgl_bool clear_transform) {
 
-  	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    TRANSFORM_NODE_STRUCT *pNode;
+
+    /*
+      Initialise sgl if this hasn't yet been done
+  */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	/* Make sure that given name is the name of a transform */
+    /* Make sure that given name is the name of a transform */
 
-    if ( GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_transform )
-	{
-		/* the given name is invalid */
+    if (GetNamedItemType(dlUserGlobals.pNamtab, name) != nt_transform) {
+        /* the given name is invalid */
 
-    	SglError(sgl_err_bad_name);
-		return; 
-	}
-
-
-	/*
-	   Tidy up current Convex primitive
-	*/
-
-	DlCompleteCurrentConvex();
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
 
-	/*	get reference to transform from the name table */
+    /*
+       Tidy up current Convex primitive
+    */
+
+    DlCompleteCurrentConvex();
+
+
+    /*	get reference to transform from the name table */
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, name);
 
 
-	/*	reset the transformation if requested */
+    /*	reset the transformation if requested */
 
-	if (clear_transform)
-		SetIdentityMatrix(&(pNode->transform));
-
-
-	/* the named transform becomes the current transform */
-
-	dlUserGlobals.pCurrentTransform = pNode;
+    if (clear_transform)
+        SetIdentityMatrix(&(pNode->transform));
 
 
-	SglError(sgl_no_err);
+    /* the named transform becomes the current transform */
+
+    dlUserGlobals.pCurrentTransform = pNode;
+
+
+    SglError(sgl_no_err);
 
 }
-
-
-
 
 
 /**************************************************************************
@@ -981,179 +932,168 @@ void CALL_CONV sgl_modify_transform( int name, sgl_bool clear_transform )
  *
  **************************************************************************/
 
-void CALL_CONV sgl_translate( float x, float y, float z )
-{
-	TRANSFORM_NODE_STRUCT * pNode;
+void CALL_CONV sgl_translate(float x, float y, float z) {
+    TRANSFORM_NODE_STRUCT *pNode;
 
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
 
-		return;
-	}
+        return;
+    }
 #endif
 
 
-	/* Complete current convex primitive */
+    /* Complete current convex primitive */
 
-	DlCompleteCurrentConvex();
-
-
-	if (dlUserGlobals.pCurrentTransform == NULL) /* there is no current transformation */
-	{
-		/* Create a new transformation node (unnamed) */
-		pNode = NEW(TRANSFORM_NODE_STRUCT);
-
-   		if(pNode == NULL)
-		{
-			/*
-				Abort	   
-			*/
-			SglError(sgl_err_no_mem);
-			return;
-		} 
-
-		InitTransformNode(pNode, NM_INVALID_NAME);
-
-		AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    DlCompleteCurrentConvex();
 
 
-		/* Newly created transform node becomes the current transform */
+    if (dlUserGlobals.pCurrentTransform == NULL) /* there is no current transformation */
+    {
+        /* Create a new transformation node (unnamed) */
+        pNode = NEW(TRANSFORM_NODE_STRUCT);
 
-		dlUserGlobals.pCurrentTransform = pNode;
-	}
+        if (pNode == NULL) {
+            /*
+                Abort
+            */
+            SglError(sgl_err_no_mem);
+            return;
+        }
+
+        InitTransformNode(pNode, NM_INVALID_NAME);
+
+        AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
 
-	Translate(x, y, z, &(dlUserGlobals.pCurrentTransform->transform));
+        /* Newly created transform node becomes the current transform */
 
-	SglError(sgl_no_err);
+        dlUserGlobals.pCurrentTransform = pNode;
+    }
+
+
+    Translate(x, y, z, &(dlUserGlobals.pCurrentTransform->transform));
+
+    SglError(sgl_no_err);
 
 }
 
 
+void CALL_CONV sgl_scale(float x, float y, float z) {
 
+    TRANSFORM_NODE_STRUCT *pNode;
 
-void CALL_CONV sgl_scale( float x, float y, float z )
-{
-
-	TRANSFORM_NODE_STRUCT * pNode;
-
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
 
-		return;
-	}
+        return;
+    }
 #endif
 
-	/* Complete current convex primitive */
+    /* Complete current convex primitive */
 
-	DlCompleteCurrentConvex();
-
-
-	if (dlUserGlobals.pCurrentTransform == NULL) /* there is no current transformation */
-	{
-		/* Create a new transformation node (unnamed) */
-		pNode = NEW(TRANSFORM_NODE_STRUCT);
-
-   		if(pNode == NULL)
-		{
-			/*
-				Abort	   
-			*/
-			SglError(sgl_err_no_mem);
-			return;
-		} 
-
-		InitTransformNode(pNode, NM_INVALID_NAME);
-
-		AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    DlCompleteCurrentConvex();
 
 
-		/* Newly created transform node becomes the current transform */
+    if (dlUserGlobals.pCurrentTransform == NULL) /* there is no current transformation */
+    {
+        /* Create a new transformation node (unnamed) */
+        pNode = NEW(TRANSFORM_NODE_STRUCT);
 
-		dlUserGlobals.pCurrentTransform = pNode;
-	}
-	else
-		pNode = dlUserGlobals.pCurrentTransform;
+        if (pNode == NULL) {
+            /*
+                Abort
+            */
+            SglError(sgl_err_no_mem);
+            return;
+        }
+
+        InitTransformNode(pNode, NM_INVALID_NAME);
+
+        AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
 
-   	Scale(x, y, z, &(pNode->transform));
+        /* Newly created transform node becomes the current transform */
 
-	SglError(sgl_no_err);
+        dlUserGlobals.pCurrentTransform = pNode;
+    } else
+        pNode = dlUserGlobals.pCurrentTransform;
+
+
+    Scale(x, y, z, &(pNode->transform));
+
+    SglError(sgl_no_err);
 
 }
 
 
+void CALL_CONV sgl_rotate(sgl_vector axis, float angle) {
+    TRANSFORM_NODE_STRUCT *pNode;
 
-void CALL_CONV sgl_rotate( sgl_vector axis, float angle )
-{
-	TRANSFORM_NODE_STRUCT * pNode;
-
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
 
-		return;
-	}
+        return;
+    }
 #endif
 
-	/* Complete current convex primitive */
+    /* Complete current convex primitive */
 
-	DlCompleteCurrentConvex();
-
-
-	if (dlUserGlobals.pCurrentTransform == NULL) /* there is no current transformation */
-	{
-		/* Create a new transformation node (unnamed) */
-		pNode = NEW(TRANSFORM_NODE_STRUCT);
-
-   		if(pNode == NULL)
-		{
-			/*
-				Abort	   
-			*/
-			SglError(sgl_err_no_mem);
-			return;
-		} 
-
-		InitTransformNode(pNode, NM_INVALID_NAME);
-
-		AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    DlCompleteCurrentConvex();
 
 
-		/* Newly created transform node becomes the current transform */
+    if (dlUserGlobals.pCurrentTransform == NULL) /* there is no current transformation */
+    {
+        /* Create a new transformation node (unnamed) */
+        pNode = NEW(TRANSFORM_NODE_STRUCT);
 
-		dlUserGlobals.pCurrentTransform = pNode;
-	}
-	else
-		pNode = dlUserGlobals.pCurrentTransform;
+        if (pNode == NULL) {
+            /*
+                Abort
+            */
+            SglError(sgl_err_no_mem);
+            return;
+        }
 
-	Rotate(axis,angle,&(pNode->transform));
+        InitTransformNode(pNode, NM_INVALID_NAME);
 
-	SglError(sgl_no_err);
+        AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+
+
+        /* Newly created transform node becomes the current transform */
+
+        dlUserGlobals.pCurrentTransform = pNode;
+    } else
+        pNode = dlUserGlobals.pCurrentTransform;
+
+    Rotate(axis, angle, &(pNode->transform));
+
+    SglError(sgl_no_err);
 }
 

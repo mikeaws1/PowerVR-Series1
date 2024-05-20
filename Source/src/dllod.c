@@ -124,110 +124,100 @@
  *                other parameters: The new level of detail information.
  *****************************************************************************/
 static int WriteData(LOD_NODE_STRUCT *pNode, sgl_vector boxCorner1,
-  sgl_vector boxCorner2, int pnModels[3], int pnChangeSizes[2])
-{
-    int	  nError = sgl_no_err, nAxis,nLongestAxis=0, nSize, nModel,nList;
-	float fLength, fLongest = 0.0f;
+                     sgl_vector boxCorner2, int pnModels[3], int pnChangeSizes[2]) {
+    int nError = sgl_no_err, nAxis, nLongestAxis = 0, nSize, nModel, nList;
+    float fLength, fLongest = 0.0f;
 
-	ASSERT(pNode != NULL)
-	ASSERT(boxCorner1 != NULL)
-	ASSERT(boxCorner2 != NULL)
-	ASSERT(pnModels != NULL)
-	ASSERT(pnChangeSizes != NULL)
+    ASSERT(pNode != NULL)
+    ASSERT(boxCorner1 != NULL)
+    ASSERT(boxCorner2 != NULL)
+    ASSERT(pnModels != NULL)
+    ASSERT(pnChangeSizes != NULL)
 
-	/*
-	// -------------------
-	// pNode->boxCorner1|2
-	// -------------------
-	*/
-	VecCopy(boxCorner1, pNode->boxCorner1);
-	VecCopy(boxCorner2, pNode->boxCorner2);
+    /*
+    // -------------------
+    // pNode->boxCorner1|2
+    // -------------------
+    */
+    VecCopy(boxCorner1, pNode->boxCorner1);
+    VecCopy(boxCorner2, pNode->boxCorner2);
 
-	/*
-	// ----------------
-	// pNode->boxCentre
-	// ----------------
-	*/
-	pNode->boxCentre[0] = (boxCorner1[0] + boxCorner2[0]) * 0.5f;
-	pNode->boxCentre[1] = (boxCorner1[1] + boxCorner2[1]) * 0.5f;
-	pNode->boxCentre[2] = (boxCorner1[2] + boxCorner2[2]) * 0.5f;
+    /*
+    // ----------------
+    // pNode->boxCentre
+    // ----------------
+    */
+    pNode->boxCentre[0] = (boxCorner1[0] + boxCorner2[0]) * 0.5f;
+    pNode->boxCentre[1] = (boxCorner1[1] + boxCorner2[1]) * 0.5f;
+    pNode->boxCentre[2] = (boxCorner1[2] + boxCorner2[2]) * 0.5f;
 
-	/*
-	// -------------------
-	// pNode->boxVertex1|2
-	// -------------------
-	*/
-	for (nAxis=0; nAxis <= 2; nAxis++)
-	{
-		fLength = sfabs(boxCorner1[nAxis] - boxCorner2[nAxis]);
-		if (fLength > fLongest)
-		{
-			fLongest = fLength;
-			nLongestAxis = nAxis;
-		}
-	}
-	VecCopy(boxCorner1, pNode->boxVertex1);
-	VecCopy(boxCorner1, pNode->boxVertex2);
-	pNode->boxVertex2[nLongestAxis] = boxCorner2[nLongestAxis];
+    /*
+    // -------------------
+    // pNode->boxVertex1|2
+    // -------------------
+    */
+    for (nAxis = 0; nAxis <= 2; nAxis++) {
+        fLength = sfabs(boxCorner1[nAxis] - boxCorner2[nAxis]);
+        if (fLength > fLongest) {
+            fLongest = fLength;
+            nLongestAxis = nAxis;
+        }
+    }
+    VecCopy(boxCorner1, pNode->boxVertex1);
+    VecCopy(boxCorner1, pNode->boxVertex2);
+    pNode->boxVertex2[nLongestAxis] = boxCorner2[nLongestAxis];
 
-	/*
-	// ----------------------
-	// pNode->pn16ChangeSizes
-	// ----------------------
-	*/
-	pNode->pn16ChangeSizes[0] = pnChangeSizes[0];
-	pNode->pn16ChangeSizes[1] = pnChangeSizes[1];
+    /*
+    // ----------------------
+    // pNode->pn16ChangeSizes
+    // ----------------------
+    */
+    pNode->pn16ChangeSizes[0] = pnChangeSizes[0];
+    pNode->pn16ChangeSizes[1] = pnChangeSizes[1];
 
-    for (nSize=0; nSize <= 1; nSize++)
-        if (pnChangeSizes[nSize] <= 0)
-        {
+    for (nSize = 0; nSize <= 1; nSize++)
+        if (pnChangeSizes[nSize] <= 0) {
             pNode->pn16ChangeSizes[nSize] = 1;
             nError = sgl_err_bad_parameter;
         }
-    if (pNode->pn16ChangeSizes[0] > pNode->pn16ChangeSizes[1])
-    {
+    if (pNode->pn16ChangeSizes[0] > pNode->pn16ChangeSizes[1]) {
         sgl_int16 n16Temp = pNode->pn16ChangeSizes[0];
-		pNode->pn16ChangeSizes[0] = pNode->pn16ChangeSizes[1];
-		pNode->pn16ChangeSizes[1] = n16Temp;
+        pNode->pn16ChangeSizes[0] = pNode->pn16ChangeSizes[1];
+        pNode->pn16ChangeSizes[1] = n16Temp;
     }
 
-	/*
-	// -----------------------
-	// pNode->pfHalfThresholds
-	// -----------------------
-	// Squares of half the specified threshold pixel sizes.
-	*/
+    /*
+    // -----------------------
+    // pNode->pfHalfThresholds
+    // -----------------------
+    // Squares of half the specified threshold pixel sizes.
+    */
     pNode->pfHalfThresholds[0] =
-	  0.25f * (float)(pNode->pn16ChangeSizes[0] * pNode->pn16ChangeSizes[0]);
+            0.25f * (float) (pNode->pn16ChangeSizes[0] * pNode->pn16ChangeSizes[0]);
     pNode->pfHalfThresholds[1] =
-	  0.25f * (float)(pNode->pn16ChangeSizes[1] * pNode->pn16ChangeSizes[1]);
+            0.25f * (float) (pNode->pn16ChangeSizes[1] * pNode->pn16ChangeSizes[1]);
 
-	/*
-	// -----------------
-	// pNode->pn16Models
-	// -----------------
-	*/
-    pNode->pn16Models[0] = (sgl_int16)pnModels[0];
-    pNode->pn16Models[1] = (sgl_int16)pnModels[1];
-    pNode->pn16Models[2] = (sgl_int16)pnModels[2];
+    /*
+    // -----------------
+    // pNode->pn16Models
+    // -----------------
+    */
+    pNode->pn16Models[0] = (sgl_int16) pnModels[0];
+    pNode->pn16Models[1] = (sgl_int16) pnModels[1];
+    pNode->pn16Models[2] = (sgl_int16) pnModels[2];
 
-    for (nModel=0; nModel <= 2; nModel++)
-	{
-		nList = pnModels[nModel];
-		if (nList != SGL_NULL_LIST)
-		{
-			if (nList != SGL_DEFAULT_LIST &&
-			  GetNamedItemType(dlUserGlobals.pNamtab, nList) == nt_list_node)
-			{
-				IncNamedItemUsage(dlUserGlobals.pNamtab, nList);
-			}
-			else
-			{
-            	pNode->pn16Models[nModel] = SGL_NULL_LIST;
-				nError = sgl_err_bad_parameter;
-			}
-		}
-	}
+    for (nModel = 0; nModel <= 2; nModel++) {
+        nList = pnModels[nModel];
+        if (nList != SGL_NULL_LIST) {
+            if (nList != SGL_DEFAULT_LIST &&
+                GetNamedItemType(dlUserGlobals.pNamtab, nList) == nt_list_node) {
+                IncNamedItemUsage(dlUserGlobals.pNamtab, nList);
+            } else {
+                pNode->pn16Models[nModel] = SGL_NULL_LIST;
+                nError = sgl_err_bad_parameter;
+            }
+        }
+    }
 
     return nError;
 }
@@ -244,19 +234,16 @@ static int WriteData(LOD_NODE_STRUCT *pNode, sgl_vector boxCorner1,
  * Description  : Decrements the usage count for any lists that we do not need
  *                any more.
  *****************************************************************************/
-static void DecrementOldModels(LOD_NODE_STRUCT *pNode)
-{
-	int   nModel;
-	sgl_int16 n16ModelList;
+static void DecrementOldModels(LOD_NODE_STRUCT *pNode) {
+    int nModel;
+    sgl_int16 n16ModelList;
 
-	for (nModel=0; nModel<=2; nModel++)
-	{
-		n16ModelList = pNode->pn16Models[nModel];
-		if (n16ModelList != SGL_NULL_LIST)
-		{
-			DecNamedItemUsage(dlUserGlobals.pNamtab, n16ModelList);
-		}
-	}
+    for (nModel = 0; nModel <= 2; nModel++) {
+        n16ModelList = pNode->pn16Models[nModel];
+        if (n16ModelList != SGL_NULL_LIST) {
+            DecNamedItemUsage(dlUserGlobals.pNamtab, n16ModelList);
+        }
+    }
 }
 
 
@@ -277,10 +264,9 @@ static void DecrementOldModels(LOD_NODE_STRUCT *pNode)
  * Description  : Cleanup processing before deletion of a level of detail
  *				  display list node.
  *****************************************************************************/
-void DlDeleteLodNodeRefs(DL_NODE_STRUCT *pNodeHdr)
-{
-	ASSERT(pNodeHdr != NULL)
-	DecrementOldModels( (LOD_NODE_STRUCT*)pNodeHdr );
+void DlDeleteLodNodeRefs(DL_NODE_STRUCT *pNodeHdr) {
+    ASSERT(pNodeHdr != NULL)
+    DecrementOldModels((LOD_NODE_STRUCT *) pNodeHdr);
 }
 
 
@@ -300,78 +286,72 @@ void DlDeleteLodNodeRefs(DL_NODE_STRUCT *pNodeHdr)
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_create_detail_levels( sgl_bool bGenerateName,
-										sgl_vector boxCorner1,
-									    sgl_vector boxCorner2,
-										int pnModels[3],
-										int pnChangeSizes[2] )
-{
+int CALL_CONV sgl_create_detail_levels(sgl_bool bGenerateName,
+                                       sgl_vector boxCorner1,
+                                       sgl_vector boxCorner2,
+                                       int pnModels[3],
+                                       int pnChangeSizes[2]) {
     /*
 	// ==========
 	// INITIALISE
 	// ==========
 	*/
     LOD_NODE_STRUCT *pNode;
-    int nReturn=0; /* This zero value is for 'undefined' return conditions. */
+    int nReturn = 0; /* This zero value is for 'undefined' return conditions. */
 
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
+    {
+        return SglError(sgl_err_failed_init);
+    }
 #endif
 
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-	/*
-	// =========
-	// MAKE NODE
-	// =========
-	*/
+    /*
+    // =========
+    // MAKE NODE
+    // =========
+    */
     pNode = NEW(LOD_NODE_STRUCT);
-	if (pNode == NULL)
-	{
-		return SglError(sgl_err_no_mem);
-	}
+    if (pNode == NULL) {
+        return SglError(sgl_err_no_mem);
+    }
 
     pNode->node_hdr.n16_node_type = nt_lod;
 
-	if (bGenerateName)
-	{
-		int nName;
+    if (bGenerateName) {
+        int nName;
 
-		nName = AddNamedItem(dlUserGlobals.pNamtab, pNode, nt_lod);
-		pNode->node_hdr.n16_name =
-		  nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16)nName;
-		nReturn = nName;
-	}
-	else
-	{
-    	pNode->node_hdr.n16_name = NM_INVALID_NAME;
-		/* Return value undefined. */
-	}
+        nName = AddNamedItem(dlUserGlobals.pNamtab, pNode, nt_lod);
+        pNode->node_hdr.n16_name =
+                nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16) nName;
+        nReturn = nName;
+    } else {
+        pNode->node_hdr.n16_name = NM_INVALID_NAME;
+        /* Return value undefined. */
+    }
 
     {
-		int nWriteError;
+        int nWriteError;
 
-		nWriteError =
-		  WriteData(pNode, boxCorner1,boxCorner2, pnModels, pnChangeSizes);
+        nWriteError =
+                WriteData(pNode, boxCorner1, boxCorner2, pnModels, pnChangeSizes);
 
-		if (nWriteError != sgl_no_err)
-		{
-			nReturn = nWriteError;
-		}
-	}
+        if (nWriteError != sgl_no_err) {
+            nReturn = nWriteError;
+        }
+    }
 
-	/*
-	// ===========
-	// ADD TO LIST
-	// ===========
-	*/
+    /*
+    // ===========
+    // ADD TO LIST
+    // ===========
+    */
     AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
     /*
@@ -394,45 +374,43 @@ int CALL_CONV sgl_create_detail_levels( sgl_bool bGenerateName,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_get_detail_levels( int nName,
-									 sgl_vector boxCorner1,
-  									 sgl_vector boxCorner2, 
-									 int pnModels[3], int pnChangeSizes[2] )
-{
+int CALL_CONV sgl_get_detail_levels(int nName,
+                                    sgl_vector boxCorner1,
+                                    sgl_vector boxCorner2,
+                                    int pnModels[3], int pnChangeSizes[2]) {
     LOD_NODE_STRUCT *pNode;
 
-	ASSERT(boxCorner1 != NULL)
-	ASSERT(boxCorner2 != NULL)
-	ASSERT(pnModels != NULL)
-	ASSERT(pnChangeSizes != NULL)
+    ASSERT(boxCorner1 != NULL)
+    ASSERT(boxCorner2 != NULL)
+    ASSERT(pnModels != NULL)
+    ASSERT(pnChangeSizes != NULL)
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
+    {
+        return SglError(sgl_err_failed_init);
+    }
 #endif
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_lod)
-	{
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_lod) {
         return SglError(sgl_err_bad_name);
-	}
+    }
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, nName);
 
-	VecCopy(pNode->boxCorner1, boxCorner1);
-	VecCopy(pNode->boxCorner2, boxCorner2);
+    VecCopy(pNode->boxCorner1, boxCorner1);
+    VecCopy(pNode->boxCorner2, boxCorner2);
 
-	pnModels[0] = pNode->pn16Models[0];
-	pnModels[1] = pNode->pn16Models[1];
-	pnModels[2] = pNode->pn16Models[2];
+    pnModels[0] = pNode->pn16Models[0];
+    pnModels[1] = pNode->pn16Models[1];
+    pnModels[2] = pNode->pn16Models[2];
 
-    pnChangeSizes[0] = (int)pNode->pn16ChangeSizes[0];
-	pnChangeSizes[1] = (int)pNode->pn16ChangeSizes[1];
+    pnChangeSizes[0] = (int) pNode->pn16ChangeSizes[0];
+    pnChangeSizes[1] = (int) pNode->pn16ChangeSizes[1];
 
     return SglError(sgl_no_err);
 }
@@ -448,40 +426,38 @@ int CALL_CONV sgl_get_detail_levels( int nName,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_set_detail_levels( int nName,
-									  sgl_vector boxCorner1,
-									  sgl_vector boxCorner2,
-									  int pnModels[3], int pnChangeSizes[2] )
-{
+void CALL_CONV sgl_set_detail_levels(int nName,
+                                     sgl_vector boxCorner1,
+                                     sgl_vector boxCorner2,
+                                     int pnModels[3], int pnChangeSizes[2]) {
     LOD_NODE_STRUCT *pNode;
 
-	ASSERT(boxCorner1 != NULL)
-	ASSERT(boxCorner2 != NULL)
-	ASSERT(pnModels != NULL)
-	ASSERT(pnChangeSizes != NULL)
+    ASSERT(boxCorner1 != NULL)
+    ASSERT(boxCorner2 != NULL)
+    ASSERT(pnModels != NULL)
+    ASSERT(pnChangeSizes != NULL)
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init); return;
-	}
+    {
+        SglError(sgl_err_failed_init); return;
+    }
 #endif
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_lod)
-    {
-		SglError(sgl_err_bad_name);
-		return;
-	}
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_lod) {
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, nName);
 
-	DecrementOldModels(pNode);
+    DecrementOldModels(pNode);
 
-    SglError(WriteData(pNode, boxCorner1,boxCorner2, pnModels, pnChangeSizes));
+    SglError(WriteData(pNode, boxCorner1, boxCorner2, pnModels, pnChangeSizes));
 }
 
 /*------------------------------- End of File -------------------------------*/

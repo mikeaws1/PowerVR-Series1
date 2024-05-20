@@ -80,7 +80,7 @@ extern	void RestoreFPU (void);
 // Define constants used: i.e. PI etc PLUS Taylor series values used to
 // compute Sine and Cosine.
 */
-#define pi		(3.141592654f)
+#define pi        (3.141592654f)
 #define inv_pi  (1.0f / pi)
 #define pi_on_2 (pi * 0.5f)
 
@@ -113,74 +113,69 @@ extern	void RestoreFPU (void);
  **************************************************************************/
 
 
-float s_cos(float x)
-{
-	
-	int n;
-	float x_sq;
-	float res;
+float s_cos(float x) {
 
-	#if DO_FPU_PRECISION
-		SetupFPU ();
-	#endif
+    int n;
+    float x_sq;
+    float res;
 
-	/*
-	// Cos(-x)==Cos(x)
-	*/
-	x = sfabs(x);
-	
-	/*
-	// Cos(N Pi + x) = (-1)^N Cos(x)
-	// Where N is an integer
-	*/
-	n = (int)(x * inv_pi);
-	x = x - ((float) n * pi);
-	
-	/*
-	// So x should now lie in the range [0 , Pi]
-	//
-	// Now the taylor series for COS about the point PI/2
-	// which is in the middle of this range is...
-	//
-	// let y = x -  Pi/2
-	//
-	// cos(x) = -y + y^3/3! - y^5/5! + y^7 /7! - y^9/9!
-	//
-	// Which when factored ....
-	//    y(-1.0 + y^2 (1/3! + y^2(-1/5! + y^2(1/7! +(y^2 * -1/9!)))));
-	*/
-	x = x - pi_on_2;
-	x_sq = x * x;
-	
-	res = x * (ct1 + x_sq*(ct3 + x_sq * (ct5 + x_sq *(ct7 +  ct9 * x_sq))));
+#if DO_FPU_PRECISION
+    SetupFPU ();
+#endif
 
-	/*
-	// Keep within COS's legal range (as we seem to sometimes 
-	// have an overflow)
-	*/
-	if(res > 1.0f)
-	{
-		res = 1.0f;
-	}
-	else if(res < -1.0f)
-	{
-		res = -1.0f;
-	}
+    /*
+    // Cos(-x)==Cos(x)
+    */
+    x = sfabs(x);
+
+    /*
+    // Cos(N Pi + x) = (-1)^N Cos(x)
+    // Where N is an integer
+    */
+    n = (int) (x * inv_pi);
+    x = x - ((float) n * pi);
+
+    /*
+    // So x should now lie in the range [0 , Pi]
+    //
+    // Now the taylor series for COS about the point PI/2
+    // which is in the middle of this range is...
+    //
+    // let y = x -  Pi/2
+    //
+    // cos(x) = -y + y^3/3! - y^5/5! + y^7 /7! - y^9/9!
+    //
+    // Which when factored ....
+    //    y(-1.0 + y^2 (1/3! + y^2(-1/5! + y^2(1/7! +(y^2 * -1/9!)))));
+    */
+    x = x - pi_on_2;
+    x_sq = x * x;
+
+    res = x * (ct1 + x_sq * (ct3 + x_sq * (ct5 + x_sq * (ct7 + ct9 * x_sq))));
+
+    /*
+    // Keep within COS's legal range (as we seem to sometimes
+    // have an overflow)
+    */
+    if (res > 1.0f) {
+        res = 1.0f;
+    } else if (res < -1.0f) {
+        res = -1.0f;
+    }
 
 
-	/*
-	// Now if n is Odd, then negate the result
-	*/
-	if(n & 0x1)
-	{
-		res = -res;
-	}
+    /*
+    // Now if n is Odd, then negate the result
+    */
+    if (n & 0x1) {
+        res = -res;
+    }
 
-	#if DO_FPU_PRECISION
-		RestoreFPU ();
-	#endif
+#if DO_FPU_PRECISION
+    RestoreFPU ();
+#endif
 
-    return (res);     
+    return (res);
 }
 
 
@@ -195,75 +190,68 @@ float s_cos(float x)
  * Description    : Computes Sin in single precision
  **************************************************************************/
 
-float s_sin(float x)
-{
+float s_sin(float x) {
 
-	int negate;
+    int negate;
 
-	int n;
-	float x_sq;
-	float res;
+    int n;
+    float x_sq;
+    float res;
 
-	#if DO_FPU_PRECISION
-		SetupFPU ();
-	#endif
-	
-	/*
-	// Sin(-x)== -Sin(x)
-	*/
-	negate = (x < 0.0f);
-	x = sfabs(x);
-	
-	/*
-	// Sin(N Pi + x) = (-1)^N Sin(x)
-	// Where N is an integer
-	*/
-	n = (int)(x * inv_pi);
-	x = x - ((float) n * pi);
-	
-	/*
-	// So x should now lie in the range [0 , Pi]
-	//
-	// Now the taylor series for Sin about the point PI/2
-	// which is in the middle of this range is...
-	//
-	// let y = x -  Pi/2
-	//
-	// sin(x) = 1 -y^2/2! + y^4/4! - y^6 /6! + y^8/8! - y^10/10!
-	//
-	// Which when factored ....
-	//   1 +y^2(-1/2 +  y^2(1/4!  +y^2(-1/6! +  y^2* 1/8!))); etc
-	*/
-	x = x - pi_on_2;
-	x_sq = x * x;
-	
-	res = 1.0f + x_sq*(st2 + x_sq *(st4 + x_sq *(st6 + x_sq * st8 ) ) );
+#if DO_FPU_PRECISION
+    SetupFPU ();
+#endif
 
-	/*
-	// Now if n is Odd, then negate the result, BUT if x was originally negative,
-	// then it also must be negated.
-	*/
-	if(n & 0x1)
-	{
-		if(negate)
-		{
-			/* Negate the negate. I.E leave as is */
-		}
-		else
-		{
-			res = -res;
-		}
-	}
-	else if(negate)
-	{
-		res = -res;
-	}
+    /*
+    // Sin(-x)== -Sin(x)
+    */
+    negate = (x < 0.0f);
+    x = sfabs(x);
 
-	#if DO_FPU_PRECISION
-		RestoreFPU ();
-	#endif
+    /*
+    // Sin(N Pi + x) = (-1)^N Sin(x)
+    // Where N is an integer
+    */
+    n = (int) (x * inv_pi);
+    x = x - ((float) n * pi);
 
-    return (res);     
+    /*
+    // So x should now lie in the range [0 , Pi]
+    //
+    // Now the taylor series for Sin about the point PI/2
+    // which is in the middle of this range is...
+    //
+    // let y = x -  Pi/2
+    //
+    // sin(x) = 1 -y^2/2! + y^4/4! - y^6 /6! + y^8/8! - y^10/10!
+    //
+    // Which when factored ....
+    //   1 +y^2(-1/2 +  y^2(1/4!  +y^2(-1/6! +  y^2* 1/8!))); etc
+    */
+    x = x - pi_on_2;
+    x_sq = x * x;
+
+    res = 1.0f + x_sq * (st2 + x_sq * (st4 + x_sq * (st6 + x_sq * st8)));
+
+    /*
+    // Now if n is Odd, then negate the result, BUT if x was originally negative,
+    // then it also must be negated.
+    */
+    if (n & 0x1) {
+        if (negate) {
+            /* Negate the negate. I.E leave as is */
+        } else {
+            res = -res;
+        }
+    } else if (negate) {
+        res = -res;
+    }
+
+#if DO_FPU_PRECISION
+    RestoreFPU ();
+#endif
+
+    return (res);
 }
 
 /**************************************************************************
@@ -277,119 +265,105 @@ float s_sin(float x)
  * Description    : Computes Sine and cosine in single precision
  **************************************************************************/
 
-void s_sincos(float x, float * s, float * c)
-{
-	int negate;
+void s_sincos(float x, float *s, float *c) {
+    int negate;
 
-	int n;
-	float x_sq;
-	float sinRes;
-	float cosRes;
+    int n;
+    float x_sq;
+    float sinRes;
+    float cosRes;
 
-	#if DO_FPU_PRECISION
-		SetupFPU ();
-	#endif
-	
-	/*
-	// Sin(-x)== -Sin(x) AND  Cos(-x)==Cos(x)
-	//
-	// So get ABS of x (but remember its sign)
-	//
-	*/
-	negate = (x < 0.0f);
-	x = sfabs(x);
-	
-	/*
-	// Sin(N Pi + x) == (-1)^N Sin(x) AND  Cos(N Pi + x) == (-1)^N Cos(x)
-	// Where N is an integer
-	*/
-	n = (int)(x * inv_pi);
-	x = x - ((float) n * pi);
-	
-	/*
-	// So x should now lie in the range [0 , Pi]
-	//
-	// Now the taylor series for Sin about the point PI/2
-	// which is in the middle of this range is...
-	//
-	// let y = x -  Pi/2
-	//
-	// sin(x) = 1 -y^2/2! + y^4/4! - y^6 /6! + y^8/8! - y^10/10!
-	//
-	// Which when factored ....
-	//   1 +y^2(-1/2 +  y^2(1/4!  +y^2(-1/6! +  y^2* 1/8!))); etc
-	//
-	//
-	// And that for COS is
-	//
-	// cos(x) = -y + y^3/3! - y^5/5! + y^7 /7! - y^9/9!
-	//
-	// Which when factored ....
-	//    y(-1.0 + y^2 (1/3! + y^2(-1/5! + y^2(1/7! +(y^2 * -1/9!)))));
-	*/
-	x = x - pi_on_2;
-	x_sq = x * x;
-	
-	
+#if DO_FPU_PRECISION
+    SetupFPU ();
+#endif
 
-	cosRes = x * (ct1 + x_sq*(ct3 + x_sq * (ct5 + x_sq *(ct7 +  ct9 * x_sq))));
-	sinRes = 1.0f + x_sq*(st2 + x_sq *(st4 + x_sq *(st6 + x_sq * st8 ) ) );
+    /*
+    // Sin(-x)== -Sin(x) AND  Cos(-x)==Cos(x)
+    //
+    // So get ABS of x (but remember its sign)
+    //
+    */
+    negate = (x < 0.0f);
+    x = sfabs(x);
+
+    /*
+    // Sin(N Pi + x) == (-1)^N Sin(x) AND  Cos(N Pi + x) == (-1)^N Cos(x)
+    // Where N is an integer
+    */
+    n = (int) (x * inv_pi);
+    x = x - ((float) n * pi);
+
+    /*
+    // So x should now lie in the range [0 , Pi]
+    //
+    // Now the taylor series for Sin about the point PI/2
+    // which is in the middle of this range is...
+    //
+    // let y = x -  Pi/2
+    //
+    // sin(x) = 1 -y^2/2! + y^4/4! - y^6 /6! + y^8/8! - y^10/10!
+    //
+    // Which when factored ....
+    //   1 +y^2(-1/2 +  y^2(1/4!  +y^2(-1/6! +  y^2* 1/8!))); etc
+    //
+    //
+    // And that for COS is
+    //
+    // cos(x) = -y + y^3/3! - y^5/5! + y^7 /7! - y^9/9!
+    //
+    // Which when factored ....
+    //    y(-1.0 + y^2 (1/3! + y^2(-1/5! + y^2(1/7! +(y^2 * -1/9!)))));
+    */
+    x = x - pi_on_2;
+    x_sq = x * x;
 
 
-	/*
-	// Keep within COS's legal range (as we seem to sometimes 
-	// have an overflow)
-	*/
-	if(cosRes > 1.0f)
-	{
-		cosRes = 1.0f;
-	}
-	else if(cosRes < -1.0f)
-	{
-		cosRes = -1.0f;
-	}
+    cosRes = x * (ct1 + x_sq * (ct3 + x_sq * (ct5 + x_sq * (ct7 + ct9 * x_sq))));
+    sinRes = 1.0f + x_sq * (st2 + x_sq * (st4 + x_sq * (st6 + x_sq * st8)));
 
 
-	/*
-	// Now if n is Odd, then negate the results, 
-	// BUT if x was originally negative, then 
-	// dont bother negating SIN twice.
-	*/
-	if(n & 0x1)
-	{
-		if(negate)
-		{
-			/* Negate the negate fo SIN. I.E leave as is */
-			cosRes = - cosRes;
-		}
-		/*
-		// Else negate both
-		*/
-		else
-		{
-			cosRes = - cosRes;
-			sinRes = - sinRes;
-		}
-	}
-	else if(negate)
-	{
-		sinRes = -sinRes;
-	}
+    /*
+    // Keep within COS's legal range (as we seem to sometimes
+    // have an overflow)
+    */
+    if (cosRes > 1.0f) {
+        cosRes = 1.0f;
+    } else if (cosRes < -1.0f) {
+        cosRes = -1.0f;
+    }
 
-	#if DO_FPU_PRECISION
-		RestoreFPU ();
-	#endif
-    
-	/*
-	// send back the results
-	*/
-	*c = cosRes;
-	*s = sinRes;
+
+    /*
+    // Now if n is Odd, then negate the results,
+    // BUT if x was originally negative, then
+    // dont bother negating SIN twice.
+    */
+    if (n & 0x1) {
+        if (negate) {
+            /* Negate the negate fo SIN. I.E leave as is */
+            cosRes = -cosRes;
+        }
+            /*
+            // Else negate both
+            */
+        else {
+            cosRes = -cosRes;
+            sinRes = -sinRes;
+        }
+    } else if (negate) {
+        sinRes = -sinRes;
+    }
+
+#if DO_FPU_PRECISION
+    RestoreFPU ();
+#endif
+
+    /*
+    // send back the results
+    */
+    *c = cosRes;
+    *s = sinRes;
 }
-
-
-
-
 
 
 #if TESTCODE
@@ -412,122 +386,122 @@ void s_sincos(float x, float * s, float * c)
 
 void main(void)
 {
-	float x;
-	
-	float y1, y2, err, max_err, worst_val;
-	float s, c;	
+    float x;
 
-	long i;
+    float y1, y2, err, max_err, worst_val;
+    float s, c;
 
-	int overflowed; 
+    long i;
 
-	/*
-	// DO SIN 
-	*/
-	printf ("Checking Single Precision Sin\n"); 
+    int overflowed;
 
-	overflowed = 0;
+    /*
+    // DO SIN
+    */
+    printf ("Checking Single Precision Sin\n");
 
-	max_err = -1.0f;
-	for(i = 0; i < STEPS; i ++)
-	{
-		
-		x = ((float) i / STEPS) * (TOP - BOT)  + BOT;
-	
-	    y1 = s_sin(x);
-	    y2 = (float) sin(x);
+    overflowed = 0;
 
-	    err = (float) fabs(y1 - y2);
-	    if(err > max_err)
-	    {
-	     	worst_val = x;
-	     	max_err = err;
-	    }
+    max_err = -1.0f;
+    for(i = 0; i < STEPS; i ++)
+    {
 
-		if(!overflowed && (fabs(y1) > 1.0f))
-		{
-			overflowed = 1;
-			printf("Exceeded 1.0 at %f\n", x);
-		}
-	    
-	}
+        x = ((float) i / STEPS) * (TOP - BOT)  + BOT;
 
-	printf ("Worst error:%f   at x =%f    Double result= %f     single =%f\n", 
-				max_err, worst_val, (float) sin(worst_val), s_sin(worst_val));
+        y1 = s_sin(x);
+        y2 = (float) sin(x);
 
-	/*
-	// DO COS
-	*/
-	printf ("\nChecking Single Precision Cos\n"); 
+        err = (float) fabs(y1 - y2);
+        if(err > max_err)
+        {
+             worst_val = x;
+             max_err = err;
+        }
 
-	overflowed = 0;
-	max_err = -1.0f;
-	for(i = 0; i < STEPS; i ++)
-	{
-		
-		x = ((float) i / STEPS) * (TOP - BOT)  + BOT;
-	
-	    y1 = s_cos(x);
-	    y2 = (float) cos(x);
+        if(!overflowed && (fabs(y1) > 1.0f))
+        {
+            overflowed = 1;
+            printf("Exceeded 1.0 at %f\n", x);
+        }
 
-	    err = (float) fabs(y1 - y2);
-	    if(err > max_err)
-	    {
-	     	worst_val = x;
-	     	max_err = err;
-	    }
+    }
 
-		if(!overflowed && (fabs(y1) > 1.0f))
-		{
-			overflowed = 1;
-			printf("Exceeded 1.0 at %f\n", x);
-		}
-	    
-	}
+    printf ("Worst error:%f   at x =%f    Double result= %f     single =%f\n",
+                max_err, worst_val, (float) sin(worst_val), s_sin(worst_val));
 
-	printf ("Worst error:%f   at x =%f    Double result= %f     single =%f\n", 
-				max_err, worst_val, (float) cos(worst_val), s_cos(worst_val));
+    /*
+    // DO COS
+    */
+    printf ("\nChecking Single Precision Cos\n");
 
+    overflowed = 0;
+    max_err = -1.0f;
+    for(i = 0; i < STEPS; i ++)
+    {
 
+        x = ((float) i / STEPS) * (TOP - BOT)  + BOT;
+
+        y1 = s_cos(x);
+        y2 = (float) cos(x);
+
+        err = (float) fabs(y1 - y2);
+        if(err > max_err)
+        {
+             worst_val = x;
+             max_err = err;
+        }
+
+        if(!overflowed && (fabs(y1) > 1.0f))
+        {
+            overflowed = 1;
+            printf("Exceeded 1.0 at %f\n", x);
+        }
+
+    }
+
+    printf ("Worst error:%f   at x =%f    Double result= %f     single =%f\n",
+                max_err, worst_val, (float) cos(worst_val), s_cos(worst_val));
 
 
-	/*
-	// DO Combined Cos and Sin
-	*/
-	printf ("\nChecking Combined Single Precision Cos & Sin\n"); 
 
-	overflowed = 0;
-	max_err = -1.0f;
-	for(i = 0; i < STEPS; i ++)
-	{
-		
-		x = ((float) i / STEPS) * (TOP - BOT)  + BOT;
-	
-	    s_sincos(x, &s, &c);
 
-	    y1 = (float) sin(x);
-	    y2 = (float) cos(x);
+    /*
+    // DO Combined Cos and Sin
+    */
+    printf ("\nChecking Combined Single Precision Cos & Sin\n");
 
-	    err = MAX((float) fabs(s - y1), (float) fabs(c - y2));
-	    if(err > max_err)
-	    {
-	     	worst_val = x;
-	     	max_err = err;
-	    }
+    overflowed = 0;
+    max_err = -1.0f;
+    for(i = 0; i < STEPS; i ++)
+    {
 
-		if(!overflowed && ((fabs(s) > 1.0f) || (fabs(c) > 1.0f)))
-		{
-			overflowed = 1;
-			printf("Exceeded 1.0 at %f\n", x);
-		}
-	    
-	}
+        x = ((float) i / STEPS) * (TOP - BOT)  + BOT;
 
-	
-	    s_sincos(worst_val, &s, &c);
+        s_sincos(x, &s, &c);
 
-	printf ("Worst error:%f   at x =%f    Double results(s,c)= %f %f    single =%f %f\n", 
-			max_err, worst_val,	(float) sin(worst_val), (float) cos(worst_val),	s, c);
+        y1 = (float) sin(x);
+        y2 = (float) cos(x);
+
+        err = MAX((float) fabs(s - y1), (float) fabs(c - y2));
+        if(err > max_err)
+        {
+             worst_val = x;
+             max_err = err;
+        }
+
+        if(!overflowed && ((fabs(s) > 1.0f) || (fabs(c) > 1.0f)))
+        {
+            overflowed = 1;
+            printf("Exceeded 1.0 at %f\n", x);
+        }
+
+    }
+
+
+        s_sincos(worst_val, &s, &c);
+
+    printf ("Worst error:%f   at x =%f    Double results(s,c)= %f %f    single =%f %f\n",
+            max_err, worst_val,	(float) sin(worst_val), (float) cos(worst_val),	s, c);
 
 
 }
@@ -540,32 +514,32 @@ void main(void)
 */
 qmain (void)
 {
-	int ct;
-	double a, e, i, worstp;
-	double worste = 0.0;
-	double f = -PI;
+    int ct;
+    double a, e, i, worstp;
+    double worste = 0.0;
+    double f = -PI;
 
-	printf("Verfiy sin(2*x) == 2*sin(x)*cos(x)\n");
-	for(i = (PI/100.0); (f + i) > f; i *=0.01)
-	{
-		for(ct = 200, a = f;  --ct; a += i)
-		{
-			e = fabs(s_sin(a+a) - (2.0*s_sin(a)*s_cos(a)));
-			if(e > worste)
-			{
-				worste = e;
-				worstp = a;
-			}
-		}
-		f = worstp - i;
-	}
+    printf("Verfiy sin(2*x) == 2*sin(x)*cos(x)\n");
+    for(i = (PI/100.0); (f + i) > f; i *=0.01)
+    {
+        for(ct = 200, a = f;  --ct; a += i)
+        {
+            e = fabs(s_sin(a+a) - (2.0*s_sin(a)*s_cos(a)));
+            if(e > worste)
+            {
+                worste = e;
+                worstp = a;
+            }
+        }
+        f = worstp - i;
+    }
 
-	printf("Worst error %.17e at %.17e\n", worste, worstp);
-	printf("sin(2x)=%.17e 2*sin(x)*cos(x)=%.17e\n", f = s_sin(worstp+worstp),
-						  2.0*s_sin(worstp) * s_cos(worstp));
+    printf("Worst error %.17e at %.17e\n", worste, worstp);
+    printf("sin(2x)=%.17e 2*sin(x)*cos(x)=%.17e\n", f = s_sin(worstp+worstp),
+                          2.0*s_sin(worstp) * s_cos(worstp));
 
-	printf("Epsilon is %.17e\n", fabs(f) * DBL_EPSILON);
-	return(0);
+    printf("Epsilon is %.17e\n", fabs(f) * DBL_EPSILON);
+    return(0);
 
 }
 

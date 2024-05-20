@@ -75,7 +75,7 @@
 /*
 // Storage for errors:
 */
-static int  gnEarliest = sgl_no_err, gnMostRecent = sgl_no_err;
+static int gnEarliest = sgl_no_err, gnMostRecent = sgl_no_err;
 
 
 /*
@@ -94,42 +94,37 @@ static int gnWarning = sgl_no_err;
  *
  * Description  : See comment in 'error.h'.
  *****************************************************************************/
-int CALL_CONV SglError ( int nError )
-{
-	#if DEBUG
-	if (nError < 0)
-	{
-   		DPF((DBG_ERROR, "Sgl error number %d", nError));
-	}
-	#endif
+int CALL_CONV SglError(int nError) {
+#if DEBUG
+    if (nError < 0)
+    {
+           DPF((DBG_ERROR, "Sgl error number %d", nError));
+    }
+#endif
 
 
-	if (nError >= 0)
-	{
-		gnMostRecent = gnWarning; /* warning for this function or sgl_no_err */
-	}
-	else
-	{
-		gnMostRecent = nError;
-	}
+    if (nError >= 0) {
+        gnMostRecent = gnWarning; /* warning for this function or sgl_no_err */
+    } else {
+        gnMostRecent = nError;
+    }
 
 
-	if (gnEarliest == sgl_no_err) 
-	{
-		gnEarliest = gnMostRecent;
-	}
+    if (gnEarliest == sgl_no_err) {
+        gnEarliest = gnMostRecent;
+    }
 
 
-	/*
-	// Clear the warning state for the next function.
-	*/
-	gnWarning = sgl_no_err;
+    /*
+    // Clear the warning state for the next function.
+    */
+    gnWarning = sgl_no_err;
 
 
-	/*
-	// Ignore the warning state in the return value.
-	*/
-	return nError;
+    /*
+    // Ignore the warning state in the return value.
+    */
+    return nError;
 
 } /* SglError */
 
@@ -144,9 +139,8 @@ int CALL_CONV SglError ( int nError )
  *
  * Description  : See comment in 'error.h'.
  *****************************************************************************/
-void CALL_CONV SglWarning ( int nWarning )
-{
-	gnWarning = nWarning;
+void CALL_CONV SglWarning(int nWarning) {
+    gnWarning = nWarning;
 }
 
 /******************************************************************************
@@ -159,9 +153,8 @@ void CALL_CONV SglWarning ( int nWarning )
  *
  * Description  : See comment in 'error.h'.
  *****************************************************************************/
-int CALL_CONV SglGetLastWarning ( )
-{
-	return gnWarning;
+int CALL_CONV SglGetLastWarning() {
+    return gnWarning;
 }
 
 /******************************************************************************
@@ -174,10 +167,9 @@ int CALL_CONV SglGetLastWarning ( )
  *
  * Description  : Public function: see API document.
  *****************************************************************************/
-void CALL_CONV sgl_get_errors ( int *pnEarliest, int *pnMostRecent )
-{
-    *pnEarliest   = gnEarliest;
-	*pnMostRecent = gnMostRecent;
+void CALL_CONV sgl_get_errors(int *pnEarliest, int *pnMostRecent) {
+    *pnEarliest = gnEarliest;
+    *pnMostRecent = gnMostRecent;
 
     gnEarliest = gnMostRecent = sgl_no_err;
 }

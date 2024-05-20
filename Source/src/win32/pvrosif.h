@@ -3,7 +3,8 @@
  * License		: MIT
  */
 
-int PVROSAPIInit (void);
-void PVROSAPIExit (void);
+int PVROSAPIInit(void);
+
+void PVROSAPIExit(void);
 
 /* end of file */

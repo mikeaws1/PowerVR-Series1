@@ -69,11 +69,9 @@
 #include <sgl_defs.h>
 #include <sgl.h>
 #include <dlnodes.h>
-#include <sgl_init.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
 
-#include <profile.h>
 #include <rnstate.h>
 
 #include <pvrosapi.h>
@@ -96,69 +94,67 @@ static int gfDefQualFlags = 0xFFFFFFFF;
  *					store values.
  **************************************************************************/
 
-static void QualSet( const QUAL_ENUM WhatToSet,
-					 const sgl_bool enable, 
-					 const sgl_bool enable2,
-					 const sgl_texture_filter_type eFilterType)
-{
-	QUALITY_NODE_STRUCT * pNode;
+static void QualSet(const QUAL_ENUM WhatToSet,
+                    const sgl_bool enable,
+                    const sgl_bool enable2,
+                    const sgl_texture_filter_type eFilterType) {
+    QUALITY_NODE_STRUCT *pNode;
 
-	/*	
-	// Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+    // Initialise sgl if this hasn't yet been done
+    */
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
-	}
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
+    }
 #endif
-	/*
-	//   Tidy up current transforms etc...
-	*/
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMesh();
+    /*
+    //   Tidy up current transforms etc...
+    */
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMesh();
 
 
-	pNode = NEW(QUALITY_NODE_STRUCT);
+    pNode = NEW(QUALITY_NODE_STRUCT);
 
-	if(pNode == NULL)
-	{
-		/*
-		// Abort	   
-		*/
-		SglError(sgl_err_no_mem);
-	} 
+    if (pNode == NULL) {
+        /*
+        // Abort
+        */
+        SglError(sgl_err_no_mem);
+    }
 
-	/*
-	// Set the header details
-	*/
-	pNode->node_hdr.n16_node_type = nt_quality;
-	pNode->node_hdr.n16_name	  = NM_INVALID_NAME;
+    /*
+    // Set the header details
+    */
+    pNode->node_hdr.n16_node_type = nt_quality;
+    pNode->node_hdr.n16_name = NM_INVALID_NAME;
 
 
-	/*
-	// Set the type of data we are setting and the flag
-	*/
-	pNode->WhatsSet = WhatToSet;
-	pNode->Enable	= enable;
-	pNode->Enable2	= enable2;
-	pNode->eFilterType	= eFilterType;
+    /*
+    // Set the type of data we are setting and the flag
+    */
+    pNode->WhatsSet = WhatToSet;
+    pNode->Enable = enable;
+    pNode->Enable2 = enable2;
+    pNode->eFilterType = eFilterType;
 
-	/*
-	// Add it to the end of the current list
-	*/
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
-	
+    /*
+    // Add it to the end of the current list
+    */
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
-	/*
-	// All went well
-	*/
-	SglError(sgl_no_err);
+
+    /*
+    // All went well
+    */
+    SglError(sgl_no_err);
 
 }
 
@@ -174,9 +170,8 @@ static void QualSet( const QUAL_ENUM WhatToSet,
  * Description    : Set the current quality filtering setting.
  *
  **************************************************************************/
-void CALL_CONV sgl_qual_texture_filter(const sgl_texture_filter_type eFilterType)
-{
-	QualSet(QFE_TEXTURE_FILTERING, FALSE, FALSE, eFilterType);
+void CALL_CONV sgl_qual_texture_filter(const sgl_texture_filter_type eFilterType) {
+    QualSet(QFE_TEXTURE_FILTERING, FALSE, FALSE, eFilterType);
 }
 
 
@@ -191,9 +186,8 @@ void CALL_CONV sgl_qual_texture_filter(const sgl_texture_filter_type eFilterType
  * Description    : Set the current quality filtering setting.
  *
  **************************************************************************/
-void CALL_CONV sgl_qual_dither(const sgl_bool enable)
-{
-	QualSet(QFE_DITHERING, enable, FALSE, (sgl_texture_filter_type)0);
+void CALL_CONV sgl_qual_dither(const sgl_bool enable) {
+    QualSet(QFE_DITHERING, enable, FALSE, (sgl_texture_filter_type) 0);
 }
 
 
@@ -209,9 +203,8 @@ void CALL_CONV sgl_qual_dither(const sgl_bool enable)
  *					of the current display list that enables/disables smooth
  *					shading.
  **************************************************************************/
-void CALL_CONV sgl_qual_smooth_shading( const sgl_bool enable )
-{
-	QualSet(QFE_SMOOTH_SHAD, enable, FALSE, (sgl_texture_filter_type)0);
+void CALL_CONV sgl_qual_smooth_shading(const sgl_bool enable) {
+    QualSet(QFE_SMOOTH_SHAD, enable, FALSE, (sgl_texture_filter_type) 0);
 }
 
 
@@ -226,9 +219,8 @@ void CALL_CONV sgl_qual_smooth_shading( const sgl_bool enable )
  * Description    : see SGL interface spec.  Adds a quality node to the end
  *					of the current display list that enables/disables textures
  **************************************************************************/
-void CALL_CONV sgl_qual_texturing(const sgl_bool enable )
-{
-	QualSet(QFE_TEXTURE, enable, FALSE, (sgl_texture_filter_type)0);
+void CALL_CONV sgl_qual_texturing(const sgl_bool enable) {
+    QualSet(QFE_TEXTURE, enable, FALSE, (sgl_texture_filter_type) 0);
 }
 
 /**************************************************************************
@@ -242,9 +234,8 @@ void CALL_CONV sgl_qual_texturing(const sgl_bool enable )
  * Description    : see SGL interface spec.  Adds a quality node to the end
  *					of the current display list that enables/disables shadows
  **************************************************************************/
-void CALL_CONV sgl_qual_generate_shadows( const sgl_bool enable )
-{
-	QualSet(QFE_SHADOWS, enable, FALSE, (sgl_texture_filter_type)0);
+void CALL_CONV sgl_qual_generate_shadows(const sgl_bool enable) {
+    QualSet(QFE_SHADOWS, enable, FALSE, (sgl_texture_filter_type) 0);
 }
 
 /**************************************************************************
@@ -258,9 +249,8 @@ void CALL_CONV sgl_qual_generate_shadows( const sgl_bool enable )
  * Description    : see SGL interface spec.  Adds a quality node to the end
  *					of the current display list that enables/disables fogging
  **************************************************************************/
-void CALL_CONV sgl_qual_fog( const sgl_bool enable )
-{
-	QualSet(QFE_FOG, enable, FALSE, (sgl_texture_filter_type)0);
+void CALL_CONV sgl_qual_fog(const sgl_bool enable) {
+    QualSet(QFE_FOG, enable, FALSE, (sgl_texture_filter_type) 0);
 }
 
 
@@ -275,10 +265,9 @@ void CALL_CONV sgl_qual_fog( const sgl_bool enable )
  * Description    : see SGL interface spec.  Adds a quality node to the end
  *					of the current display list that enables/disables cool detect
  **************************************************************************/
-void CALL_CONV sgl_qual_collision_detection( const sgl_bool enable,
-											 const sgl_bool enable_offscreen )
-{
-	QualSet(QFE_COLLISIONS, enable, enable_offscreen, (sgl_texture_filter_type)0);
+void CALL_CONV sgl_qual_collision_detection(const sgl_bool enable,
+                                            const sgl_bool enable_offscreen) {
+    QualSet(QFE_COLLISIONS, enable, enable_offscreen, (sgl_texture_filter_type) 0);
 }
 
 /**************************************************************************
@@ -291,9 +280,8 @@ void CALL_CONV sgl_qual_collision_detection( const sgl_bool enable,
  * Globals Used	  : gnDefQualFlags
  * Description    : 
  **************************************************************************/
-int GetDefaultQualityFlags (void)
-{
-	return (gfDefQualFlags);
+int GetDefaultQualityFlags(void) {
+    return (gfDefQualFlags);
 }
 
 /**************************************************************************
@@ -306,51 +294,44 @@ int GetDefaultQualityFlags (void)
  * Globals Used	  : gnDefQualFlags
  * Description    : Set up default quality flags - read values from sgl.ini
  **************************************************************************/
-void InitDefaultQualityFlags (void)
-{
-	sgl_bool bSmoothShade = 		SglReadPrivateProfileInt ("Quality", "SmoothShading", 1, "sgl.ini");
-	sgl_bool bTexture = 			SglReadPrivateProfileInt ("Quality", "Textures", 1, "sgl.ini");
-	sgl_bool bShadows = 			SglReadPrivateProfileInt ("Quality", "Shadows", 1, "sgl.ini");
-	sgl_bool bCollisions = 			SglReadPrivateProfileInt ("Quality", "Collisions", 1, "sgl.ini");
-	sgl_bool bOffScreenCollisions = SglReadPrivateProfileInt ("Quality", "OffscreenCollisions", 1, "sgl.ini");
-	sgl_bool bDithering =			SglReadPrivateProfileInt ("Quality", "Dithering", 1, "sgl.ini");
+void InitDefaultQualityFlags(void) {
+    sgl_bool bSmoothShade = SglReadPrivateProfileInt("Quality", "SmoothShading", 1, "sgl.ini");
+    sgl_bool bTexture = SglReadPrivateProfileInt("Quality", "Textures", 1, "sgl.ini");
+    sgl_bool bShadows = SglReadPrivateProfileInt("Quality", "Shadows", 1, "sgl.ini");
+    sgl_bool bCollisions = SglReadPrivateProfileInt("Quality", "Collisions", 1, "sgl.ini");
+    sgl_bool bOffScreenCollisions = SglReadPrivateProfileInt("Quality", "OffscreenCollisions", 1, "sgl.ini");
+    sgl_bool bDithering = SglReadPrivateProfileInt("Quality", "Dithering", 1, "sgl.ini");
 
-	gfDefQualFlags = 0;
+    gfDefQualFlags = 0;
 
-	if (bSmoothShade)
-	{
-		gfDefQualFlags |= qf_smooth_shading;
-	}
+    if (bSmoothShade) {
+        gfDefQualFlags |= qf_smooth_shading;
+    }
 
-	if (bTexture)
-	{
-		gfDefQualFlags |= qf_textures;
-	}
+    if (bTexture) {
+        gfDefQualFlags |= qf_textures;
+    }
 
-	if (bShadows)
-	{
-		gfDefQualFlags |= qf_cast_shadows;
-	}
+    if (bShadows) {
+        gfDefQualFlags |= qf_cast_shadows;
+    }
 
-	if (bCollisions)
-	{
-		gfDefQualFlags |= qf_full_collision;
-	}
+    if (bCollisions) {
+        gfDefQualFlags |= qf_full_collision;
+    }
 
-	if (bOffScreenCollisions)
-	{
-		gfDefQualFlags |= qf_onscreen_collision;
-	}
+    if (bOffScreenCollisions) {
+        gfDefQualFlags |= qf_onscreen_collision;
+    }
 
-	if (bDithering)
-	{
-		gfDefQualFlags |= qf_dithering;
-	}
+    if (bDithering) {
+        gfDefQualFlags |= qf_dithering;
+    }
 
-	/*
-	// We don't set the Fog value here, because the initial setting depends
-	// on what the camera settings are
-	*/
+    /*
+    // We don't set the Fog value here, because the initial setting depends
+    // on what the camera settings are
+    */
 }
 
 /*

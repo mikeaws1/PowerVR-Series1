@@ -46,7 +46,7 @@
 
 
 #define SET_OR_CLEAR_FLAGS(VAL, SET, FLAGS) \
-		 {if(SET) VAL |=  (FLAGS); else VAL &= ~(FLAGS);}
+         {if(SET) VAL |=  (FLAGS); else VAL &= ~(FLAGS);}
 
 
 /******************************************************************************
@@ -61,145 +61,132 @@
  *				  Assumes that pNode points to a valid level of detail display
  *				  list node.
  *****************************************************************************/
-void RnProcessQualityNode(	const QUALITY_NODE_STRUCT *pNode,
-							QUALITY_STATE_STRUCT *pQualityState)
-{
+void RnProcessQualityNode(const QUALITY_NODE_STRUCT *pNode,
+                          QUALITY_STATE_STRUCT *pQualityState) {
 
-	/*
-	// Decide what is being changed
-	*/
-	switch(pNode->WhatsSet)
-	{
-		/*//////////////
-		// SMOOTH SHADING
-		////////////// */
-		case QFE_SMOOTH_SHAD:
-		{
-			SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   pNode->Enable, 
-							   qf_smooth_shading);
-			break;
-		}
+    /*
+    // Decide what is being changed
+    */
+    switch (pNode->WhatsSet) {
+        /*//////////////
+        // SMOOTH SHADING
+        ////////////// */
+        case QFE_SMOOTH_SHAD: {
+            SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                               pNode->Enable,
+                               qf_smooth_shading);
+            break;
+        }
 
-		/*//////////////
-		// TEXTURING
-		////////////// */
-		case QFE_TEXTURE:
-		{
-			SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   pNode->Enable, 
-							   qf_textures);
+            /*//////////////
+            // TEXTURING
+            ////////////// */
+        case QFE_TEXTURE: {
+            SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                               pNode->Enable,
+                               qf_textures);
 
-			break;
-		}
+            break;
+        }
 
-		/*//////////////
-		// Fogging
-		////////////// */
-		case QFE_FOG:
-		{
-			PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+            /*//////////////
+            // Fogging
+            ////////////// */
+        case QFE_FOG: {
+            PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-			/*
-			// If fogging IS in action, then allow the user to
-			// change the value, else ignore it
-			*/
-			if(pProjMat->FogOn)
-			{
-				SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   pNode->Enable, 
-							   qf_fog);
-			}
+            /*
+            // If fogging IS in action, then allow the user to
+            // change the value, else ignore it
+            */
+            if (pProjMat->FogOn) {
+                SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                                   pNode->Enable,
+                                   qf_fog);
+            }
 
-			break;
-		}
+            break;
+        }
 
-		/*//////////////
-		// COLLISION DETECTION
-		////////////// */
-		case QFE_COLLISIONS:
-		{
-			/*
-			// If disabled, disable all collision detection
-			*/
-			if(!pNode->Enable)
-			{
-				SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   FALSE, 
-							   qf_full_collision | qf_onscreen_collision);
+            /*//////////////
+            // COLLISION DETECTION
+            ////////////// */
+        case QFE_COLLISIONS: {
+            /*
+            // If disabled, disable all collision detection
+            */
+            if (!pNode->Enable) {
+                SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                                   FALSE,
+                                   qf_full_collision | qf_onscreen_collision);
 
-			}
-			/*
-			// Else if only onscreen collision is allowed
-			*/
-			else if(!pNode->Enable2)
-			{
-				SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   TRUE, 
-							   qf_onscreen_collision);
+            }
+                /*
+                // Else if only onscreen collision is allowed
+                */
+            else if (!pNode->Enable2) {
+                SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                                   TRUE,
+                                   qf_onscreen_collision);
 
-				SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   FALSE, 
-							   qf_full_collision);
+                SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                                   FALSE,
+                                   qf_full_collision);
 
-			}
-			/*
-			// Else all collisions allowed
-			*/
-			else
-			{
-				SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   TRUE, 
-							   qf_full_collision);
+            }
+                /*
+                // Else all collisions allowed
+                */
+            else {
+                SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                                   TRUE,
+                                   qf_full_collision);
 
-			}
-			
-			break;
-		}
+            }
 
-		/*////////////////////////////
-		// Texture filtering setting
-		/////////////////////////// */
-		case QFE_TEXTURE_FILTERING:
-		{
-			/* Always set to TRUE since we want the settings
-			 * to become active.
-			 */
-			SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   TRUE,
-							   qf_texture_filtering);
+            break;
+        }
 
-			/* Set the bilinear filtering option.
-			 */
-			pQualityState->eFilterType = pNode->eFilterType;
-			break;
-		}
+            /*////////////////////////////
+            // Texture filtering setting
+            /////////////////////////// */
+        case QFE_TEXTURE_FILTERING: {
+            /* Always set to TRUE since we want the settings
+             * to become active.
+             */
+            SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                               TRUE,
+                               qf_texture_filtering);
 
-		/*//////////////
-		// DITHERING
-		////////////// */
-		case QFE_DITHERING:
-		{
-			SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   pNode->Enable, 
-							   qf_dithering);
-			break;
-		}
+            /* Set the bilinear filtering option.
+             */
+            pQualityState->eFilterType = pNode->eFilterType;
+            break;
+        }
 
-		/*//////////////
-		// SHADOWS
-		////////////// */
-		default:
-		{
-			ASSERT(pNode->WhatsSet == QFE_SHADOWS);
+            /*//////////////
+            // DITHERING
+            ////////////// */
+        case QFE_DITHERING: {
+            SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                               pNode->Enable,
+                               qf_dithering);
+            break;
+        }
 
-			SET_OR_CLEAR_FLAGS(pQualityState->flags,
-							   pNode->Enable, 
-							   qf_cast_shadows);
-			break;
-		}
+            /*//////////////
+            // SHADOWS
+            ////////////// */
+        default: {
+            ASSERT(pNode->WhatsSet == QFE_SHADOWS);
 
-	}/*end switch*/
+            SET_OR_CLEAR_FLAGS(pQualityState->flags,
+                               pNode->Enable,
+                               qf_cast_shadows);
+            break;
+        }
+
+    }/*end switch*/
 }
 
 

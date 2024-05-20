@@ -164,7 +164,7 @@
 /*
 // define Debug Module IDs
 */
-#define MODULE_ID	MODID_RN
+#define MODULE_ID    MODID_RN
 
 
 #include <sgl_defs.h>
@@ -242,388 +242,380 @@ static TRANS_PLANE_ARRAY_TYPE transformedPlanes;
  *					with the MACRO MULTI_FP_REG determining which version to
  *					use.
  **************************************************************************/
- void RnTransformBasicPlanes( const CONV_PLANE_STRUCT * pPlanes,
-									const int numPlanes,
-									const TRANSFORM_STRUCT * pTransform,
-									TRANS_PLANE_ARRAY_TYPE TransformedPlanes)
-{
+void RnTransformBasicPlanes(const CONV_PLANE_STRUCT *pPlanes,
+                            const int numPlanes,
+                            const TRANSFORM_STRUCT *pTransform,
+                            TRANS_PLANE_ARRAY_TYPE TransformedPlanes) {
 
-	int i;
+    int i;
 
-	const CONV_PLANE_STRUCT * pInputPlane;
-	TRANSFORMED_PLANE_STRUCT *pOutputPlane;
+    const CONV_PLANE_STRUCT *pInputPlane;
+    TRANSFORMED_PLANE_STRUCT *pOutputPlane;
 
-	/*
-	// Code the routine depending on the number of available FP registers
-	*/
-	#if MULTI_FP_REG
-		/*
-		// A copy of an entire matrix sucked into registers (where available).
-		// The matrix stays constant for a lot of operations so it makes sense
-		// to save it locally.
-		*/
-		float m00, m01, m02, m03;
-		float m10, m11, m12, m13;
-		float m20, m21, m22, m23;
+    /*
+    // Code the routine depending on the number of available FP registers
+    */
+#if MULTI_FP_REG
+    /*
+    // A copy of an entire matrix sucked into registers (where available).
+    // The matrix stays constant for a lot of operations so it makes sense
+    // to save it locally.
+    */
+    float m00, m01, m02, m03;
+    float m10, m11, m12, m13;
+    float m20, m21, m22, m23;
 
-		float inv00, inv01, inv02, inv03;
-		float inv10, inv11, inv12, inv13;
-		float inv20, inv21, inv22, inv23;
-	#else
-		/*
-		// For the case where we DONT have many FP registers,
-		// define aliases for the matrix entries. (NOTE this
-		// gets redefined in one of the cases
-		*/
-		#define m00 pTransform->mat[0][0]
-		#define m01 pTransform->mat[0][1]
-		#define m02 pTransform->mat[0][2]
-		#define m03 pTransform->mat[0][3]
+    float inv00, inv01, inv02, inv03;
+    float inv10, inv11, inv12, inv13;
+    float inv20, inv21, inv22, inv23;
+#else
+    /*
+    // For the case where we DONT have many FP registers,
+    // define aliases for the matrix entries. (NOTE this
+    // gets redefined in one of the cases
+    */
+#define m00 pTransform->mat[0][0]
+#define m01 pTransform->mat[0][1]
+#define m02 pTransform->mat[0][2]
+#define m03 pTransform->mat[0][3]
 
-		#define m10 pTransform->mat[1][0]
-		#define m11 pTransform->mat[1][1]
-		#define m12 pTransform->mat[1][2]
-		#define m13 pTransform->mat[1][3]
+#define m10 pTransform->mat[1][0]
+#define m11 pTransform->mat[1][1]
+#define m12 pTransform->mat[1][2]
+#define m13 pTransform->mat[1][3]
 
-		#define m20 pTransform->mat[2][0]
-		#define m21 pTransform->mat[2][1]
-		#define m22 pTransform->mat[2][2]
-		#define m23 pTransform->mat[2][3]
+#define m20 pTransform->mat[2][0]
+#define m21 pTransform->mat[2][1]
+#define m22 pTransform->mat[2][2]
+#define m23 pTransform->mat[2][3]
 
-		/*
-		// for arbitrary scale we have to use 
-		// the inverse matrix.
-		*/
-		#define inv00  pTransform->inv[0][0]
-		#define inv01  pTransform->inv[1][0]
-		#define inv02  pTransform->inv[2][0]
+    /*
+    // for arbitrary scale we have to use
+    // the inverse matrix.
+    */
+#define inv00  pTransform->inv[0][0]
+#define inv01  pTransform->inv[1][0]
+#define inv02  pTransform->inv[2][0]
 
-		#define inv10  pTransform->inv[0][1]
-		#define inv11  pTransform->inv[1][1]
-		#define inv12  pTransform->inv[2][1]
+#define inv10  pTransform->inv[0][1]
+#define inv11  pTransform->inv[1][1]
+#define inv12  pTransform->inv[2][1]
 
-		#define inv20  pTransform->inv[0][2]
-		#define inv21  pTransform->inv[1][2]
-		#define inv22  pTransform->inv[2][2]
+#define inv20  pTransform->inv[0][2]
+#define inv21  pTransform->inv[1][2]
+#define inv22  pTransform->inv[2][2]
 
-	#endif
+#endif
 
-	/*
-	// Local copies of the components of the normal and the rep point.
-	*/
-	float normX, normY, normZ;
-	float repX,	 repY,	repZ;
+    /*
+    // Local copies of the components of the normal and the rep point.
+    */
+    float normX, normY, normZ;
+    float repX, repY, repZ;
 
-	/*
-	// Variables used to compute the plane "d" value. 
-	// lastNorm and lastRep save the temporary results to 
-	// speed calculation of the d value
-	*/
-	float tmpD, lastNorm, lastRep;
+    /*
+    // Variables used to compute the plane "d" value.
+    // lastNorm and lastRep save the temporary results to
+    // speed calculation of the d value
+    */
+    float tmpD, lastNorm, lastRep;
 
-	/*
-	// Set up pointers to the first input plane, and where the transformed
-	// results will go...
-	*/
-	pInputPlane = pPlanes;
-	pOutputPlane = TransformedPlanes;
-
-
-	#if MULTI_FP_REG
-		/*
-		// Suck in the matrix bit... this is needed in all 3 cases below
-		*/
-		m00 = pTransform->mat[0][0];
-		m01 = pTransform->mat[0][1];
-		m02 = pTransform->mat[0][2];
-		m03 = pTransform->mat[0][3];
-
-		m10 = pTransform->mat[1][0];
-		m11 = pTransform->mat[1][1];
-		m12 = pTransform->mat[1][2];
-		m13 = pTransform->mat[1][3];
-
-	    m20 = pTransform->mat[2][0];
-	    m21 = pTransform->mat[2][1];
-	    m22 = pTransform->mat[2][2];
-	    m23 = pTransform->mat[2][3];
-
-	    /*
-		// Suck in the TRANSPOSE of the Inverse matrix. 
-		// (Note that we don't need the translation bits for direction
-		// vectors)
-		*/
-		inv00 = pTransform->inv[0][0];
-		inv01 = pTransform->inv[1][0];
-		inv02 = pTransform->inv[2][0];
-	
-		inv10 = pTransform->inv[0][1];
-		inv11 = pTransform->inv[1][1];
-		inv12 = pTransform->inv[2][1];
-
-		inv20 = pTransform->inv[0][2];
-		inv21 = pTransform->inv[1][2];
-		inv22 = pTransform->inv[2][2];
-
-	#endif
-
-	/*
-	// Determine the type of the matrix, so we can choose the
-	// optimal method of transforming the plane data.
-	*/
-
-	/* /////////////////////////////////
-	// No scaling or Uniform Scaling..
-	// then we can transform the normal the same as the rep point.
-	// Note that we arent renormalising the normal
-	///////////////////////////////// */	
-	if ( (pTransform->scale_flag == no_scale) || (pTransform->scale_flag == uniform_scale) )
-	{
-		
-		/*
-		// Loop through the planes
-		*/
-		for(i = 0; i < numPlanes; i++)
-		{
-			/*
-			// Copy the flag, and original data pointer
-			// Note the cast below JUST removes const..  we really need to
-			// propogate const ...
-			*/
-			pOutputPlane->flags= pInputPlane->flags;
-			DPFOO((DBG_VERBOSE, 
-					"Ideally like to put consts everywhere below.."));
-			pOutputPlane->pOriginalData = (CONV_PLANE_STRUCT *)pInputPlane;
-
-			/*
-			// get the normal in local storage
-			*/
-			normX = pInputPlane->normal[0];
-			normY = pInputPlane->normal[1];
-			normZ = pInputPlane->normal[2];
-
-			/*
-			// get the rep point in local storage
-			*/
-			repX = pInputPlane->rep_point[0];
-			repY = pInputPlane->rep_point[1];
-			repZ = pInputPlane->rep_point[2];
-
-			/*
-			// compute X components of Normal and Rep point. 
-			//
-			// Note: save results in temp  variables, so we can compute
-			// "d" efficiently. THIS GOES AGAINST VL PROGRAMMING STYLE BUT
-			// TIME IS CRITICAL HERE.
-			*/
-			pOutputPlane->normal[0] = lastNorm =  m00 * normX +  m01 * normY  +  m02 * normZ;
-			pOutputPlane->repPnt[0] = lastRep =  m00 * repX +  m01 * repY  +  m02 * repZ + m03;
-			tmpD = lastNorm * lastRep;
+    /*
+    // Set up pointers to the first input plane, and where the transformed
+    // results will go...
+    */
+    pInputPlane = pPlanes;
+    pOutputPlane = TransformedPlanes;
 
 
-			/*
-			// compute the Y components
-			*/
-			pOutputPlane->normal[1] = lastNorm =  m10 * normX +  m11 * normY  +  m12 * normZ;
-			pOutputPlane->repPnt[1] = lastRep =  m10 * repX +  m11 * repY  +  m12 * repZ + m13;
-			tmpD += lastNorm * lastRep;
+#if MULTI_FP_REG
+    /*
+    // Suck in the matrix bit... this is needed in all 3 cases below
+    */
+    m00 = pTransform->mat[0][0];
+    m01 = pTransform->mat[0][1];
+    m02 = pTransform->mat[0][2];
+    m03 = pTransform->mat[0][3];
 
-			/*
-			// compute the Z components
-			*/
-			pOutputPlane->normal[2] = lastNorm =  m20 * normX +  m21 * normY  +  m22 * normZ;
-			pOutputPlane->repPnt[2] = lastRep =  m20 * repX +  m21 * repY  +  m22 * repZ + m23;
+    m10 = pTransform->mat[1][0];
+    m11 = pTransform->mat[1][1];
+    m12 = pTransform->mat[1][2];
+    m13 = pTransform->mat[1][3];
 
-			/*
-			// compute and save the plane d value.
-			*/
-			pOutputPlane->d = tmpD + lastNorm * lastRep;
+    m20 = pTransform->mat[2][0];
+    m21 = pTransform->mat[2][1];
+    m22 = pTransform->mat[2][2];
+    m23 = pTransform->mat[2][3];
 
-			pInputPlane++;
-			pOutputPlane++; 
+    /*
+    // Suck in the TRANSPOSE of the Inverse matrix.
+    // (Note that we don't need the translation bits for direction
+    // vectors)
+    */
+    inv00 = pTransform->inv[0][0];
+    inv01 = pTransform->inv[1][0];
+    inv02 = pTransform->inv[2][0];
 
-		}/*end for*/
-	} /*end if no scale*/
-	else if (pTransform->scale_flag == arbitrary_scale) 
-	{
-		
-		/* /////////////////////////////////
-		// Arbitrary scaling.
-		// This is the general case. To maintain a normal,
-		// we must use the transpose of the inverse matrix.
-		// (see the appendix of Foley and Van Dam and the old RGL code)
-		//
-		// We therefore do the transformation in two passes - the first of the
-		// rep point by the usual matrix, and the second of the
-		// normal by the transpose etc. Calc D value in the 2nd pass.
-		///////////////////////////////// */
-			/*
-			// Loop through the planes 
-			*/
-		    for(i = 0; i < numPlanes; i++) 
-			{
-				/*
-				// Copy the flag, and original data pointer
-				// Note the cast below JUST removes const..  we really need to
-				// propogate const ...
-				*/
-				pOutputPlane->flags= pInputPlane->flags;
+    inv10 = pTransform->inv[0][1];
+    inv11 = pTransform->inv[1][1];
+    inv12 = pTransform->inv[2][1];
 
-				DPFOO((DBG_VERBOSE, 
-						"Ideally like to put consts everywhere below.."));
-				pOutputPlane->pOriginalData = (CONV_PLANE_STRUCT *)pInputPlane;
+    inv20 = pTransform->inv[0][2];
+    inv21 = pTransform->inv[1][2];
+    inv22 = pTransform->inv[2][2];
 
-				/*
-				// get the rep point in local storage
-				*/
-				repX = pInputPlane->rep_point[0];
-				repY = pInputPlane->rep_point[1];
-				repZ = pInputPlane->rep_point[2];
+#endif
 
-				/*
-				// compute X component
-				*/
-				pOutputPlane->repPnt[0] =  m00 * repX +  m01 * repY  +  m02 * repZ + m03;
+    /*
+    // Determine the type of the matrix, so we can choose the
+    // optimal method of transforming the plane data.
+    */
 
-				/*
-				// compute the Y component
-				*/
-				pOutputPlane->repPnt[1] = m10 * repX +  m11 * repY  +  m12 * repZ + m13;
+    /* /////////////////////////////////
+    // No scaling or Uniform Scaling..
+    // then we can transform the normal the same as the rep point.
+    // Note that we arent renormalising the normal
+    ///////////////////////////////// */
+    if ((pTransform->scale_flag == no_scale) || (pTransform->scale_flag == uniform_scale)) {
 
-				/*
-				// compute the Z component
-				*/
-				pOutputPlane->repPnt[2] =  m20 * repX +  m21 * repY  +  m22 * repZ + m23;
+        /*
+        // Loop through the planes
+        */
+        for (i = 0; i < numPlanes; i++) {
+            /*
+            // Copy the flag, and original data pointer
+            // Note the cast below JUST removes const..  we really need to
+            // propogate const ...
+            */
+            pOutputPlane->flags = pInputPlane->flags;
+            DPFOO((DBG_VERBOSE,
+                    "Ideally like to put consts everywhere below.."));
+            pOutputPlane->pOriginalData = (CONV_PLANE_STRUCT *) pInputPlane;
+
+            /*
+            // get the normal in local storage
+            */
+            normX = pInputPlane->normal[0];
+            normY = pInputPlane->normal[1];
+            normZ = pInputPlane->normal[2];
+
+            /*
+            // get the rep point in local storage
+            */
+            repX = pInputPlane->rep_point[0];
+            repY = pInputPlane->rep_point[1];
+            repZ = pInputPlane->rep_point[2];
+
+            /*
+            // compute X components of Normal and Rep point.
+            //
+            // Note: save results in temp  variables, so we can compute
+            // "d" efficiently. THIS GOES AGAINST VL PROGRAMMING STYLE BUT
+            // TIME IS CRITICAL HERE.
+            */
+            pOutputPlane->normal[0] = lastNorm = m00 * normX + m01 * normY + m02 * normZ;
+            pOutputPlane->repPnt[0] = lastRep = m00 * repX + m01 * repY + m02 * repZ + m03;
+            tmpD = lastNorm * lastRep;
 
 
-				/*
-				// get the normal in local storage.
-				*/
-				normX = pInputPlane->normal[0];
-				normY = pInputPlane->normal[1];
-				normZ = pInputPlane->normal[2];
+            /*
+            // compute the Y components
+            */
+            pOutputPlane->normal[1] = lastNorm = m10 * normX + m11 * normY + m12 * normZ;
+            pOutputPlane->repPnt[1] = lastRep = m10 * repX + m11 * repY + m12 * repZ + m13;
+            tmpD += lastNorm * lastRep;
 
-				/*
-				// compute X component of Normal
-				// NOTE save results in temp  variables, so we can compute
-				// "d" efficiently. THIS GOES AGAINST VL PROGRAMMING STYLE BUT
-				// TIME IS CRITICAL HERE.
-				//
-				*/
-				pOutputPlane->normal[0] = lastNorm =  inv00 * normX +  inv01 * normY  +  inv02 * normZ;
-				tmpD = lastNorm * pOutputPlane->repPnt[0];
+            /*
+            // compute the Z components
+            */
+            pOutputPlane->normal[2] = lastNorm = m20 * normX + m21 * normY + m22 * normZ;
+            pOutputPlane->repPnt[2] = lastRep = m20 * repX + m21 * repY + m22 * repZ + m23;
 
-				/*
-				// compute the Y component
-				*/
-				pOutputPlane->normal[1] = lastNorm =  inv10 * normX +  inv11 * normY  +  inv12 * normZ;
-				tmpD += lastNorm * pOutputPlane->repPnt[1];
+            /*
+            // compute and save the plane d value.
+            */
+            pOutputPlane->d = tmpD + lastNorm * lastRep;
 
-				/*
-				// compute the Z component
-				*/
-				pOutputPlane->normal[2] = lastNorm =  inv20 * normX +  inv21 * normY  +  inv22 * normZ;
+            pInputPlane++;
+            pOutputPlane++;
 
-				/*
-				// compute and save the plane d value.
-				*/
-				pOutputPlane->d = tmpD + lastNorm * pOutputPlane->repPnt[2];
+        }/*end for*/
+    } /*end if no scale*/
+    else if (pTransform->scale_flag == arbitrary_scale) {
 
-				pInputPlane++;
-				pOutputPlane++; 
+        /* /////////////////////////////////
+        // Arbitrary scaling.
+        // This is the general case. To maintain a normal,
+        // we must use the transpose of the inverse matrix.
+        // (see the appendix of Foley and Van Dam and the old RGL code)
+        //
+        // We therefore do the transformation in two passes - the first of the
+        // rep point by the usual matrix, and the second of the
+        // normal by the transpose etc. Calc D value in the 2nd pass.
+        ///////////////////////////////// */
+        /*
+        // Loop through the planes
+        */
+        for (i = 0; i < numPlanes; i++) {
+            /*
+            // Copy the flag, and original data pointer
+            // Note the cast below JUST removes const..  we really need to
+            // propogate const ...
+            */
+            pOutputPlane->flags = pInputPlane->flags;
 
-			}/*end for*/
+            DPFOO((DBG_VERBOSE,
+                    "Ideally like to put consts everywhere below.."));
+            pOutputPlane->pOriginalData = (CONV_PLANE_STRUCT *) pInputPlane;
 
-	}/*end if Arbitrary scale */
-	else
-	{
-		/* /////////////////////////////////
-		// UNKNOWN CASE ??? The system is messing up....
-		///////////////////////////////// */
-		ASSERT(FALSE);
-	}/*end if*/
+            /*
+            // get the rep point in local storage
+            */
+            repX = pInputPlane->rep_point[0];
+            repY = pInputPlane->rep_point[1];
+            repZ = pInputPlane->rep_point[2];
 
-	#if !MULTI_FP_REG
-		/*
-		//	undefine all the macros
-		*/
-		#undef m00
-		#undef m01
-		#undef m02
-		#undef m03
+            /*
+            // compute X component
+            */
+            pOutputPlane->repPnt[0] = m00 * repX + m01 * repY + m02 * repZ + m03;
 
-		#undef m10
-		#undef m11
-		#undef m12
-		#undef m13
+            /*
+            // compute the Y component
+            */
+            pOutputPlane->repPnt[1] = m10 * repX + m11 * repY + m12 * repZ + m13;
 
-		#undef m20
-		#undef m21
-		#undef m22
-		#undef m23
+            /*
+            // compute the Z component
+            */
+            pOutputPlane->repPnt[2] = m20 * repX + m21 * repY + m22 * repZ + m23;
 
-	    #undef inv00
-		#undef inv01
-		#undef inv02
-		#undef inv03
 
-		#undef inv10
-		#undef inv11
-		#undef inv12
-		#undef inv13
+            /*
+            // get the normal in local storage.
+            */
+            normX = pInputPlane->normal[0];
+            normY = pInputPlane->normal[1];
+            normZ = pInputPlane->normal[2];
 
-		#undef inv20
-		#undef inv21
-		#undef inv22
-		#undef inv23
+            /*
+            // compute X component of Normal
+            // NOTE save results in temp  variables, so we can compute
+            // "d" efficiently. THIS GOES AGAINST VL PROGRAMMING STYLE BUT
+            // TIME IS CRITICAL HERE.
+            //
+            */
+            pOutputPlane->normal[0] = lastNorm = inv00 * normX + inv01 * normY + inv02 * normZ;
+            tmpD = lastNorm * pOutputPlane->repPnt[0];
 
-	#endif
+            /*
+            // compute the Y component
+            */
+            pOutputPlane->normal[1] = lastNorm = inv10 * normX + inv11 * normY + inv12 * normZ;
+            tmpD += lastNorm * pOutputPlane->repPnt[1];
+
+            /*
+            // compute the Z component
+            */
+            pOutputPlane->normal[2] = lastNorm = inv20 * normX + inv21 * normY + inv22 * normZ;
+
+            /*
+            // compute and save the plane d value.
+            */
+            pOutputPlane->d = tmpD + lastNorm * pOutputPlane->repPnt[2];
+
+            pInputPlane++;
+            pOutputPlane++;
+
+        }/*end for*/
+
+    }/*end if Arbitrary scale */
+    else {
+        /* /////////////////////////////////
+        // UNKNOWN CASE ??? The system is messing up....
+        ///////////////////////////////// */
+        ASSERT(FALSE);
+    }/*end if*/
+
+#if !MULTI_FP_REG
+    /*
+    //	undefine all the macros
+    */
+#undef m00
+#undef m01
+#undef m02
+#undef m03
+
+#undef m10
+#undef m11
+#undef m12
+#undef m13
+
+#undef m20
+#undef m21
+#undef m22
+#undef m23
+
+#undef inv00
+#undef inv01
+#undef inv02
+#undef inv03
+
+#undef inv10
+#undef inv11
+#undef inv12
+#undef inv13
+
+#undef inv20
+#undef inv21
+#undef inv22
+#undef inv23
+
+#endif
 
 
 
-	/* //////////////////////////////////////
-	// DEBUG Error testing......
-	////////////////////////////////////// */
-	#if DEBUG
-		/*
-		// Check that the plane normals were unit vectors
-		// This really has nothing to do with the routine, but
-		// it can't hurt!!!
-		*/
-		for(i = 0; i < numPlanes; i++)
-		{
-			ASSERT(fabs(SqrVecLength((pPlanes+i)->normal) - 1.0f) < 0.01);
-		}
-		/*
-		// check the computed "d" values, and transformed vectors
-		*/
-		for(i = 0; i < numPlanes; i++)
-		{
-			sgl_vector temp;
+    /* //////////////////////////////////////
+    // DEBUG Error testing......
+    ////////////////////////////////////// */
+#if DEBUG
+    /*
+    // Check that the plane normals were unit vectors
+    // This really has nothing to do with the routine, but
+    // it can't hurt!!!
+    */
+    for(i = 0; i < numPlanes; i++)
+    {
+        ASSERT(fabs(SqrVecLength((pPlanes+i)->normal) - 1.0f) < 0.01);
+    }
+    /*
+    // check the computed "d" values, and transformed vectors
+    */
+    for(i = 0; i < numPlanes; i++)
+    {
+        sgl_vector temp;
 
-			/*
-			// check rep point.
-			*/
-			TransformVector(pTransform, (pPlanes+i)->rep_point , temp);
-			VecSub(temp, TransformedPlanes[i].repPnt, temp);
-			ASSERT(fabs(SqrVecLength(temp)) < 0.01f);
+        /*
+        // check rep point.
+        */
+        TransformVector(pTransform, (pPlanes+i)->rep_point , temp);
+        VecSub(temp, TransformedPlanes[i].repPnt, temp);
+        ASSERT(fabs(SqrVecLength(temp)) < 0.01f);
 
-			/*
-			// check d matches an alternate computation method
-			*/
-			if(fabs(DotProd(TransformedPlanes[i].normal,
-							 TransformedPlanes[i].repPnt)
-				 - TransformedPlanes[i].d) > 0.01)
-			{
-				DPF((DBG_MESSAGE, "Inaccuracy in Transform Convex???"));
-			}
-		}
-	#endif
-	/* ////////////////////////////////////// */
-	
+        /*
+        // check d matches an alternate computation method
+        */
+        if(fabs(DotProd(TransformedPlanes[i].normal,
+                         TransformedPlanes[i].repPnt)
+             - TransformedPlanes[i].d) > 0.01)
+        {
+            DPF((DBG_MESSAGE, "Inaccuracy in Transform Convex???"));
+        }
+    }
+#endif
+    /* ////////////////////////////////////// */
+
 }
-
-
 
 
 /*
@@ -634,47 +626,40 @@ static TRANS_PLANE_ARRAY_TYPE transformedPlanes;
 //
 //
 */
-static int RnGetLightsSlot(const int LightName, const MASTER_STATE_STRUCT *pState)
-{
-	LIGHT_ENTRY_STRUCT * pCurrEntry;
+static int RnGetLightsSlot(const int LightName, const MASTER_STATE_STRUCT *pState) {
+    LIGHT_ENTRY_STRUCT *pCurrEntry;
 
-	int i;
+    int i;
 
-	pCurrEntry = pState->pLightsState->light_entries;
+    pCurrEntry = pState->pLightsState->light_entries;
 
-	/*
-	// Look through the light state for this light, and
-	// get its light slot
-	*/
-	for(i = 0; i < pState->pLightsState->num_lights; i++)
-	{
-		/*
-		// Is this the light we want?
-		*/
-		if(pCurrEntry->light_name == LightName)
-		{
-			/*
-			// then return the slot
-			*/
-			return pCurrEntry->assigned_shad_volume;
-		}
+    /*
+    // Look through the light state for this light, and
+    // get its light slot
+    */
+    for (i = 0; i < pState->pLightsState->num_lights; i++) {
+        /*
+        // Is this the light we want?
+        */
+        if (pCurrEntry->light_name == LightName) {
+            /*
+            // then return the slot
+            */
+            return pCurrEntry->assigned_shad_volume;
+        }
 
-		/*
-		// try the next one
-		*/
-		pCurrEntry ++;
+        /*
+        // try the next one
+        */
+        pCurrEntry++;
 
-	}/*end for */
+    }/*end for */
 
-	/*
-	// Not found then return 0
-	*/
-	return 0;
+    /*
+    // Not found then return 0
+    */
+    return 0;
 }
-
-
-
-
 
 
 /**************************************************************************
@@ -710,457 +695,424 @@ static int RnGetLightsSlot(const int LightName, const MASTER_STATE_STRUCT *pStat
  *
  **************************************************************************/
 
-sgl_bool RnProcessConvexNode(const CONVEX_NODE_STRUCT  *pConvex,
-							 const MASTER_STATE_STRUCT *pState,
-							 const SHADOW_LIM_STRUCT *pShadowLimitPlanes,
-							 sgl_bool *parentUpdatePoints,
-							 int nCurrTransSetID)
-{
-	/*
-	// Transformed Bounding box (if any) in world Coordinates
-	*/
-	BBOX_MINMAX_STRUCT bboxInWC;
+sgl_bool RnProcessConvexNode(const CONVEX_NODE_STRUCT *pConvex,
+                             const MASTER_STATE_STRUCT *pState,
+                             const SHADOW_LIM_STRUCT *pShadowLimitPlanes,
+                             sgl_bool *parentUpdatePoints,
+                             int nCurrTransSetID) {
+    /*
+    // Transformed Bounding box (if any) in world Coordinates
+    */
+    BBOX_MINMAX_STRUCT bboxInWC;
 
-	/*
-	// Boolean if primitive is DEFINITELY off screen.
-	// (Note if this is FALSE then we can only say if it
-	// is PROBABLY on screen.)
-	*/
-	sgl_bool offScreen;
+    /*
+    // Boolean if primitive is DEFINITELY off screen.
+    // (Note if this is FALSE then we can only say if it
+    // is PROBABLY on screen.)
+    */
+    sgl_bool offScreen;
 
-	/*
-	// Type of convex we are dealing with
-	*/
-	CONVEX_FLAGS_ENUM ConvexType;
+    /*
+    // Type of convex we are dealing with
+    */
+    CONVEX_FLAGS_ENUM ConvexType;
 
-	/*
-	// Flags indicating what work will need to be done to each
-	// primitive.
-	*/
-	sgl_bool generateShadowVolumes;
-	sgl_bool NeedsClipping;
+    /*
+    // Flags indicating what work will need to be done to each
+    // primitive.
+    */
+    sgl_bool generateShadowVolumes;
+    sgl_bool NeedsClipping;
 
-	/*
-	// Remember if the primitive has been transformed
-	*/
-	sgl_bool beenTransformed;
-
-
-	/*
-	// A pointer to the bounding box OR NULL if there isn't one.
-	*/
-	const BBOX_MINMAX_STRUCT *pBBox;
-
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-
-	ASSERT(parentUpdatePoints != NULL);
-	/*
-	// Paranoia
-	*/
-	ASSERT(pConvex->u16_num_planes <= pConvex->u16_max_planes)
-	ASSERT(pConvex->u16_num_planes <= SGL_MAX_PLANES)
-
-	SGL_TIME_START(TRIVIAL_REJECTION_TIME)
-
-	/*
-	// Exit Early if there aren't any planes!!!
-	*/
-	if(pConvex->u16_num_planes == 0)
-	{
-		DPF((DBG_MESSAGE, "Skipping Empty Convex"));
-		return TRUE; /*still ok though*/
-	}
-
-	/* Set bilinear filtering mode.
-	 * This is the best place to do this. The relevent bilinear
-	 * filtering setting will be set for all subsequent mesh objects.
-	 */
-  	if (pState->pQualityState->flags & qf_texture_filtering)
-	{
-		pProjMat->eFilterType = pState->pQualityState->eFilterType;
-	}
-
-	/* Set dithering mode.
-	 */
-  	if (pState->pQualityState->flags & qf_dithering)
-	{
-		pProjMat->bDithering = TRUE;
-	}
-	else
-	{
-		pProjMat->bDithering = FALSE;
-	}
-
-	/*
-	// See if the primitive has a bounding box,
-	// and transform the box.
-	*/
-	if(pConvex->u16_flags & cf_has_bbox)
-	{
-		
-		DPF((DBG_VERBOSE, 
-		 "Convex with BBOX: \n\tInitial Pos:[%f, %f, %f] +-[%f, %f, %f]",
-						 pConvex->bbox.boxCentre[0],
-						 pConvex->bbox.boxCentre[1],
-						 pConvex->bbox.boxCentre[2],
-						 pConvex->bbox.boxOffsets[0],
-						 pConvex->bbox.boxOffsets[1],
-						 pConvex->bbox.boxOffsets[2]));
+    /*
+    // Remember if the primitive has been transformed
+    */
+    sgl_bool beenTransformed;
 
 
-		TransformBBox(pState->pTransformState, 
-					 & (pConvex->bbox),	 &bboxInWC);
+    /*
+    // A pointer to the bounding box OR NULL if there isn't one.
+    */
+    const BBOX_MINMAX_STRUCT *pBBox;
 
-		DPF((DBG_VERBOSE, "After Transform: Min:[%f, %f, %f] Max [%f, %f, %f]",
-						 bboxInWC.boxMin[0],
-						 bboxInWC.boxMin[1],
-						 bboxInWC.boxMin[2],
-						 bboxInWC.boxMax[0],
-						 bboxInWC.boxMax[1],
-						 bboxInWC.boxMax[2]));
-		/*
-		// test to see if it is DEFINITELY off screen. (It could
-		// still not be visible even when it is FALSE).
-		*/
-		offScreen =  (RnTestBoxWithCamera(&bboxInWC, FALSE, &NeedsClipping)
-					   == TB_BOX_OFFSCREEN);
-		
-		DPF((DBG_VERBOSE, "BBox Offscreen?:%d", offScreen));
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-		/*
-		// Record that the primitive itself hasn't been transformed
-		*/
-		beenTransformed = FALSE;
+    ASSERT(parentUpdatePoints != NULL);
+    /*
+    // Paranoia
+    */
+    ASSERT(pConvex->u16_num_planes <= pConvex->u16_max_planes)
+    ASSERT(pConvex->u16_num_planes <= SGL_MAX_PLANES)
 
-		/*
-		// Save a pointer to the bounidng box
-		*/
-		pBBox = &bboxInWC;
-	}
-	/*
-	// Else the object is infinite, so the only way to determine if
-	// it is on screen is to transform the planes first
-	*/
-	else
-	{
-		SGL_TIME_SUSPEND(TRIVIAL_REJECTION_TIME)
-		SGL_TIME_START(TRANSFORM_PLANES_TIME)
-		RnTransformBasicPlanes( pConvex->plane_data,
-								pConvex->u16_num_planes,
-								pState->pTransformState, 
-								transformedPlanes);
-		SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
-		SGL_TIME_RESUME(TRIVIAL_REJECTION_TIME)
-		
-		offScreen = RnTestPlanesWithCamera( transformedPlanes, 
-											pConvex->u16_num_planes);
+    SGL_TIME_START(TRIVIAL_REJECTION_TIME)
 
-		beenTransformed = TRUE;
+    /*
+    // Exit Early if there aren't any planes!!!
+    */
+    if (pConvex->u16_num_planes == 0) {
+        DPF((DBG_MESSAGE, "Skipping Empty Convex"));
+        return TRUE; /*still ok though*/
+    }
 
-		/*
-		// There isn't a bounding box so save as NULL
-		*/
-		pBBox = NULL;
-	}/*end if/else bounding box*/
+    /* Set bilinear filtering mode.
+     * This is the best place to do this. The relevent bilinear
+     * filtering setting will be set for all subsequent mesh objects.
+     */
+    if (pState->pQualityState->flags & qf_texture_filtering) {
+        pProjMat->eFilterType = pState->pQualityState->eFilterType;
+    }
 
-	SGL_TIME_STOP(TRIVIAL_REJECTION_TIME)
+    /* Set dithering mode.
+     */
+    if (pState->pQualityState->flags & qf_dithering) {
+        pProjMat->bDithering = TRUE;
+    } else {
+        pProjMat->bDithering = FALSE;
+    }
 
-	SGL_TIME_START(PROCESS_CONVEX_NODE_TIME)
-	/*//////////////////////////////////////
-	// Decide what processing needs to be done, based on the type of
-	// convex primitive, setting the flags which enable the various
-	// bits of processing to be done.
-	////////////////////////////////////// */
-	ConvexType = (CONVEX_FLAGS_ENUM) (pConvex->u16_flags & cf_mask_type);
-	switch(ConvexType)
-	{
-		/*///////////////////////////////////////////////////////
-		// CASE Standard convex primitive
-		/////////////////////////////////////////////////////// */
-		case cf_standard_convex:
-		{
-			/*
-			// generate shadows? Must have a light that casts shadows, and 
-			// have shadows switched on in the quality.
-			*/
-			generateShadowVolumes=(pState->pLightsState->flags & lsf_shadows) &&
-						 (pState->pQualityState->flags & qf_cast_shadows);
+    /*
+    // See if the primitive has a bounding box,
+    // and transform the box.
+    */
+    if (pConvex->u16_flags & cf_has_bbox) {
 
-			/*
-			// Do we bother transforming the convex?
-			*/
-			if((!beenTransformed) && (!offScreen || generateShadowVolumes))
-			{
-	    	    SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-			    SGL_TIME_START(TRANSFORM_PLANES_TIME)
-				RnTransformBasicPlanes( pConvex->plane_data,
-								pConvex->u16_num_planes,
-								pState->pTransformState, 
-								transformedPlanes);
-			    SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
-	    	    SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
-
-				beenTransformed = TRUE;
-
-			}/*end if transformPrim*/
-
-			/*
-			// Do we have to project/classify/shade the primitive
-			*/
-			if(!offScreen)
-			{
-				ASSERT(beenTransformed);
-
-	    	    SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-				if(! RnProcessVisibleConvex( pConvex,  pState,
-											 transformedPlanes,  
-											 NeedsClipping, 
-											 pBBox,
-											 &offScreen,
-											 nCurrTransSetID))
-				{
-	    	        SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
-					return FALSE; /*out of parameter space*/
-				}
-	    	    SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
-			}/*end if projectEtcPrim */
+        DPF((DBG_VERBOSE,
+                "Convex with BBOX: \n\tInitial Pos:[%f, %f, %f] +-[%f, %f, %f]",
+                pConvex->bbox.boxCentre[0],
+                pConvex->bbox.boxCentre[1],
+                pConvex->bbox.boxCentre[2],
+                pConvex->bbox.boxOffsets[0],
+                pConvex->bbox.boxOffsets[1],
+                pConvex->bbox.boxOffsets[2]));
 
 
-			/*
-			// Generate Shadows?
-			*/
-			if(generateShadowVolumes)
-			{
-				DPF((DBG_MESSAGE, "**************************"));
-	    	    SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-	    	    SGL_TIME_START(PROCESS_SHADOW_TIME)
-				if(! RnProcessConvexShadows( pConvex,  pState, 
-											 pShadowLimitPlanes,
-											 transformedPlanes,  
-											 pBBox, offScreen,
-											 !offScreen))
-				{
-	    	        SGL_TIME_STOP(PROCESS_SHADOW_TIME)
-	    	        SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
-					return FALSE;  /*out of parameter space*/
-				}
-	    	    SGL_TIME_STOP(PROCESS_SHADOW_TIME)
-	    	    SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+        TransformBBox(pState->pTransformState,
+                      &(pConvex->bbox), &bboxInWC);
 
-			}/*end if shadows wanted*/
+        DPF((DBG_VERBOSE, "After Transform: Min:[%f, %f, %f] Max [%f, %f, %f]",
+                bboxInWC.boxMin[0],
+                bboxInWC.boxMin[1],
+                bboxInWC.boxMin[2],
+                bboxInWC.boxMax[0],
+                bboxInWC.boxMax[1],
+                bboxInWC.boxMax[2]));
+        /*
+        // test to see if it is DEFINITELY off screen. (It could
+        // still not be visible even when it is FALSE).
+        */
+        offScreen = (RnTestBoxWithCamera(&bboxInWC, FALSE, &NeedsClipping)
+                     == TB_BOX_OFFSCREEN);
 
+        DPF((DBG_VERBOSE, "BBox Offscreen?:%d", offScreen));
 
-			/*
-			// perform collision detection?
-			// Must be collision points, then either full collision detection,
-			//  or onscreen and onscreen collision detection.
-			*/
-			if( (pState->pCollisionState->num_pnts != 0) &&
-				((pState->pQualityState->flags & qf_full_collision) ||
-				 (!offScreen &&	
-				   (pState->pQualityState->flags & qf_onscreen_collision))))
-			{
-				/*
-				// which space do we do the detection in? If the primitive has
-				// been transformed, we may as well do it in world coordinates,
-				*/
-				if(beenTransformed)
-				{
-					RnTestPointsWithTransformedPlanes(
-					  pConvex,
-					  transformedPlanes,
-					  pState->pCollisionState,
-					  parentUpdatePoints);
-				}
-				else
-				{
-					RnTestPointsWithLocalPlanes(
-					  pConvex,
-					  pState->pTransformState,
-					  pState->pCollisionState,
-					  parentUpdatePoints);
-				}/*end if beenTransformed*/
-			}/*end if do collision detection*/
+        /*
+        // Record that the primitive itself hasn't been transformed
+        */
+        beenTransformed = FALSE;
 
+        /*
+        // Save a pointer to the bounidng box
+        */
+        pBBox = &bboxInWC;
+    }
+        /*
+        // Else the object is infinite, so the only way to determine if
+        // it is on screen is to transform the planes first
+        */
+    else {
+        SGL_TIME_SUSPEND(TRIVIAL_REJECTION_TIME)
+        SGL_TIME_START(TRANSFORM_PLANES_TIME)
+        RnTransformBasicPlanes(pConvex->plane_data,
+                               pConvex->u16_num_planes,
+                               pState->pTransformState,
+                               transformedPlanes);
+        SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
+        SGL_TIME_RESUME(TRIVIAL_REJECTION_TIME)
 
-			break;
+        offScreen = RnTestPlanesWithCamera(transformedPlanes,
+                                           pConvex->u16_num_planes);
 
-		}
+        beenTransformed = TRUE;
 
-		/*///////////////////////////////////////////////////////
-		// CASE "hidden" primitive, for shadows and/or collision testing
-		/////////////////////////////////////////////////////// */
-		case cf_hidden_convex:
-		{
+        /*
+        // There isn't a bounding box so save as NULL
+        */
+        pBBox = NULL;
+    }/*end if/else bounding box*/
 
-			/*
-			// generate shadows? Must have a light that casts shadows, and 
-			// have shadows switched on in the quality.
-			*/
-			if( (pState->pLightsState->flags & lsf_shadows) &&
-				(pState->pQualityState->flags & qf_cast_shadows))
-			{
-				/*
-				// Do we bother transforming the convex?
-				*/
-				if(!beenTransformed)
-				{
-	    	        SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-					SGL_TIME_START(TRANSFORM_PLANES_TIME)
-					RnTransformBasicPlanes( pConvex->plane_data,
-								pConvex->u16_num_planes,
-								pState->pTransformState, 
-								transformedPlanes);
-					SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
-	    	        SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+    SGL_TIME_STOP(TRIVIAL_REJECTION_TIME)
 
-					beenTransformed = TRUE;
+    SGL_TIME_START(PROCESS_CONVEX_NODE_TIME)
+    /*//////////////////////////////////////
+    // Decide what processing needs to be done, based on the type of
+    // convex primitive, setting the flags which enable the various
+    // bits of processing to be done.
+    ////////////////////////////////////// */
+    ConvexType = (CONVEX_FLAGS_ENUM) (pConvex->u16_flags & cf_mask_type);
+    switch (ConvexType) {
+        /*///////////////////////////////////////////////////////
+        // CASE Standard convex primitive
+        /////////////////////////////////////////////////////// */
+        case cf_standard_convex: {
+            /*
+            // generate shadows? Must have a light that casts shadows, and
+            // have shadows switched on in the quality.
+            */
+            generateShadowVolumes = (pState->pLightsState->flags & lsf_shadows) &&
+                                    (pState->pQualityState->flags & qf_cast_shadows);
 
-				}/*end if transformPrim*/
+            /*
+            // Do we bother transforming the convex?
+            */
+            if ((!beenTransformed) && (!offScreen || generateShadowVolumes)) {
+                SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                SGL_TIME_START(TRANSFORM_PLANES_TIME)
+                RnTransformBasicPlanes(pConvex->plane_data,
+                                       pConvex->u16_num_planes,
+                                       pState->pTransformState,
+                                       transformedPlanes);
+                SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
+                SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
 
-				/*
-				// Generate Shadows
-				*/
-				DPF((DBG_MESSAGE, "**************************"));
-	    	    SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-	    	    SGL_TIME_START(PROCESS_SHADOW_TIME)
-				if(! RnProcessConvexShadows( pConvex,  pState, 
-											 pShadowLimitPlanes,
-											 transformedPlanes,  
-											 pBBox, offScreen,
-											 !offScreen))
-				{
-	    	        SGL_TIME_STOP(PROCESS_SHADOW_TIME)
-	    	        SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
-					return FALSE;  /*out of parameter space*/
-				}
-	    	    SGL_TIME_STOP(PROCESS_SHADOW_TIME)
-	    	    SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
-			}
+                beenTransformed = TRUE;
 
-			/*
-			// perform collision detection?
-			// Must be collision points, then either full collision detection,
-			//  or onscreen and onscreen collision detection.
-			*/
-			if( (pState->pCollisionState->num_pnts != 0) &&
-				((pState->pQualityState->flags & qf_full_collision) ||
-				 (!offScreen &&	
-				   (pState->pQualityState->flags & qf_onscreen_collision))))
-			{
-				/*
-				// which space do we do the detection in? If the primitive has
-				// been transformed, we may as well do it in world coordinates,
-				*/
-				if(beenTransformed)
-				{
-					RnTestPointsWithTransformedPlanes(
-					  pConvex,
-					  transformedPlanes,
-					  pState->pCollisionState,
-					  parentUpdatePoints);
-				}
-				else
-				{
-					RnTestPointsWithLocalPlanes(
-					  pConvex,
-					  pState->pTransformState,
-					  pState->pCollisionState,
-					  parentUpdatePoints);
-				}/*end if beenTransformed*/
-			}/*end if do collision detection*/
+            }/*end if transformPrim*/
 
-			break;
-		}
+            /*
+            // Do we have to project/classify/shade the primitive
+            */
+            if (!offScreen) {
+                ASSERT(beenTransformed);
+
+                SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                if (!RnProcessVisibleConvex(pConvex, pState,
+                                            transformedPlanes,
+                                            NeedsClipping,
+                                            pBBox,
+                                            &offScreen,
+                                            nCurrTransSetID)) {
+                    SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
+                    return FALSE; /*out of parameter space*/
+                }
+                SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+            }/*end if projectEtcPrim */
 
 
-		/*///////////////////////////////////////////////////////
-		// CASE Light Volume / Forced Shadow Volume primitive
-		// Use default case as no other (legal) cases are left
-		/////////////////////////////////////////////////////// */
-		default:
-		{
-			int volumesLightSlot;
+            /*
+            // Generate Shadows?
+            */
+            if (generateShadowVolumes) {
+                DPF((DBG_MESSAGE, "**************************"));
+                SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                SGL_TIME_START(PROCESS_SHADOW_TIME)
+                if (!RnProcessConvexShadows(pConvex, pState,
+                                            pShadowLimitPlanes,
+                                            transformedPlanes,
+                                            pBBox, offScreen,
+                                            !offScreen)) {
+                    SGL_TIME_STOP(PROCESS_SHADOW_TIME)
+                    SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
+                    return FALSE;  /*out of parameter space*/
+                }
+                SGL_TIME_STOP(PROCESS_SHADOW_TIME)
+                SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
 
-			/*
-			// Check that we have been given something sensible
-			*/
-			ASSERT(ConvexType==cf_shadow_volume || ConvexType==cf_light_volume);
-
-			/*
-			// Determine if the light associated with the light volume
-			// CAN cast shadows, and what shadow slot number it uses.
-			*/
-			volumesLightSlot = RnGetLightsSlot(pConvex->u16_volumes_light, pState);
-
-			/*
-			// if the associated light can cast shadows
-			*/
-			if(volumesLightSlot != 0)
-			{
-				/*
-				// If this is a light volume, then we must check
-				// if we've already processed a light volume before. We have
-				// to "initialise" registers in the hardware in order
-				// to handle light vols, on a region by region basis.
-				*/
-				if(ConvexType==cf_light_volume && !doneALightVol)
-				{
-					DPF((DBG_MESSAGE, "***Initialising for light volume***"));
-					AllowLightVolAdditionSGL(& pProjMat->RegionsRect);
-					doneALightVol = TRUE;
-				}
+            }/*end if shadows wanted*/
 
 
-				/*
-				// Only interested in processing this primitive if it
-				// in onscreen
-				*/
-				if(!offScreen)
-				{
-					/*
-					// Do we need to transform the planes ? 
-					*/
-					if(!beenTransformed)
-					{
-	    	            SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-					    SGL_TIME_START(TRANSFORM_PLANES_TIME)
-						RnTransformBasicPlanes( pConvex->plane_data,
-								pConvex->u16_num_planes,
-								pState->pTransformState, 
-								transformedPlanes);
-					    SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
-	    	            SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+            /*
+            // perform collision detection?
+            // Must be collision points, then either full collision detection,
+            //  or onscreen and onscreen collision detection.
+            */
+            if ((pState->pCollisionState->num_pnts != 0) &&
+                ((pState->pQualityState->flags & qf_full_collision) ||
+                 (!offScreen &&
+                  (pState->pQualityState->flags & qf_onscreen_collision)))) {
+                /*
+                // which space do we do the detection in? If the primitive has
+                // been transformed, we may as well do it in world coordinates,
+                */
+                if (beenTransformed) {
+                    RnTestPointsWithTransformedPlanes(
+                            pConvex,
+                            transformedPlanes,
+                            pState->pCollisionState,
+                            parentUpdatePoints);
+                } else {
+                    RnTestPointsWithLocalPlanes(
+                            pConvex,
+                            pState->pTransformState,
+                            pState->pCollisionState,
+                            parentUpdatePoints);
+                }/*end if beenTransformed*/
+            }/*end if do collision detection*/
 
-					}/*end if transformPrim*/
 
-					/*
-					// Project and classify etc the primitive
-					*/
-	    	        SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
-					if(!RnProcessLightOrShadVolume(pConvex, pState,
-												transformedPlanes, 
-												pBBox) )
-					{
-	    	            SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
-						return FALSE;  /*out of parameter space*/
-					}
-	    	        SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+            break;
 
-				}/*end if not offscreen*/
+        }
 
-			}/*end if valid shadow light */
+            /*///////////////////////////////////////////////////////
+            // CASE "hidden" primitive, for shadows and/or collision testing
+            /////////////////////////////////////////////////////// */
+        case cf_hidden_convex: {
 
-			break;
-		}/*default (ie. shadow/light volume cases) */
+            /*
+            // generate shadows? Must have a light that casts shadows, and
+            // have shadows switched on in the quality.
+            */
+            if ((pState->pLightsState->flags & lsf_shadows) &&
+                (pState->pQualityState->flags & qf_cast_shadows)) {
+                /*
+                // Do we bother transforming the convex?
+                */
+                if (!beenTransformed) {
+                    SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                    SGL_TIME_START(TRANSFORM_PLANES_TIME)
+                    RnTransformBasicPlanes(pConvex->plane_data,
+                                           pConvex->u16_num_planes,
+                                           pState->pTransformState,
+                                           transformedPlanes);
+                    SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
+                    SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
 
-	} /*End Switch*/
+                    beenTransformed = TRUE;
 
-	/*
-	// Got this far so should be ok!
-	*/
-	SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
-	return TRUE;
+                }/*end if transformPrim*/
+
+                /*
+                // Generate Shadows
+                */
+                DPF((DBG_MESSAGE, "**************************"));
+                SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                SGL_TIME_START(PROCESS_SHADOW_TIME)
+                if (!RnProcessConvexShadows(pConvex, pState,
+                                            pShadowLimitPlanes,
+                                            transformedPlanes,
+                                            pBBox, offScreen,
+                                            !offScreen)) {
+                    SGL_TIME_STOP(PROCESS_SHADOW_TIME)
+                    SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
+                    return FALSE;  /*out of parameter space*/
+                }
+                SGL_TIME_STOP(PROCESS_SHADOW_TIME)
+                SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+            }
+
+            /*
+            // perform collision detection?
+            // Must be collision points, then either full collision detection,
+            //  or onscreen and onscreen collision detection.
+            */
+            if ((pState->pCollisionState->num_pnts != 0) &&
+                ((pState->pQualityState->flags & qf_full_collision) ||
+                 (!offScreen &&
+                  (pState->pQualityState->flags & qf_onscreen_collision)))) {
+                /*
+                // which space do we do the detection in? If the primitive has
+                // been transformed, we may as well do it in world coordinates,
+                */
+                if (beenTransformed) {
+                    RnTestPointsWithTransformedPlanes(
+                            pConvex,
+                            transformedPlanes,
+                            pState->pCollisionState,
+                            parentUpdatePoints);
+                } else {
+                    RnTestPointsWithLocalPlanes(
+                            pConvex,
+                            pState->pTransformState,
+                            pState->pCollisionState,
+                            parentUpdatePoints);
+                }/*end if beenTransformed*/
+            }/*end if do collision detection*/
+
+            break;
+        }
+
+
+            /*///////////////////////////////////////////////////////
+            // CASE Light Volume / Forced Shadow Volume primitive
+            // Use default case as no other (legal) cases are left
+            /////////////////////////////////////////////////////// */
+        default: {
+            int volumesLightSlot;
+
+            /*
+            // Check that we have been given something sensible
+            */
+            ASSERT(ConvexType == cf_shadow_volume || ConvexType == cf_light_volume);
+
+            /*
+            // Determine if the light associated with the light volume
+            // CAN cast shadows, and what shadow slot number it uses.
+            */
+            volumesLightSlot = RnGetLightsSlot(pConvex->u16_volumes_light, pState);
+
+            /*
+            // if the associated light can cast shadows
+            */
+            if (volumesLightSlot != 0) {
+                /*
+                // If this is a light volume, then we must check
+                // if we've already processed a light volume before. We have
+                // to "initialise" registers in the hardware in order
+                // to handle light vols, on a region by region basis.
+                */
+                if (ConvexType == cf_light_volume && !doneALightVol) {
+                    DPF((DBG_MESSAGE, "***Initialising for light volume***"));
+                    AllowLightVolAdditionSGL(&pProjMat->RegionsRect);
+                    doneALightVol = TRUE;
+                }
+
+
+                /*
+                // Only interested in processing this primitive if it
+                // in onscreen
+                */
+                if (!offScreen) {
+                    /*
+                    // Do we need to transform the planes ?
+                    */
+                    if (!beenTransformed) {
+                        SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                        SGL_TIME_START(TRANSFORM_PLANES_TIME)
+                        RnTransformBasicPlanes(pConvex->plane_data,
+                                               pConvex->u16_num_planes,
+                                               pState->pTransformState,
+                                               transformedPlanes);
+                        SGL_TIME_STOP(TRANSFORM_PLANES_TIME)
+                        SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+
+                    }/*end if transformPrim*/
+
+                    /*
+                    // Project and classify etc the primitive
+                    */
+                    SGL_TIME_SUSPEND(PROCESS_CONVEX_NODE_TIME)
+                    if (!RnProcessLightOrShadVolume(pConvex, pState,
+                                                    transformedPlanes,
+                                                    pBBox)) {
+                        SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
+                        return FALSE;  /*out of parameter space*/
+                    }
+                    SGL_TIME_RESUME(PROCESS_CONVEX_NODE_TIME)
+
+                }/*end if not offscreen*/
+
+            }/*end if valid shadow light */
+
+            break;
+        }/*default (ie. shadow/light volume cases) */
+
+    } /*End Switch*/
+
+    /*
+    // Got this far so should be ok!
+    */
+    SGL_TIME_STOP(PROCESS_CONVEX_NODE_TIME)
+    return TRUE;
 }
 
 
@@ -1190,130 +1142,119 @@ sgl_bool RnProcessConvexNode(const CONVEX_NODE_STRUCT  *pConvex,
  *					we can get out early. 
  **************************************************************************/
 
-void RnCTPreProcessConvexNode(const CONVEX_NODE_STRUCT  *pConvex,
-							 const MASTER_STATE_STRUCT *pState,
-							 void *pCachedTexture)
-{
-	/*
-	// pointer to local material
-	*/
-	LOCAL_MATERIALS_STRUCT * pLocalMaterial;
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
+void RnCTPreProcessConvexNode(const CONVEX_NODE_STRUCT *pConvex,
+                              const MASTER_STATE_STRUCT *pState,
+                              void *pCachedTexture) {
+    /*
+    // pointer to local material
+    */
+    LOCAL_MATERIALS_STRUCT *pLocalMaterial;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
 
-	int size,YSize, i;
-	
-	/*
-	// Transformed Bounding box (if any) in world Coordinates
-	*/
-	BBOX_MINMAX_STRUCT bboxInWC;
+    int size, YSize, i;
 
-	/*
-	// The regions the box spans
-	*/	
-	REGIONS_RECT_STRUCT Regions;
+    /*
+    // Transformed Bounding box (if any) in world Coordinates
+    */
+    BBOX_MINMAX_STRUCT bboxInWC;
 
-	pLocalMaterial = pConvex->local_materials;
-	/*
-	// If there definately arent any cached textures, get out now
-	*/
-	if((pCachedTexture== NULL) && (pLocalMaterial == NULL))
-	{
-		return;
-	}
+    /*
+    // The regions the box spans
+    */
+    REGIONS_RECT_STRUCT Regions;
 
-	/*
-	// If the quality flags say there is no texture - get out as well
-	*/
-	if(! pState->pQualityState->flags & qf_textures)
-	{
-		return;
-	}
+    pLocalMaterial = pConvex->local_materials;
+    /*
+    // If there definately arent any cached textures, get out now
+    */
+    if ((pCachedTexture == NULL) && (pLocalMaterial == NULL)) {
+        return;
+    }
 
-	/*
-	// Decide if the object is on screen
-	//
-	// See if the primitive has a bounding box,
-	// and transform the box.
-	*/
-	if(pConvex->u16_flags & cf_has_bbox)
-	{
-		
-		TransformBBox(pState->pTransformState, 
-					 & (pConvex->bbox),	 &bboxInWC);
+    /*
+    // If the quality flags say there is no texture - get out as well
+    */
+    if (!pState->pQualityState->flags & qf_textures) {
+        return;
+    }
+
+    /*
+    // Decide if the object is on screen
+    //
+    // See if the primitive has a bounding box,
+    // and transform the box.
+    */
+    if (pConvex->u16_flags & cf_has_bbox) {
+
+        TransformBBox(pState->pTransformState,
+                      &(pConvex->bbox), &bboxInWC);
 
 
-		/*
-		// Determine the size by looking at the bounding box regions
-		*/
-		if(! RnDetermineRegionsFromBBox(&bboxInWC, &Regions))
-		{
-			/*
-			// Get out of here
-			*/
-			DPF((DBG_VERBOSE, "BBox Offscreen:"));
-			return;
-		}
+        /*
+        // Determine the size by looking at the bounding box regions
+        */
+        if (!RnDetermineRegionsFromBBox(&bboxInWC, &Regions)) {
+            /*
+            // Get out of here
+            */
+            DPF((DBG_VERBOSE, "BBox Offscreen:"));
+            return;
+        }
 
-		/*
-		// Ok map these into sizes
-		*/
-		size= (Regions.LastXRegion - Regions.FirstXRegion +1) * 
-									 pProjMat->RegionInfo.XSize;
-		YSize= (Regions.LastYRegion - Regions.FirstYRegion +1) * 
-									 pProjMat->RegionInfo.YSize;
+        /*
+        // Ok map these into sizes
+        */
+        size = (Regions.LastXRegion - Regions.FirstXRegion + 1) *
+               pProjMat->RegionInfo.XSize;
+        YSize = (Regions.LastYRegion - Regions.FirstYRegion + 1) *
+                pProjMat->RegionInfo.YSize;
 
-		if(YSize > size)
-		{
-			size = YSize;
-		}
+        if (YSize > size) {
+            size = YSize;
+        }
 
-	}
-	/*
-	// Else the object is infinite: To make life easy just assume it is on screen
-	// and that it is large.
-	*/
-	else
-	{
-		size = 1024;
-	}/*end if/else bounding box*/
+    }
+        /*
+        // Else the object is infinite: To make life easy just assume it is on screen
+        // and that it is large.
+        */
+    else {
+        size = 1024;
+    }/*end if/else bounding box*/
 
 
 
 
-	/*
-	// Now step through the materials used, (including the first) and
-	// set up any cacheable textures. NOTE this doesnt check to see if
-	// the texture IS actually used, but who cares - it's close enough
-	*/
-	if(pCachedTexture != NULL)
-	{
-		MarkCachedTextureUsed(pCachedTexture, size);
-	}
+    /*
+    // Now step through the materials used, (including the first) and
+    // set up any cacheable textures. NOTE this doesnt check to see if
+    // the texture IS actually used, but who cares - it's close enough
+    */
+    if (pCachedTexture != NULL) {
+        MarkCachedTextureUsed(pCachedTexture, size);
+    }
 
-	for(i = pConvex->u16_num_materials; i != 0;   i--, pLocalMaterial++)
-	{
-		void * pPreviousCText;
+    for (i = pConvex->u16_num_materials; i != 0; i--, pLocalMaterial++) {
+        void *pPreviousCText;
 
-		pPreviousCText = pCachedTexture;
-		/*
-		// Update using this material
-		*/
-		if(pLocalMaterial->p_material != NULL)
-		{
-			RnCTPreprocessMaterialNode(pLocalMaterial->p_material, 
-					(MASTER_STATE_STRUCT *) pState, &pCachedTexture);
-		}
+        pPreviousCText = pCachedTexture;
+        /*
+        // Update using this material
+        */
+        if (pLocalMaterial->p_material != NULL) {
+            RnCTPreprocessMaterialNode(pLocalMaterial->p_material,
+                                       (MASTER_STATE_STRUCT *) pState, &pCachedTexture);
+        }
 
-		/*
-		// if the texture has changed, and we still have a cached texture,
-		// mark it as used
-		*/
-		if((pPreviousCText != pCachedTexture) &&(pCachedTexture != NULL))
-		{
-			MarkCachedTextureUsed(pCachedTexture, size);
-		}
-		
-	}
+        /*
+        // if the texture has changed, and we still have a cached texture,
+        // mark it as used
+        */
+        if ((pPreviousCText != pCachedTexture) && (pCachedTexture != NULL)) {
+            MarkCachedTextureUsed(pCachedTexture, size);
+        }
+
+    }
 }
 
 

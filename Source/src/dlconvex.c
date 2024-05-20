@@ -238,7 +238,7 @@
 
 #include <pvrosapi.h>
 #include <sglmem.h>
-#include <dlshade.h>	/* SmoothPlaneDataPrecalc() */
+#include <dlshade.h>    /* SmoothPlaneDataPrecalc() */
 
 /*
 // --------------
@@ -284,67 +284,64 @@
  *				  required), and CommonAddPlane (for sgl_add_simple_plane and
  *				  sgl_add_plane).
  *****************************************************************************/
-static int CreateConvex(const CONVEX_FLAGS_ENUM ConvexType)
-{
+static int CreateConvex(const CONVEX_FLAGS_ENUM ConvexType) {
 
     CONVEX_NODE_STRUCT *pNode;
 
-	/*
-	// Check that the parameter is valid (note the (int) is just to
-	// stop a warning about unsigned >= 0)
-	*/
-	ASSERT( (((int)ConvexType) >= cf_standard_convex) &&
-			(ConvexType <= cf_shadow_volume));
+    /*
+    // Check that the parameter is valid (note the (int) is just to
+    // stop a warning about unsigned >= 0)
+    */
+    ASSERT((((int) ConvexType) >= cf_standard_convex) &&
+           (ConvexType <= cf_shadow_volume));
 
-	/*
-	// =========
-	// MAKE NODE
-	// =========
-	*/
-	pNode = NEW(CONVEX_NODE_STRUCT);
-	if (pNode == NULL)
-	{
-		return sgl_err_no_mem;
-	}
+    /*
+    // =========
+    // MAKE NODE
+    // =========
+    */
+    pNode = NEW(CONVEX_NODE_STRUCT);
+    if (pNode == NULL) {
+        return sgl_err_no_mem;
+    }
 
-	pNode->node_hdr.n16_node_type = nt_convex;
-	pNode->node_hdr.n16_name	  = NM_INVALID_NAME;
+    pNode->node_hdr.n16_node_type = nt_convex;
+    pNode->node_hdr.n16_name = NM_INVALID_NAME;
 
-	pNode->u16_num_planes = 0;
-	pNode->u16_max_planes = CHUNK_SIZE;
+    pNode->u16_num_planes = 0;
+    pNode->u16_max_planes = CHUNK_SIZE;
 
-	pNode->u16_flags = ConvexType | cf_all_premapped |
-	  cf_all_text_wrap | cf_all_smooth | cf_all_visible | cf_see_inside;
+    pNode->u16_flags = ConvexType | cf_all_premapped |
+                       cf_all_text_wrap | cf_all_smooth | cf_all_visible | cf_see_inside;
 
-	pNode->edge_info = NULL;
+    pNode->edge_info = NULL;
 
-	pNode->plane_data =
-	  SGLMalloc(pNode->u16_max_planes * sizeof(CONV_PLANE_STRUCT));
-	if (pNode->plane_data == NULL)
-	{
-		SGLFree(pNode);
-		return sgl_err_no_mem;
-	}
+    pNode->plane_data =
+            SGLMalloc(pNode->u16_max_planes * sizeof(CONV_PLANE_STRUCT));
+    if (pNode->plane_data == NULL) {
+        SGLFree(pNode);
+        return sgl_err_no_mem;
+    }
 
-	pNode->texture_data = NULL;
-	pNode->shading_data = NULL;
-	pNode->points_data = NULL;
-				
-	pNode->u16_num_materials = 0;
-				
-	/*** NEEDS CHUNK OPTIMISATION: ***/
-	pNode->u16_max_materials = SGL_MAX_PLANES;
-				
-	pNode->local_materials = NULL;
-				
-	/*
-	// ============
-	// INSTALL NODE
-	// ============
-	*/
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
-	dlUserGlobals.pCurrentConvex = pNode;
-	return sgl_no_err;
+    pNode->texture_data = NULL;
+    pNode->shading_data = NULL;
+    pNode->points_data = NULL;
+
+    pNode->u16_num_materials = 0;
+
+    /*** NEEDS CHUNK OPTIMISATION: ***/
+    pNode->u16_max_materials = SGL_MAX_PLANES;
+
+    pNode->local_materials = NULL;
+
+    /*
+    // ============
+    // INSTALL NODE
+    // ============
+    */
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    dlUserGlobals.pCurrentConvex = pNode;
+    return sgl_no_err;
 }
 
 
@@ -360,46 +357,42 @@ static int CreateConvex(const CONVEX_FLAGS_ENUM ConvexType)
  * Description  : Copies plane related information. Called by sgl_delete_plane.
  *****************************************************************************/
 static void CopyPlaneInfo(
-  CONV_PLANE_STRUCT   *pDestPlane,
-  CONV_TEXTURE_UNION  *pDestTexture,
-  CONV_SHADING_STRUCT *pDestShading,
-  CONV_POINTS_STRUCT *pDestPoints,
-  CONV_PLANE_STRUCT	  *pSrcPlane,
-  CONV_TEXTURE_UNION  *pSrcTexture,
-  CONV_SHADING_STRUCT *pSrcShading,
-  CONV_POINTS_STRUCT *pSrcPoints,
-  sgl_bool			  bCopyTextures,
-  sgl_bool            bCopyShadings,
-  sgl_bool            bCopyPoints)
-{
-	ASSERT(pDestPlane	!= NULL);
-	ASSERT(pSrcPlane	!= NULL);
+        CONV_PLANE_STRUCT *pDestPlane,
+        CONV_TEXTURE_UNION *pDestTexture,
+        CONV_SHADING_STRUCT *pDestShading,
+        CONV_POINTS_STRUCT *pDestPoints,
+        CONV_PLANE_STRUCT *pSrcPlane,
+        CONV_TEXTURE_UNION *pSrcTexture,
+        CONV_SHADING_STRUCT *pSrcShading,
+        CONV_POINTS_STRUCT *pSrcPoints,
+        sgl_bool bCopyTextures,
+        sgl_bool bCopyShadings,
+        sgl_bool bCopyPoints) {
+    ASSERT(pDestPlane != NULL);
+    ASSERT(pSrcPlane != NULL);
 
-	*pDestPlane = *pSrcPlane;
+    *pDestPlane = *pSrcPlane;
 
-	if (bCopyTextures && (pDestPlane->flags & pf_textured))
-	{
-		ASSERT(pDestTexture != NULL);
-		ASSERT(pSrcTexture != NULL);
+    if (bCopyTextures && (pDestPlane->flags & pf_textured)) {
+        ASSERT(pDestTexture != NULL);
+        ASSERT(pSrcTexture != NULL);
 
-		*pDestTexture = *pSrcTexture;
-	}
+        *pDestTexture = *pSrcTexture;
+    }
 
-	if (bCopyShadings && (pDestPlane->flags & pf_smooth_shad))
-	{
-		ASSERT(pDestShading != NULL);
-		ASSERT(pSrcShading != NULL);
+    if (bCopyShadings && (pDestPlane->flags & pf_smooth_shad)) {
+        ASSERT(pDestShading != NULL);
+        ASSERT(pSrcShading != NULL);
 
-		*pDestShading = *pSrcShading;
-	}
+        *pDestShading = *pSrcShading;
+    }
 
-	if (bCopyPoints)
-	{
-		ASSERT(pDestPoints != NULL);
-		ASSERT(pSrcPoints != NULL);
+    if (bCopyPoints) {
+        ASSERT(pDestPoints != NULL);
+        ASSERT(pSrcPoints != NULL);
 
-		*pDestPoints = *pSrcPoints;
-	}
+        *pDestPoints = *pSrcPoints;
+    }
 }
 
 
@@ -414,170 +407,151 @@ static void CopyPlaneInfo(
  * Description  : Common setup code for sgl_add_simple_plane and sgl_add_plane.
  *****************************************************************************/
 static int CommonAddPlane(CONVEX_NODE_STRUCT **ppNode,
-  CONV_PLANE_STRUCT **ppPlane)
-{
-	CONVEX_NODE_STRUCT *pNode;
+                          CONV_PLANE_STRUCT **ppPlane) {
+    CONVEX_NODE_STRUCT *pNode;
 
-	/*
-	// ==========
-	// INITIALISE
-	// ==========
-	*/
-	ASSERT(ppNode != NULL);
-	ASSERT(ppPlane != NULL);
+    /*
+    // ==========
+    // INITIALISE
+    // ==========
+    */
+    ASSERT(ppNode != NULL);
+    ASSERT(ppPlane != NULL);
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return sgl_err_failed_init;
-	}
+    {
+        return sgl_err_failed_init;
+    }
 #endif
 
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-	/*
-	// ===============
-	// GET CONVEX NODE
-	// ===============
-	// Create a new one if required.
-	*/
-	if (dlUserGlobals.pCurrentConvex == NULL)
-	{
-		int nError;
+    /*
+    // ===============
+    // GET CONVEX NODE
+    // ===============
+    // Create a new one if required.
+    */
+    if (dlUserGlobals.pCurrentConvex == NULL) {
+        int nError;
 
-		nError = CreateConvex(cf_standard_convex);
-		if (nError != sgl_no_err)
-		{
-			return nError;
-		}
-	}
-	/*
-	// dlUserGlobals.pCurrentConvex may have been changed by CreateConvex.
-	*/
-	*ppNode = dlUserGlobals.pCurrentConvex;  /* Caller's pointer to node. */
-	pNode = *ppNode;  /* Local pointer to the node. */
-	ASSERT(pNode != NULL);
+        nError = CreateConvex(cf_standard_convex);
+        if (nError != sgl_no_err) {
+            return nError;
+        }
+    }
+    /*
+    // dlUserGlobals.pCurrentConvex may have been changed by CreateConvex.
+    */
+    *ppNode = dlUserGlobals.pCurrentConvex;  /* Caller's pointer to node. */
+    pNode = *ppNode;  /* Local pointer to the node. */
+    ASSERT(pNode != NULL);
 
-	/*
-	// ================
-	// EXTEND PRIMITIVE
-	// ================
-	*/
-	ASSERT(pNode->u16_num_planes <= pNode->u16_max_planes);
-	if (pNode->u16_num_planes == SGL_MAX_PLANES)
-	{
-		return sgl_err_too_many_planes;
-	}
-	if (pNode->u16_num_planes == pNode->u16_max_planes)
-	{
-		/*
-		// --------------------------
-		// Extend capacity by a chunk
-		// --------------------------
-		*/
-		sgl_uint16 u16NewMaxPlanes = pNode->u16_max_planes + CHUNK_SIZE;
+    /*
+    // ================
+    // EXTEND PRIMITIVE
+    // ================
+    */
+    ASSERT(pNode->u16_num_planes <= pNode->u16_max_planes);
+    if (pNode->u16_num_planes == SGL_MAX_PLANES) {
+        return sgl_err_too_many_planes;
+    }
+    if (pNode->u16_num_planes == pNode->u16_max_planes) {
+        /*
+        // --------------------------
+        // Extend capacity by a chunk
+        // --------------------------
+        */
+        sgl_uint16 u16NewMaxPlanes = pNode->u16_max_planes + CHUNK_SIZE;
 
-		CONV_PLANE_STRUCT	*pNewPlaneData;
-		CONV_TEXTURE_UNION	*pNewTextureData;
-		CONV_SHADING_STRUCT *pNewShadingData;
-		CONV_POINTS_STRUCT *pNewPointsData;
+        CONV_PLANE_STRUCT *pNewPlaneData;
+        CONV_TEXTURE_UNION *pNewTextureData;
+        CONV_SHADING_STRUCT *pNewShadingData;
+        CONV_POINTS_STRUCT *pNewPointsData;
 
 
-		pNewPlaneData = SGLRealloc( pNode->plane_data,
-		  u16NewMaxPlanes * sizeof(CONV_PLANE_STRUCT) );
-		if (pNewPlaneData == NULL)
-		{
-			return sgl_err_no_mem;  /* The plane data is unchanged. */
-		}
+        pNewPlaneData = SGLRealloc(pNode->plane_data,
+                                   u16NewMaxPlanes * sizeof(CONV_PLANE_STRUCT));
+        if (pNewPlaneData == NULL) {
+            return sgl_err_no_mem;  /* The plane data is unchanged. */
+        }
 
-		if (pNode->texture_data != NULL)
-		{
-			pNewTextureData = SGLRealloc( pNode->texture_data,
-			  u16NewMaxPlanes * sizeof(CONV_TEXTURE_UNION) );
-			if (pNewTextureData == NULL)
-			{
-				/* Restore plane data to the unexpanded size: */
-				pNode->plane_data =
-				  SGLRealloc(pNewPlaneData, pNode->u16_max_planes);
-				ASSERT(pNode->plane_data != NULL);
+        if (pNode->texture_data != NULL) {
+            pNewTextureData = SGLRealloc(pNode->texture_data,
+                                         u16NewMaxPlanes * sizeof(CONV_TEXTURE_UNION));
+            if (pNewTextureData == NULL) {
+                /* Restore plane data to the unexpanded size: */
+                pNode->plane_data =
+                        SGLRealloc(pNewPlaneData, pNode->u16_max_planes);
+                ASSERT(pNode->plane_data != NULL);
 
-				return sgl_err_no_mem;
-			}
-		}
-		else
-		{
-			pNewTextureData = NULL;
-		}
+                return sgl_err_no_mem;
+            }
+        } else {
+            pNewTextureData = NULL;
+        }
 
-		if (pNode->points_data != NULL)
-		{
-			pNewPointsData = SGLRealloc( pNode->points_data,
-						   u16NewMaxPlanes * sizeof(CONV_POINTS_STRUCT) );
-			if (pNewPointsData == NULL)
-			{
-				/* Restore plane data to the unexpanded size: */
-				pNode->plane_data =
-						SGLRealloc(pNewPlaneData, pNode->u16_max_planes);
-				ASSERT(pNode->plane_data != NULL);
+        if (pNode->points_data != NULL) {
+            pNewPointsData = SGLRealloc(pNode->points_data,
+                                        u16NewMaxPlanes * sizeof(CONV_POINTS_STRUCT));
+            if (pNewPointsData == NULL) {
+                /* Restore plane data to the unexpanded size: */
+                pNode->plane_data =
+                        SGLRealloc(pNewPlaneData, pNode->u16_max_planes);
+                ASSERT(pNode->plane_data != NULL);
 
-				return sgl_err_no_mem;
-			}
-		}
-		else
-		{
-			pNewPointsData = NULL;
-		}
+                return sgl_err_no_mem;
+            }
+        } else {
+            pNewPointsData = NULL;
+        }
 
-		if (pNode->shading_data != NULL)
-		{
-			pNewShadingData = SGLRealloc( pNode->shading_data,
-			  u16NewMaxPlanes * sizeof(CONV_SHADING_STRUCT) );
-			if (pNewShadingData == NULL)
-			{
-				/* Restore plane and texture data to the unexpanded size: */
+        if (pNode->shading_data != NULL) {
+            pNewShadingData = SGLRealloc(pNode->shading_data,
+                                         u16NewMaxPlanes * sizeof(CONV_SHADING_STRUCT));
+            if (pNewShadingData == NULL) {
+                /* Restore plane and texture data to the unexpanded size: */
 
-				ASSERT(pNode->u16_max_planes > 0);  /* Previous max_planes. */
+                ASSERT(pNode->u16_max_planes > 0);  /* Previous max_planes. */
 
-				pNode->plane_data =
-				  SGLRealloc(pNewPlaneData, pNode->u16_max_planes);
-				ASSERT(pNode->plane_data != NULL);
+                pNode->plane_data =
+                        SGLRealloc(pNewPlaneData, pNode->u16_max_planes);
+                ASSERT(pNode->plane_data != NULL);
 
-				if (pNewTextureData != NULL)
-				{
-					pNode->texture_data =
-					  SGLRealloc(pNewTextureData, pNode->u16_max_planes);
-					ASSERT(pNode->texture_data != NULL);
-				}
+                if (pNewTextureData != NULL) {
+                    pNode->texture_data =
+                            SGLRealloc(pNewTextureData, pNode->u16_max_planes);
+                    ASSERT(pNode->texture_data != NULL);
+                }
 
-				return sgl_err_no_mem;
-			}
-		}
-		else
-		{
-			pNewShadingData = NULL;
-		}
+                return sgl_err_no_mem;
+            }
+        } else {
+            pNewShadingData = NULL;
+        }
 
-		/*
-		// --------------------
-		// Update node contents
-		// --------------------
-		// It safe to do this now since we are past all possible errors.
-		*/
-		pNode->u16_max_planes = u16NewMaxPlanes;
+        /*
+        // --------------------
+        // Update node contents
+        // --------------------
+        // It safe to do this now since we are past all possible errors.
+        */
+        pNode->u16_max_planes = u16NewMaxPlanes;
 
-		pNode->plane_data   = pNewPlaneData;
-		pNode->texture_data = pNewTextureData;
-		pNode->shading_data = pNewShadingData;
-		pNode->points_data = pNewPointsData;
-	}
-	pNode->u16_num_planes++;
+        pNode->plane_data = pNewPlaneData;
+        pNode->texture_data = pNewTextureData;
+        pNode->shading_data = pNewShadingData;
+        pNode->points_data = pNewPointsData;
+    }
+    pNode->u16_num_planes++;
 
-	ASSERT(pNode->plane_data != NULL);
-	*ppPlane = pNode->plane_data + pNode->u16_num_planes -1;
+    ASSERT(pNode->plane_data != NULL);
+    *ppPlane = pNode->plane_data + pNode->u16_num_planes - 1;
 
-	return sgl_no_err;
+    return sgl_no_err;
 }
 
 
@@ -593,43 +567,39 @@ static int CommonAddPlane(CONVEX_NODE_STRUCT **ppNode,
  *				  sgl_delete_plane.
  *****************************************************************************/
 static int CommonSetPlane(CONVEX_NODE_STRUCT **ppNode,
-  CONV_PLANE_STRUCT **ppPlane, int nPlaneIndex)
-{
-	ASSERT(ppNode != NULL);
-	/* ppPlane is NULL when called from sgl_delete_plane. */
+                          CONV_PLANE_STRUCT **ppPlane, int nPlaneIndex) {
+    ASSERT(ppNode != NULL);
+    /* ppPlane is NULL when called from sgl_delete_plane. */
 
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return sgl_err_failed_init;
-	}
+    {
+        return sgl_err_failed_init;
+    }
 #endif
 
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-	if (dlUserGlobals.pCurrentConvex == NULL)
-	{
-		return sgl_err_no_convex;
-	}
+    if (dlUserGlobals.pCurrentConvex == NULL) {
+        return sgl_err_no_convex;
+    }
 
-	*ppNode = dlUserGlobals.pCurrentConvex;
-	ASSERT(*ppNode != NULL);
+    *ppNode = dlUserGlobals.pCurrentConvex;
+    ASSERT(*ppNode != NULL);
 
-	if (nPlaneIndex < 0 || nPlaneIndex >= (*ppNode)->u16_num_planes)
-	{
-		return sgl_err_bad_index;
-	}
+    if (nPlaneIndex < 0 || nPlaneIndex >= (*ppNode)->u16_num_planes) {
+        return sgl_err_bad_index;
+    }
 
-	if (ppPlane != NULL)
-	{
-		*ppPlane = (*ppNode)->plane_data + nPlaneIndex;
-		ASSERT(*ppPlane != NULL);
-	}
+    if (ppPlane != NULL) {
+        *ppPlane = (*ppNode)->plane_data + nPlaneIndex;
+        ASSERT(*ppPlane != NULL);
+    }
 
-	return sgl_no_err;
+    return sgl_no_err;
 }
 
 
@@ -644,46 +614,42 @@ static int CommonSetPlane(CONVEX_NODE_STRUCT **ppNode,
  * Description  : Defines a simple plane.  Called by sgl_add_simple_plane and
  *				  sgl_set_simple_plane.
  *****************************************************************************/
-static void DefineSimplePlane( CONVEX_NODE_STRUCT *pNode,
-							   CONV_PLANE_STRUCT *pPlane, 
-							   sgl_vector surfacePoint, 
-							   sgl_vector normal,
-							   sgl_bool bInvisible)
-{
+static void DefineSimplePlane(CONVEX_NODE_STRUCT *pNode,
+                              CONV_PLANE_STRUCT *pPlane,
+                              sgl_vector surfacePoint,
+                              sgl_vector normal,
+                              sgl_bool bInvisible) {
 
-	sgl_bool StandardConvex;
+    sgl_bool StandardConvex;
 
-	ASSERT(pNode != NULL);
-	ASSERT(pPlane != NULL);
+    ASSERT(pNode != NULL);
+    ASSERT(pPlane != NULL);
 
-	/*
-	// is this a standard convex primitive, or one of the special types?
-	// Special types ignore invisibility, texture and smooth shading info
-	*/
-	StandardConvex =((pNode->u16_flags & cf_mask_type) == cf_standard_convex);
+    /*
+    // is this a standard convex primitive, or one of the special types?
+    // Special types ignore invisibility, texture and smooth shading info
+    */
+    StandardConvex = ((pNode->u16_flags & cf_mask_type) == cf_standard_convex);
 
-	/*
-	// ignore invisible if not a standard convex
-	*/
-	if(!StandardConvex)
-	{
-		bInvisible = FALSE;
-	}
-	else if (bInvisible)
-	{
-		pNode->u16_flags &= ~cf_all_visible;
-	}
+    /*
+    // ignore invisible if not a standard convex
+    */
+    if (!StandardConvex) {
+        bInvisible = FALSE;
+    } else if (bInvisible) {
+        pNode->u16_flags &= ~cf_all_visible;
+    }
 
-	pNode->u16_flags &= ~(cf_all_premapped | cf_all_text_wrap | cf_all_smooth);
+    pNode->u16_flags &= ~(cf_all_premapped | cf_all_text_wrap | cf_all_smooth);
 
-	pPlane->flags = bInvisible ? 0 : pf_visible;
-	pPlane->normal[0] = normal[0];
-	pPlane->normal[1] = normal[1];
-	pPlane->normal[2] = normal[2];
-	VecNormalise(pPlane->normal);
-	pPlane->rep_point[0] = surfacePoint[0];
-	pPlane->rep_point[1] = surfacePoint[1];
-	pPlane->rep_point[2] = surfacePoint[2];
+    pPlane->flags = bInvisible ? 0 : pf_visible;
+    pPlane->normal[0] = normal[0];
+    pPlane->normal[1] = normal[1];
+    pPlane->normal[2] = normal[2];
+    VecNormalise(pPlane->normal);
+    pPlane->rep_point[0] = surfacePoint[0];
+    pPlane->rep_point[1] = surfacePoint[1];
+    pPlane->rep_point[2] = surfacePoint[2];
 }
 
 
@@ -699,296 +665,260 @@ static void DefineSimplePlane( CONVEX_NODE_STRUCT *pNode,
  * Description  : Defines a non-simple plane.  Called by sgl_add_plane and
  *				  sgl_set_plane.
  *****************************************************************************/
-static int DefinePlane(	CONVEX_NODE_STRUCT *pNode, 
-						CONV_PLANE_STRUCT *pPlane,
-						sgl_vector surfacePoint, 
-						sgl_vector point2, 
-						sgl_vector point3,
-						sgl_bool   bInvisible, 
-						sgl_vector normal1,
-						sgl_vector normal2,
-						sgl_vector normal3, 
-						sgl_2d_vec uv1, 
-						sgl_2d_vec uv2,
-						sgl_2d_vec uv3 )
-{
-	int		   nErr = sgl_no_err;
-	sgl_bool   bSupplyNormals, bSupplyUV,
-			     bTextureMemOk=TRUE, bShadingMemOk=TRUE;
-	sgl_vector diff1,diff2, crossProd, newSurfacePoint,newPoint2,newPoint3;
+static int DefinePlane(CONVEX_NODE_STRUCT *pNode,
+                       CONV_PLANE_STRUCT *pPlane,
+                       sgl_vector surfacePoint,
+                       sgl_vector point2,
+                       sgl_vector point3,
+                       sgl_bool bInvisible,
+                       sgl_vector normal1,
+                       sgl_vector normal2,
+                       sgl_vector normal3,
+                       sgl_2d_vec uv1,
+                       sgl_2d_vec uv2,
+                       sgl_2d_vec uv3) {
+    int nErr = sgl_no_err;
+    sgl_bool bSupplyNormals, bSupplyUV,
+            bTextureMemOk = TRUE, bShadingMemOk = TRUE;
+    sgl_vector diff1, diff2, crossProd, newSurfacePoint, newPoint2, newPoint3;
 
-	CONV_TEXTURE_UNION  *pTexture;
-	CONV_SHADING_STRUCT *pShading;
-	CONV_POINTS_STRUCT  *pPoints;
+    CONV_TEXTURE_UNION *pTexture;
+    CONV_SHADING_STRUCT *pShading;
+    CONV_POINTS_STRUCT *pPoints;
 
-	ASSERT(pNode != NULL);
-	ASSERT(pPlane != NULL);
+    ASSERT(pNode != NULL);
+    ASSERT(pPlane != NULL);
 
-	bSupplyNormals = (normal1 != NULL);
-	bSupplyUV = (uv1 != NULL);
+    bSupplyNormals = (normal1 != NULL);
+    bSupplyUV = (uv1 != NULL);
 
-	/*
-	// check whether normal information is only partly present
-	*/
-	if (bSupplyNormals)
-	{
-		if (normal2 == NULL || normal3 == NULL)
-		{
-			nErr = sgl_err_bad_parameter;
-			bSupplyNormals = FALSE;
-		}
-	}
-	else
-	{
-		if (normal2 != NULL || normal3 != NULL)
-		{
-			nErr = sgl_err_bad_parameter;
-		}
-	}
+    /*
+    // check whether normal information is only partly present
+    */
+    if (bSupplyNormals) {
+        if (normal2 == NULL || normal3 == NULL) {
+            nErr = sgl_err_bad_parameter;
+            bSupplyNormals = FALSE;
+        }
+    } else {
+        if (normal2 != NULL || normal3 != NULL) {
+            nErr = sgl_err_bad_parameter;
+        }
+    }
 
-	/*
-	// check whether UV information is only partly present
-	*/
-	if (bSupplyUV)
-	{
-		if (uv2 == NULL || uv3 == NULL)
-		{
-			nErr = sgl_err_bad_parameter;
-			bSupplyUV = FALSE;
-		}
-	}
-	else
-	{
-		if (uv2 != NULL || uv3 != NULL)
-		{
-			nErr = sgl_err_bad_parameter;
-		}
-	}
+    /*
+    // check whether UV information is only partly present
+    */
+    if (bSupplyUV) {
+        if (uv2 == NULL || uv3 == NULL) {
+            nErr = sgl_err_bad_parameter;
+            bSupplyUV = FALSE;
+        }
+    } else {
+        if (uv2 != NULL || uv3 != NULL) {
+            nErr = sgl_err_bad_parameter;
+        }
+    }
 
-	/*
-	// is this a standard convex primitive, or one of the special types?
-	// Special types ignore invisibility, texture and smooth shading info
-	*/
-	if ((pNode->u16_flags & cf_mask_type) != cf_standard_convex)
-	{
-		bInvisible = FALSE;
-		bSupplyNormals = FALSE;
-		bSupplyUV = FALSE;
-	}
+    /*
+    // is this a standard convex primitive, or one of the special types?
+    // Special types ignore invisibility, texture and smooth shading info
+    */
+    if ((pNode->u16_flags & cf_mask_type) != cf_standard_convex) {
+        bInvisible = FALSE;
+        bSupplyNormals = FALSE;
+        bSupplyUV = FALSE;
+    }
 
-	/*
-	// ==================
-	// ENSURE COLINEARITY
-	// ==================
-	*/
-	diff1[0] = surfacePoint[0] - point2[0];
-	diff1[1] = surfacePoint[1] - point2[1];
-	diff1[2] = surfacePoint[2] - point2[2];
+    /*
+    // ==================
+    // ENSURE COLINEARITY
+    // ==================
+    */
+    diff1[0] = surfacePoint[0] - point2[0];
+    diff1[1] = surfacePoint[1] - point2[1];
+    diff1[2] = surfacePoint[2] - point2[2];
 
-	diff2[0] = surfacePoint[0] - point3[0];
-	diff2[1] = surfacePoint[1] - point3[1];
-	diff2[2] = surfacePoint[2] - point3[2];
+    diff2[0] = surfacePoint[0] - point3[0];
+    diff2[1] = surfacePoint[1] - point3[1];
+    diff2[2] = surfacePoint[2] - point3[2];
 
-	CrossProd(diff1,diff2,crossProd);
-	if (fabs(crossProd[0]) < MIN_CROSS_PROD &&
-	    fabs(crossProd[1]) < MIN_CROSS_PROD &&
-	    fabs(crossProd[2]) < MIN_CROSS_PROD)
-	{
-		DPFDEV((DBG_MESSAGE,"Colinear pts:\n(%e,%e,%e)\n(%e,%e,%e)\n(%e,%e,%e)",			 
-		  surfacePoint[0], surfacePoint[1], surfacePoint[2],
-		  point2[0], point2[1], point2[2],
-		  point3[0], point3[1], point3[2]));
+    CrossProd(diff1, diff2, crossProd);
+    if (fabs(crossProd[0]) < MIN_CROSS_PROD &&
+        fabs(crossProd[1]) < MIN_CROSS_PROD &&
+        fabs(crossProd[2]) < MIN_CROSS_PROD) {
+        DPFDEV((DBG_MESSAGE, "Colinear pts:\n(%e,%e,%e)\n(%e,%e,%e)\n(%e,%e,%e)",
+                surfacePoint[0], surfacePoint[1], surfacePoint[2],
+                point2[0], point2[1], point2[2],
+                point3[0], point3[1], point3[2]));
 
-		newSurfacePoint[0] = 0.0f;
-		newSurfacePoint[1] = 0.0f;
-		newSurfacePoint[2] = 0.0f;
+        newSurfacePoint[0] = 0.0f;
+        newSurfacePoint[1] = 0.0f;
+        newSurfacePoint[2] = 0.0f;
 
-		newPoint2[0] = 1.0f;
-		newPoint2[1] = 0.0f;
-		newPoint2[2] = 0.0f;
+        newPoint2[0] = 1.0f;
+        newPoint2[1] = 0.0f;
+        newPoint2[2] = 0.0f;
 
-		newPoint3[0] = 0.0f;
-		newPoint3[1] = 1.0f;
-		newPoint3[2] = 0.0f;
+        newPoint3[0] = 0.0f;
+        newPoint3[1] = 1.0f;
+        newPoint3[2] = 0.0f;
 
-		/*
-		// We are changing the pointers (which are now local to this function)
-		// rather than the values in order that the caller's vectors are not
-		// changed.
-		*/
-		surfacePoint = newSurfacePoint;
-		point2 = newPoint2;
-		point3 = newPoint3;
+        /*
+        // We are changing the pointers (which are now local to this function)
+        // rather than the values in order that the caller's vectors are not
+        // changed.
+        */
+        surfacePoint = newSurfacePoint;
+        point2 = newPoint2;
+        point3 = newPoint3;
 
-		crossProd[0] = 0.0f;
-		crossProd[1] = 0.0f;
-		crossProd[2] = 1.0f; /* Normal to the plane. */
+        crossProd[0] = 0.0f;
+        crossProd[1] = 0.0f;
+        crossProd[2] = 1.0f; /* Normal to the plane. */
 
-		nErr = sgl_err_colinear_plane_points;
-	}
+        nErr = sgl_err_colinear_plane_points;
+    }
 
-	/*
-	// ==================
-	// CONTINUE NODE FILL
-	// ==================
-	*/
-	if (bInvisible)
-	{
-		pNode->u16_flags &= ~cf_all_visible;
-	}
-	pPlane->flags = bInvisible ? 0 : pf_visible;
+    /*
+    // ==================
+    // CONTINUE NODE FILL
+    // ==================
+    */
+    if (bInvisible) {
+        pNode->u16_flags &= ~cf_all_visible;
+    }
+    pPlane->flags = bInvisible ? 0 : pf_visible;
 
-	VecNormalise(crossProd);
-	pPlane->normal[0] = crossProd[0];
-	pPlane->normal[1] = crossProd[1];
-	pPlane->normal[2] = crossProd[2];
+    VecNormalise(crossProd);
+    pPlane->normal[0] = crossProd[0];
+    pPlane->normal[1] = crossProd[1];
+    pPlane->normal[2] = crossProd[2];
 
-	pPlane->rep_point[0] = surfacePoint[0];
-	pPlane->rep_point[1] = surfacePoint[1];
-	pPlane->rep_point[2] = surfacePoint[2];
+    pPlane->rep_point[0] = surfacePoint[0];
+    pPlane->rep_point[1] = surfacePoint[1];
+    pPlane->rep_point[2] = surfacePoint[2];
 
-	/* if we have points, hang on to 'em */
-	
-	if (pNode->points_data == NULL)
-	{
-		pNode->points_data = SGLMalloc (pNode->u16_max_planes * 
-									sizeof(CONV_POINTS_STRUCT));
- 
-		if (pNode->points_data == NULL)
-		{
-			DPF ((DBG_ERROR, "DefinePlane: no memory for points data"));
-			nErr = sgl_err_no_mem;
-		}
-	}
+    /* if we have points, hang on to 'em */
 
-	pPoints = pNode->points_data + pNode->u16_num_planes -1;
+    if (pNode->points_data == NULL) {
+        pNode->points_data = SGLMalloc (pNode->u16_max_planes *
+                                        sizeof(CONV_POINTS_STRUCT));
 
-	VecCopy (surfacePoint, pPoints->pt1);
-	VecSub (point2, surfacePoint, pPoints->pt2_delta);
-	VecSub (point3, surfacePoint, pPoints->pt3_delta);
+        if (pNode->points_data == NULL) {
+            DPF ((DBG_ERROR, "DefinePlane: no memory for points data"));
+            nErr = sgl_err_no_mem;
+        }
+    }
 
-	/*
-	// -------
-	// Texture
-	// -------
-	*/
+    pPoints = pNode->points_data + pNode->u16_num_planes - 1;
 
-	if (bSupplyUV)
-	{
-		/***** Ensure texture information memory is set up: *****/
-	
-		if (pNode->texture_data == NULL)
-		{
-			pNode->texture_data = SGLMalloc (pNode->u16_max_planes * sizeof(CONV_TEXTURE_UNION));
-			if (pNode->texture_data == NULL)
-			{
-				bTextureMemOk = FALSE;
-				nErr = sgl_err_no_mem;
-			}
-		}
-	
-		if (bTextureMemOk)
-		{
-			/***** Texture flags: *****/
-	
-			pPlane->flags |= pf_textured;			   /* This is textured. */
-			/*OPTIMISATION: USE PREMAPPING ALSO FOR UNMODIFYABLE NODE & MATERIAL*/
-			pPlane->flags |= pf_pre_mapped;		   /* This is premapped. */
-			pNode->u16_flags &= ~cf_all_text_wrap; /* Not all texture wrapped*/
-	
-			/***** Calculate texture information: *****/
-	
-			pTexture = pNode->texture_data + pNode->u16_num_planes -1;
-			/*OPTIMISATION: USE PREMAPPING ALSO FOR UNMODIFYABLE NODE & MATERIAL*/
-			MapExternalToInternal(surfacePoint,point2,point3, uv1,uv2,uv3,
-			  pTexture->pre_mapped.u_vect, pTexture->pre_mapped.v_vect,
-			  pTexture->pre_mapped.o_vect);
-		}
-		else
-		{
-			/* Not all texture wrapped and not all premapped: */
-			pNode->u16_flags &= ~(cf_all_text_wrap | cf_all_premapped);
-		}
-	}
-	else
-	{
-		/* Not all premapped. */
-		pNode->u16_flags &= ~cf_all_premapped; 
-	}
+    VecCopy(surfacePoint, pPoints->pt1);
+    VecSub(point2, surfacePoint, pPoints->pt2_delta);
+    VecSub(point3, surfacePoint, pPoints->pt3_delta);
 
-	/*
-	// -------
-	// Shading
-	// -------
-	*/
-	if (bSupplyNormals)
-	{
-		/***** Ensure shading information memory is set up: *****/
+    /*
+    // -------
+    // Texture
+    // -------
+    */
 
-		if (pNode->shading_data == NULL)
-		{
-			pNode->shading_data = 
-			  SGLMalloc (pNode->u16_max_planes * sizeof(CONV_SHADING_STRUCT));
-			
-			if (pNode->shading_data == NULL)
-			{
-				DPF ((DBG_ERROR, "DefinePlane: no memory for shading data"));
-				bShadingMemOk = FALSE;
-				nErr = sgl_err_no_mem;
-			}
-		}
+    if (bSupplyUV) {
+        /***** Ensure texture information memory is set up: *****/
 
-		if (bShadingMemOk)
-		{
-			/***** Calculate address of shading information: *****/
+        if (pNode->texture_data == NULL) {
+            pNode->texture_data = SGLMalloc (pNode->u16_max_planes * sizeof(CONV_TEXTURE_UNION));
+            if (pNode->texture_data == NULL) {
+                bTextureMemOk = FALSE;
+                nErr = sgl_err_no_mem;
+            }
+        }
 
-			pShading = pNode->shading_data + pNode->u16_num_planes -1;
+        if (bTextureMemOk) {
+            /***** Texture flags: *****/
 
-			if (SmoothPlaneDataPrecalc( pShading, surfacePoint, point2, point3, 
-										normal1, normal2, normal3))
-			{
-				/***** Shading flag: *****/
+            pPlane->flags |= pf_textured;               /* This is textured. */
+            /*OPTIMISATION: USE PREMAPPING ALSO FOR UNMODIFYABLE NODE & MATERIAL*/
+            pPlane->flags |= pf_pre_mapped;           /* This is premapped. */
+            pNode->u16_flags &= ~cf_all_text_wrap; /* Not all texture wrapped*/
 
-				pPlane->flags |= pf_smooth_shad;  /* This is smooth shaded. */
-			}
-			else
-			{
-				DPF ((DBG_WARNING, "DefinePlane: invalid shading data"));
+            /***** Calculate texture information: *****/
 
-				/* 
-				// non fatal - plane will be flat shaded, but return an 
-				// error in case anyone is interested 
-				*/
-				pNode->u16_flags &= ~cf_all_smooth; /* not all smooth shaded */
+            pTexture = pNode->texture_data + pNode->u16_num_planes - 1;
+            /*OPTIMISATION: USE PREMAPPING ALSO FOR UNMODIFYABLE NODE & MATERIAL*/
+            MapExternalToInternal(surfacePoint, point2, point3, uv1, uv2, uv3,
+                                  pTexture->pre_mapped.u_vect, pTexture->pre_mapped.v_vect,
+                                  pTexture->pre_mapped.o_vect);
+        } else {
+            /* Not all texture wrapped and not all premapped: */
+            pNode->u16_flags &= ~(cf_all_text_wrap | cf_all_premapped);
+        }
+    } else {
+        /* Not all premapped. */
+        pNode->u16_flags &= ~cf_all_premapped;
+    }
 
-				/*
-				// This is assuming that colinear plane points were the
-				// problem.
-				*/
-				nErr = sgl_err_colinear_plane_points;
-			}
-		}
-		else
-		{
-			pNode->u16_flags &= ~cf_all_smooth; /* not all smooth shaded */
-		}
-	}
-	else
-	{
-		pNode->u16_flags &= ~cf_all_smooth; /* not all smooth shaded */
-	}
+    /*
+    // -------
+    // Shading
+    // -------
+    */
+    if (bSupplyNormals) {
+        /***** Ensure shading information memory is set up: *****/
 
-	if (!bShadingMemOk)
-	{
-		pNode->u16_flags &= ~cf_all_smooth;  /* Not all smooth shaded. */
-	}
+        if (pNode->shading_data == NULL) {
+            pNode->shading_data =
+                    SGLMalloc (pNode->u16_max_planes * sizeof(CONV_SHADING_STRUCT));
 
-	/*
-	// ======
-	// RETURN
-	// ======
-	*/
-	return nErr;
+            if (pNode->shading_data == NULL) {
+                DPF ((DBG_ERROR, "DefinePlane: no memory for shading data"));
+                bShadingMemOk = FALSE;
+                nErr = sgl_err_no_mem;
+            }
+        }
+
+        if (bShadingMemOk) {
+            /***** Calculate address of shading information: *****/
+
+            pShading = pNode->shading_data + pNode->u16_num_planes - 1;
+
+            if (SmoothPlaneDataPrecalc(pShading, surfacePoint, point2, point3,
+                                       normal1, normal2, normal3)) {
+                /***** Shading flag: *****/
+
+                pPlane->flags |= pf_smooth_shad;  /* This is smooth shaded. */
+            } else {
+                DPF ((DBG_WARNING, "DefinePlane: invalid shading data"));
+
+                /*
+                // non fatal - plane will be flat shaded, but return an
+                // error in case anyone is interested
+                */
+                pNode->u16_flags &= ~cf_all_smooth; /* not all smooth shaded */
+
+                /*
+                // This is assuming that colinear plane points were the
+                // problem.
+                */
+                nErr = sgl_err_colinear_plane_points;
+            }
+        } else {
+            pNode->u16_flags &= ~cf_all_smooth; /* not all smooth shaded */
+        }
+    } else {
+        pNode->u16_flags &= ~cf_all_smooth; /* not all smooth shaded */
+    }
+
+    if (!bShadingMemOk) {
+        pNode->u16_flags &= ~cf_all_smooth;  /* Not all smooth shaded. */
+    }
+
+    /*
+    // ======
+    // RETURN
+    // ======
+    */
+    return nErr;
 }
 
 
@@ -1004,68 +934,58 @@ static int DefinePlane(	CONVEX_NODE_STRUCT *pNode,
  *				  updated itself.  (It still says the data is present.)
  *				  Called by DlDeleteConvexNodeRefs and sgl_modify_polyhedron.
  *****************************************************************************/
-static void StripNode(CONVEX_NODE_STRUCT *pNode)
-{
-	CONVEX_FLAGS_ENUM ConvexType;
-	ASSERT(pNode != NULL);
+static void StripNode(CONVEX_NODE_STRUCT *pNode) {
+    CONVEX_FLAGS_ENUM ConvexType;
+    ASSERT(pNode != NULL);
 
-	SGLFree(pNode->edge_info);
-       
-	SGLFree(pNode->texture_data);
-	SGLFree(pNode->shading_data);
-	SGLFree(pNode->points_data);
+    SGLFree(pNode->edge_info);
 
-	/*
-	// if this was a light or shadow volume node, then decrement usage
-	// count on the associated light
-	*/
-	ConvexType = (CONVEX_FLAGS_ENUM) (pNode->u16_flags & cf_mask_type);
+    SGLFree(pNode->texture_data);
+    SGLFree(pNode->shading_data);
+    SGLFree(pNode->points_data);
 
-	if(ConvexType == cf_light_volume || ConvexType == cf_shadow_volume)
-	{
-		DecNamedItemUsage(dlUserGlobals.pNamtab, pNode->u16_volumes_light);
-	}
+    /*
+    // if this was a light or shadow volume node, then decrement usage
+    // count on the associated light
+    */
+    ConvexType = (CONVEX_FLAGS_ENUM) (pNode->u16_flags & cf_mask_type);
+
+    if (ConvexType == cf_light_volume || ConvexType == cf_shadow_volume) {
+        DecNamedItemUsage(dlUserGlobals.pNamtab, pNode->u16_volumes_light);
+    }
 
 
-	if (pNode->local_materials != NULL)
-	{
-		unsigned uMat;
-		LOCAL_MATERIALS_STRUCT *pMatData;
+    if (pNode->local_materials != NULL) {
+        unsigned uMat;
+        LOCAL_MATERIALS_STRUCT *pMatData;
 
-		for (uMat=0; uMat < pNode->u16_num_materials; uMat++)
-		{
-			pMatData = pNode->local_materials + uMat;
-			/* If we have a valid material name: */
-			if (pMatData->material_name != NM_INVALID_NAME)
-			{
-				/*
-				// We cannot have both a material name and a material node
-				// pointer:
-				*/
-				ASSERT(pMatData->p_material == NULL);
+        for (uMat = 0; uMat < pNode->u16_num_materials; uMat++) {
+            pMatData = pNode->local_materials + uMat;
+            /* If we have a valid material name: */
+            if (pMatData->material_name != NM_INVALID_NAME) {
+                /*
+                // We cannot have both a material name and a material node
+                // pointer:
+                */
+                ASSERT(pMatData->p_material == NULL);
 
-				DecNamedItemUsage(dlUserGlobals.pNamtab,
-				  pMatData->material_name);
-			}
-			else
-			{
-				/* If we have a valid material node pointer: */
-				if (pMatData->p_material != NULL)
-				{
-					DlDeleteNode((DL_NODE_STRUCT *)pMatData->p_material);
-				}
-				else
-				{
-					/*
-					// We can have a blank local material only for the first
-					// local material in the list.
-					*/
-					ASSERT(uMat == 0);
-				}
-			}
-		}
-		SGLFree(pNode->local_materials);
-	}
+                DecNamedItemUsage(dlUserGlobals.pNamtab,
+                                  pMatData->material_name);
+            } else {
+                /* If we have a valid material node pointer: */
+                if (pMatData->p_material != NULL) {
+                    DlDeleteNode((DL_NODE_STRUCT *) pMatData->p_material);
+                } else {
+                    /*
+                    // We can have a blank local material only for the first
+                    // local material in the list.
+                    */
+                    ASSERT(uMat == 0);
+                }
+            }
+        }
+        SGLFree(pNode->local_materials);
+    }
 }
 
 
@@ -1107,7 +1027,7 @@ static void StripNode(CONVEX_NODE_STRUCT *pNode)
  *****************************************************************************/
 
 
-#if 0  
+#if 0
 
 
 /*
@@ -1118,126 +1038,126 @@ void MapExternalToInternal(sgl_vector P0, sgl_vector P1, sgl_vector P2,
   sgl_2d_vec UV0, sgl_2d_vec UV1, sgl_2d_vec UV2, sgl_vector U, sgl_vector V,
   sgl_vector O)
 {
-	sgl_vector Q0,Q1;
-	float a,b,c,d;        /*2d matrix to invert */
-	float ai,bi,ci,di;    /*inverted 2d matrix  */
-	float det;
+    sgl_vector Q0,Q1;
+    float a,b,c,d;        /*2d matrix to invert */
+    float ai,bi,ci,di;    /*inverted 2d matrix  */
+    float det;
 
-	DPF(( DBG_VERBOSE, "P0 =%f %f %f", P0[0],P0[1],P0[2] ));
-	DPF(( DBG_VERBOSE, "P1 =%f %f %f", P1[0],P1[1],P1[2] ));
-	DPF(( DBG_VERBOSE, "P2 =%f %f %f", P2[0],P2[1],P2[2] ));
+    DPF(( DBG_VERBOSE, "P0 =%f %f %f", P0[0],P0[1],P0[2] ));
+    DPF(( DBG_VERBOSE, "P1 =%f %f %f", P1[0],P1[1],P1[2] ));
+    DPF(( DBG_VERBOSE, "P2 =%f %f %f", P2[0],P2[1],P2[2] ));
 
-	DPF(( DBG_VERBOSE, "UV0 =%f %f", UV0[0],UV0[1] ));
-	DPF(( DBG_VERBOSE, "UV1 =%f %f", UV1[0],UV1[1] ));
-	DPF(( DBG_VERBOSE, "UV2 =%f %f", UV2[0],UV2[1] ));
+    DPF(( DBG_VERBOSE, "UV0 =%f %f", UV0[0],UV0[1] ));
+    DPF(( DBG_VERBOSE, "UV1 =%f %f", UV1[0],UV1[1] ));
+    DPF(( DBG_VERBOSE, "UV2 =%f %f", UV2[0],UV2[1] ));
 
-	Q0[0]=P0[0]-P1[0];
-	Q0[1]=P0[1]-P1[1];
-	Q0[2]=P0[2]-P1[2];
+    Q0[0]=P0[0]-P1[0];
+    Q0[1]=P0[1]-P1[1];
+    Q0[2]=P0[2]-P1[2];
 
-	Q1[0]=P0[0]-P2[0];
-	Q1[1]=P0[1]-P2[1];
-	Q1[2]=P0[2]-P2[2];
+    Q1[0]=P0[0]-P2[0];
+    Q1[1]=P0[1]-P2[1];
+    Q1[2]=P0[2]-P2[2];
 
-	a=UV0[0]-UV1[0];
-	b=UV0[1]-UV1[1];
-	c=UV0[0]-UV2[0];
-	d=UV0[1]-UV2[1];
+    a=UV0[0]-UV1[0];
+    b=UV0[1]-UV1[1];
+    c=UV0[0]-UV2[0];
+    d=UV0[1]-UV2[1];
 
-	ai=d;    /*transpose matrix*/
-	bi=-b;
-	ci=-c;
-	di=a;
+    ai=d;    /*transpose matrix*/
+    bi=-b;
+    ci=-c;
+    di=a;
 
-	det=a*d - b*c; /*calculate determinant*/
+    det=a*d - b*c; /*calculate determinant*/
 
-	DPF(( DBG_VERBOSE, "det=%e", det ));
+    DPF(( DBG_VERBOSE, "det=%e", det ));
 
-	if(fabs(det)<1.0e-4)    /*clip determinant*/
-	{
-		DPF ((DBG_WARNING, "MapExternalToInternal: determinant is very small (%f); clipping", det));
-	    det=1.0e-4;
+    if(fabs(det)<1.0e-4)    /*clip determinant*/
+    {
+        DPF ((DBG_WARNING, "MapExternalToInternal: determinant is very small (%f); clipping", det));
+        det=1.0e-4;
 
-		SglWarning(sgl_warn_colinear_uvs);
-	}
+        SglWarning(sgl_warn_colinear_uvs);
+    }
 
-	det=1.0f/det;
+    det=1.0f/det;
 
-	DPF(( DBG_VERBOSE, "det=%e", det ));
+    DPF(( DBG_VERBOSE, "det=%e", det ));
 
-	ai*=det;
-	bi*=det;
-	ci*=det;
-	di*=det;
+    ai*=det;
+    bi*=det;
+    ci*=det;
+    di*=det;
 
-	/*
-	** multiply the inverse by Q0 and Q1
-	*/
+    /*
+    ** multiply the inverse by Q0 and Q1
+    */
 
-	U[0]=ai*Q0[0];  /*calculate U*/
-	U[1]=ai*Q0[1]; 
-	U[2]=ai*Q0[2]; 
+    U[0]=ai*Q0[0];  /*calculate U*/
+    U[1]=ai*Q0[1];
+    U[2]=ai*Q0[2];
 
-	U[0]+=bi*Q1[0];
-	U[1]+=bi*Q1[1]; 
-	U[2]+=bi*Q1[2]; 
+    U[0]+=bi*Q1[0];
+    U[1]+=bi*Q1[1];
+    U[2]+=bi*Q1[2];
 
-	V[0]=ci*Q0[0];  /*calculate V*/
-	V[1]=ci*Q0[1]; 
-	V[2]=ci*Q0[2]; 
+    V[0]=ci*Q0[0];  /*calculate V*/
+    V[1]=ci*Q0[1];
+    V[2]=ci*Q0[2];
 
-	V[0]+=di*Q1[0];
-	V[1]+=di*Q1[1]; 
-	V[2]+=di*Q1[2]; 
+    V[0]+=di*Q1[0];
+    V[1]+=di*Q1[1];
+    V[2]+=di*Q1[2];
 
-	/*
-	** now calculate the origin using the first set of coeff's. 
-	*/
+    /*
+    ** now calculate the origin using the first set of coeff's.
+    */
 
-	O[0]=UV0[0]*U[0] + UV0[1]*V[0];
-	O[1]=UV0[0]*U[1] + UV0[1]*V[1];
-	O[2]=UV0[0]*U[2] + UV0[1]*V[2];
+    O[0]=UV0[0]*U[0] + UV0[1]*V[0];
+    O[1]=UV0[0]*U[1] + UV0[1]*V[1];
+    O[2]=UV0[0]*U[2] + UV0[1]*V[2];
 
-	O[0]=P0[0]-O[0];
-	O[1]=P0[1]-O[1];
-	O[2]=P0[2]-O[2];
+    O[0]=P0[0]-O[0];
+    O[1]=P0[1]-O[1];
+    O[2]=P0[2]-O[2];
 
 
 #if DEBUG
-	/* now output the coefficients */
+    /* now output the coefficients */
 
-	DPF(( DBG_VERBOSE, "U[]=%f %f %f", U[0],U[1],U[2] ));
-	DPF(( DBG_VERBOSE, "V[]=%f %f %f", V[0],V[1],V[2] ));
-	DPF(( DBG_VERBOSE, "O[]=%f %f %f", O[0],O[1],O[2] ));
+    DPF(( DBG_VERBOSE, "U[]=%f %f %f", U[0],U[1],U[2] ));
+    DPF(( DBG_VERBOSE, "V[]=%f %f %f", V[0],V[1],V[2] ));
+    DPF(( DBG_VERBOSE, "O[]=%f %f %f", O[0],O[1],O[2] ));
 
-	/*test that my code is working*/
+    /*test that my code is working*/
 
-	if(fabs((O[0]+UV0[0]*U[0]+UV0[1]*V[0])-P0[0])>1e-4 ||
-	   fabs((O[1]+UV0[0]*U[1]+UV0[1]*V[1])-P0[1])>1e-4 ||
-	   fabs((O[2]+UV0[0]*U[2]+UV0[1]*V[2])-P0[2])>1e-4 )
-	   DPF(( DBG_VERBOSE, "P0 does not match!!" ));
-	   
-	if(fabs((O[0]+UV1[0]*U[0]+UV1[1]*V[0])-P1[0])>1e-4 ||
-	   fabs((O[1]+UV1[0]*U[1]+UV1[1]*V[1])-P1[1])>1e-4 ||
-	   fabs((O[2]+UV1[0]*U[2]+UV1[1]*V[2])-P1[2])>1e-4 )
-	   DPF(( DBG_VERBOSE, "P1 does not match!!" ));
+    if(fabs((O[0]+UV0[0]*U[0]+UV0[1]*V[0])-P0[0])>1e-4 ||
+       fabs((O[1]+UV0[0]*U[1]+UV0[1]*V[1])-P0[1])>1e-4 ||
+       fabs((O[2]+UV0[0]*U[2]+UV0[1]*V[2])-P0[2])>1e-4 )
+       DPF(( DBG_VERBOSE, "P0 does not match!!" ));
 
-	if(fabs((O[0]+UV2[0]*U[0]+UV2[1]*V[0])-P2[0])>1e-4 ||
-	   fabs((O[1]+UV2[0]*U[1]+UV2[1]*V[1])-P2[1])>1e-4 ||
-	   fabs((O[2]+UV2[0]*U[2]+UV2[1]*V[2])-P2[2])>1e-4 )
-	   DPF(( DBG_VERBOSE, "P2 does not match!!" ));
+    if(fabs((O[0]+UV1[0]*U[0]+UV1[1]*V[0])-P1[0])>1e-4 ||
+       fabs((O[1]+UV1[0]*U[1]+UV1[1]*V[1])-P1[1])>1e-4 ||
+       fabs((O[2]+UV1[0]*U[2]+UV1[1]*V[2])-P1[2])>1e-4 )
+       DPF(( DBG_VERBOSE, "P1 does not match!!" ));
 
-	DPF(( DBG_VERBOSE, "P0= %f %f %f", O[0]+UV0[0]*U[0]+UV0[1]*V[0],
-								  	   O[1]+UV0[0]*U[1]+UV0[1]*V[1],
-									   O[2]+UV0[0]*U[2]+UV0[1]*V[2] ));
+    if(fabs((O[0]+UV2[0]*U[0]+UV2[1]*V[0])-P2[0])>1e-4 ||
+       fabs((O[1]+UV2[0]*U[1]+UV2[1]*V[1])-P2[1])>1e-4 ||
+       fabs((O[2]+UV2[0]*U[2]+UV2[1]*V[2])-P2[2])>1e-4 )
+       DPF(( DBG_VERBOSE, "P2 does not match!!" ));
 
-	DPF(( DBG_VERBOSE, "P1= %f %f %f", O[0]+UV1[0]*U[0]+UV1[1]*V[0],
-								  	   O[1]+UV1[0]*U[1]+UV1[1]*V[1],
-									   O[2]+UV1[0]*U[2]+UV1[1]*V[2] ));
+    DPF(( DBG_VERBOSE, "P0= %f %f %f", O[0]+UV0[0]*U[0]+UV0[1]*V[0],
+                                         O[1]+UV0[0]*U[1]+UV0[1]*V[1],
+                                       O[2]+UV0[0]*U[2]+UV0[1]*V[2] ));
 
-	DPF(( DBG_VERBOSE, "P2= %f %f %f", O[0]+UV2[0]*U[0]+UV2[1]*V[0],
-								  	   O[1]+UV2[0]*U[1]+UV2[1]*V[1],
-									   O[2]+UV2[0]*U[2]+UV2[1]*V[2] ));
+    DPF(( DBG_VERBOSE, "P1= %f %f %f", O[0]+UV1[0]*U[0]+UV1[1]*V[0],
+                                         O[1]+UV1[0]*U[1]+UV1[1]*V[1],
+                                       O[2]+UV1[0]*U[2]+UV1[1]*V[2] ));
+
+    DPF(( DBG_VERBOSE, "P2= %f %f %f", O[0]+UV2[0]*U[0]+UV2[1]*V[0],
+                                         O[1]+UV2[0]*U[1]+UV2[1]*V[1],
+                                       O[2]+UV2[0]*U[2]+UV2[1]*V[2] ));
 #endif /* #if DEBUG */
 }
 
@@ -1251,318 +1171,301 @@ void MapExternalToInternal(sgl_vector P0, sgl_vector P1, sgl_vector P2,
 // shifts UVs to be as close to the origin as possible, without changing the
 // visible texture mapping (reduces wobbling).
 */
-#define SMALL_DETERMINANT 		 (1.0E-6f)
+#define SMALL_DETERMINANT         (1.0E-6f)
 #define SHORT_DISTANCE_TWEEN_UVS (1.0e-3f)
 
 void MapExternalToInternal(sgl_vector P0, sgl_vector P1, sgl_vector P2,
-  sgl_2d_vec UV0, sgl_2d_vec UV1, sgl_2d_vec UV2, sgl_vector U, sgl_vector V,
-  sgl_vector O)
-{
-	sgl_vector Q0,Q1;
-	float a,b,c,d;        /*2d matrix to invert */
-	float ai,bi,ci,di;    /*inverted 2d matrix  */
-	float det;
+                           sgl_2d_vec UV0, sgl_2d_vec UV1, sgl_2d_vec UV2, sgl_vector U, sgl_vector V,
+                           sgl_vector O) {
+    sgl_vector Q0, Q1;
+    float a, b, c, d;        /*2d matrix to invert */
+    float ai, bi, ci, di;    /*inverted 2d matrix  */
+    float det;
 
-	sgl_2d_vec localUV0, localUV1, localUV2;
+    sgl_2d_vec localUV0, localUV1, localUV2;
 
-	#if DEBUG
-	static sgl_bool  bRecursing = FALSE;
-	#endif
+#if DEBUG
+    static sgl_bool  bRecursing = FALSE;
+#endif
 
-	DPF(( DBG_VERBOSE, "P0 =%f %f %f", P0[0],P0[1],P0[2] ));
-	DPF(( DBG_VERBOSE, "P1 =%f %f %f", P1[0],P1[1],P1[2] ));
-	DPF(( DBG_VERBOSE, "P2 =%f %f %f", P2[0],P2[1],P2[2] ));
+    DPF((DBG_VERBOSE, "P0 =%f %f %f", P0[0], P0[1], P0[2]));
+    DPF((DBG_VERBOSE, "P1 =%f %f %f", P1[0], P1[1], P1[2]));
+    DPF((DBG_VERBOSE, "P2 =%f %f %f", P2[0], P2[1], P2[2]));
 
-	DPF(( DBG_VERBOSE, "UV0 =%f %f", UV0[0],UV0[1] ));
-	DPF(( DBG_VERBOSE, "UV1 =%f %f", UV1[0],UV1[1] ));
-	DPF(( DBG_VERBOSE, "UV2 =%f %f", UV2[0],UV2[1] ));
+    DPF((DBG_VERBOSE, "UV0 =%f %f", UV0[0], UV0[1]));
+    DPF((DBG_VERBOSE, "UV1 =%f %f", UV1[0], UV1[1]));
+    DPF((DBG_VERBOSE, "UV2 =%f %f", UV2[0], UV2[1]));
 
-	/*
-	// Warn about UV values that are greater in magnitude than LARGE_UV:
-	*/
-	#define LARGE_UV  100.0f
+    /*
+    // Warn about UV values that are greater in magnitude than LARGE_UV:
+    */
+#define LARGE_UV  100.0f
 
-	if ((fabs(UV0[0]) >= LARGE_UV || fabs(UV0[1]) >= LARGE_UV ||
-	     fabs(UV1[0]) >= LARGE_UV || fabs(UV1[1]) >= LARGE_UV ||
-	     fabs(UV2[0]) >= LARGE_UV || fabs(UV2[1]) >= LARGE_UV))
-	{
-		SglWarning(sgl_warn_large_uvs);
-	}
-	
-	#undef LARGE_UV
+    if ((fabs(UV0[0]) >= LARGE_UV || fabs(UV0[1]) >= LARGE_UV ||
+         fabs(UV1[0]) >= LARGE_UV || fabs(UV1[1]) >= LARGE_UV ||
+         fabs(UV2[0]) >= LARGE_UV || fabs(UV2[1]) >= LARGE_UV)) {
+        SglWarning(sgl_warn_large_uvs);
+    }
 
-	/*
-	// Make local copies of the UV values so that original ones are not
-	// changed, which would affect neighbouring faces.
-	*/
-	localUV0[0] = UV0[0];
-	localUV1[0] = UV1[0];
-	localUV2[0] = UV2[0];
+#undef LARGE_UV
 
-	localUV0[1] = UV0[1];
-	localUV1[1] = UV1[1];
-	localUV2[1] = UV2[1];
+    /*
+    // Make local copies of the UV values so that original ones are not
+    // changed, which would affect neighbouring faces.
+    */
+    localUV0[0] = UV0[0];
+    localUV1[0] = UV1[0];
+    localUV2[0] = UV2[0];
 
-	/*
-	// Improves modelling where UVs are shifted a long way from zero, causing
-	// texture wobbling.  Should probably do a warning message for this.
-	*/
-	{
-		/*
-		// Average distance of Us and Vs from the origin.
-		*/
-		float fAverageU = (localUV0[0]+localUV1[0]+localUV2[0]) / 3.0f,
-			  fAverageV = (localUV0[1]+localUV1[1]+localUV2[1]) / 3.0f;
+    localUV0[1] = UV0[1];
+    localUV1[1] = UV1[1];
+    localUV2[1] = UV2[1];
 
-		/*
-		// The shift must be a multiple of 2 to allow for UV flipping.
-		*/
-		int nShiftU = ((int)fAverageU / 2) *2,
-			nShiftV = ((int)fAverageV / 2) *2;
+    /*
+    // Improves modelling where UVs are shifted a long way from zero, causing
+    // texture wobbling.  Should probably do a warning message for this.
+    */
+    {
+        /*
+        // Average distance of Us and Vs from the origin.
+        */
+        float fAverageU = (localUV0[0] + localUV1[0] + localUV2[0]) / 3.0f,
+                fAverageV = (localUV0[1] + localUV1[1] + localUV2[1]) / 3.0f;
 
-	 	/*
-		// The 'if' is a slight speedup perhaps, and useful for setting a
-		// breakpoint when a shift occurs.
-		*/
-		if (nShiftU || nShiftV)
-		{
-			localUV0[0] -= (float)nShiftU;
-			localUV1[0] -= (float)nShiftU;
-			localUV2[0] -= (float)nShiftU;
+        /*
+        // The shift must be a multiple of 2 to allow for UV flipping.
+        */
+        int nShiftU = ((int) fAverageU / 2) * 2,
+                nShiftV = ((int) fAverageV / 2) * 2;
 
-			localUV0[1] -= (float)nShiftV;
-			localUV1[1] -= (float)nShiftV;
-			localUV2[1] -= (float)nShiftV;
-		}
+        /*
+       // The 'if' is a slight speedup perhaps, and useful for setting a
+       // breakpoint when a shift occurs.
+       */
+        if (nShiftU || nShiftV) {
+            localUV0[0] -= (float) nShiftU;
+            localUV1[0] -= (float) nShiftU;
+            localUV2[0] -= (float) nShiftU;
 
-	} /* UV shifting local variables */
+            localUV0[1] -= (float) nShiftV;
+            localUV1[1] -= (float) nShiftV;
+            localUV2[1] -= (float) nShiftV;
+        }
 
-	Q0[0]=P0[0]-P1[0];
-	Q0[1]=P0[1]-P1[1];
-	Q0[2]=P0[2]-P1[2];
+    } /* UV shifting local variables */
 
-	Q1[0]=P0[0]-P2[0];
-	Q1[1]=P0[1]-P2[1];
-	Q1[2]=P0[2]-P2[2];
+    Q0[0] = P0[0] - P1[0];
+    Q0[1] = P0[1] - P1[1];
+    Q0[2] = P0[2] - P1[2];
 
-	a=localUV0[0]-localUV1[0];
-	b=localUV0[1]-localUV1[1];
-	c=localUV0[0]-localUV2[0];
-	d=localUV0[1]-localUV2[1];
+    Q1[0] = P0[0] - P2[0];
+    Q1[1] = P0[1] - P2[1];
+    Q1[2] = P0[2] - P2[2];
 
-	ai=d;    /*transpose matrix*/
-	bi=-b;
-	ci=-c;
-	di=a;
+    a = localUV0[0] - localUV1[0];
+    b = localUV0[1] - localUV1[1];
+    c = localUV0[0] - localUV2[0];
+    d = localUV0[1] - localUV2[1];
 
-	det=a*d - b*c; /*calculate determinant*/
+    ai = d;    /*transpose matrix*/
+    bi = -b;
+    ci = -c;
+    di = a;
 
-	DPF(( DBG_VERBOSE, "det=%e", det ));
+    det = a * d - b * c; /*calculate determinant*/
 
-	/*
-	// We need to ensure that the determinant does not get too small.  This
-	// happens if the UV points are colinear or almost colinear in UV space.
-	// In these cases one or more of the UVs are modified slightly.
-	*/
-	if (fabs(det) < SMALL_DETERMINANT)
-	{
-		/*
-		// fShort is the minimum distance allowed between UV points and the
-		// distance UV values are moved by to keep them apart.
-		//
-		// If the UV components are far away from each other then fShort is
-		// scaled accordingly.
-		*/
-		float  fShort;
+    DPF((DBG_VERBOSE, "det=%e", det));
 
-		DPFDEV((DBG_WARNING,
-		  "MapExternalToInternal: UV colinear, determinant is very small (%f); clipping",
-		  det));
+    /*
+    // We need to ensure that the determinant does not get too small.  This
+    // happens if the UV points are colinear or almost colinear in UV space.
+    // In these cases one or more of the UVs are modified slightly.
+    */
+    if (fabs(det) < SMALL_DETERMINANT) {
+        /*
+        // fShort is the minimum distance allowed between UV points and the
+        // distance UV values are moved by to keep them apart.
+        //
+        // If the UV components are far away from each other then fShort is
+        // scaled accordingly.
+        */
+        float fShort;
 
-		SglWarning(sgl_warn_colinear_uvs);
+        DPFDEV((DBG_WARNING,
+                "MapExternalToInternal: UV colinear, determinant is very small (%f); clipping",
+                det));
 
-		/*
-		// Add the absolute distances between UV points, and then use
-		// a scaling factor. We don't allow there to be too huge a 
-		// difference between the UV coordinates.
-		*/
-		fShort = SHORT_DISTANCE_TWEEN_UVS * (
-		  sfabs(a) + sfabs(b) +
-		  sfabs(c) + sfabs(d) );
+        SglWarning(sgl_warn_colinear_uvs);
 
-		/*
-		// If they are all too close together, then just set the "min".
-		*/
-		if (fShort < SHORT_DISTANCE_TWEEN_UVS)
-		{
-			fShort = SHORT_DISTANCE_TWEEN_UVS;
-		}
+        /*
+        // Add the absolute distances between UV points, and then use
+        // a scaling factor. We don't allow there to be too huge a
+        // difference between the UV coordinates.
+        */
+        fShort = SHORT_DISTANCE_TWEEN_UVS * (
+                sfabs(a) + sfabs(b) +
+                sfabs(c) + sfabs(d));
+
+        /*
+        // If they are all too close together, then just set the "min".
+        */
+        if (fShort < SHORT_DISTANCE_TWEEN_UVS) {
+            fShort = SHORT_DISTANCE_TWEEN_UVS;
+        }
 
 
-		/*
-		// If the first and second points are too close:
-		*/
-		if (sfabs(a) + sfabs(b) < fShort)
-		{
-			/*
-			// If the second and third points are too close (and so all three
-			// points are too close):
-			*/
-			if (sfabs(localUV1[0] - localUV2[0]) +
-			  sfabs(localUV1[1] - localUV2[1]) < fShort)
-			{
-				/*
-				// Just move the second and third points away from the first
-				// point, ensuring they are not colinear:
-				// Note: we add 2x the fshort value to guarantee the points
-				// are at least fShort apart.
-				*/
-				localUV1[0] += 2.0f * fShort;
-				localUV2[1] += 2.0f * fShort;
-			}
-			else
-			{
-				/*
-				// The last two UV points are different, so move the first
-				// point slightly to one side of the line joining the other
-				// two.
-				//
-				// This movement is less than 1/100 of a texel, and is parallel
-				// to either the U or V axis, whichever is more perpendicular
-				// to the line joining the original points.
-				*/
-				if (sfabs(localUV1[0] - localUV2[0]) <
-				  sfabs(localUV1[1] - localUV2[1]))
-				{
-					localUV0[0] += 2.0f * fShort;
-				}
-				else
-				{
-					localUV0[1] += 2.0f * fShort;
-				}
-			}
+        /*
+        // If the first and second points are too close:
+        */
+        if (sfabs(a) + sfabs(b) < fShort) {
+            /*
+            // If the second and third points are too close (and so all three
+            // points are too close):
+            */
+            if (sfabs(localUV1[0] - localUV2[0]) +
+                sfabs(localUV1[1] - localUV2[1]) < fShort) {
+                /*
+                // Just move the second and third points away from the first
+                // point, ensuring they are not colinear:
+                // Note: we add 2x the fshort value to guarantee the points
+                // are at least fShort apart.
+                */
+                localUV1[0] += 2.0f * fShort;
+                localUV2[1] += 2.0f * fShort;
+            } else {
+                /*
+                // The last two UV points are different, so move the first
+                // point slightly to one side of the line joining the other
+                // two.
+                //
+                // This movement is less than 1/100 of a texel, and is parallel
+                // to either the U or V axis, whichever is more perpendicular
+                // to the line joining the original points.
+                */
+                if (sfabs(localUV1[0] - localUV2[0]) <
+                    sfabs(localUV1[1] - localUV2[1])) {
+                    localUV0[0] += 2.0f * fShort;
+                } else {
+                    localUV0[1] += 2.0f * fShort;
+                }
+            }
 
-		} /* if the first two points are too close */
+        } /* if the first two points are too close */
 
-		else
+        else {
+            /*
+            // The first two UVs are different, so move the the last one
+            // slightly, as above.
+            */
+            if (sfabs(a) < sfabs(b)) {
+                localUV2[0] += 2.0f * fShort;
+            } else {
+                localUV2[1] += 2.0f * fShort;
+            }
+        }
 
-		{
-			/*
-			// The first two UVs are different, so move the the last one
-			// slightly, as above.
-			*/
-			if (sfabs(a) < sfabs(b))
-			{
-				localUV2[0] += 2.0f * fShort;
-			}
-			else
-			{
-				localUV2[1] += 2.0f * fShort;
-			}
-		}
+        /*
+        // Check everything again to be absolutely sure the UVs are not too
+        // colinear.
+        //
+        // In debug mode ensure we do not recurse multiple times: that would be
+        // inefficient and mean that we are not moving the UVs sufficiently.
+        */
+#if DEBUG
+        ASSERT(bRecursing == FALSE);
+        bRecursing = TRUE;
+#endif
+        MapExternalToInternal(P0, P1, P2, localUV0, localUV1, localUV2, U, V, O);
 
-		/*
-		// Check everything again to be absolutely sure the UVs are not too
-		// colinear.
-		//
-		// In debug mode ensure we do not recurse multiple times: that would be
-		// inefficient and mean that we are not moving the UVs sufficiently.
-		*/
-		#if DEBUG
-		ASSERT(bRecursing == FALSE);
-		bRecursing = TRUE;
-		#endif
-		MapExternalToInternal(P0,P1,P2, localUV0,localUV1,localUV2, U,V,O);
+        return;
 
-		return;
+    } /*if (fabs(det) < SMALL_DETERMINANT) */
 
-	} /*if (fabs(det) < SMALL_DETERMINANT) */
+    /*
+    // We have finished any recursing, so reset the flag for the next external
+    // call to this function.
+    */
+#if DEBUG
+    bRecursing = FALSE;
+#endif
 
-	/*
-	// We have finished any recursing, so reset the flag for the next external
-	// call to this function.
-	*/
-	#if DEBUG
-	bRecursing = FALSE;
-	#endif
+    det = 1.0f / det;
 
-	det=1.0f/det;
+    DPF((DBG_VERBOSE, "det=%e", det));
 
-	DPF(( DBG_VERBOSE, "det=%e", det ));
+    ai *= det;
+    bi *= det;
+    ci *= det;
+    di *= det;
 
-	ai*=det;
-	bi*=det;
-	ci*=det;
-	di*=det;
+    /*
+    ** multiply the inverse by Q0 and Q1
+    */
 
-	/*
-	** multiply the inverse by Q0 and Q1
-	*/
+    U[0] = ai * Q0[0];  /*calculate U*/
+    U[1] = ai * Q0[1];
+    U[2] = ai * Q0[2];
 
-	U[0]=ai*Q0[0];  /*calculate U*/
-	U[1]=ai*Q0[1]; 
-	U[2]=ai*Q0[2]; 
+    U[0] += bi * Q1[0];
+    U[1] += bi * Q1[1];
+    U[2] += bi * Q1[2];
 
-	U[0]+=bi*Q1[0];
-	U[1]+=bi*Q1[1]; 
-	U[2]+=bi*Q1[2]; 
+    V[0] = ci * Q0[0];  /*calculate V*/
+    V[1] = ci * Q0[1];
+    V[2] = ci * Q0[2];
 
-	V[0]=ci*Q0[0];  /*calculate V*/
-	V[1]=ci*Q0[1]; 
-	V[2]=ci*Q0[2]; 
+    V[0] += di * Q1[0];
+    V[1] += di * Q1[1];
+    V[2] += di * Q1[2];
 
-	V[0]+=di*Q1[0];
-	V[1]+=di*Q1[1]; 
-	V[2]+=di*Q1[2]; 
+    /*
+    ** now calculate the origin using the first set of coeff's.
+    */
 
-	/*
-	** now calculate the origin using the first set of coeff's. 
-	*/
+    O[0] = localUV0[0] * U[0] + localUV0[1] * V[0];
+    O[1] = localUV0[0] * U[1] + localUV0[1] * V[1];
+    O[2] = localUV0[0] * U[2] + localUV0[1] * V[2];
 
-	O[0]=localUV0[0]*U[0] + localUV0[1]*V[0];
-	O[1]=localUV0[0]*U[1] + localUV0[1]*V[1];
-	O[2]=localUV0[0]*U[2] + localUV0[1]*V[2];
-
-	O[0]=P0[0]-O[0];
-	O[1]=P0[1]-O[1];
-	O[2]=P0[2]-O[2];
+    O[0] = P0[0] - O[0];
+    O[1] = P0[1] - O[1];
+    O[2] = P0[2] - O[2];
 
 
 #if DEBUG
-	/* now output the coefficients */
+    /* now output the coefficients */
 
-	DPF(( DBG_VERBOSE, "U[]=%f %f %f", U[0],U[1],U[2] ));
-	DPF(( DBG_VERBOSE, "V[]=%f %f %f", V[0],V[1],V[2] ));
-	DPF(( DBG_VERBOSE, "O[]=%f %f %f", O[0],O[1],O[2] ));
+    DPF(( DBG_VERBOSE, "U[]=%f %f %f", U[0],U[1],U[2] ));
+    DPF(( DBG_VERBOSE, "V[]=%f %f %f", V[0],V[1],V[2] ));
+    DPF(( DBG_VERBOSE, "O[]=%f %f %f", O[0],O[1],O[2] ));
 
-	/*test that my code is working*/
+    /*test that my code is working*/
 
-	if(fabs((O[0]+localUV0[0]*U[0]+localUV0[1]*V[0])-P0[0])>1e-4 ||
-	   fabs((O[1]+localUV0[0]*U[1]+localUV0[1]*V[1])-P0[1])>1e-4 ||
-	   fabs((O[2]+localUV0[0]*U[2]+localUV0[1]*V[2])-P0[2])>1e-4 )
-	   DPF(( DBG_VERBOSE, "P0 does not match!!" ));
-	   
-	if(fabs((O[0]+localUV1[0]*U[0]+localUV1[1]*V[0])-P1[0])>1e-4 ||
-	   fabs((O[1]+localUV1[0]*U[1]+localUV1[1]*V[1])-P1[1])>1e-4 ||
-	   fabs((O[2]+localUV1[0]*U[2]+localUV1[1]*V[2])-P1[2])>1e-4 )
-	   DPF(( DBG_VERBOSE, "P1 does not match!!" ));
+    if(fabs((O[0]+localUV0[0]*U[0]+localUV0[1]*V[0])-P0[0])>1e-4 ||
+       fabs((O[1]+localUV0[0]*U[1]+localUV0[1]*V[1])-P0[1])>1e-4 ||
+       fabs((O[2]+localUV0[0]*U[2]+localUV0[1]*V[2])-P0[2])>1e-4 )
+       DPF(( DBG_VERBOSE, "P0 does not match!!" ));
 
-	if(fabs((O[0]+localUV2[0]*U[0]+localUV2[1]*V[0])-P2[0])>1e-4 ||
-	   fabs((O[1]+localUV2[0]*U[1]+localUV2[1]*V[1])-P2[1])>1e-4 ||
-	   fabs((O[2]+localUV2[0]*U[2]+localUV2[1]*V[2])-P2[2])>1e-4 )
-	   DPF(( DBG_VERBOSE, "P2 does not match!!" ));
+    if(fabs((O[0]+localUV1[0]*U[0]+localUV1[1]*V[0])-P1[0])>1e-4 ||
+       fabs((O[1]+localUV1[0]*U[1]+localUV1[1]*V[1])-P1[1])>1e-4 ||
+       fabs((O[2]+localUV1[0]*U[2]+localUV1[1]*V[2])-P1[2])>1e-4 )
+       DPF(( DBG_VERBOSE, "P1 does not match!!" ));
 
-	DPF(( DBG_VERBOSE, "P0= %f %f %f", O[0]+localUV0[0]*U[0]+localUV0[1]*V[0],
-								  	   O[1]+localUV0[0]*U[1]+localUV0[1]*V[1],
-									   O[2]+localUV0[0]*U[2]+localUV0[1]*V[2] ));
+    if(fabs((O[0]+localUV2[0]*U[0]+localUV2[1]*V[0])-P2[0])>1e-4 ||
+       fabs((O[1]+localUV2[0]*U[1]+localUV2[1]*V[1])-P2[1])>1e-4 ||
+       fabs((O[2]+localUV2[0]*U[2]+localUV2[1]*V[2])-P2[2])>1e-4 )
+       DPF(( DBG_VERBOSE, "P2 does not match!!" ));
 
-	DPF(( DBG_VERBOSE, "P1= %f %f %f", O[0]+localUV1[0]*U[0]+localUV1[1]*V[0],
-								  	   O[1]+localUV1[0]*U[1]+localUV1[1]*V[1],
-									   O[2]+localUV1[0]*U[2]+localUV1[1]*V[2] ));
+    DPF(( DBG_VERBOSE, "P0= %f %f %f", O[0]+localUV0[0]*U[0]+localUV0[1]*V[0],
+                                         O[1]+localUV0[0]*U[1]+localUV0[1]*V[1],
+                                       O[2]+localUV0[0]*U[2]+localUV0[1]*V[2] ));
 
-	DPF(( DBG_VERBOSE, "P2= %f %f %f", O[0]+localUV2[0]*U[0]+localUV2[1]*V[0],
-								  	   O[1]+localUV2[0]*U[1]+localUV2[1]*V[1],
-									   O[2]+localUV2[0]*U[2]+localUV2[1]*V[2] ));
+    DPF(( DBG_VERBOSE, "P1= %f %f %f", O[0]+localUV1[0]*U[0]+localUV1[1]*V[0],
+                                         O[1]+localUV1[0]*U[1]+localUV1[1]*V[1],
+                                       O[2]+localUV1[0]*U[2]+localUV1[1]*V[2] ));
+
+    DPF(( DBG_VERBOSE, "P2= %f %f %f", O[0]+localUV2[0]*U[0]+localUV2[1]*V[0],
+                                         O[1]+localUV2[0]*U[1]+localUV2[1]*V[1],
+                                       O[2]+localUV2[0]*U[2]+localUV2[1]*V[2] ));
 #endif /* #if DEBUG */
 }
 
@@ -1582,56 +1485,50 @@ void MapExternalToInternal(sgl_vector P0, sgl_vector P1, sgl_vector P2,
  *				  This requires creating adjacency information, bounding box
  *				  etc for the primitive.
  *****************************************************************************/
-void DlCompleteCurrentConvex(void)
-{
-	CONVEX_NODE_STRUCT *pNode = dlUserGlobals.pCurrentConvex;
+void DlCompleteCurrentConvex(void) {
+    CONVEX_NODE_STRUCT *pNode = dlUserGlobals.pCurrentConvex;
 
-	if (pNode != NULL)
-	{
-		/*
-		// ==========================
-		// CALCULATE EDGE INFORMATION
-		// ==========================
-		// NOTE: THIS MAY FAIL (returning sgl_err_no_mem).  THIS IS A SITUATION
-		// THAT IS NOT CORRECTLY HANDLED, AND IS A DREADED BUG!
-		*/
-		GenerateAdjacencyInfo(pNode);
+    if (pNode != NULL) {
+        /*
+        // ==========================
+        // CALCULATE EDGE INFORMATION
+        // ==========================
+        // NOTE: THIS MAY FAIL (returning sgl_err_no_mem).  THIS IS A SITUATION
+        // THAT IS NOT CORRECTLY HANDLED, AND IS A DREADED BUG!
+        */
+        GenerateAdjacencyInfo(pNode);
 
-		/*
-		// ========================
-		// COMPLETE LOCAL MATERIALS
-		// ========================
-		*/
-		if (pNode->u16_num_materials)
-		{
-			int nMat, nPlaneCount=0;
-			LOCAL_MATERIALS_STRUCT *pFinalMaterialData =
-			  pNode->local_materials + pNode->u16_num_materials -1;
+        /*
+        // ========================
+        // COMPLETE LOCAL MATERIALS
+        // ========================
+        */
+        if (pNode->u16_num_materials) {
+            int nMat, nPlaneCount = 0;
+            LOCAL_MATERIALS_STRUCT *pFinalMaterialData =
+                    pNode->local_materials + pNode->u16_num_materials - 1;
 
-			ASSERT(pNode->local_materials != NULL);
+            ASSERT(pNode->local_materials != NULL);
 
-			/*
-			// -------------------------------------------------
-			// Calculate planes affected by final local material
-			// -------------------------------------------------
-			*/
-			for (nMat=0; nMat < pNode->u16_num_materials-1; nMat++)
-			{
-				nPlaneCount +=
-				  pNode->local_materials[nMat].planes_affected;
-			}
+            /*
+            // -------------------------------------------------
+            // Calculate planes affected by final local material
+            // -------------------------------------------------
+            */
+            for (nMat = 0; nMat < pNode->u16_num_materials - 1; nMat++) {
+                nPlaneCount +=
+                        pNode->local_materials[nMat].planes_affected;
+            }
 
-			pFinalMaterialData->planes_affected =
-			  pNode->u16_num_planes - nPlaneCount;
-			ASSERT(pFinalMaterialData->planes_affected >= 0);
-		}
-		else
-		{
-			ASSERT(pNode->local_materials == NULL);
-		}
+            pFinalMaterialData->planes_affected =
+                    pNode->u16_num_planes - nPlaneCount;
+            ASSERT(pFinalMaterialData->planes_affected >= 0);
+        } else {
+            ASSERT(pNode->local_materials == NULL);
+        }
 
-		dlUserGlobals.pCurrentConvex = NULL;
-	}
+        dlUserGlobals.pCurrentConvex = NULL;
+    }
 }
 
 
@@ -1645,106 +1542,99 @@ void DlCompleteCurrentConvex(void)
  *
  * Description  : Adds a local material to the current convex primitive node.
  *****************************************************************************/
-int DlConvexAddLocalMaterial(MATERIAL_NODE_STRUCT *pMaterialNode)
-{
-	CONVEX_NODE_STRUCT     *pConvexNode = dlUserGlobals.pCurrentConvex;
-	LOCAL_MATERIALS_STRUCT *pMaterialData;
+int DlConvexAddLocalMaterial(MATERIAL_NODE_STRUCT *pMaterialNode) {
+    CONVEX_NODE_STRUCT *pConvexNode = dlUserGlobals.pCurrentConvex;
+    LOCAL_MATERIALS_STRUCT *pMaterialData;
 
-	ASSERT(pMaterialNode != NULL);
-	ASSERT(pConvexNode != NULL);
+    ASSERT(pMaterialNode != NULL);
+    ASSERT(pConvexNode != NULL);
 
 
-	/*
-	// NOTE that there is no point in adding a local material to anything
-	// but a standard convex, but I don't really see what options are open
-	// to us... I guess we could simply delete the local material passed
-	// to this routine PROVIDED it doesn't have a name... Perhaps we 
-	// could implement it later. At the moment just let it occupy space
-	// (besides its the users fault 8-) )
-	*/
-	
-	/*
-	// ==========================================
-	// ALLOCATE ANY NEW LOCAL DATA SPACE REQUIRED
-	// ==========================================
-	*/
-	/* OPTIMISATION: DO ALLOCATION IN CHUNKS RATHER THAN ALL OR NOTHING. */
-	ASSERT(pConvexNode->u16_max_materials == SGL_MAX_PLANES)
-	if (pConvexNode->u16_num_materials != 0)
-	{
-		ASSERT(pConvexNode->local_materials != NULL);
-	}
-	else
-	{
-		ASSERT(pConvexNode->local_materials == NULL);
-		pConvexNode->local_materials = SGLMalloc(sizeof(LOCAL_MATERIALS_STRUCT) *
-		  pConvexNode->u16_max_materials);
-		if (pConvexNode->local_materials == NULL)
-		{
-			return sgl_err_no_mem;
-		}
+    /*
+    // NOTE that there is no point in adding a local material to anything
+    // but a standard convex, but I don't really see what options are open
+    // to us... I guess we could simply delete the local material passed
+    // to this routine PROVIDED it doesn't have a name... Perhaps we
+    // could implement it later. At the moment just let it occupy space
+    // (besides its the users fault 8-) )
+    */
 
-		/*
-		// Test to see if any planes have already been added. If so
-		// then they are affected by the previous material state. This
-		// is indicated by storing a NULL ptr in the first material
-		// entry
-		*/
-		if(pConvexNode->u16_num_planes != 0)
-		{
-			
-			/*
-			// add one local material, and set its planes affected, and pointer
-			*/
-			pMaterialData = pConvexNode->local_materials;
+    /*
+    // ==========================================
+    // ALLOCATE ANY NEW LOCAL DATA SPACE REQUIRED
+    // ==========================================
+    */
+    /* OPTIMISATION: DO ALLOCATION IN CHUNKS RATHER THAN ALL OR NOTHING. */
+    ASSERT(pConvexNode->u16_max_materials == SGL_MAX_PLANES)
+    if (pConvexNode->u16_num_materials != 0) {
+        ASSERT(pConvexNode->local_materials != NULL);
+    } else {
+        ASSERT(pConvexNode->local_materials == NULL);
+        pConvexNode->local_materials = SGLMalloc(sizeof(LOCAL_MATERIALS_STRUCT) *
+                                                 pConvexNode->u16_max_materials);
+        if (pConvexNode->local_materials == NULL) {
+            return sgl_err_no_mem;
+        }
 
-			pMaterialData->planes_affected = pConvexNode->u16_num_planes;
-			pMaterialData->material_name   = NM_INVALID_NAME;
-			pMaterialData->p_material      = NULL;
-			
-			pConvexNode->u16_num_materials=1;
-		}
-	}
+        /*
+        // Test to see if any planes have already been added. If so
+        // then they are affected by the previous material state. This
+        // is indicated by storing a NULL ptr in the first material
+        // entry
+        */
+        if (pConvexNode->u16_num_planes != 0) {
 
-	/*
-	// =========================================
-	// ADD NEW LOCAL MATERIAL TO THE CONVEX NODE
-	// =========================================
-	*/
-	ASSERT(pConvexNode->u16_num_materials < pConvexNode->u16_max_materials);
-	pConvexNode->u16_num_materials++;
+            /*
+            // add one local material, and set its planes affected, and pointer
+            */
+            pMaterialData = pConvexNode->local_materials;
 
-	pMaterialData =
-	  pConvexNode->local_materials + (pConvexNode->u16_num_materials -1);
+            pMaterialData->planes_affected = pConvexNode->u16_num_planes;
+            pMaterialData->material_name = NM_INVALID_NAME;
+            pMaterialData->p_material = NULL;
 
-	pMaterialData->planes_affected = 0;
-	pMaterialData->material_name   = NM_INVALID_NAME;
-	pMaterialData->p_material      = pMaterialNode;
+            pConvexNode->u16_num_materials = 1;
+        }
+    }
 
-	/*
-	// ====================================================
-	// CALCULATE PLANES AFFECTED BY PREVIOUS LOCAL MATERIAL
-	// (Note last one will be done when primitive is completed)
-	// ====================================================
-	*/
-	if (pConvexNode->u16_num_materials >= 2)
-	{
-		/*
-		// OPTIMISATION: REMOVE THE PREVIOUS LOCAL MATERIAL (SEE STRIPNODE
-		// ABOVE) IF IT IS NOT USED BY ANY PLANES.
-		*/
-		int nMat, nPlaneCount=0;
-		LOCAL_MATERIALS_STRUCT *pPrevMaterialData = pMaterialData-1;
+    /*
+    // =========================================
+    // ADD NEW LOCAL MATERIAL TO THE CONVEX NODE
+    // =========================================
+    */
+    ASSERT(pConvexNode->u16_num_materials < pConvexNode->u16_max_materials);
+    pConvexNode->u16_num_materials++;
 
-		for (nMat=0; nMat < pConvexNode->u16_num_materials-2; nMat++)
-			nPlaneCount += pConvexNode->local_materials[nMat].planes_affected;
+    pMaterialData =
+            pConvexNode->local_materials + (pConvexNode->u16_num_materials - 1);
 
-		pPrevMaterialData->planes_affected =
-		  pConvexNode->u16_num_planes - nPlaneCount;
-		ASSERT(pPrevMaterialData->planes_affected >= 0);
-	}
+    pMaterialData->planes_affected = 0;
+    pMaterialData->material_name = NM_INVALID_NAME;
+    pMaterialData->p_material = pMaterialNode;
 
-	return sgl_no_err;
+    /*
+    // ====================================================
+    // CALCULATE PLANES AFFECTED BY PREVIOUS LOCAL MATERIAL
+    // (Note last one will be done when primitive is completed)
+    // ====================================================
+    */
+    if (pConvexNode->u16_num_materials >= 2) {
+        /*
+        // OPTIMISATION: REMOVE THE PREVIOUS LOCAL MATERIAL (SEE STRIPNODE
+        // ABOVE) IF IT IS NOT USED BY ANY PLANES.
+        */
+        int nMat, nPlaneCount = 0;
+        LOCAL_MATERIALS_STRUCT *pPrevMaterialData = pMaterialData - 1;
+
+        for (nMat = 0; nMat < pConvexNode->u16_num_materials - 2; nMat++)
+            nPlaneCount += pConvexNode->local_materials[nMat].planes_affected;
+
+        pPrevMaterialData->planes_affected =
+                pConvexNode->u16_num_planes - nPlaneCount;
+        ASSERT(pPrevMaterialData->planes_affected >= 0);
+    }
+
+    return sgl_no_err;
 }
 
 
@@ -1759,18 +1649,17 @@ int DlConvexAddLocalMaterial(MATERIAL_NODE_STRUCT *pMaterialNode)
  * Description  : Cleanup processing before deletion of a convex primitive
  *				  display list node.
  *****************************************************************************/
-void DlDeleteConvexNodeRefs(DL_NODE_STRUCT *pNodeHdr)
-{
-        CONVEX_NODE_STRUCT *pNode;
+void DlDeleteConvexNodeRefs(DL_NODE_STRUCT *pNodeHdr) {
+    CONVEX_NODE_STRUCT *pNode;
 
-	ASSERT(pNodeHdr != NULL);
-	ASSERT(pNodeHdr->n16_node_type == nt_convex);
+    ASSERT(pNodeHdr != NULL);
+    ASSERT(pNodeHdr->n16_node_type == nt_convex);
 
-        pNode = (CONVEX_NODE_STRUCT *)pNodeHdr;
-	
-        StripNode(pNode);
+    pNode = (CONVEX_NODE_STRUCT *) pNodeHdr;
 
-        SGLFree(pNode->plane_data);
+    StripNode(pNode);
+
+    SGLFree(pNode->plane_data);
 }
 
 
@@ -1790,44 +1679,40 @@ void DlDeleteConvexNodeRefs(DL_NODE_STRUCT *pNodeHdr)
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_create_convex( sgl_bool bGenerateName )
-{
+int CALL_CONV sgl_create_convex(sgl_bool bGenerateName) {
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
-	else
+    {
+        return SglError(sgl_err_failed_init);
+    }
+    else
 #endif
-	{
-		int nError;
+    {
+        int nError;
 
-		DlCompleteCurrentTransform();
-		DlCompleteCurrentConvex();
-		DlCompleteCurrentMaterial();
-		DlCompleteCurrentMesh();
+        DlCompleteCurrentTransform();
+        DlCompleteCurrentConvex();
+        DlCompleteCurrentMaterial();
+        DlCompleteCurrentMesh();
 
-		nError = CreateConvex(cf_standard_convex);
+        nError = CreateConvex(cf_standard_convex);
 
-		if (bGenerateName && nError == sgl_no_err)
-		{
-			int nName;
+        if (bGenerateName && nError == sgl_no_err) {
+            int nName;
 
-			ASSERT(dlUserGlobals.pCurrentConvex != NULL);
+            ASSERT(dlUserGlobals.pCurrentConvex != NULL);
 
-			nName = AddNamedItem(dlUserGlobals.pNamtab,
-			  dlUserGlobals.pCurrentConvex, nt_convex);
+            nName = AddNamedItem(dlUserGlobals.pNamtab,
+                                 dlUserGlobals.pCurrentConvex, nt_convex);
 
-			dlUserGlobals.pCurrentConvex->node_hdr.n16_name =
-			  nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16)nName;
-			return SglError(nName);
-		}
-		else
-		{
-			return SglError(nError);
-		}
-	}
+            dlUserGlobals.pCurrentConvex->node_hdr.n16_name =
+                    nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16) nName;
+            return SglError(nName);
+        } else {
+            return SglError(nError);
+        }
+    }
 }
 
 
@@ -1841,90 +1726,84 @@ int CALL_CONV sgl_create_convex( sgl_bool bGenerateName )
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_modify_convex( int nName, sgl_bool bClearPolyhedron )
-{
-	/*
-	// ==========
-	// INITIALISE
-	// ==========
-	*/
+void CALL_CONV sgl_modify_convex(int nName, sgl_bool bClearPolyhedron) {
+    /*
+    // ==========
+    // INITIALISE
+    // ==========
+    */
     CONVEX_NODE_STRUCT *pNode;
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-	if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_convex)
-	{
-		DPFDEV((DBG_WARNING, "sgl_modify_convex: calling with bad name"));
-		SglError(sgl_err_bad_name);
-		return;
-	}
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_convex) {
+        DPFDEV((DBG_WARNING, "sgl_modify_convex: calling with bad name"));
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
-	/*
-	// =================
-	// SELECT POLYHEDRON
-	// =================
-	*/
-	pNode = GetNamedItem(dlUserGlobals.pNamtab, nName);
-	ASSERT(pNode != NULL);
+    /*
+    // =================
+    // SELECT POLYHEDRON
+    // =================
+    */
+    pNode = GetNamedItem(dlUserGlobals.pNamtab, nName);
+    ASSERT(pNode != NULL);
 
-	dlUserGlobals.pCurrentConvex = pNode;
+    dlUserGlobals.pCurrentConvex = pNode;
 
-	/*
-	// ================
-	// CLEAR POLYHEDRON
-	// ================
-	*/
-	if (bClearPolyhedron)
-	{
-		StripNode(pNode);
+    /*
+    // ================
+    // CLEAR POLYHEDRON
+    // ================
+    */
+    if (bClearPolyhedron) {
+        StripNode(pNode);
 
-		pNode->u16_num_planes = 0;
-		/*
-		// We are not bothering to reduce u16_max_planes and the corresponding
-		// data structure sizes.
-		*/
+        pNode->u16_num_planes = 0;
+        /*
+        // We are not bothering to reduce u16_max_planes and the corresponding
+        // data structure sizes.
+        */
 
-		pNode->u16_flags = cf_all_premapped | cf_all_text_wrap |
-		  cf_all_smooth | cf_all_visible;
+        pNode->u16_flags = cf_all_premapped | cf_all_text_wrap |
+                           cf_all_smooth | cf_all_visible;
 
-		pNode->edge_info = NULL;
-		pNode->texture_data = NULL;
-		pNode->shading_data = NULL;
-		pNode->points_data = NULL;
+        pNode->edge_info = NULL;
+        pNode->texture_data = NULL;
+        pNode->shading_data = NULL;
+        pNode->points_data = NULL;
 
-		if (pNode->u16_num_materials)
-		{
-			ASSERT(pNode->local_materials != NULL);
-			pNode->u16_num_materials = 0;
+        if (pNode->u16_num_materials) {
+            ASSERT(pNode->local_materials != NULL);
+            pNode->u16_num_materials = 0;
 
-			/*** NEEDS CHUNK OPTIMISATION: ***/
-			/* When we do optimisation u16_max_materials may need reducing.*/
+            /*** NEEDS CHUNK OPTIMISATION: ***/
+            /* When we do optimisation u16_max_materials may need reducing.*/
 
-			pNode->local_materials = NULL;
-		}
-		else
-		{
-			ASSERT(pNode->local_materials == NULL);
-		}
-	}
+            pNode->local_materials = NULL;
+        } else {
+            ASSERT(pNode->local_materials == NULL);
+        }
+    }
 
-	/*
-	// ======
-	// RETURN
-	// ======
-	*/
-	SglError(sgl_no_err);
+    /*
+    // ======
+    // RETURN
+    // ======
+    */
+    SglError(sgl_no_err);
 }
 
 
@@ -1938,30 +1817,27 @@ void CALL_CONV sgl_modify_convex( int nName, sgl_bool bClearPolyhedron )
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_add_simple_plane( sgl_vector surfacePoint, 
-									 sgl_vector normal,
-									 sgl_bool bInvisible)
-{
-	int nError;
-	CONVEX_NODE_STRUCT *pNode;
-	CONV_PLANE_STRUCT  *pPlane;
+void CALL_CONV sgl_add_simple_plane(sgl_vector surfacePoint,
+                                    sgl_vector normal,
+                                    sgl_bool bInvisible) {
+    int nError;
+    CONVEX_NODE_STRUCT *pNode;
+    CONV_PLANE_STRUCT *pPlane;
 
-	if (surfacePoint == NULL || normal == NULL)
-	{
-		DPFDEV((DBG_WARNING, "sgl_add_simple_plane: calling with bad parameters"));	
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    if (surfacePoint == NULL || normal == NULL) {
+        DPFDEV((DBG_WARNING, "sgl_add_simple_plane: calling with bad parameters"));
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-	nError = CommonAddPlane(&pNode,&pPlane);
-	if (nError != sgl_no_err)
-	{
-		SglError(nError);
-		return;
-	}
+    nError = CommonAddPlane(&pNode, &pPlane);
+    if (nError != sgl_no_err) {
+        SglError(nError);
+        return;
+    }
 
-	DefineSimplePlane(pNode,pPlane, surfacePoint,normal,bInvisible);
-	SglError(sgl_no_err);
+    DefineSimplePlane(pNode, pPlane, surfacePoint, normal, bInvisible);
+    SglError(sgl_no_err);
 }
 
 
@@ -1976,66 +1852,63 @@ void CALL_CONV sgl_add_simple_plane( sgl_vector surfacePoint,
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
 
-void CALL_CONV sgl_add_shadow_limit_plane( sgl_vector surfacePoint, 
-										   sgl_vector normal )
-{
+void CALL_CONV sgl_add_shadow_limit_plane(sgl_vector surfacePoint,
+                                          sgl_vector normal) {
     SHAD_LIM_NODE_STRUCT *pNode;
-	CONV_PLANE_STRUCT  *pPlane;
+    CONV_PLANE_STRUCT *pPlane;
 
 #if !WIN32
     if (SglInitialise())
-	{
-	  SglError(sgl_err_failed_init);
-	  return;
-	}
+    {
+      SglError(sgl_err_failed_init);
+      return;
+    }
 #endif
 
-	/*
-	// =========
-	// MAKE NODE
-	// =========
-	*/
-	pNode = NEW(SHAD_LIM_NODE_STRUCT);
-	if (pNode == NULL)
-	  {
-		SglError(sgl_err_no_mem);
-		return;
+    /*
+    // =========
+    // MAKE NODE
+    // =========
+    */
+    pNode = NEW(SHAD_LIM_NODE_STRUCT);
+    if (pNode == NULL) {
+        SglError(sgl_err_no_mem);
+        return;
 
-	  }
+    }
 
-	pNode->node_hdr.n16_node_type = nt_shadow_limit;
-	pNode->node_hdr.n16_name	  = NM_INVALID_NAME;
-	pNode->node_hdr.next_node	  = NULL;
+    pNode->node_hdr.n16_node_type = nt_shadow_limit;
+    pNode->node_hdr.n16_name = NM_INVALID_NAME;
+    pNode->node_hdr.next_node = NULL;
 
-	/*
-	// ============
-	// INSTALL NODE
-	// ============
-	*/
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    /*
+    // ============
+    // INSTALL NODE
+    // ============
+    */
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
 
-	/* add data into plane space in node struct */
-	pPlane = &(pNode->plane_data);
+    /* add data into plane space in node struct */
+    pPlane = &(pNode->plane_data);
 
-	if (surfacePoint == NULL || normal == NULL)
-	{
-		DPFDEV((DBG_WARNING, "sgl_add_shadow_limit_plane: calling with bad parameters"));	
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    if (surfacePoint == NULL || normal == NULL) {
+        DPFDEV((DBG_WARNING, "sgl_add_shadow_limit_plane: calling with bad parameters"));
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-	pPlane->normal[0] = normal[0];
-	pPlane->normal[1] = normal[1];
-	pPlane->normal[2] = normal[2];
-	VecNormalise(pPlane->normal);
-	pPlane->rep_point[0] = surfacePoint[0];
-	pPlane->rep_point[1] = surfacePoint[1];
-	pPlane->rep_point[2] = surfacePoint[2];
+    pPlane->normal[0] = normal[0];
+    pPlane->normal[1] = normal[1];
+    pPlane->normal[2] = normal[2];
+    VecNormalise(pPlane->normal);
+    pPlane->rep_point[0] = surfacePoint[0];
+    pPlane->rep_point[1] = surfacePoint[1];
+    pPlane->rep_point[2] = surfacePoint[2];
 
-	pPlane->flags = pf_shadow_plane;
+    pPlane->flags = pf_shadow_plane;
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 }
 
 
@@ -2050,82 +1923,69 @@ void CALL_CONV sgl_add_shadow_limit_plane( sgl_vector surfacePoint,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_add_plane( sgl_vector surfacePoint,
-							  sgl_vector point2, sgl_vector point3,
-		 					  sgl_bool   bInvisible,
-							  sgl_vector normal1,
-							  sgl_vector normal2,
-							  sgl_vector normal3,
-							  sgl_2d_vec uv1, sgl_2d_vec uv2, sgl_2d_vec uv3 )
-{
-	int nError;
+void CALL_CONV sgl_add_plane(sgl_vector surfacePoint,
+                             sgl_vector point2, sgl_vector point3,
+                             sgl_bool bInvisible,
+                             sgl_vector normal1,
+                             sgl_vector normal2,
+                             sgl_vector normal3,
+                             sgl_2d_vec uv1, sgl_2d_vec uv2, sgl_2d_vec uv3) {
+    int nError;
 
-	CONVEX_NODE_STRUCT *pNode;
-	CONV_PLANE_STRUCT  *pPlane;
+    CONVEX_NODE_STRUCT *pNode;
+    CONV_PLANE_STRUCT *pPlane;
 
-	/*
-	// check whether point information is present
-	*/
-	if (surfacePoint == NULL || point2 == NULL || point3 == NULL)
-	{
-		DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad parameters"));	
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    /*
+    // check whether point information is present
+    */
+    if (surfacePoint == NULL || point2 == NULL || point3 == NULL) {
+        DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad parameters"));
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-	/*
-	// check whether normal information is only partly present
-	*/
-	if (normal1 == NULL)
-	{
-		if (normal2 != NULL || normal3 != NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad normals"));		
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
-	else
-	{
-		if (normal2 == NULL || normal3 == NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad normals"));				
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
+    /*
+    // check whether normal information is only partly present
+    */
+    if (normal1 == NULL) {
+        if (normal2 != NULL || normal3 != NULL) {
+            DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad normals"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    } else {
+        if (normal2 == NULL || normal3 == NULL) {
+            DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad normals"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    }
 
-	/*
-	// check whether UV information is only partly present
-	*/
-	if (uv1 == NULL)
-	{
-		if (uv2 != NULL || uv3 != NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad UVs"));		
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
-	else
-	{
-		if (uv2 == NULL || uv3 == NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad UVs"));			
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
+    /*
+    // check whether UV information is only partly present
+    */
+    if (uv1 == NULL) {
+        if (uv2 != NULL || uv3 != NULL) {
+            DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad UVs"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    } else {
+        if (uv2 == NULL || uv3 == NULL) {
+            DPFDEV((DBG_WARNING, "sgl_add_plane: calling with bad UVs"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    }
 
-	nError = CommonAddPlane(&pNode,&pPlane);
-	if (nError != sgl_no_err)
-	{
-		SglError(nError);
-		return;
-	}
+    nError = CommonAddPlane(&pNode, &pPlane);
+    if (nError != sgl_no_err) {
+        SglError(nError);
+        return;
+    }
 
-	SglError(DefinePlane( pNode,pPlane, surfacePoint,point2,point3, bInvisible,
-	  normal1,normal2,normal3, uv1,uv2,uv3 ));
+    SglError(DefinePlane(pNode, pPlane, surfacePoint, point2, point3, bInvisible,
+                         normal1, normal2, normal3, uv1, uv2, uv3));
 }
 
 
@@ -2139,30 +1999,27 @@ void CALL_CONV sgl_add_plane( sgl_vector surfacePoint,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_set_simple_plane( int nPlaneIndex, sgl_vector surfacePoint,
-									 sgl_vector normal, sgl_bool bInvisible )
-{
-	int nError;
+void CALL_CONV sgl_set_simple_plane(int nPlaneIndex, sgl_vector surfacePoint,
+                                    sgl_vector normal, sgl_bool bInvisible) {
+    int nError;
 
-	CONVEX_NODE_STRUCT *pNode;
-	CONV_PLANE_STRUCT  *pPlane;
+    CONVEX_NODE_STRUCT *pNode;
+    CONV_PLANE_STRUCT *pPlane;
 
-	if (surfacePoint == NULL || normal == NULL)
-	{
-		DPFDEV((DBG_WARNING, "sgl_set_simple_plane: calling with bad parameters"));	
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    if (surfacePoint == NULL || normal == NULL) {
+        DPFDEV((DBG_WARNING, "sgl_set_simple_plane: calling with bad parameters"));
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-	nError = CommonSetPlane(&pNode,&pPlane, nPlaneIndex);
-	if (nError != sgl_no_err)
-	{
-		SglError(nError);
-		return;
-	}
+    nError = CommonSetPlane(&pNode, &pPlane, nPlaneIndex);
+    if (nError != sgl_no_err) {
+        SglError(nError);
+        return;
+    }
 
-	DefineSimplePlane(pNode,pPlane, surfacePoint,normal,bInvisible);
-	SglError(sgl_no_err);
+    DefineSimplePlane(pNode, pPlane, surfacePoint, normal, bInvisible);
+    SglError(sgl_no_err);
 }
 
 
@@ -2177,82 +2034,69 @@ void CALL_CONV sgl_set_simple_plane( int nPlaneIndex, sgl_vector surfacePoint,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_set_plane( int nPlaneIndex,
-							  sgl_vector surfacePoint,
-							  sgl_vector point2, sgl_vector point3,
-							  sgl_bool   bInvisible,
-							  sgl_vector normal1,
- 							  sgl_vector normal2, sgl_vector normal3,
-							  sgl_2d_vec uv1, sgl_2d_vec uv2, sgl_2d_vec uv3 )
-{
-	int nError;
+void CALL_CONV sgl_set_plane(int nPlaneIndex,
+                             sgl_vector surfacePoint,
+                             sgl_vector point2, sgl_vector point3,
+                             sgl_bool bInvisible,
+                             sgl_vector normal1,
+                             sgl_vector normal2, sgl_vector normal3,
+                             sgl_2d_vec uv1, sgl_2d_vec uv2, sgl_2d_vec uv3) {
+    int nError;
 
-	CONVEX_NODE_STRUCT *pNode;
-	CONV_PLANE_STRUCT  *pPlane;
+    CONVEX_NODE_STRUCT *pNode;
+    CONV_PLANE_STRUCT *pPlane;
 
-	/*
-	// check whether point information is present
-	*/
-	if (surfacePoint == NULL || point2 == NULL || point3 == NULL)
-	{
-		DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad parameters"));		
-		SglError(sgl_err_bad_parameter);
-		return;
-	}
+    /*
+    // check whether point information is present
+    */
+    if (surfacePoint == NULL || point2 == NULL || point3 == NULL) {
+        DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad parameters"));
+        SglError(sgl_err_bad_parameter);
+        return;
+    }
 
-	/*
-	// check whether normal information is only partly present
-	*/
-	if (normal1 == NULL)
-	{
-		if (normal2 != NULL || normal3 != NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad normals"));			
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
-	else
-	{
-		if (normal2 == NULL || normal3 == NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad normals"));		
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
+    /*
+    // check whether normal information is only partly present
+    */
+    if (normal1 == NULL) {
+        if (normal2 != NULL || normal3 != NULL) {
+            DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad normals"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    } else {
+        if (normal2 == NULL || normal3 == NULL) {
+            DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad normals"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    }
 
-	/*
-	// check whether UV information is only partly present
-	*/
-	if (uv1 == NULL)
-	{
-		if (uv2 != NULL || uv3 != NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad UVs"));			
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
-	else
-	{
-		if (uv2 == NULL || uv3 == NULL)
-		{
-			DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad UVs"));			
-			SglError(sgl_err_bad_parameter);
-			return;
-		}
-	}
+    /*
+    // check whether UV information is only partly present
+    */
+    if (uv1 == NULL) {
+        if (uv2 != NULL || uv3 != NULL) {
+            DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad UVs"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    } else {
+        if (uv2 == NULL || uv3 == NULL) {
+            DPFDEV((DBG_WARNING, "sgl_set_plane: calling with bad UVs"));
+            SglError(sgl_err_bad_parameter);
+            return;
+        }
+    }
 
-	nError = CommonSetPlane(&pNode,&pPlane, nPlaneIndex);
-	if (nError != sgl_no_err)
-	{
-		SglError(nError);
-		return;
-	}
+    nError = CommonSetPlane(&pNode, &pPlane, nPlaneIndex);
+    if (nError != sgl_no_err) {
+        SglError(nError);
+        return;
+    }
 
-	SglError(DefinePlane( pNode,pPlane, surfacePoint,point2,point3, bInvisible,
-	  normal1,normal2,normal3, uv1,uv2,uv3 ));
+    SglError(DefinePlane(pNode, pPlane, surfacePoint, point2, point3, bInvisible,
+                         normal1, normal2, normal3, uv1, uv2, uv3));
 }
 
 
@@ -2266,88 +2110,79 @@ void CALL_CONV sgl_set_plane( int nPlaneIndex,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_delete_plane( int nPlaneIndex )
-{
-	int					nError,nDestPlane;
-	CONVEX_NODE_STRUCT	*pNode;
-	CONV_PLANE_STRUCT	*pDestPlaneData,*pSrcPlaneData;
-	CONV_TEXTURE_UNION	*pDestTexture=NULL,*pSrcTexture=NULL;
-	CONV_SHADING_STRUCT	*pDestShading=NULL,*pSrcShading=NULL;
-	CONV_POINTS_STRUCT *pDestPoints=NULL,*pSrcPoints=NULL;
+void CALL_CONV sgl_delete_plane(int nPlaneIndex) {
+    int nError, nDestPlane;
+    CONVEX_NODE_STRUCT *pNode;
+    CONV_PLANE_STRUCT *pDestPlaneData, *pSrcPlaneData;
+    CONV_TEXTURE_UNION *pDestTexture = NULL, *pSrcTexture = NULL;
+    CONV_SHADING_STRUCT *pDestShading = NULL, *pSrcShading = NULL;
+    CONV_POINTS_STRUCT *pDestPoints = NULL, *pSrcPoints = NULL;
 
-	nError = CommonSetPlane(&pNode,NULL, nPlaneIndex);
-	if (nError != sgl_no_err)
-	{
-		SglError(nError);
-		return;
-	}
+    nError = CommonSetPlane(&pNode, NULL, nPlaneIndex);
+    if (nError != sgl_no_err) {
+        SglError(nError);
+        return;
+    }
 
-	for (nDestPlane = nPlaneIndex; nDestPlane <= (int)pNode->u16_num_planes -2;
-	  nDestPlane++)
-	{
-		pDestPlaneData = pNode->plane_data + nDestPlane;
-		pSrcPlaneData = pDestPlaneData+1;
+    for (nDestPlane = nPlaneIndex; nDestPlane <= (int) pNode->u16_num_planes - 2;
+         nDestPlane++) {
+        pDestPlaneData = pNode->plane_data + nDestPlane;
+        pSrcPlaneData = pDestPlaneData + 1;
 
-		if (pNode->texture_data != NULL)
-		{
-			pDestTexture = pNode->texture_data + nDestPlane;
-			pSrcTexture = pDestTexture+1;
-		}
+        if (pNode->texture_data != NULL) {
+            pDestTexture = pNode->texture_data + nDestPlane;
+            pSrcTexture = pDestTexture + 1;
+        }
 
-		if (pNode->shading_data != NULL)
-		{
-			pDestShading = pNode->shading_data + nDestPlane;
-			pSrcShading = pDestShading+1;
-		}
+        if (pNode->shading_data != NULL) {
+            pDestShading = pNode->shading_data + nDestPlane;
+            pSrcShading = pDestShading + 1;
+        }
 
-		if (pNode->points_data != NULL)
-		{
-			pDestPoints = pNode->points_data + nDestPlane;
-			pSrcPoints = pDestPoints+1;
-		}
+        if (pNode->points_data != NULL) {
+            pDestPoints = pNode->points_data + nDestPlane;
+            pSrcPoints = pDestPoints + 1;
+        }
 
-		/*
-		// OPTIMISATION: PUT CopyPlaneInfo CODE HERE INSTEAD OF IN SEPARATE
-		// FUNCTION.
-		*/
-		CopyPlaneInfo(pDestPlaneData,pDestTexture,pDestShading,pDestPoints,
-			pSrcPlaneData,pSrcTexture,pSrcShading,pSrcPoints,
-			pNode->texture_data != NULL, 
-			pNode->shading_data != NULL,
-			pNode->points_data != NULL);
-	}
+        /*
+        // OPTIMISATION: PUT CopyPlaneInfo CODE HERE INSTEAD OF IN SEPARATE
+        // FUNCTION.
+        */
+        CopyPlaneInfo(pDestPlaneData, pDestTexture, pDestShading, pDestPoints,
+                      pSrcPlaneData, pSrcTexture, pSrcShading, pSrcPoints,
+                      pNode->texture_data != NULL,
+                      pNode->shading_data != NULL,
+                      pNode->points_data != NULL);
+    }
 
-	if (pNode->local_materials != NULL)
-	{
-		/*
-		// Decrement the plane count of the corresponding local material (if
-		// there is one):
-		*/
-		int nPlaneCount=0, nMat;
+    if (pNode->local_materials != NULL) {
+        /*
+        // Decrement the plane count of the corresponding local material (if
+        // there is one):
+        */
+        int nPlaneCount = 0, nMat;
 
-		for (nMat=0; nMat < pNode->u16_num_materials; nMat++)
-		{
-			nPlaneCount += pNode->local_materials[nMat].planes_affected;
-			if (nPlaneCount > nPlaneIndex)
-			{
-				pNode->local_materials[nMat].planes_affected--;
-				break;
-			}
-			/*
-			// OPTIMISATION: MERGE THIS LOCAL MATERIAL WITH SUBSEQUENT ONES IF
-			// IT IS NO LONGER USED FOR ANY PLANES.  REDUCE MAX_MATERIALS BY A
-			// CHUNK IF APPLICABLE.
-			// We are not bothering to reduce u16_max_materials and the
-			// corresponding data structure size.
-			*/
-		}
-	}
+        for (nMat = 0; nMat < pNode->u16_num_materials; nMat++) {
+            nPlaneCount += pNode->local_materials[nMat].planes_affected;
+            if (nPlaneCount > nPlaneIndex) {
+                pNode->local_materials[nMat].planes_affected--;
+                break;
+            }
+            /*
+            // OPTIMISATION: MERGE THIS LOCAL MATERIAL WITH SUBSEQUENT ONES IF
+            // IT IS NO LONGER USED FOR ANY PLANES.  REDUCE MAX_MATERIALS BY A
+            // CHUNK IF APPLICABLE.
+            // We are not bothering to reduce u16_max_materials and the
+            // corresponding data structure size.
+            */
+        }
+    }
 
-	pNode->u16_num_planes--;
+    pNode->u16_num_planes--;
 
-	SglError(GenerateAdjacencyInfo(pNode));
+    SglError(GenerateAdjacencyInfo(pNode));
 
-	/* OPTIMISATION: CHECK WHETHER EACH CONVEX 'ALL' FLAG CAN NOW BE SET. */
+    /* OPTIMISATION: CHECK WHETHER EACH CONVEX 'ALL' FLAG CAN NOW BE SET. */
 }
 
 
@@ -2361,28 +2196,24 @@ void CALL_CONV sgl_delete_plane( int nPlaneIndex )
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_plane_count()
-{
+int CALL_CONV sgl_plane_count() {
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
+    {
+        return SglError(sgl_err_failed_init);
+    }
 #endif
 
-	DlCompleteCurrentTransform();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentTransform();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-	if (dlUserGlobals.pCurrentConvex == NULL)
-	{
-		return SglError(sgl_err_no_convex);
-	}
+    if (dlUserGlobals.pCurrentConvex == NULL) {
+        return SglError(sgl_err_no_convex);
+    }
 
-	return SglError(dlUserGlobals.pCurrentConvex->u16_num_planes);
+    return SglError(dlUserGlobals.pCurrentConvex->u16_num_planes);
 }
-
-
 
 
 /******************************************************************************
@@ -2396,82 +2227,73 @@ int CALL_CONV sgl_plane_count()
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_create_light_volume( const sgl_bool bGenerateName,
-							 		   const sgl_bool bLightVol,
-									   const int LightName)
-{
+int CALL_CONV sgl_create_light_volume(const sgl_bool bGenerateName,
+                                      const sgl_bool bLightVol,
+                                      const int LightName) {
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
-	else
+    {
+        return SglError(sgl_err_failed_init);
+    }
+    else
 #endif
-	{
-		int nError;
+    {
+        int nError;
 
-		DlCompleteCurrentTransform();
-		DlCompleteCurrentConvex();
-		DlCompleteCurrentMaterial();
-		DlCompleteCurrentMesh();
+        DlCompleteCurrentTransform();
+        DlCompleteCurrentConvex();
+        DlCompleteCurrentMaterial();
+        DlCompleteCurrentMesh();
 
-		/*
-		// Check that LightName is a valid light
-		*/
-		if(GetNamedItemType(dlUserGlobals.pNamtab, LightName) != nt_light)
-		{
-			DPFDEV((DBG_WARNING, "sgl_create_light_volume: calling with bad name"));			
-			return SglError(sgl_err_bad_name);
-		}
-		
-		/*
-		// Check that it is a parallel or point light
-		*/
-		/*
-		// NOT Implemented, it'll get skipped if its an ambient light anyway
-		//							  SJF
-		*/
+        /*
+        // Check that LightName is a valid light
+        */
+        if (GetNamedItemType(dlUserGlobals.pNamtab, LightName) != nt_light) {
+            DPFDEV((DBG_WARNING, "sgl_create_light_volume: calling with bad name"));
+            return SglError(sgl_err_bad_name);
+        }
 
-		if(bLightVol)
-		{
-			nError = CreateConvex(cf_light_volume);
-		}
-		else
-		{
-			nError = CreateConvex(cf_shadow_volume);
-		}
+        /*
+        // Check that it is a parallel or point light
+        */
+        /*
+        // NOT Implemented, it'll get skipped if its an ambient light anyway
+        //							  SJF
+        */
 
-		/*
-		// Store the associated light, and increment the usage count
-		// on the name. (it should get decremented in the deletion of the
-		// convex)
-		*/
-		if(nError == sgl_no_err)
-		{
-			dlUserGlobals.pCurrentConvex->u16_volumes_light = LightName;
+        if (bLightVol) {
+            nError = CreateConvex(cf_light_volume);
+        } else {
+            nError = CreateConvex(cf_shadow_volume);
+        }
 
-			IncNamedItemUsage(dlUserGlobals.pNamtab, LightName);
-		}
+        /*
+        // Store the associated light, and increment the usage count
+        // on the name. (it should get decremented in the deletion of the
+        // convex)
+        */
+        if (nError == sgl_no_err) {
+            dlUserGlobals.pCurrentConvex->u16_volumes_light = LightName;
 
-		if (bGenerateName && nError == sgl_no_err)
-		{
-			int nName;
+            IncNamedItemUsage(dlUserGlobals.pNamtab, LightName);
+        }
 
-			ASSERT(dlUserGlobals.pCurrentConvex != NULL);
+        if (bGenerateName && nError == sgl_no_err) {
+            int nName;
 
-			nName = AddNamedItem(dlUserGlobals.pNamtab,
-			  dlUserGlobals.pCurrentConvex, nt_convex);
+            ASSERT(dlUserGlobals.pCurrentConvex != NULL);
 
-			dlUserGlobals.pCurrentConvex->node_hdr.n16_name =
-			  nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16)nName;
-			return SglError(nName);
-		}
-		else
-		{
-			return SglError(nError);
-		}
-	}
+            nName = AddNamedItem(dlUserGlobals.pNamtab,
+                                 dlUserGlobals.pCurrentConvex, nt_convex);
+
+            dlUserGlobals.pCurrentConvex->node_hdr.n16_name =
+                    nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16) nName;
+            return SglError(nName);
+        } else {
+            return SglError(nError);
+        }
+    }
 }
 
 /******************************************************************************
@@ -2484,44 +2306,40 @@ int CALL_CONV sgl_create_light_volume( const sgl_bool bGenerateName,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_create_hidden_convex( sgl_bool bGenerateName )
-{
+int CALL_CONV sgl_create_hidden_convex(sgl_bool bGenerateName) {
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
-	else
+    {
+        return SglError(sgl_err_failed_init);
+    }
+    else
 #endif
-	{
-		int nError;
+    {
+        int nError;
 
-		DlCompleteCurrentTransform();
-		DlCompleteCurrentConvex();
-		DlCompleteCurrentMaterial();
-		DlCompleteCurrentMesh();
+        DlCompleteCurrentTransform();
+        DlCompleteCurrentConvex();
+        DlCompleteCurrentMaterial();
+        DlCompleteCurrentMesh();
 
-		nError = CreateConvex(cf_hidden_convex);
+        nError = CreateConvex(cf_hidden_convex);
 
-		if (bGenerateName && nError == sgl_no_err)
-		{
-			int nName;
+        if (bGenerateName && nError == sgl_no_err) {
+            int nName;
 
-			ASSERT(dlUserGlobals.pCurrentConvex != NULL);
+            ASSERT(dlUserGlobals.pCurrentConvex != NULL);
 
-			nName = AddNamedItem(dlUserGlobals.pNamtab,
-			  dlUserGlobals.pCurrentConvex, nt_convex);
+            nName = AddNamedItem(dlUserGlobals.pNamtab,
+                                 dlUserGlobals.pCurrentConvex, nt_convex);
 
-			dlUserGlobals.pCurrentConvex->node_hdr.n16_name =
-			  nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16)nName;
-			return SglError(nName);
-		}
-		else
-		{
-			return SglError(nError);
-		}
-	}
+            dlUserGlobals.pCurrentConvex->node_hdr.n16_name =
+                    nName == sgl_err_no_name ? NM_INVALID_NAME : (sgl_int16) nName;
+            return SglError(nName);
+        } else {
+            return SglError(nError);
+        }
+    }
 }
 
 

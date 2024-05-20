@@ -214,7 +214,7 @@
  *****************************************************************************/
 
 #include <math.h>
-#include <windows.h> 
+#include <windows.h>
 
 #include "sgl_defs.h"
 #include "hwinterf.h"
@@ -231,19 +231,19 @@
 /*
 // Stand alone and overlay configs....
 */
-#define SA_HIGH_X_RES	640
-#define SA_HIGH_Y_RES	448    /* BUG Work around - we dont do partial sized yet*/
+#define SA_HIGH_X_RES    640
+#define SA_HIGH_Y_RES    448    /* BUG Work around - we dont do partial sized yet*/
 
-#define OV_HIGH_X_RES	640
-#define OV_HIGH_Y_RES	448    /* BUG Work around - we dont do partial sized yet*/
+#define OV_HIGH_X_RES    640
+#define OV_HIGH_Y_RES    448    /* BUG Work around - we dont do partial sized yet*/
 
-#define	X_REGION_SIZE	32
-#define	Y_REGION_SIZE	32	
+#define    X_REGION_SIZE    32
+#define    Y_REGION_SIZE    32
 
 
-#define LOW_X_RES	320
-#define LOW_Y_RES1	200
-#define LOW_Y_RES2	240
+#define LOW_X_RES    320
+#define LOW_Y_RES1    200
+#define LOW_Y_RES2    240
 
 
 #define MID_X_RES  640
@@ -254,23 +254,23 @@
 #define HIGH_X_RES 800
 #define HIGH_Y_RES 600
 
-#define MERGE_HEIGHT	8 /* Dynamic Regions defaults */
-#define MIN_Y_SIZE		2
+#define MERGE_HEIGHT    8 /* Dynamic Regions defaults */
+#define MIN_Y_SIZE        2
 
 extern HLDEVICE gHLogicalDev;
 
 /* only one device is supported for the simulator */
 
-static sgl_bool device_free=TRUE;
+static sgl_bool device_free = TRUE;
 
-int	DeviceX;
-int	DeviceY;
+int DeviceX;
+int DeviceY;
 
-static int	RegionXSize;
-static int	RegionYSize;
+static int RegionXSize;
+static int RegionYSize;
 
-static int 	HasLeftOver;
-static int  LeftOverY; 
+static int HasLeftOver;
+static int LeftOverY;
 
 static int NumXRegions;
 static int NumYRegions;
@@ -278,7 +278,7 @@ static int NumYRegions;
 static int MergeHeight; /* Dynamic Region, control paramters */
 static int MinYSize;
 
-static FRAME_BUFFER_MODE 	gFrameBufferMode = FRAME_BUFFER_ACTIVE;
+static FRAME_BUFFER_MODE gFrameBufferMode = FRAME_BUFFER_ACTIVE;
 
 #if DEBUG
 /**********************************************************************
@@ -291,47 +291,47 @@ static FRAME_BUFFER_MODE 	gFrameBufferMode = FRAME_BUFFER_ACTIVE;
 
 void DrawRegionGrid(PSGLCONTEXT pContext)
 {
-	SGLCONTEXT GridContext = *pContext;
-	SGLVERTEX line[2];
-	sgl_uint16 pLine[][2] = {0,1};
-	int i;
+    SGLCONTEXT GridContext = *pContext;
+    SGLVERTEX line[2];
+    sgl_uint16 pLine[][2] = {0,1};
+    int i;
 
-	/* make the context safe for flat shaded */
-	GridContext.u32Flags &= ~SGLTT_TEXTURE;
-	GridContext.u32Flags &= ~SGLTT_GOURAUD;
-	GridContext.u32Flags &= ~SGLTT_HIGHLIGHT;
-	GridContext.u32Flags &= ~SGLTT_VERTEXTRANS;
-	GridContext.u32Flags &= ~SGLTT_GLOBALTRANS;
-	GridContext.u32Flags &= ~SGLTT_DISABLEZBUFFER;
-	GridContext.uLineWidth = 1;
+    /* make the context safe for flat shaded */
+    GridContext.u32Flags &= ~SGLTT_TEXTURE;
+    GridContext.u32Flags &= ~SGLTT_GOURAUD;
+    GridContext.u32Flags &= ~SGLTT_HIGHLIGHT;
+    GridContext.u32Flags &= ~SGLTT_VERTEXTRANS;
+    GridContext.u32Flags &= ~SGLTT_GLOBALTRANS;
+    GridContext.u32Flags &= ~SGLTT_DISABLEZBUFFER;
+    GridContext.uLineWidth = 1;
 
-	line[0].u32Colour = 0x00ff00ff;
-	line[1].u32Colour = 0x00ff00ff;
+    line[0].u32Colour = 0x00ff00ff;
+    line[1].u32Colour = 0x00ff00ff;
 
-	line[0].fInvW = 1.0f;
-	line[1].fInvW = 1.0f;
-	line[0].fY = 0.0f; 
-	line[1].fY = (float)(DeviceY - 1);
+    line[0].fInvW = 1.0f;
+    line[1].fInvW = 1.0f;
+    line[0].fY = 0.0f;
+    line[1].fY = (float)(DeviceY - 1);
 
-	/* draw Y lines */
-	for(i=RegionXSize-1; i<DeviceX-1; i+=RegionXSize)
-	{
-		line[0].fX = (float)i;
-		line[1].fX = (float)i;
-		
-		sgltri_lines(&GridContext, 1, pLine, line);
-	}
+    /* draw Y lines */
+    for(i=RegionXSize-1; i<DeviceX-1; i+=RegionXSize)
+    {
+        line[0].fX = (float)i;
+        line[1].fX = (float)i;
 
-	line[0].fX = 0.0f; 
-	line[1].fX = (float)(DeviceX - 1);
-	/* draw X lines */
-	for(i=RegionYSize-1; i<DeviceY-1; i+=RegionYSize)
-	{
-		line[0].fY = (float)i;
-		line[1].fY = (float)i;
-		
-		sgltri_lines(&GridContext, 1, pLine, line);
-	}
+        sgltri_lines(&GridContext, 1, pLine, line);
+    }
+
+    line[0].fX = 0.0f;
+    line[1].fX = (float)(DeviceX - 1);
+    /* draw X lines */
+    for(i=RegionYSize-1; i<DeviceY-1; i+=RegionYSize)
+    {
+        line[0].fY = (float)i;
+        line[1].fY = (float)i;
+
+        sgltri_lines(&GridContext, 1, pLine, line);
+    }
 }
 #endif
 
@@ -344,10 +344,9 @@ void DrawRegionGrid(PSGLCONTEXT pContext)
  * Description 	  : Allows calls like sgl_use_address_mode to disable
  *					automatic frame buffer management
  **************************************************************************/
-void CALL_CONV HWSetFrameBufferMode (FRAME_BUFFER_MODE FrameBufferMode)
-{
-	gFrameBufferMode = FrameBufferMode;
-}	
+void CALL_CONV HWSetFrameBufferMode(FRAME_BUFFER_MODE FrameBufferMode) {
+    gFrameBufferMode = FrameBufferMode;
+}
 
 /**************************************************************************
  * Function Name  : HWCreateDevice
@@ -367,199 +366,178 @@ void CALL_CONV HWSetFrameBufferMode (FRAME_BUFFER_MODE FrameBufferMode)
  *				   
  **************************************************************************/
 
-int	CALL_CONV HWCreateDevice( int *device_number,
-							  int *x_dimension,
-							  int *y_dimension,
-							  sgl_device_colour_types *device_mode,
-							  sgl_bool *double_buffer )
-{
-	HDISPLAY hDisplay;
-	
-	int error = -1;
-	
-	/* only one device is supported  */
-	if (device_free)
-	{
-		DeviceX = *x_dimension;
-		DeviceY = *y_dimension;
+int CALL_CONV HWCreateDevice(int *device_number,
+                             int *x_dimension,
+                             int *y_dimension,
+                             sgl_device_colour_types *device_mode,
+                             sgl_bool *double_buffer) {
+    HDISPLAY hDisplay;
 
-		device_free = FALSE;
+    int error = -1;
 
-		/*
-		// Get the region size... and then if not a legal size, choose one that
-		// is!
-		//
-		// NOTE (for Midas3) the X sizes MUST be a multiple of the number of
-		// sabre cells, and (for all boards) Y MUST be a multiple of the number
-		// of sabres.  Note we are assuming 1 sabre!
-		*/
-		RegionXSize = HWRdValFileUInt ("SW_XRegionSize", X_REGION_SIZE);
-		RegionYSize = HWRdValFileUInt ("SW_YRegionSize", Y_REGION_SIZE);
+    /* only one device is supported  */
+    if (device_free) {
+        DeviceX = *x_dimension;
+        DeviceY = *y_dimension;
 
-		/* Dynamic Region settings */
-		MergeHeight = HWRdValFileUInt ("SW_MergeHeight", MERGE_HEIGHT);
-		MinYSize	= HWRdValFileUInt ("SW_MinYSize", MIN_Y_SIZE);
-		
-		switch(RegionXSize) 
-		{			/* See 'HWGetRegionSize' below for an explanation */
-			case 0: 
-				RegionXSize = NUM_SABRE_CELLS;
-				break;
-			case 32: 				/* Don't merge tiles sideways */
-				MergeHeight = 512;  /* Or any other big number would do */
-				break;
-			case 64:
-				RegionXSize = 32;   /* Do merge tiles sideways */
-				break;
-			default:
-				RegionXSize = (RegionXSize+ NUM_SABRE_CELLS -1)/ NUM_SABRE_CELLS;
-				RegionXSize *= NUM_SABRE_CELLS;
-			break;
-		}		
-			
-		
-		if(RegionYSize == 0)
-		{
-			RegionYSize = 1;
-		}
-		
-		if(MinYSize == 0)
-		{
-			MinYSize = RegionYSize;
-		}
-		
-		if(MergeHeight == 0)
-		{
-			MergeHeight = 2;
-		}
+        device_free = FALSE;
 
-		/*
-		// Calculate how many regions there are
-		*/
-	    NumXRegions = (DeviceX + RegionXSize - 1) / RegionXSize;
-	    NumYRegions = (DeviceY + RegionYSize - 1) / RegionYSize;
+        /*
+        // Get the region size... and then if not a legal size, choose one that
+        // is!
+        //
+        // NOTE (for Midas3) the X sizes MUST be a multiple of the number of
+        // sabre cells, and (for all boards) Y MUST be a multiple of the number
+        // of sabres.  Note we are assuming 1 sabre!
+        */
+        RegionXSize = HWRdValFileUInt("SW_XRegionSize", X_REGION_SIZE);
+        RegionYSize = HWRdValFileUInt("SW_YRegionSize", Y_REGION_SIZE);
 
-		/*
-		// Check that we don't exceed the max number of regions we
-		// can handle
-		*/
-		NumXRegions = MIN(NumXRegions, MAX_X_REGIONS);
-		NumYRegions = MIN(NumYRegions, MAX_Y_REGIONS);
+        /* Dynamic Region settings */
+        MergeHeight = HWRdValFileUInt("SW_MergeHeight", MERGE_HEIGHT);
+        MinYSize = HWRdValFileUInt("SW_MinYSize", MIN_Y_SIZE);
 
-		/*
-		// For Midas 3 and earlier, make sure X is a multiple of the size of
-		// the regions.
-		*/
+        switch (RegionXSize) {            /* See 'HWGetRegionSize' below for an explanation */
+            case 0:
+                RegionXSize = NUM_SABRE_CELLS;
+                break;
+            case 32:                /* Don't merge tiles sideways */
+                MergeHeight = 512;  /* Or any other big number would do */
+                break;
+            case 64:
+                RegionXSize = 32;   /* Do merge tiles sideways */
+                break;
+            default:
+                RegionXSize = (RegionXSize + NUM_SABRE_CELLS - 1) / NUM_SABRE_CELLS;
+                RegionXSize *= NUM_SABRE_CELLS;
+                break;
+        }
+
+
+        if (RegionYSize == 0) {
+            RegionYSize = 1;
+        }
+
+        if (MinYSize == 0) {
+            MinYSize = RegionYSize;
+        }
+
+        if (MergeHeight == 0) {
+            MergeHeight = 2;
+        }
+
+        /*
+        // Calculate how many regions there are
+        */
+        NumXRegions = (DeviceX + RegionXSize - 1) / RegionXSize;
+        NumYRegions = (DeviceY + RegionYSize - 1) / RegionYSize;
+
+        /*
+        // Check that we don't exceed the max number of regions we
+        // can handle
+        */
+        NumXRegions = MIN(NumXRegions, MAX_X_REGIONS);
+        NumYRegions = MIN(NumYRegions, MAX_Y_REGIONS);
+
+        /*
+        // For Midas 3 and earlier, make sure X is a multiple of the size of
+        // the regions.
+        */
 #if ISPTSP
-		*x_dimension = NumXRegions * RegionXSize;
+        *x_dimension = NumXRegions * RegionXSize;
 #endif
 
-		/*
-		// See if there is a small portion left over for y.
-		*/
-		LeftOverY =	DeviceY - ((NumYRegions-1)*RegionYSize);
-		HasLeftOver = (LeftOverY!=0);
+        /*
+        // See if there is a small portion left over for y.
+        */
+        LeftOverY = DeviceY - ((NumYRegions - 1) * RegionYSize);
+        HasLeftOver = (LeftOverY != 0);
 
-		if (gFrameBufferMode == FRAME_BUFFER_PASSIVE)
-		{
-			DPF ((DBG_MESSAGE, "Opening passive device"));			
+        if (gFrameBufferMode == FRAME_BUFFER_PASSIVE) {
+            DPF ((DBG_MESSAGE, "Opening passive device"));
 
-			hDisplay = PVROSOpenDisplayDevice (gHLogicalDev, NULL, FRAME_BUFFER_PASSIVE);
-			
-			if (hDisplay)
-			{
-				*device_number = (int) hDisplay;
-				
-				/* success */
-				error = 0;
-			}
-		}
-		else
-		{
-			ASSERT (gFrameBufferMode == FRAME_BUFFER_ACTIVE);
-			
-			/* 
-				old apps request sizes slightly smaller than they 
-				actually want. Ah well, snap x and y to nearest
-				16 pixel boundary and try that.
-			*/
-			*x_dimension = (*x_dimension + 0x0000000F) & 0xFFFFFFF0;
-			*y_dimension = (*y_dimension + 0x0000000F) & 0xFFFFFFF0;
+            hDisplay = PVROSOpenDisplayDevice(gHLogicalDev, NULL, FRAME_BUFFER_PASSIVE);
 
-			/* Need to special case Y sizes of 200 and 600 since
-			 * these aren't divisable by 16.
-			 *
-			 * i.e. if Y set to 208 or 192 then set to 200, and
-			 * if Y set to 608 or 592 then set to 600.
-			 */
-			if ((*y_dimension == 208) || (*y_dimension == 192))
-				*y_dimension = 200;
-			
-			if ((*y_dimension == 608) || (*y_dimension == 592))
-				*y_dimension = 600;
-			
-			/* GUID = null is the primary ddraw provider
-			 */
-			hDisplay = PVROSOpenDisplayDevice (gHLogicalDev, NULL, FRAME_BUFFER_ACTIVE);
-			
-			if (hDisplay)
-			{
-				sgl_uint32 nModes;
-				
-				nModes = PVROSEnumDisplayModes (hDisplay, NULL);
-				
-				if (nModes)
-				{
-					DisplayModeTable *pDMT = SGLMalloc (sizeof (DisplayModeTable) * nModes);
-					
-					if (pDMT)
-					{
-						sgl_uint32 k;
-						
-						PVROSEnumDisplayModes (hDisplay, pDMT);
-						
-						for (k = 0; k < nModes; ++k)
-						{
-							if (((int)(pDMT[k].XResolution) == *x_dimension) &&
-								((int)(pDMT[k].YResolution) == *y_dimension) &&
-								(((pDMT[k].BitDepth == 16) && (*device_mode == sgl_device_16bit)) ||
-								 (((pDMT[k].BitDepth == 32) || (pDMT[k].BitDepth == 24)) && 
-								  (*device_mode == sgl_device_24bit))))
-							{
-								PVROSERR Err;
-								
-								if (*double_buffer)
-								{
-									Err = PVROSSelectDisplayMode (hDisplay, pDMT[k].hMode, 2);
-								}
-								else
-								{
-									Err = PVROSSelectDisplayMode (hDisplay, pDMT[k].hMode, 1);
-								}
-								
-								if (Err == PVROS_GROOVY)
-								{
-									*device_number = (int) hDisplay;
+            if (hDisplay) {
+                *device_number = (int) hDisplay;
 
-									/* success */
-									error = 0;
-								}
-							}
-						}
-						
-						SGLFree (pDMT);					
-					}
-				}
-			}
-		}
-	}	
-	else
-	{
-		/* the device is already in use */
+                /* success */
+                error = 0;
+            }
+        } else {
+            ASSERT (gFrameBufferMode == FRAME_BUFFER_ACTIVE);
 
-	}	
-	
-	return error;
+            /*
+                old apps request sizes slightly smaller than they
+                actually want. Ah well, snap x and y to nearest
+                16 pixel boundary and try that.
+            */
+            *x_dimension = (*x_dimension + 0x0000000F) & 0xFFFFFFF0;
+            *y_dimension = (*y_dimension + 0x0000000F) & 0xFFFFFFF0;
+
+            /* Need to special case Y sizes of 200 and 600 since
+             * these aren't divisable by 16.
+             *
+             * i.e. if Y set to 208 or 192 then set to 200, and
+             * if Y set to 608 or 592 then set to 600.
+             */
+            if ((*y_dimension == 208) || (*y_dimension == 192))
+                *y_dimension = 200;
+
+            if ((*y_dimension == 608) || (*y_dimension == 592))
+                *y_dimension = 600;
+
+            /* GUID = null is the primary ddraw provider
+             */
+            hDisplay = PVROSOpenDisplayDevice(gHLogicalDev, NULL, FRAME_BUFFER_ACTIVE);
+
+            if (hDisplay) {
+                sgl_uint32 nModes;
+
+                nModes = PVROSEnumDisplayModes(hDisplay, NULL);
+
+                if (nModes) {
+                    DisplayModeTable *pDMT = SGLMalloc (sizeof(DisplayModeTable) * nModes);
+
+                    if (pDMT) {
+                        sgl_uint32 k;
+
+                        PVROSEnumDisplayModes(hDisplay, pDMT);
+
+                        for (k = 0; k < nModes; ++k) {
+                            if (((int) (pDMT[k].XResolution) == *x_dimension) &&
+                                ((int) (pDMT[k].YResolution) == *y_dimension) &&
+                                (((pDMT[k].BitDepth == 16) && (*device_mode == sgl_device_16bit)) ||
+                                 (((pDMT[k].BitDepth == 32) || (pDMT[k].BitDepth == 24)) &&
+                                  (*device_mode == sgl_device_24bit)))) {
+                                PVROSERR Err;
+
+                                if (*double_buffer) {
+                                    Err = PVROSSelectDisplayMode(hDisplay, pDMT[k].hMode, 2);
+                                } else {
+                                    Err = PVROSSelectDisplayMode(hDisplay, pDMT[k].hMode, 1);
+                                }
+
+                                if (Err == PVROS_GROOVY) {
+                                    *device_number = (int) hDisplay;
+
+                                    /* success */
+                                    error = 0;
+                                }
+                            }
+                        }
+
+                        SGLFree (pDMT);
+                    }
+                }
+            }
+        }
+    } else {
+        /* the device is already in use */
+
+    }
+
+    return error;
 
 } /* HWCreateDevice */
 
@@ -580,20 +558,17 @@ int	CALL_CONV HWCreateDevice( int *device_number,
  *				   
  **************************************************************************/
 
-int	CALL_CONV HWGetDeviceSize( int hDisplay,
-							   int *x_dimension, int *y_dimension )
-{
-	int error = 0;
+int CALL_CONV HWGetDeviceSize(int hDisplay,
+                              int *x_dimension, int *y_dimension) {
+    int error = 0;
 
-	if (!device_free)
-	{
-		*x_dimension = DeviceX;
-		*y_dimension = DeviceY;
-	}
-	else
-		error = -1; /* no device has been created */
+    if (!device_free) {
+        *x_dimension = DeviceX;
+        *y_dimension = DeviceY;
+    } else
+        error = -1; /* no device has been created */
 
-	return error;
+    return error;
 }
 
 
@@ -612,36 +587,32 @@ int	CALL_CONV HWGetDeviceSize( int hDisplay,
  *				   
  **************************************************************************/
 
-int CALL_CONV HWGetRegionInfo( int hDisplay,
-							   DEVICE_REGION_INFO_STRUCT * pRegionInfo )
-{
-	int error = 0;
+int CALL_CONV HWGetRegionInfo(int hDisplay,
+                              DEVICE_REGION_INFO_STRUCT *pRegionInfo) {
+    int error = 0;
 
-	if (!device_free)
-	{
-		/* 	have to calculate the number of regions require for the given devices size */
+    if (!device_free) {
+        /* 	have to calculate the number of regions require for the given devices size */
 
-		pRegionInfo->NumXRegions = NumXRegions; 
-		pRegionInfo->NumYRegions = NumYRegions; 
+        pRegionInfo->NumXRegions = NumXRegions;
+        pRegionInfo->NumYRegions = NumYRegions;
 
-		pRegionInfo->LeftOverY = LeftOverY;
-		pRegionInfo->HasLeftOver = HasLeftOver;		
-		
-		pRegionInfo->XSize = RegionXSize;
-		pRegionInfo->YSize = RegionYSize;
+        pRegionInfo->LeftOverY = LeftOverY;
+        pRegionInfo->HasLeftOver = HasLeftOver;
 
-		/* Dynamic region settings */
-		pRegionInfo->MinYSize    = MinYSize;
-		pRegionInfo->MergeHeight = MergeHeight;
+        pRegionInfo->XSize = RegionXSize;
+        pRegionInfo->YSize = RegionYSize;
 
-	}
-	else
-		error = -1; /* no device has been created */
+        /* Dynamic region settings */
+        pRegionInfo->MinYSize = MinYSize;
+        pRegionInfo->MergeHeight = MergeHeight;
 
-	return error;
+    } else
+        error = -1; /* no device has been created */
+
+    return error;
 
 }
-
 
 
 /**************************************************************************
@@ -664,76 +635,70 @@ int CALL_CONV HWGetRegionInfo( int hDisplay,
  **************************************************************************/
 
 
-int CALL_CONV HWSetViewport( int parent_device,
-							 int * left, int * top,
-							 int * right, int * bottom )
-{
+int CALL_CONV HWSetViewport(int parent_device,
+                            int *left, int *top,
+                            int *right, int *bottom) {
 
-	int error = 0;
-	int tem;
-	
-	if (device_free)
-	{
-		/* no device has been defined */
-	 
-		error = -1;
-	}
-	else
-	{
-		/* Clamp given coord to within device boundaries */
+    int error = 0;
+    int tem;
 
-		*left	= CLAMP(*left,  0, (DeviceX-1));
-		*right	= CLAMP(*right, 0, (DeviceX-1));
-		*top	= CLAMP(*top,	0, (DeviceY-1));
-		*bottom = CLAMP(*bottom,0, (DeviceY-1));
+    if (device_free) {
+        /* no device has been defined */
 
-		/* make sure left is smaller than right and top is smaller than bottom */		
+        error = -1;
+    } else {
+        /* Clamp given coord to within device boundaries */
 
-		if (*left > *right)
-		{
-			tem=*right;
-			*right=*left;
-			*left=tem; 
-		}
+        *left = CLAMP(*left, 0, (DeviceX - 1));
+        *right = CLAMP(*right, 0, (DeviceX - 1));
+        *top = CLAMP(*top, 0, (DeviceY - 1));
+        *bottom = CLAMP(*bottom, 0, (DeviceY - 1));
 
-		if (*top > *bottom)
-		{
-			tem=*top;
-			*top=*bottom;
-			*bottom=tem; 
-		}
-		
-		/* x values must be multiples of num sabre cells and
-		// y multiples of  num sabres... 
-		//
-		// HOWEVER to make the coding easier, we'll make the further
-		// restriction that they align with the region size.
-		//
-		// We need to make sure that if the input values for viewports abut,
-		// then after rounding then they still join up. They will join up if
-		// the edge positions differ by only one pixel, so if we add one to
-		// the right value, round and then subtract one off it should still
-		// join up with a matching left-hand edge. Similarly with top and
-		// bottom edges.
-		*/
-		*left = ((*left + RegionXSize/2) / RegionXSize) * RegionXSize;
-		*left = CLAMP(*left, 0, (DeviceX-1));
+        /* make sure left is smaller than right and top is smaller than bottom */
 
-		*right =((*right + 1 + RegionXSize/2) / RegionXSize)* RegionXSize -1;
-		*right = CLAMP(*right, 0, (DeviceX-1));
+        if (*left > *right) {
+            tem = *right;
+            *right = *left;
+            *left = tem;
+        }
 
-		*top 	= ((*top + RegionYSize/2) 	/ RegionYSize) * RegionYSize;
-		*top	= CLAMP(*top,	0, (DeviceY-1));
+        if (*top > *bottom) {
+            tem = *top;
+            *top = *bottom;
+            *bottom = tem;
+        }
 
-		*bottom = ((*bottom + 1 + RegionYSize/2)/ RegionYSize) * RegionYSize -1;
-		*bottom	= CLAMP(*bottom, 0, (DeviceY-1));
+        /* x values must be multiples of num sabre cells and
+        // y multiples of  num sabres...
+        //
+        // HOWEVER to make the coding easier, we'll make the further
+        // restriction that they align with the region size.
+        //
+        // We need to make sure that if the input values for viewports abut,
+        // then after rounding then they still join up. They will join up if
+        // the edge positions differ by only one pixel, so if we add one to
+        // the right value, round and then subtract one off it should still
+        // join up with a matching left-hand edge. Similarly with top and
+        // bottom edges.
+        */
+        *left = ((*left + RegionXSize / 2) / RegionXSize) * RegionXSize;
+        *left = CLAMP(*left, 0, (DeviceX - 1));
+
+        *right = ((*right + 1 + RegionXSize / 2) / RegionXSize) * RegionXSize - 1;
+        *right = CLAMP(*right, 0, (DeviceX - 1));
+
+        *top = ((*top + RegionYSize / 2) / RegionYSize) * RegionYSize;
+        *top = CLAMP(*top, 0, (DeviceY - 1));
+
+        *bottom = ((*bottom + 1 + RegionYSize / 2) / RegionYSize) * RegionYSize - 1;
+        *bottom = CLAMP(*bottom, 0, (DeviceY - 1));
 
 
-		/* what about if they are the same ??????????? Have left it for now */
+        /* what about if they are the same ??????????? Have left it for now */
 
-	}
+    }
 
-	return error;
+    return error;
 
 }
 
@@ -753,22 +718,20 @@ int CALL_CONV HWSetViewport( int parent_device,
  *				   
  **************************************************************************/
 
-int	CALL_CONV HWDeleteDevice( int hDisplay )
-{
-	int error=0;
+int CALL_CONV HWDeleteDevice(int hDisplay) {
+    int error = 0;
 
-	/* there is only one device in the simulator */	
+    /* there is only one device in the simulator */
 
-	device_free = TRUE;	
+    device_free = TRUE;
 
-	if (hDisplay)
-	{
-		PVROSCloseDisplayDevice( gHLogicalDev, (HDISPLAY) hDisplay );		
+    if (hDisplay) {
+        PVROSCloseDisplayDevice(gHLogicalDev, (HDISPLAY) hDisplay);
 
-		(void*) hDisplay = NULL;
-	}
+        (void *) hDisplay = NULL;
+    }
 
-	return error;
+    return error;
 }
 
 /**************************************************************************
@@ -779,36 +742,34 @@ int	CALL_CONV HWDeleteDevice( int hDisplay )
  * Global Used    : 
  * Description 	  : Frees specified device
  **************************************************************************/
-void CALL_CONV HWGetRegionSize ( int *pnXSize, int *pnYSize )
-{
-	*pnXSize = RegionXSize;
+void CALL_CONV HWGetRegionSize(int *pnXSize, int *pnYSize) {
+    *pnXSize = RegionXSize;
 
-	/* Since the XSize used by 'dregion.c' _has_ to be the minimum
-	 * width, the values read in from sglhw.ini are twisted to maintain
-	 * a clear external interface. Therefore, the region sizes in the .ini
-	 * file should be interpreted as the Maximum X and Y values:
-	 * 32 x 32  => never go higher than 32 (but can go lower) and don't 
-	 *             alter the width of the tiles.
-	 * 64 x 32  => as above for Y, but the tile can be 32 or 64 pixels 
-	 *             wide, depending on the number of planes within it.
-	 */
+    /* Since the XSize used by 'dregion.c' _has_ to be the minimum
+     * width, the values read in from sglhw.ini are twisted to maintain
+     * a clear external interface. Therefore, the region sizes in the .ini
+     * file should be interpreted as the Maximum X and Y values:
+     * 32 x 32  => never go higher than 32 (but can go lower) and don't
+     *             alter the width of the tiles.
+     * 64 x 32  => as above for Y, but the tile can be 32 or 64 pixels
+     *             wide, depending on the number of planes within it.
+     */
 
-	switch(*pnXSize)
-	{
-		case 0: 
-			*pnXSize = NUM_SABRE_CELLS;
-			break;
-		case 32: 				    /* Don't merge tiles sideways */
-			MergeHeight = 512;		/* Or any other big number would do */
-			break;
-		case 64:
-			*pnXSize = 32;			/* Do merge tiles sideways */
-			break;
-		default:
-			*pnXSize = (*pnXSize+ NUM_SABRE_CELLS -1)/ NUM_SABRE_CELLS;
-			*pnXSize *= NUM_SABRE_CELLS;
-		break;
-	}		
+    switch (*pnXSize) {
+        case 0:
+            *pnXSize = NUM_SABRE_CELLS;
+            break;
+        case 32:                    /* Don't merge tiles sideways */
+            MergeHeight = 512;        /* Or any other big number would do */
+            break;
+        case 64:
+            *pnXSize = 32;            /* Do merge tiles sideways */
+            break;
+        default:
+            *pnXSize = (*pnXSize + NUM_SABRE_CELLS - 1) / NUM_SABRE_CELLS;
+            *pnXSize *= NUM_SABRE_CELLS;
+            break;
+    }
 
-	*pnYSize = RegionYSize;
+    *pnYSize = RegionYSize;
 }

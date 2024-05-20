@@ -38,7 +38,9 @@
 #include <windows.h>
 
 #define API_TYPESONLY
+
 #include "sgl.h"
+
 #undef API_TYPESONLY
 
 /* 
@@ -46,7 +48,9 @@
 */
 
 #define API_FNBLOCK
+
 #include "pvrosapi.h"
+
 #undef API_FNBLOCK
 
 /* 
@@ -58,79 +62,65 @@
 
 static sgl_bool bNeedsFree = FALSE;
 
-int CALL_CONV PVROSAPIInit ()
-{		
-	InstanceData.hLib = GetModuleHandle ("PVROS.DLL");
+int CALL_CONV PVROSAPIInit() {
+    InstanceData.hLib = GetModuleHandle("PVROS.DLL");
 
-	if (!InstanceData.hLib)
-	{
-		OutputDebugString ("PVROSAPIInit: Loading library ...\n");
-		InstanceData.hLib = LoadLibrary ("PVROS.DLL");
-		bNeedsFree = TRUE;
-	}
-	
-	if (InstanceData.hLib == NULL)
-	{
-		LPVOID lpMsgBuf;
+    if (!InstanceData.hLib) {
+        OutputDebugString("PVROSAPIInit: Loading library ...\n");
+        InstanceData.hLib = LoadLibrary("PVROS.DLL");
+        bNeedsFree = TRUE;
+    }
 
-		OutputDebugString ("PVROSAPIInit: Unable to load PVROS.DLL\n");
+    if (InstanceData.hLib == NULL) {
+        LPVOID lpMsgBuf;
 
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-					  NULL,
-					  GetLastError(),
-					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language*/
-					  (LPTSTR) &lpMsgBuf,
-					  0,
-					  NULL );
+        OutputDebugString("PVROSAPIInit: Unable to load PVROS.DLL\n");
 
-		/* Display the string.*/
-		MessageBox( NULL, lpMsgBuf, "GetLastError", MB_OK|MB_ICONINFORMATION );
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                      NULL,
+                      GetLastError(),
+                      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language*/
+                      (LPTSTR) &lpMsgBuf,
+                      0,
+                      NULL);
 
-		/* Free the buffer.*/
-		LocalFree( lpMsgBuf );
-		
-	}			  
-	else
-	{
-		API_GETFNTYPE(PVROSAPI) pfnGetIF;
-		
-		pfnGetIF = (void *) GetProcAddress (InstanceData.hLib, "GetPVROSAPI_IF");
-		
-		if (!bNeedsFree)
-		{
-			InstanceData.hLib = NULL;
-		}
-		
-		if (!pfnGetIF)
-		{
-			OutputDebugString ("PVROSAPIInit: Unable to get PVROS interface loader\n");
-		}
-		else if (pfnGetIF (&InstanceData.pIf) != sizeof (API_STRUCTTYPE(PVROSAPI)))
-		{
-			OutputDebugString ("PVROSAPIInit: PVROS interface is weird\n");
-		}
-		else
-		{
-			return (TRUE);
-		}
+        /* Display the string.*/
+        MessageBox(NULL, lpMsgBuf, "GetLastError", MB_OK | MB_ICONINFORMATION);
 
-		if (bNeedsFree)
-		{
-			FreeLibrary (InstanceData.hLib);
-			InstanceData.hLib = NULL;
-		}
-	}
-		
-	return (FALSE);
+        /* Free the buffer.*/
+        LocalFree(lpMsgBuf);
+
+    } else {
+        API_GETFNTYPE(PVROSAPI) pfnGetIF;
+
+        pfnGetIF = (void *) GetProcAddress(InstanceData.hLib, "GetPVROSAPI_IF");
+
+        if (!bNeedsFree) {
+            InstanceData.hLib = NULL;
+        }
+
+        if (!pfnGetIF) {
+            OutputDebugString("PVROSAPIInit: Unable to get PVROS interface loader\n");
+        } else if (pfnGetIF(&InstanceData.pIf) != sizeof(API_STRUCTTYPE(PVROSAPI))) {
+            OutputDebugString("PVROSAPIInit: PVROS interface is weird\n");
+        } else {
+            return (TRUE);
+        }
+
+        if (bNeedsFree) {
+            FreeLibrary(InstanceData.hLib);
+            InstanceData.hLib = NULL;
+        }
+    }
+
+    return (FALSE);
 }
 
-void  CALL_CONV PVROSAPIExit ()
-{
-	if (bNeedsFree && InstanceData.hLib)
-	{
-		FreeLibrary (InstanceData.hLib);
-	}
-	InstanceData.hLib = NULL;	
-}	
+void CALL_CONV PVROSAPIExit() {
+    if (bNeedsFree && InstanceData.hLib) {
+        FreeLibrary(InstanceData.hLib);
+    }
+    InstanceData.hLib = NULL;
+}
 
 /* end of $RCSfile: pvrosif.c,v $ */

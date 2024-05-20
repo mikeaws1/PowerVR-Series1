@@ -262,7 +262,7 @@
 #include <hwinterf.h>
 #include <parmbuff.h>
 #include <sgl_math.h>
-#include <dregion.h>	/* JWF added for missing prototypes */
+#include <dregion.h>    /* JWF added for missing prototypes */
 
 #include <pmsabre.h>
 
@@ -271,17 +271,17 @@
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
-#define UPPER_6_OF_TAG		0x3F000UL
-#define SFLOAT_20BIT_ZERO	(0)
-#define FLOAT_TO_FIXED 		((float) (((sgl_uint32)1) <<31))
-#define MAGIC  				(1024.0f)
-#define INVMAGIC  			(1.0f/MAGIC)
+#define UPPER_6_OF_TAG        0x3F000UL
+#define SFLOAT_20BIT_ZERO    (0)
+#define FLOAT_TO_FIXED        ((float) (((sgl_uint32)1) <<31))
+#define MAGIC                (1024.0f)
+#define INVMAGIC            (1.0f/MAGIC)
 
 #if SLOW_FCMP && !MULTI_FP_REG
 /* A bit messy, but the pre-processor was unable to deal with the
  * value "FLOAT_TO_LONG (INVMAGIC)".
  */
-#define LONG_INVMAGIC		0x3A800000
+#define LONG_INVMAGIC        0x3A800000
 #endif
 
 /*
@@ -301,11 +301,11 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 #else
 
 #define DEBUG_CLIP_PLANE_TAG 0x000000UL
-#define DEBUG_INVIS_FP_TAG	 0x000000UL
-#define DEBUG_INVIS_RP_TAG	 0x000000UL
-#define DEBUG_PERP_TAG		 0x000000UL
-#define DEBUG_DUMMY_F_TAG	 0x000000UL
-#define DEBUG_DUMMY_R_TAG	 0x000000UL
+#define DEBUG_INVIS_FP_TAG     0x000000UL
+#define DEBUG_INVIS_RP_TAG     0x000000UL
+#define DEBUG_PERP_TAG         0x000000UL
+#define DEBUG_DUMMY_F_TAG     0x000000UL
+#define DEBUG_DUMMY_R_TAG     0x000000UL
 
 #endif
 
@@ -322,42 +322,44 @@ static FOGHIGHLIGHT eExtraStatus[IBUFFERSIZE];
 
 #if PACKISPCORE || PACKISPPOLYGONCORE || PACKISPCORECLIPTESTED || PACKISPPOLYGONCORECLIPTESTED
 
-	#if 1								/* Change if verifying assembler stuff */
+#if 1                                /* Change if verifying assembler stuff */
 
-		/*
-		// Include the real C Packto20bit code
-		*/
-		#define INLINE_P20 static INLINE
-		#include "pto20b.h"
-		#define InPackTo20Bit PackTo20Bit				/* Try C version      */
-		#undef  INLINE_P20
+/*
+// Include the real C Packto20bit code
+*/
+#define INLINE_P20 static INLINE
 
-	#else
+#include "pto20b.h"
 
-		/* For debuggin assembler equivalents */
-		extern sgl_int32 PackTo20Bit(const float Value);		/* pkisp.c version    */
-		extern sgl_int32 PackTo20BitTest(const float Value);	/* dispml.asm version */
+#define InPackTo20Bit PackTo20Bit                /* Try C version      */
+#undef  INLINE_P20
 
-		#if 0
-			#define InPackTo20Bit PackTo20BitTest			/* Try ASM version    */
-		#elif 1
-			#define InPackTo20Bit PackTo20Bit				/* Try C version      */
-		#else
-			#define InPackTo20Bit PackTo20BitTrial		/* Try both?          */
+#else
 
-			static INLINE sgl_int32 PackTo20BitTrial( const float Value )
-			{
-				sgl_int32 Res1 = PackTo20Bit(Value);
-				sgl_int32 Res2 = PackTo20BitTest(Value);
+/* For debuggin assembler equivalents */
+extern sgl_int32 PackTo20Bit(const float Value);		/* pkisp.c version    */
+extern sgl_int32 PackTo20BitTest(const float Value);	/* dispml.asm version */
 
-				if ( Res1 != Res2 ) __asm int 3;
+#if 0
+#define InPackTo20Bit PackTo20BitTest			/* Try ASM version    */
+#elif 1
+#define InPackTo20Bit PackTo20Bit				/* Try C version      */
+#else
+#define InPackTo20Bit PackTo20BitTrial		/* Try both?          */
 
-				return (Res1);
-			}
+    static INLINE sgl_int32 PackTo20BitTrial( const float Value )
+    {
+        sgl_int32 Res1 = PackTo20Bit(Value);
+        sgl_int32 Res2 = PackTo20BitTest(Value);
 
-		#endif
+        if ( Res1 != Res2 ) __asm int 3;
 
-	#endif
+        return (Res1);
+    }
+
+#endif
+
+#endif
 
 #endif /* #if PACKISPCORE || PACKISPPOLYGONCORE */
 
@@ -371,48 +373,46 @@ static FOGHIGHLIGHT eExtraStatus[IBUFFERSIZE];
 **
 **********************************************************************/
 
-void GenerateDepthInfo(PITRI pTri, sgl_uint32 nPolys)
-{
-	TRANS_REGION_DEPTHS_STRUCT* pGDepth;
+void GenerateDepthInfo(PITRI pTri, sgl_uint32 nPolys) {
+    TRANS_REGION_DEPTHS_STRUCT *pGDepth;
 
-	pGDepth = &gDepthInfo[0];	
+    pGDepth = &gDepthInfo[0];
 
-	for ( ; nPolys; nPolys--, pGDepth++)
-	{
-		/* static variable should init these to zero */
-		#if 0
-		pGDepth->DepthDx = 0.0f;
-		pGDepth->DepthDy = 0.0f;
-		#endif
+    for (; nPolys; nPolys--, pGDepth++) {
+        /* static variable should init these to zero */
+#if 0
+        pGDepth->DepthDx = 0.0f;
+        pGDepth->DepthDy = 0.0f;
+#endif
 
-		/*
-		// Find and save the miniumum of the "Z" (i.e. 1/w) values. 
-		// Now, to my knowledge, these Z values are all positive, so
-		// fcloate compare is nad, use Integer instead.
-		*/
-		
-		ASSERT(pTri->fZ[0] >= 0);
-		ASSERT(pTri->fZ[1] >= 0);
-		ASSERT(pTri->fZ[2] >= 0);
+        /*
+        // Find and save the miniumum of the "Z" (i.e. 1/w) values.
+        // Now, to my knowledge, these Z values are all positive, so
+        // fcloate compare is nad, use Integer instead.
+        */
 
-		#if (SLOW_FCMP && !MULTI_FP_REG)
-		{		
-			long  lTemp;
-		
-			lTemp = MIN( FLOAT_TO_LONG(pTri->fZ[2]), 
-					 MIN( FLOAT_TO_LONG(pTri->fZ[0]), 
-						  FLOAT_TO_LONG(pTri->fZ[1])));
+        ASSERT(pTri->fZ[0] >= 0);
+        ASSERT(pTri->fZ[1] >= 0);
+        ASSERT(pTri->fZ[2] >= 0);
 
-			pGDepth->BaseDepth = LONG_TO_FLOAT(lTemp);
-		}
-		#else
+#if (SLOW_FCMP && !MULTI_FP_REG)
+        {
+            long lTemp;
 
-			pGDepth->BaseDepth = MIN(pTri->fZ[2], MIN(pTri->fZ[0], pTri->fZ[1]));
+            lTemp = MIN(FLOAT_TO_LONG(pTri->fZ[2]),
+                        MIN(FLOAT_TO_LONG(pTri->fZ[0]),
+                            FLOAT_TO_LONG(pTri->fZ[1])));
 
-		#endif
+            pGDepth->BaseDepth = LONG_TO_FLOAT(lTemp);
+        }
+#else
 
-		pTri ++;
-	}	
+        pGDepth->BaseDepth = MIN(pTri->fZ[2], MIN(pTri->fZ[0], pTri->fZ[1]));
+
+#endif
+
+        pTri++;
+    }
 }
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
@@ -429,193 +429,181 @@ void GenerateDepthInfo(PITRI pTri, sgl_uint32 nPolys)
 ** 
 **********************************************************************/
 
-void PackISPCoreClipTestedExtra(sgl_uint32 *pPlaneMem, 
-								sgl_uint32  nPolysInChunk, 
-								sgl_uint32 *rTSPAddr, 
-								PITRI      *rpTri,
-								int         nIncrement, 
-								PIMATERIAL *rpMat,
-								int         nMatInc, 
-								sgl_uint32  TSPIncrement,
-								sgl_uint32  *rTSPOffsetAddr,
-								sgl_uint32  TSPIncrementExtra)
-{
-	float 	fA, fB, fC;
-	float 	fAe, fBe, fCe;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
-	sgl_uint32	TSPOffsetAddr = *rTSPOffsetAddr;
-	PIMATERIAL	pMat = *rpMat;
-	PFOGHIGHLIGHT epExtras = eExtraStatus;
+void PackISPCoreClipTestedExtra(sgl_uint32 *pPlaneMem,
+                                sgl_uint32 nPolysInChunk,
+                                sgl_uint32 *rTSPAddr,
+                                PITRI *rpTri,
+                                int nIncrement,
+                                PIMATERIAL *rpMat,
+                                int nMatInc,
+                                sgl_uint32 TSPIncrement,
+                                sgl_uint32 *rTSPOffsetAddr,
+                                sgl_uint32 TSPIncrementExtra) {
+    float fA, fB, fC;
+    float fAe, fBe, fCe;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    sgl_uint32 TSPAddr = *rTSPAddr;
+    sgl_uint32 TSPOffsetAddr = *rTSPOffsetAddr;
+    PIMATERIAL pMat = *rpMat;
+    PFOGHIGHLIGHT epExtras = eExtraStatus;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		FW( pPlaneMem, 0+0, fA);
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        FW(pPlaneMem, 0 + 0, fA);
+        FW(pPlaneMem, 1 + 0, fB);
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-		{
-			/* If problem set C to 0.
-		     */
-			fC = 0.0f;
-			IW( pPlaneMem, 2+0, 0);
-		}
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX) {
+            /* If problem set C to 0.
+             */
+            fC = 0.0f;
+            IW(pPlaneMem, 2 + 0, 0);
+        } else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
 
         /* Doing it the INT way fails when fMaxVal is 0.0 - so have to go back to the
 		   float way. This problem was highlighted by the release build with the -Qip
 		   option of the CFLAGS */
 
-		if (fMaxVal > INVMAGIC)
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-			fC = fZ2;
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-			FW( pPlaneMem, 2+0, fZ2);
-		}
+        if (fMaxVal > INVMAGIC) {
+            fA = 0.0f;
+            fB = 0.0f;
+            fC = fZ2;
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fAe = pTri->fAdjoint[0][2];
-		fBe = pTri->fAdjoint[1][2];
-		fCe = pTri->fAdjoint[2][2];
-		/* Check the range*/
-		if(sfabs((2*INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe)))
-		{
-			fAe = 0.0f;
-			fBe = 0.0f;
-		}
-		FW( pPlaneMem, 0+4, fAe);
-		FW( pPlaneMem, 1+4, fBe);
-		FW( pPlaneMem, 2+4, fCe);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fAe = pTri->fAdjoint[0][2];
+        fBe = pTri->fAdjoint[1][2];
+        fCe = pTri->fAdjoint[2][2];
+        /* Check the range*/
+        if (sfabs((2 * INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe))) {
+            fAe = 0.0f;
+            fBe = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 4, fAe);
+        FW(pPlaneMem, 1 + 4, fBe);
+        FW(pPlaneMem, 2 + 4, fCe);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane 
-		 */
-		fAe = pTri->fAdjoint[0][0];
-		fBe = pTri->fAdjoint[1][0];
-		fCe = pTri->fAdjoint[2][0];
-		/* Check the range*/
-		if(sfabs((2*INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe)))
-		{
-			fAe = 0.0f;
-			fBe = 0.0f;
-		}
-		FW( pPlaneMem, 0+8, fAe);
-		FW( pPlaneMem, 1+8, fBe);
-		FW( pPlaneMem, 2+8, fCe);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fAe = pTri->fAdjoint[0][0];
+        fBe = pTri->fAdjoint[1][0];
+        fCe = pTri->fAdjoint[2][0];
+        /* Check the range*/
+        if (sfabs((2 * INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe))) {
+            fAe = 0.0f;
+            fBe = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 8, fAe);
+        FW(pPlaneMem, 1 + 8, fBe);
+        FW(pPlaneMem, 2 + 8, fCe);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do third edge plane
-		 */
-		fAe = pTri->fAdjoint[0][1];
-		fBe = pTri->fAdjoint[1][1];
-		fCe = pTri->fAdjoint[2][1];
-		/* Check the range*/
-		if(sfabs((2*INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe)))
-		{
-			fAe = 0.0f;
-			fBe = 0.0f;
-		}
-		FW( pPlaneMem, 0+12, fAe);
-		FW( pPlaneMem, 1+12, fBe);
-		FW( pPlaneMem, 2+12, fCe);
-		IW( pPlaneMem, 3+12, (forw_perp | (DEBUG_PERP_TAG << 4)));
-		
-		TSPAddr += TSPIncrement;
-		pPlaneMem += WORDS_PER_PLANE * 4;
-		
-		/* if the smooth specular plane is added ... */
-		if(pMat->nSmoothSpecularIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+        /* do third edge plane
+         */
+        fAe = pTri->fAdjoint[0][1];
+        fBe = pTri->fAdjoint[1][1];
+        fCe = pTri->fAdjoint[2][1];
+        /* Check the range*/
+        if (sfabs((2 * INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe))) {
+            fAe = 0.0f;
+            fBe = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 12, fAe);
+        FW(pPlaneMem, 1 + 12, fBe);
+        FW(pPlaneMem, 2 + 12, fCe);
+        IW(pPlaneMem, 3 + 12, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-			*epExtras = GOURAUD_HIGHLIGHT;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
-		else
-		{
-			/* no extra plane */
-			*epExtras = NO_FOG_AND_HIGHLIGHT;
-		}
+        TSPAddr += TSPIncrement;
+        pPlaneMem += WORDS_PER_PLANE * 4;
 
-		/* if the fog plane is added ... */
-		if(pMat->nFogIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+        /* if the smooth specular plane is added ... */
+        if (pMat->nSmoothSpecularIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-			*epExtras |= VERTEX_FOG;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
+            *epExtras = GOURAUD_HIGHLIGHT;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        } else {
+            /* no extra plane */
+            *epExtras = NO_FOG_AND_HIGHLIGHT;
+        }
 
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		*((sgl_uint32 *) &pMat) += nMatInc;
+        /* if the fog plane is added ... */
+        if (pMat->nFogIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-		epExtras++;
-	}
+            *epExtras |= VERTEX_FOG;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        }
 
-	*rpTri = pTri;
-	*rpMat = pMat;
-	*rTSPAddr = TSPAddr;
-	*rTSPOffsetAddr = TSPOffsetAddr;
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        *((sgl_uint32 *) &pMat) += nMatInc;
+
+        epExtras++;
+    }
+
+    *rpTri = pTri;
+    *rpMat = pMat;
+    *rTSPAddr = TSPAddr;
+    *rTSPOffsetAddr = TSPOffsetAddr;
 }
 
 /**********************************************************************
@@ -628,174 +616,166 @@ void PackISPCoreClipTestedExtra(sgl_uint32 *pPlaneMem,
 **
 **********************************************************************/
 
-void PackISPCoreExtra(sgl_uint32 *pPlaneMem, 
-					  sgl_uint32  nPolysInChunk, 
-					  sgl_uint32 *rTSPAddr, 
-					  PITRI      *rpTri,
-					  int         nIncrement, 
-					  PIMATERIAL  *rpMat,
-					  int         nMatInc, 
-					  sgl_uint32  TSPIncrement,
-					  sgl_uint32  *rTSPOffsetAddr,
-					  sgl_uint32  TSPIncrementExtra)
-{
-	float 	fA, fB, fC;
-	float 	fAe, fBe, fCe;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	PIMATERIAL	pMat = *rpMat;
-	sgl_uint32	TSPAddr = *rTSPAddr;
-	sgl_uint32	TSPOffsetAddr = *rTSPOffsetAddr;
-	PFOGHIGHLIGHT epExtras = eExtraStatus;
+void PackISPCoreExtra(sgl_uint32 *pPlaneMem,
+                      sgl_uint32 nPolysInChunk,
+                      sgl_uint32 *rTSPAddr,
+                      PITRI *rpTri,
+                      int nIncrement,
+                      PIMATERIAL *rpMat,
+                      int nMatInc,
+                      sgl_uint32 TSPIncrement,
+                      sgl_uint32 *rTSPOffsetAddr,
+                      sgl_uint32 TSPIncrementExtra) {
+    float fA, fB, fC;
+    float fAe, fBe, fCe;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    PIMATERIAL pMat = *rpMat;
+    sgl_uint32 TSPAddr = *rTSPAddr;
+    sgl_uint32 TSPOffsetAddr = *rTSPOffsetAddr;
+    PFOGHIGHLIGHT epExtras = eExtraStatus;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		FW( pPlaneMem, 0+0, fA);
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        FW(pPlaneMem, 0 + 0, fA);
+        FW(pPlaneMem, 1 + 0, fB);
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-		{
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-			fC = 0.0f;
-		}
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX) {
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+            fC = 0.0f;
+        } else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
 #if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
 #else
-		if (fMaxVal > INVMAGIC)
+            if (fMaxVal > INVMAGIC)
 #endif
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-			fC = fZ2;
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-			FW( pPlaneMem, 2+0, fZ2);
-		}
+        {
+            fA = 0.0f;
+            fB = 0.0f;
+            fC = fZ2;
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fAe = pTri->fAdjoint[0][2];
-		fBe = pTri->fAdjoint[1][2];
-		fCe = pTri->fAdjoint[2][2];
-		FW( pPlaneMem, 0+4, fAe);
-		FW( pPlaneMem, 1+4, fBe);
-		FW( pPlaneMem, 2+4, fCe);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fAe = pTri->fAdjoint[0][2];
+        fBe = pTri->fAdjoint[1][2];
+        fCe = pTri->fAdjoint[2][2];
+        FW(pPlaneMem, 0 + 4, fAe);
+        FW(pPlaneMem, 1 + 4, fBe);
+        FW(pPlaneMem, 2 + 4, fCe);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane 
-		 */
-		fAe = pTri->fAdjoint[0][0];
-		fBe = pTri->fAdjoint[1][0];
-		fCe = pTri->fAdjoint[2][0];
-		FW( pPlaneMem, 0+8, fAe);
-		FW( pPlaneMem, 1+8, fBe);
-		FW( pPlaneMem, 2+8, fCe);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fAe = pTri->fAdjoint[0][0];
+        fBe = pTri->fAdjoint[1][0];
+        fCe = pTri->fAdjoint[2][0];
+        FW(pPlaneMem, 0 + 8, fAe);
+        FW(pPlaneMem, 1 + 8, fBe);
+        FW(pPlaneMem, 2 + 8, fCe);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do third edge plane
-		 */
-		fAe = pTri->fAdjoint[0][1];
-		fBe = pTri->fAdjoint[1][1];
-		fCe = pTri->fAdjoint[2][1];
-		FW( pPlaneMem, 0+12, fAe);
-		FW( pPlaneMem, 1+12, fBe);
-		FW( pPlaneMem, 2+12, fCe);
-		IW( pPlaneMem, 3+12, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do third edge plane
+         */
+        fAe = pTri->fAdjoint[0][1];
+        fBe = pTri->fAdjoint[1][1];
+        fCe = pTri->fAdjoint[2][1];
+        FW(pPlaneMem, 0 + 12, fAe);
+        FW(pPlaneMem, 1 + 12, fBe);
+        FW(pPlaneMem, 2 + 12, fCe);
+        IW(pPlaneMem, 3 + 12, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		TSPAddr += TSPIncrement;
+        TSPAddr += TSPIncrement;
 
-		pPlaneMem += WORDS_PER_PLANE * 4;
+        pPlaneMem += WORDS_PER_PLANE * 4;
 
-		/* if the smooth specular plane is added ... */
-		if(pMat->nSmoothSpecularIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+        /* if the smooth specular plane is added ... */
+        if (pMat->nSmoothSpecularIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-			*epExtras = GOURAUD_HIGHLIGHT;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
-		else
-		{
-			/* no extra plane */
-			*epExtras = NO_FOG_AND_HIGHLIGHT;
-		}
+            *epExtras = GOURAUD_HIGHLIGHT;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        } else {
+            /* no extra plane */
+            *epExtras = NO_FOG_AND_HIGHLIGHT;
+        }
 
-		/* if the fog plane is added ... */
-		if(pMat->nFogIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+        /* if the fog plane is added ... */
+        if (pMat->nFogIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-			*epExtras |= VERTEX_FOG;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
+            *epExtras |= VERTEX_FOG;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        }
 
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		*((sgl_uint32 *) &pMat) += nMatInc;
-		epExtras++;
-	}
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        *((sgl_uint32 *) &pMat) += nMatInc;
+        epExtras++;
+    }
 
-	*rpTri = pTri;
-	*rpMat = pMat;
-	*rTSPAddr = TSPAddr;
-	*rTSPOffsetAddr = TSPOffsetAddr;
+    *rpTri = pTri;
+    *rpMat = pMat;
+    *rTSPAddr = TSPAddr;
+    *rTSPOffsetAddr = TSPOffsetAddr;
 }
 
 /**********************************************************************
@@ -807,117 +787,115 @@ void PackISPCoreExtra(sgl_uint32 *pPlaneMem,
 **********************************************************************/
 
 void PackISPCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rTSPAddr, PITRI *rpTri,
-															int nIncrement, sgl_uint32 TSPIncrement)
-{
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+                 int nIncrement, sgl_uint32 TSPIncrement) {
+    float fA, fB, fC;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    sgl_uint32 TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		FW( pPlaneMem, 0+0, fA);
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        FW(pPlaneMem, 0 + 0, fA);
+        FW(pPlaneMem, 1 + 0, fB);
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX)
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+        else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-				IW( pPlaneMem, 0+0, 0); 
-				IW( pPlaneMem, 1+0, 0);
-				FW( pPlaneMem, 2+0, fZ2);
-		}
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
+#else
+            if (fMaxVal > INVMAGIC)
+#endif
+        {
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
-		FW( pPlaneMem, 0+4, fA);
-		FW( pPlaneMem, 1+4, fB);
-		FW( pPlaneMem, 2+4, fC);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
+        FW(pPlaneMem, 0 + 4, fA);
+        FW(pPlaneMem, 1 + 4, fB);
+        FW(pPlaneMem, 2 + 4, fC);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane 
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		FW( pPlaneMem, 0+8, fA);
-		FW( pPlaneMem, 1+8, fB);
-		FW( pPlaneMem, 2+8, fC);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
+        FW(pPlaneMem, 0 + 8, fA);
+        FW(pPlaneMem, 1 + 8, fB);
+        FW(pPlaneMem, 2 + 8, fC);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do third edge plane
-		 */
-		fA = pTri->fAdjoint[0][1];
-		fB = pTri->fAdjoint[1][1];
-		fC = pTri->fAdjoint[2][1];
-		FW( pPlaneMem, 0+12, fA);
-		FW( pPlaneMem, 1+12, fB);
-		FW( pPlaneMem, 2+12, fC);
-		IW( pPlaneMem, 3+12, (forw_perp | (DEBUG_PERP_TAG << 4)));
-		
-		pPlaneMem += WORDS_PER_PLANE * 4;
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+        /* do third edge plane
+         */
+        fA = pTri->fAdjoint[0][1];
+        fB = pTri->fAdjoint[1][1];
+        fC = pTri->fAdjoint[2][1];
+        FW(pPlaneMem, 0 + 12, fA);
+        FW(pPlaneMem, 1 + 12, fB);
+        FW(pPlaneMem, 2 + 12, fC);
+        IW(pPlaneMem, 3 + 12, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        pPlaneMem += WORDS_PER_PLANE * 4;
+
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 }
 
 /**********************************************************************
@@ -931,138 +909,133 @@ void PackISPCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rT
 **********************************************************************/
 
 void PackISPCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rTSPAddr, PITRI *rpTri,
-															int nIncrement, sgl_uint32 TSPIncrement)
-{
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+                           int nIncrement, sgl_uint32 TSPIncrement) {
+    float fA, fB, fC;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    sgl_uint32 TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		FW( pPlaneMem, 0+0, fA);
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        FW(pPlaneMem, 0 + 0, fA);
+        FW(pPlaneMem, 1 + 0, fB);
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX)
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+        else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-				IW( pPlaneMem, 0+0, 0); 
-				IW( pPlaneMem, 1+0, 0);
-				FW( pPlaneMem, 2+0, fZ2);
-		}
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
+#else
+            if (fMaxVal > INVMAGIC)
+#endif
+        {
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
-		/* Check the range*/
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-		}
-		FW( pPlaneMem, 0+4, fA);
-		FW( pPlaneMem, 1+4, fB);
-		FW( pPlaneMem, 2+4, fC);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
+        /* Check the range*/
+        if (sfabs((2 * INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB))) {
+            fA = 0.0f;
+            fB = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 4, fA);
+        FW(pPlaneMem, 1 + 4, fB);
+        FW(pPlaneMem, 2 + 4, fC);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane 
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		/* Check the range*/
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-		}
-		FW( pPlaneMem, 0+8, fA);
-		FW( pPlaneMem, 1+8, fB);
-		FW( pPlaneMem, 2+8, fC);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
+        /* Check the range*/
+        if (sfabs((2 * INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB))) {
+            fA = 0.0f;
+            fB = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 8, fA);
+        FW(pPlaneMem, 1 + 8, fB);
+        FW(pPlaneMem, 2 + 8, fC);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do third edge plane
-		 */
-		fA = pTri->fAdjoint[0][1];
-		fB = pTri->fAdjoint[1][1];
-		fC = pTri->fAdjoint[2][1];
-		/* Check the range*/
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-		}
-		FW( pPlaneMem, 0+12, fA);
-		FW( pPlaneMem, 1+12, fB);
-		FW( pPlaneMem, 2+12, fC);
-		IW( pPlaneMem, 3+12, (forw_perp | (DEBUG_PERP_TAG << 4)));
-		
-		pPlaneMem += WORDS_PER_PLANE * 4;
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+        /* do third edge plane
+         */
+        fA = pTri->fAdjoint[0][1];
+        fB = pTri->fAdjoint[1][1];
+        fC = pTri->fAdjoint[2][1];
+        /* Check the range*/
+        if (sfabs((2 * INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB))) {
+            fA = 0.0f;
+            fB = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 12, fA);
+        FW(pPlaneMem, 1 + 12, fB);
+        FW(pPlaneMem, 2 + 12, fC);
+        IW(pPlaneMem, 3 + 12, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        pPlaneMem += WORDS_PER_PLANE * 4;
+
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 }
 
- 
+
 /**********************************************************************
 **
 ** Hardware: PCX2, PCX2_003
@@ -1071,28 +1044,25 @@ void PackISPCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_
 **
 **********************************************************************/
 
-INLINE sgl_uint32 *PackISPPoly(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtraVertices )
-{
-	int 	nEdge = nExtraVertices + 1;
-	PIEDGE	pEdge = *ppEdge;
+INLINE sgl_uint32 *PackISPPoly(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtraVertices) {
+    int nEdge = nExtraVertices + 1;
+    PIEDGE pEdge = *ppEdge;
 
-	do
-	{
-		FW( pPlaneMem, 0, pEdge->fA);
-		FW( pPlaneMem, 1, pEdge->fB);
-		FW( pPlaneMem, 2, pEdge->fC);
-		IW( pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
-	
-		/* Next Edge if you please */
-		pPlaneMem += WORDS_PER_PLANE;
-		pEdge++;
-	}
-	while ( --nEdge != 0 );
-	
-	/* Update pEdge for next time */
-	*ppEdge = pEdge;
-	
-	return (pPlaneMem);
+    do {
+        FW(pPlaneMem, 0, pEdge->fA);
+        FW(pPlaneMem, 1, pEdge->fB);
+        FW(pPlaneMem, 2, pEdge->fC);
+        IW(pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
+
+        /* Next Edge if you please */
+        pPlaneMem += WORDS_PER_PLANE;
+        pEdge++;
+    } while (--nEdge != 0);
+
+    /* Update pEdge for next time */
+    *ppEdge = pEdge;
+
+    return (pPlaneMem);
 }
 
 /**********************************************************************
@@ -1106,169 +1076,161 @@ INLINE sgl_uint32 *PackISPPoly(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtra
 **
 **********************************************************************/
 
-void PackISPPolygonCoreExtra(sgl_uint32 *pPlaneMem, 
-							 sgl_uint32 nPolysInChunk,
-							 sgl_uint32 *rTSPAddr, 
-							 PITRI *rpTri, 
-							 int nIncrement,
-							 PIMATERIAL  *rpMat,
-					  		 int         nMatInc,
-							 sgl_uint32 TSPIncrement,
-							 PIEDGE *ppEdge, 
-							 int nExtraVertices,
-							 sgl_uint32  *rTSPOffsetAddr,
-							 sgl_uint32  TSPIncrementExtra)
-{
-	float 	fA, fB, fC;
-	float 	fAe, fBe, fCe;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	PIMATERIAL	pMat = *rpMat;
-	sgl_uint32	TSPAddr = *rTSPAddr;
-	sgl_uint32	TSPOffsetAddr = *rTSPOffsetAddr;
-	PFOGHIGHLIGHT epExtras = eExtraStatus;
+void PackISPPolygonCoreExtra(sgl_uint32 *pPlaneMem,
+                             sgl_uint32 nPolysInChunk,
+                             sgl_uint32 *rTSPAddr,
+                             PITRI *rpTri,
+                             int nIncrement,
+                             PIMATERIAL *rpMat,
+                             int nMatInc,
+                             sgl_uint32 TSPIncrement,
+                             PIEDGE *ppEdge,
+                             int nExtraVertices,
+                             sgl_uint32 *rTSPOffsetAddr,
+                             sgl_uint32 TSPIncrementExtra) {
+    float fA, fB, fC;
+    float fAe, fBe, fCe;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    PIMATERIAL pMat = *rpMat;
+    sgl_uint32 TSPAddr = *rTSPAddr;
+    sgl_uint32 TSPOffsetAddr = *rTSPOffsetAddr;
+    PFOGHIGHLIGHT epExtras = eExtraStatus;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		FW( pPlaneMem, 0+0, fA);
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        FW(pPlaneMem, 0 + 0, fA);
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        FW(pPlaneMem, 1 + 0, fB);
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-		{
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-			fC = 0.0f;
-		}
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX) {
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+            fC = 0.0f;
+        } else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-			fC = fZ2;
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-			FW( pPlaneMem, 2+0, fZ2);
-		}
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
+#else
+            if (fMaxVal > INVMAGIC)
+#endif
+        {
+            fA = 0.0f;
+            fB = 0.0f;
+            fC = fZ2;
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fAe = pTri->fAdjoint[0][2];
-		FW( pPlaneMem, 0+4, fAe);
-		fBe = pTri->fAdjoint[1][2];
-		FW( pPlaneMem, 1+4, fBe);
-		fCe = pTri->fAdjoint[2][2];
-		FW( pPlaneMem, 2+4, fCe);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fAe = pTri->fAdjoint[0][2];
+        FW(pPlaneMem, 0 + 4, fAe);
+        fBe = pTri->fAdjoint[1][2];
+        FW(pPlaneMem, 1 + 4, fBe);
+        fCe = pTri->fAdjoint[2][2];
+        FW(pPlaneMem, 2 + 4, fCe);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane
-		 */
-		fAe = pTri->fAdjoint[0][0];
-		FW( pPlaneMem, 0+8, fAe);
-		fBe = pTri->fAdjoint[1][0];
-		FW( pPlaneMem, 1+8, fBe);
-		fCe = pTri->fAdjoint[2][0];
-		FW( pPlaneMem, 2+8, fCe);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fAe = pTri->fAdjoint[0][0];
+        FW(pPlaneMem, 0 + 8, fAe);
+        fBe = pTri->fAdjoint[1][0];
+        FW(pPlaneMem, 1 + 8, fBe);
+        fCe = pTri->fAdjoint[2][0];
+        FW(pPlaneMem, 2 + 8, fCe);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* Do the third and any remaining edge planes from *ppEdge */
-		pPlaneMem = PackISPPoly( pPlaneMem + (WORDS_PER_PLANE*3),
-												ppEdge, nExtraVertices );
-		
-		TSPAddr += TSPIncrement;
+        /* Do the third and any remaining edge planes from *ppEdge */
+        pPlaneMem = PackISPPoly(pPlaneMem + (WORDS_PER_PLANE * 3),
+                                ppEdge, nExtraVertices);
 
-		/* if the smooth specular plane is added ... */
-		if(pMat->nSmoothSpecularIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+        TSPAddr += TSPIncrement;
 
-			*epExtras = GOURAUD_HIGHLIGHT;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
-		else
-		{
-			/* no extra plane */
-			*epExtras = NO_FOG_AND_HIGHLIGHT;
-		}
+        /* if the smooth specular plane is added ... */
+        if (pMat->nSmoothSpecularIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-		/* if the fog plane is added ... */
-		if(pMat->nFogIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+            *epExtras = GOURAUD_HIGHLIGHT;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        } else {
+            /* no extra plane */
+            *epExtras = NO_FOG_AND_HIGHLIGHT;
+        }
 
-			*epExtras |= VERTEX_FOG;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
+        /* if the fog plane is added ... */
+        if (pMat->nFogIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		*((sgl_uint32 *) &pMat) += nMatInc;
-		epExtras++;
-	}
+            *epExtras |= VERTEX_FOG;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        }
 
-	*rpTri = pTri;
-	*rpMat = pMat;
-	*rTSPAddr = TSPAddr;
-	*rTSPOffsetAddr = TSPOffsetAddr;
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        *((sgl_uint32 *) &pMat) += nMatInc;
+        epExtras++;
+    }
+
+    *rpTri = pTri;
+    *rpMat = pMat;
+    *rTSPAddr = TSPAddr;
+    *rTSPOffsetAddr = TSPOffsetAddr;
 } /* PackISPPolygonCoreExtra */
 
 /**********************************************************************
@@ -1281,39 +1243,33 @@ void PackISPPolygonCoreExtra(sgl_uint32 *pPlaneMem,
 **
 **********************************************************************/
 
-INLINE sgl_uint32 *PackISPPolyClipTested(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtraVertices )
-{
-	int 	nEdge = nExtraVertices + 1;
-	PIEDGE	pEdge = *ppEdge;
+INLINE sgl_uint32 *PackISPPolyClipTested(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtraVertices) {
+    int nEdge = nExtraVertices + 1;
+    PIEDGE pEdge = *ppEdge;
 
-	do
-	{
-		/* Check the range
-		 */
-		if(	sfabs((2*INVMAGIC) * pEdge->fC + pEdge->fA + pEdge->fB) >
-			(sfabs(pEdge->fA) + sfabs(pEdge->fB)))
-		{
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-		}
-		else
-		{
-			FW( pPlaneMem, 0, pEdge->fA);
-			FW( pPlaneMem, 1, pEdge->fB);
-		}
-		FW( pPlaneMem, 2, pEdge->fC);
-		IW( pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
-	
-		/* Next Edge if you please */
-		pPlaneMem += WORDS_PER_PLANE;
-		pEdge++;
-	}
-	while ( --nEdge != 0 );
-	
-	/* Update pEdge for next time */
-	*ppEdge = pEdge;
-	
-	return (pPlaneMem);
+    do {
+        /* Check the range
+         */
+        if (sfabs((2 * INVMAGIC) * pEdge->fC + pEdge->fA + pEdge->fB) >
+            (sfabs(pEdge->fA) + sfabs(pEdge->fB))) {
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+        } else {
+            FW(pPlaneMem, 0, pEdge->fA);
+            FW(pPlaneMem, 1, pEdge->fB);
+        }
+        FW(pPlaneMem, 2, pEdge->fC);
+        IW(pPlaneMem, 3, (forw_perp | (DEBUG_PERP_TAG << 4)));
+
+        /* Next Edge if you please */
+        pPlaneMem += WORDS_PER_PLANE;
+        pEdge++;
+    } while (--nEdge != 0);
+
+    /* Update pEdge for next time */
+    *ppEdge = pEdge;
+
+    return (pPlaneMem);
 }
 
 /**********************************************************************
@@ -1330,183 +1286,173 @@ INLINE sgl_uint32 *PackISPPolyClipTested(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, 
 **********************************************************************/
 
 void PackISPPolygonCoreClipTestedExtra(sgl_uint32 *pPlaneMem,
-				 					   sgl_uint32 nPolysInChunk,
-									   sgl_uint32 *rTSPAddr, 
-									   PITRI *rpTri, 
-									   int nIncrement,
-									   PIMATERIAL  *rpMat,
-					  				   int         nMatInc, 
-									   sgl_uint32 TSPIncrement,
-									   PIEDGE *ppEdge, 
-									   int nExtraVertices,
-									   sgl_uint32  *rTSPOffsetAddr,
-					  				   sgl_uint32  TSPIncrementExtra)
-{
-	float 	fA, fB, fC;
-	float 	fAe, fBe, fCe;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	PIMATERIAL	pMat = *rpMat;
-	sgl_uint32	TSPAddr = *rTSPAddr;
-	sgl_uint32	TSPOffsetAddr = *rTSPOffsetAddr;
-	PFOGHIGHLIGHT epExtras = eExtraStatus;
+                                       sgl_uint32 nPolysInChunk,
+                                       sgl_uint32 *rTSPAddr,
+                                       PITRI *rpTri,
+                                       int nIncrement,
+                                       PIMATERIAL *rpMat,
+                                       int nMatInc,
+                                       sgl_uint32 TSPIncrement,
+                                       PIEDGE *ppEdge,
+                                       int nExtraVertices,
+                                       sgl_uint32 *rTSPOffsetAddr,
+                                       sgl_uint32 TSPIncrementExtra) {
+    float fA, fB, fC;
+    float fAe, fBe, fCe;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    PIMATERIAL pMat = *rpMat;
+    sgl_uint32 TSPAddr = *rTSPAddr;
+    sgl_uint32 TSPOffsetAddr = *rTSPOffsetAddr;
+    PFOGHIGHLIGHT epExtras = eExtraStatus;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		FW( pPlaneMem, 0+0, fA);
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        FW(pPlaneMem, 0 + 0, fA);
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        FW(pPlaneMem, 1 + 0, fB);
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-		{
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-			fC = 0.0f;
-		}
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX) {
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+            fC = 0.0f;
+        } else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-			fC = fZ2;
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-			FW( pPlaneMem, 2+0, fZ2);
-		}
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
+#else
+            if (fMaxVal > INVMAGIC)
+#endif
+        {
+            fA = 0.0f;
+            fB = 0.0f;
+            fC = fZ2;
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fAe = pTri->fAdjoint[0][2];
-		fBe = pTri->fAdjoint[1][2];
-		fCe = pTri->fAdjoint[2][2];
-		/* Check the range
-		 */
-		if(sfabs((2*INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe)))
-		{
-			fAe = 0.0f;
-			fBe = 0.0f;
-		}
-		FW( pPlaneMem, 0+4, fAe);
-		FW( pPlaneMem, 1+4, fBe);
-		FW( pPlaneMem, 2+4, fCe);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fAe = pTri->fAdjoint[0][2];
+        fBe = pTri->fAdjoint[1][2];
+        fCe = pTri->fAdjoint[2][2];
+        /* Check the range
+         */
+        if (sfabs((2 * INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe))) {
+            fAe = 0.0f;
+            fBe = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 4, fAe);
+        FW(pPlaneMem, 1 + 4, fBe);
+        FW(pPlaneMem, 2 + 4, fCe);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane
-		 */
-		fAe = pTri->fAdjoint[0][0];
-		fBe = pTri->fAdjoint[1][0];
-		fCe = pTri->fAdjoint[2][0];
-		/* Check the range
-		 */
-		if(sfabs((2*INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe)))
-		{
-			fAe = 0.0f;
-			fBe = 0.0f;
-		}
-		FW( pPlaneMem, 0+8, fAe);
-		FW( pPlaneMem, 1+8, fBe);
-		FW( pPlaneMem, 2+8, fCe);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fAe = pTri->fAdjoint[0][0];
+        fBe = pTri->fAdjoint[1][0];
+        fCe = pTri->fAdjoint[2][0];
+        /* Check the range
+         */
+        if (sfabs((2 * INVMAGIC) * fCe + fAe + fBe) > (sfabs(fAe) + sfabs(fBe))) {
+            fAe = 0.0f;
+            fBe = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 8, fAe);
+        FW(pPlaneMem, 1 + 8, fBe);
+        FW(pPlaneMem, 2 + 8, fCe);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* Do the third and any remaining edge planes from *ppEdge */
-		pPlaneMem = PackISPPolyClipTested( pPlaneMem + (WORDS_PER_PLANE*3),
-												ppEdge, nExtraVertices );
-		
-		TSPAddr += TSPIncrement;
+        /* Do the third and any remaining edge planes from *ppEdge */
+        pPlaneMem = PackISPPolyClipTested(pPlaneMem + (WORDS_PER_PLANE * 3),
+                                          ppEdge, nExtraVertices);
 
-		/* if the smooth specular plane is added ... */
-		if(pMat->nSmoothSpecularIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+        TSPAddr += TSPIncrement;
 
-			*epExtras = GOURAUD_HIGHLIGHT;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
-		else
-		{
-			/* no extra plane */
-			*epExtras = NO_FOG_AND_HIGHLIGHT;
-		}
+        /* if the smooth specular plane is added ... */
+        if (pMat->nSmoothSpecularIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-		/* if the fog plane is added ... */
-		if(pMat->nFogIndex)
-		{
-			/* we saved the values that were used for the front plane */
-			FW( pPlaneMem, 0+0, fA);
-			FW( pPlaneMem, 1+0, fB);
-			FW( pPlaneMem, 2+0, fC);
-			IW( pPlaneMem, 3+0, (forw_visib | (TSPOffsetAddr << 4)));
+            *epExtras = GOURAUD_HIGHLIGHT;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        } else {
+            /* no extra plane */
+            *epExtras = NO_FOG_AND_HIGHLIGHT;
+        }
 
-			*epExtras |= VERTEX_FOG;
-			pPlaneMem += WORDS_PER_PLANE;
-			TSPOffsetAddr += TSPIncrementExtra;
-		}
+        /* if the fog plane is added ... */
+        if (pMat->nFogIndex) {
+            /* we saved the values that were used for the front plane */
+            FW(pPlaneMem, 0 + 0, fA);
+            FW(pPlaneMem, 1 + 0, fB);
+            FW(pPlaneMem, 2 + 0, fC);
+            IW(pPlaneMem, 3 + 0, (forw_visib | (TSPOffsetAddr << 4)));
 
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		*((sgl_uint32 *) &pMat) += nMatInc;
+            *epExtras |= VERTEX_FOG;
+            pPlaneMem += WORDS_PER_PLANE;
+            TSPOffsetAddr += TSPIncrementExtra;
+        }
 
-		epExtras++;
-	}
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        *((sgl_uint32 *) &pMat) += nMatInc;
 
-	*rpTri = pTri;
-	*rpMat = pMat;
-	*rTSPAddr = TSPAddr;
-	*rTSPOffsetAddr = TSPOffsetAddr;
+        epExtras++;
+    }
+
+    *rpTri = pTri;
+    *rpMat = pMat;
+    *rTSPAddr = TSPAddr;
+    *rTSPOffsetAddr = TSPOffsetAddr;
 } /* PackISPPolygonCoreClipTestedExtra */
 
 
@@ -1520,111 +1466,109 @@ void PackISPPolygonCoreClipTestedExtra(sgl_uint32 *pPlaneMem,
 **********************************************************************/
 
 void PackISPPolygonCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
-	sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
-										PIEDGE *ppEdge, int nExtraVertices)
-{
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+                        sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
+                        PIEDGE *ppEdge, int nExtraVertices) {
+    float fA, fB, fC;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    sgl_uint32 TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		FW( pPlaneMem, 0+0, fA);
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        FW(pPlaneMem, 0 + 0, fA);
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        FW(pPlaneMem, 1 + 0, fB);
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX)
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+        else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-			FW( pPlaneMem, 2+0, fZ2);
-		}
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
+#else
+            if (fMaxVal > INVMAGIC)
+#endif
+        {
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		FW( pPlaneMem, 0+4, fA);
-		fB = pTri->fAdjoint[1][2];
-		FW( pPlaneMem, 1+4, fB);
-		fC = pTri->fAdjoint[2][2];
-		FW( pPlaneMem, 2+4, fC);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        FW(pPlaneMem, 0 + 4, fA);
+        fB = pTri->fAdjoint[1][2];
+        FW(pPlaneMem, 1 + 4, fB);
+        fC = pTri->fAdjoint[2][2];
+        FW(pPlaneMem, 2 + 4, fC);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane
-		 */
-		fA = pTri->fAdjoint[0][0];
-		FW( pPlaneMem, 0+8, fA);
-		fB = pTri->fAdjoint[1][0];
-		FW( pPlaneMem, 1+8, fB);
-		fC = pTri->fAdjoint[2][0];
-		FW( pPlaneMem, 2+8, fC);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        FW(pPlaneMem, 0 + 8, fA);
+        fB = pTri->fAdjoint[1][0];
+        FW(pPlaneMem, 1 + 8, fB);
+        fC = pTri->fAdjoint[2][0];
+        FW(pPlaneMem, 2 + 8, fC);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* Do the third and any remaining edge planes from *ppEdge */
-		pPlaneMem = PackISPPoly( pPlaneMem + (WORDS_PER_PLANE*3),
-												ppEdge, nExtraVertices );
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+        /* Do the third and any remaining edge planes from *ppEdge */
+        pPlaneMem = PackISPPoly(pPlaneMem + (WORDS_PER_PLANE * 3),
+                                ppEdge, nExtraVertices);
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 } /* PackISPPolygonCore */
 
 /**********************************************************************
@@ -1639,125 +1583,121 @@ void PackISPPolygonCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
 **********************************************************************/
 
 void PackISPPolygonCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
-	sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
-										PIEDGE *ppEdge, int nExtraVertices)
-{
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+                                  sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
+                                  PIEDGE *ppEdge, int nExtraVertices) {
+    float fA, fB, fC;
+    float fZ0, fZ1, fZ2;
+    float f1OverDet;
+    float fMaxVal;
+    PITRI pTri = *rpTri;
+    sgl_uint32 TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--) {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
-		FW( pPlaneMem, 0+0, fA);
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
-		FW( pPlaneMem, 1+0, fB);
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];
+        FW(pPlaneMem, 0 + 0, fA);
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+        fB = fZ0 * pTri->fAdjoint[1][0] + fZ1 * pTri->fAdjoint[1][1];
+        FW(pPlaneMem, 1 + 0, fB);
 
-		/* Check C value. PCX2 hardware has problems converting a number in
-		 * the range -9.313e-10 to 0. If C is in this range set to 0.
-		 */
+        fC = fZ0 * pTri->fAdjoint[2][0] + fZ1 * pTri->fAdjoint[2][1] + fZ2 + gfDepthBias;
+
+        /* Check C value. PCX2 hardware has problems converting a number in
+         * the range -9.313e-10 to 0. If C is in this range set to 0.
+         */
 #if PCX2
-		if (sfabs(fC) <= MAGIC_FLOAT_FIX)
-			/* If problem set C to 0.
-		     */
-			IW( pPlaneMem, 2+0, 0);
-		else
+        if (sfabs(fC) <= MAGIC_FLOAT_FIX)
+            /* If problem set C to 0.
+             */
+            IW(pPlaneMem, 2 + 0, 0);
+        else
 #endif
-			/* Continue as normal.
-			 */
-			FW( pPlaneMem, 2+0, fC);
+            /* Continue as normal.
+             */
+            FW(pPlaneMem, 2 + 0, fC);
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			IW( pPlaneMem, 0+0, 0); 
-			IW( pPlaneMem, 1+0, 0);
-			FW( pPlaneMem, 2+0, fZ2);
-		}
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC)
+#else
+            if (fMaxVal > INVMAGIC)
+#endif
+        {
+            IW(pPlaneMem, 0 + 0, 0);
+            IW(pPlaneMem, 1 + 0, 0);
+            FW(pPlaneMem, 2 + 0, fZ2);
+        }
 
-		/* Pack instruction and TSP address.
-		 */
-		IW( pPlaneMem, 3+0, (forw_visib_fp | (TSPAddr << 4)));
+        /* Pack instruction and TSP address.
+         */
+        IW(pPlaneMem, 3 + 0, (forw_visib_fp | (TSPAddr << 4)));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
-		/* Check the range
-		 */
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-		}
-		FW( pPlaneMem, 0+4, fA);
-		FW( pPlaneMem, 1+4, fB);
-		FW( pPlaneMem, 2+4, fC);
-		IW( pPlaneMem, 3+4, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
+        /* Check the range
+         */
+        if (sfabs((2 * INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB))) {
+            fA = 0.0f;
+            fB = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 4, fA);
+        FW(pPlaneMem, 1 + 4, fB);
+        FW(pPlaneMem, 2 + 4, fC);
+        IW(pPlaneMem, 3 + 4, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* do second edge plane
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		/* Check the range
-		 */
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			fA = 0.0f;
-			fB = 0.0f;
-		}
-		FW( pPlaneMem, 0+8, fA);
-		FW( pPlaneMem, 1+8, fB);
-		FW( pPlaneMem, 2+8, fC);
-		IW( pPlaneMem, 3+8, (forw_perp | (DEBUG_PERP_TAG << 4)));
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
+        /* Check the range
+         */
+        if (sfabs((2 * INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB))) {
+            fA = 0.0f;
+            fB = 0.0f;
+        }
+        FW(pPlaneMem, 0 + 8, fA);
+        FW(pPlaneMem, 1 + 8, fB);
+        FW(pPlaneMem, 2 + 8, fC);
+        IW(pPlaneMem, 3 + 8, (forw_perp | (DEBUG_PERP_TAG << 4)));
 
-		/* Do the third and any remaining edge planes from *ppEdge */
-		pPlaneMem = PackISPPolyClipTested( pPlaneMem + (WORDS_PER_PLANE*3),
-												ppEdge, nExtraVertices );
-	   
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+        /* Do the third and any remaining edge planes from *ppEdge */
+        pPlaneMem = PackISPPolyClipTested(pPlaneMem + (WORDS_PER_PLANE * 3),
+                                          ppEdge, nExtraVertices);
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 } /* PackISPPolygonCoreClipTested */
 
 #else	/* #if PCX2	*/
@@ -1776,200 +1716,200 @@ void PackISPPolygonCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChun
 **********************************************************************/
 
 void PackISPCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rTSPAddr, PITRI *rpTri,
-															int nIncrement, sgl_uint32 TSPIncrement)
+                                                            int nIncrement, sgl_uint32 TSPIncrement)
 {
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	float 	fInvMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+    float 	fA, fB, fC;
+    float 	fZ0, fZ1, fZ2;
+    float 	f1OverDet;
+    float 	fMaxVal;
+    float 	fInvMaxVal;
+    PITRI	pTri = *rpTri;
+    sgl_uint32	TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--)
+    {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
+        fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
-		}
-		else
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				InPackTo20Bit (fA);
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				InPackTo20Bit (fB);
-			pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
-		}
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
-		/* 
-		// HMM the following IS NOT a very efficient arrangement!!!!
-		//
-		// Check range does not go out of bounds
-		*/
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			pPlaneMem[0+3] = forw_perp |
-							 ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
-			pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20);
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
+#else
+        if (fMaxVal > INVMAGIC)
+#endif
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
+        }
+        else
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                InPackTo20Bit (fA);
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                InPackTo20Bit (fB);
+            pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
+        }
+
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
+        /*
+        // HMM the following IS NOT a very efficient arrangement!!!!
+        //
+        // Check range does not go out of bounds
+        */
+        if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
+        {
+            pPlaneMem[0+3] = forw_perp |
+                             ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
+            pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20);
 
 
-			/* Not used fInvMaxVal = 1.0f;	*/
+            /* Not used fInvMaxVal = 1.0f;	*/
 
-			if(fC < 0.0f)
-			{
-				pPlaneMem[2+3] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
-			}
-			else
-			{
-				pPlaneMem[2+3] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
-			}
-		}
-		else
-		{
-			fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+            if(fC < 0.0f)
+            {
+                pPlaneMem[2+3] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
+            }
+            else
+            {
+                pPlaneMem[2+3] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
+            }
+        }
+        else
+        {
+            fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-			pPlaneMem[0+3] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-				InPackTo20Bit (fA * fInvMaxVal);
-			pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
-				InPackTo20Bit (fB * fInvMaxVal);
-			pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		}
-		
-		/* do second edge plane 
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		/* 
-		// HMM the following IS NOT a very efficient arrangement!!!!
-		//
-		// Check range does not go out of bounds
-		*/
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			pPlaneMem[0+6] = forw_perp |
-							 ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
-			pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20);
+            pPlaneMem[0+3] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                InPackTo20Bit (fA * fInvMaxVal);
+            pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
+                InPackTo20Bit (fB * fInvMaxVal);
+            pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+        }
 
-			/* Not used fInvMaxVal = 1.0f;	*/
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
+        /*
+        // HMM the following IS NOT a very efficient arrangement!!!!
+        //
+        // Check range does not go out of bounds
+        */
+        if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
+        {
+            pPlaneMem[0+6] = forw_perp |
+                             ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
+            pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20);
 
-			if(fC < 0.0f)
-			{
-				pPlaneMem[2+6] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
-			}
-			else
-			{
-				pPlaneMem[2+6] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
-			}
-		}
-		else
-		{
-			fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+            /* Not used fInvMaxVal = 1.0f;	*/
 
-			pPlaneMem[0+6] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-				InPackTo20Bit (fA * fInvMaxVal);
-			pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
-				InPackTo20Bit (fB * fInvMaxVal);
-			pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		}
+            if(fC < 0.0f)
+            {
+                pPlaneMem[2+6] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
+            }
+            else
+            {
+                pPlaneMem[2+6] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
+            }
+        }
+        else
+        {
+            fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-		/* do third edge plane
-		 */
-		fA = pTri->fAdjoint[0][1];
-		fB = pTri->fAdjoint[1][1];
-		fC = pTri->fAdjoint[2][1];
-		/* 
-		// HMM the following IS NOT a very efficient arrangement!!!!
-		//
-		// Check range does not go out of bounds
-		*/
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			pPlaneMem[0+9] = forw_perp |
-							 ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
-			pPlaneMem[1+9] = (DEBUG_PERP_TAG << 20);
+            pPlaneMem[0+6] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                InPackTo20Bit (fA * fInvMaxVal);
+            pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
+                InPackTo20Bit (fB * fInvMaxVal);
+            pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+        }
 
-			/* Not used fInvMaxVal = 1.0f;	*/
+        /* do third edge plane
+         */
+        fA = pTri->fAdjoint[0][1];
+        fB = pTri->fAdjoint[1][1];
+        fC = pTri->fAdjoint[2][1];
+        /*
+        // HMM the following IS NOT a very efficient arrangement!!!!
+        //
+        // Check range does not go out of bounds
+        */
+        if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
+        {
+            pPlaneMem[0+9] = forw_perp |
+                             ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
+            pPlaneMem[1+9] = (DEBUG_PERP_TAG << 20);
 
-			if(fC < 0.0f)
-			{
-				pPlaneMem[2+9] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
-			}
-			else
-			{
-				pPlaneMem[2+9] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
-			}
-		}
-		else
-		{
-			fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+            /* Not used fInvMaxVal = 1.0f;	*/
 
-			pPlaneMem[0+9] = forw_perp |
-							 ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-							 InPackTo20Bit (fA * fInvMaxVal);
-			pPlaneMem[1+9] = (DEBUG_PERP_TAG << 20) |
-							 InPackTo20Bit (fB * fInvMaxVal);
-			pPlaneMem[2+9] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+            if(fC < 0.0f)
+            {
+                pPlaneMem[2+9] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
+            }
+            else
+            {
+                pPlaneMem[2+9] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
+            }
+        }
+        else
+        {
+            fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-		}
-		
-		pPlaneMem += WORDS_PER_PLANE * 4;
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+            pPlaneMem[0+9] = forw_perp |
+                             ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                             InPackTo20Bit (fA * fInvMaxVal);
+            pPlaneMem[1+9] = (DEBUG_PERP_TAG << 20) |
+                             InPackTo20Bit (fB * fInvMaxVal);
+            pPlaneMem[2+9] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        }
+
+        pPlaneMem += WORDS_PER_PLANE * 4;
+
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 }
 
 #else
@@ -1984,7 +1924,7 @@ void PackISPCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_
 **********************************************************************/
 
 extern void PackISPCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rTSPAddr, PITRI *rpTri,
-															int nIncrement, sgl_uint32 TSPIncrement);
+                                                            int nIncrement, sgl_uint32 TSPIncrement);
 #endif
 
 #if PACKISPCORE
@@ -1999,124 +1939,124 @@ extern void PackISPCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChun
 **********************************************************************/
 
 void PackISPCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rTSPAddr, PITRI *rpTri,
-															int nIncrement, sgl_uint32 TSPIncrement)
+                                                            int nIncrement, sgl_uint32 TSPIncrement)
 {
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	float 	fInvMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+    float 	fA, fB, fC;
+    float 	fZ0, fZ1, fZ2;
+    float 	f1OverDet;
+    float 	fMaxVal;
+    float 	fInvMaxVal;
+    PITRI	pTri = *rpTri;
+    sgl_uint32	TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--)
+    {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
+        fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
-		}
-		else
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				InPackTo20Bit (fA);
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				InPackTo20Bit (fB);
-			pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
-		}
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
+#else
+        if (fMaxVal > INVMAGIC)
+#endif
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
+        }
+        else
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                InPackTo20Bit (fA);
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                InPackTo20Bit (fB);
+            pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
+        }
 
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
-		fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
+        fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-		pPlaneMem[0+3] = forw_perp |
-			((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-			InPackTo20Bit (fA * fInvMaxVal);
-		pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
-			InPackTo20Bit (fB * fInvMaxVal);
-		pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		
-		/* do second edge plane 
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
-		
-		pPlaneMem[0+6] = forw_perp |
-			((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-			InPackTo20Bit (fA * fInvMaxVal);
-		pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
-			InPackTo20Bit (fB * fInvMaxVal);
-		pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+        pPlaneMem[0+3] = forw_perp |
+            ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+            InPackTo20Bit (fA * fInvMaxVal);
+        pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
+            InPackTo20Bit (fB * fInvMaxVal);
+        pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
 
-		/* do third edge plane
-		 */
-		fA = pTri->fAdjoint[0][1];
-		fB = pTri->fAdjoint[1][1];
-		fC = pTri->fAdjoint[2][1];
-		fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
+        fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-		pPlaneMem[0+9] = forw_perp |
-			((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-			InPackTo20Bit (fA * fInvMaxVal);
-		pPlaneMem[1+9] = (DEBUG_PERP_TAG << 20) |
-			InPackTo20Bit (fB * fInvMaxVal);
-		pPlaneMem[2+9] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		
-		pPlaneMem += WORDS_PER_PLANE * 4;
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+        pPlaneMem[0+6] = forw_perp |
+            ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+            InPackTo20Bit (fA * fInvMaxVal);
+        pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
+            InPackTo20Bit (fB * fInvMaxVal);
+        pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        /* do third edge plane
+         */
+        fA = pTri->fAdjoint[0][1];
+        fB = pTri->fAdjoint[1][1];
+        fC = pTri->fAdjoint[2][1];
+        fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+
+        pPlaneMem[0+9] = forw_perp |
+            ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+            InPackTo20Bit (fA * fInvMaxVal);
+        pPlaneMem[1+9] = (DEBUG_PERP_TAG << 20) |
+            InPackTo20Bit (fB * fInvMaxVal);
+        pPlaneMem[2+9] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+
+        pPlaneMem += WORDS_PER_PLANE * 4;
+
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 }
 #else
 #define PackISPCore _PackISPCore
@@ -2130,7 +2070,7 @@ void PackISPCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rT
 **********************************************************************/
 
 extern void PackISPCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uint32 *rTSPAddr, PITRI *rpTri,
-															int nIncrement, sgl_uint32 TSPIncrement);
+                                                            int nIncrement, sgl_uint32 TSPIncrement);
 #endif
 
 #if PACKISPPOLYGONCORE
@@ -2145,36 +2085,36 @@ extern void PackISPCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk, sgl_uin
 
 INLINE sgl_uint32 *PackISPPoly(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtraVertices )
 {
-	int 	nEdge = nExtraVertices + 1;
-	PIEDGE	pEdge = *ppEdge;
-	float 	fInvMaxVal;
+    int 	nEdge = nExtraVertices + 1;
+    PIEDGE	pEdge = *ppEdge;
+    float 	fInvMaxVal;
 
-	do
-	{
-			
-		/* Do the third and any extra edges
-		 */
-		fInvMaxVal =
-		  ApproxRecip ((2 * MAGIC * (sfabs (pEdge->fA) + sfabs (pEdge->fB))) + sfabs (pEdge->fC));
+    do
+    {
 
-		pPlaneMem[0] = forw_perp |
-								((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-								InPackTo20Bit (pEdge->fA * fInvMaxVal);
-		pPlaneMem[1] = (DEBUG_PERP_TAG << 20) |
-								InPackTo20Bit (pEdge->fB * fInvMaxVal);
-		pPlaneMem[2] = (sgl_int32) (pEdge->fC * fInvMaxVal * FLOAT_TO_FIXED);
-		pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
-	
-		/* Next Edge if you please */
-		pPlaneMem += WORDS_PER_PLANE;
-		pEdge++;
-	}
-	while ( --nEdge != 0 );
-	
-	/* Update pEdge for next time */
-	*ppEdge = pEdge;
-	
-	return (pPlaneMem);
+        /* Do the third and any extra edges
+         */
+        fInvMaxVal =
+          ApproxRecip ((2 * MAGIC * (sfabs (pEdge->fA) + sfabs (pEdge->fB))) + sfabs (pEdge->fC));
+
+        pPlaneMem[0] = forw_perp |
+                                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                                InPackTo20Bit (pEdge->fA * fInvMaxVal);
+        pPlaneMem[1] = (DEBUG_PERP_TAG << 20) |
+                                InPackTo20Bit (pEdge->fB * fInvMaxVal);
+        pPlaneMem[2] = (sgl_int32) (pEdge->fC * fInvMaxVal * FLOAT_TO_FIXED);
+        pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
+
+        /* Next Edge if you please */
+        pPlaneMem += WORDS_PER_PLANE;
+        pEdge++;
+    }
+    while ( --nEdge != 0 );
+
+    /* Update pEdge for next time */
+    *ppEdge = pEdge;
+
+    return (pPlaneMem);
 }
 
 
@@ -2189,114 +2129,114 @@ INLINE sgl_uint32 *PackISPPoly(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtra
 
 
 void PackISPPolygonCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
-	sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
-										PIEDGE *ppEdge, int nExtraVertices)
+    sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
+                                        PIEDGE *ppEdge, int nExtraVertices)
 {
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	float 	fInvMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+    float 	fA, fB, fC;
+    float 	fZ0, fZ1, fZ2;
+    float 	f1OverDet;
+    float 	fMaxVal;
+    float 	fInvMaxVal;
+    PITRI	pTri = *rpTri;
+    sgl_uint32	TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--)
+    {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
+        fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
-		}
-		else
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				InPackTo20Bit (fA);
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				InPackTo20Bit (fB);
-			pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
-		}
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
+#else
+        if (fMaxVal > INVMAGIC)
+#endif
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
+        }
+        else
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                InPackTo20Bit (fA);
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                InPackTo20Bit (fB);
+            pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
+        }
 
-		fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
-		
-		pPlaneMem[0+3] = forw_perp |
-			((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-			InPackTo20Bit (fA * fInvMaxVal);
-		pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
-			InPackTo20Bit (fB * fInvMaxVal);
-		pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		
-		/* do second edge plane
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		
-		fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
-		
-		pPlaneMem[0+6] = forw_perp |
-			((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-			InPackTo20Bit (fA * fInvMaxVal);
-		pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
-			InPackTo20Bit (fB * fInvMaxVal);
-		pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		
-		/* Do the third and any remaining edge planes from *ppEdge */
-		pPlaneMem = PackISPPoly( pPlaneMem + (WORDS_PER_PLANE*3),
-												ppEdge, nExtraVertices );
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+        fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+
+        pPlaneMem[0+3] = forw_perp |
+            ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+            InPackTo20Bit (fA * fInvMaxVal);
+        pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
+            InPackTo20Bit (fB * fInvMaxVal);
+        pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
+
+        fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+
+        pPlaneMem[0+6] = forw_perp |
+            ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+            InPackTo20Bit (fA * fInvMaxVal);
+        pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
+            InPackTo20Bit (fB * fInvMaxVal);
+        pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+
+        /* Do the third and any remaining edge planes from *ppEdge */
+        pPlaneMem = PackISPPoly( pPlaneMem + (WORDS_PER_PLANE*3),
+                                                ppEdge, nExtraVertices );
+
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 } /* PackISPPolygonCore */
 
 #else
@@ -2311,8 +2251,8 @@ void PackISPPolygonCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
 **********************************************************************/
 
 extern void PackISPPolygonCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
-		sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
-											PIEDGE *ppEdge, int nExtraVertices);
+        sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
+                                            PIEDGE *ppEdge, int nExtraVertices);
 #endif /* #if PACKISPPOLYGONCORE */
 
 #if PACKISPPOLYGONCORECLIPTESTED
@@ -2328,59 +2268,59 @@ extern void PackISPPolygonCore(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
 
 INLINE sgl_uint32 *PackISPPolyClipTested(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, int nExtraVertices )
 {
-	int 	nEdge = nExtraVertices + 1;
-	PIEDGE	pEdge = *ppEdge;
-	float 	fInvMaxVal;
+    int 	nEdge = nExtraVertices + 1;
+    PIEDGE	pEdge = *ppEdge;
+    float 	fInvMaxVal;
 
-	do
-	{
-		/* Do the third and any extra edges
-		 */
-			
-		/* Change the range.
-		 */
-		if(	sfabs((2*INVMAGIC) * pEdge->fC + pEdge->fA + pEdge->fB) >
-			(sfabs(pEdge->fA) + sfabs(pEdge->fB)))
-		{
-			pPlaneMem[0] = forw_perp | ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
-			pPlaneMem[1] = (DEBUG_PERP_TAG << 20);
-			pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
+    do
+    {
+        /* Do the third and any extra edges
+         */
 
-			/* Not used fInvMaxVal = 1.0f;	*/
+        /* Change the range.
+         */
+        if(	sfabs((2*INVMAGIC) * pEdge->fC + pEdge->fA + pEdge->fB) >
+            (sfabs(pEdge->fA) + sfabs(pEdge->fB)))
+        {
+            pPlaneMem[0] = forw_perp | ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
+            pPlaneMem[1] = (DEBUG_PERP_TAG << 20);
+            pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
 
-			if(pEdge->fC < 0.0f)
-			{
-				pPlaneMem[2] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
-			}
-			else
-			{
-				pPlaneMem[2] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
-			}
-		}
-		else
-		{
-			fInvMaxVal =
-			  ApproxRecip ((2 * MAGIC * (sfabs (pEdge->fA) + sfabs (pEdge->fB))) + sfabs (pEdge->fC));
+            /* Not used fInvMaxVal = 1.0f;	*/
 
-			pPlaneMem[0] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-				InPackTo20Bit (pEdge->fA * fInvMaxVal);
-			pPlaneMem[1] = (DEBUG_PERP_TAG << 20) |
-				InPackTo20Bit (pEdge->fB * fInvMaxVal);
-			pPlaneMem[2] = (sgl_int32) (pEdge->fC * fInvMaxVal * FLOAT_TO_FIXED);
-			pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
-		}
+            if(pEdge->fC < 0.0f)
+            {
+                pPlaneMem[2] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
+            }
+            else
+            {
+                pPlaneMem[2] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
+            }
+        }
+        else
+        {
+            fInvMaxVal =
+              ApproxRecip ((2 * MAGIC * (sfabs (pEdge->fA) + sfabs (pEdge->fB))) + sfabs (pEdge->fC));
 
-		/* Next Edge if you please */
-		pPlaneMem += WORDS_PER_PLANE;
-		pEdge++;
-	}
-	while ( --nEdge != 0 );
-	
-	/* Update pEdge for next time */
-	*ppEdge = pEdge;
-	
-	return (pPlaneMem);
+            pPlaneMem[0] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                InPackTo20Bit (pEdge->fA * fInvMaxVal);
+            pPlaneMem[1] = (DEBUG_PERP_TAG << 20) |
+                InPackTo20Bit (pEdge->fB * fInvMaxVal);
+            pPlaneMem[2] = (sgl_int32) (pEdge->fC * fInvMaxVal * FLOAT_TO_FIXED);
+            pPlaneMem[3] = forw_perp | (DEBUG_PERP_TAG << 4);
+        }
+
+        /* Next Edge if you please */
+        pPlaneMem += WORDS_PER_PLANE;
+        pEdge++;
+    }
+    while ( --nEdge != 0 );
+
+    /* Update pEdge for next time */
+    *ppEdge = pEdge;
+
+    return (pPlaneMem);
 }
 
 
@@ -2395,171 +2335,171 @@ INLINE sgl_uint32 *PackISPPolyClipTested(sgl_uint32 *pPlaneMem, PIEDGE *ppEdge, 
 
 
 void PackISPPolygonCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
-	sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
-										PIEDGE *ppEdge, int nExtraVertices)
+    sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
+                                        PIEDGE *ppEdge, int nExtraVertices)
 {
-	float 	fA, fB, fC;
-	float 	fZ0, fZ1, fZ2;
-	float 	f1OverDet;
-	float 	fMaxVal;
-	float 	fInvMaxVal;
-	PITRI	pTri = *rpTri;
-	sgl_uint32	TSPAddr = *rTSPAddr;
+    float 	fA, fB, fC;
+    float 	fZ0, fZ1, fZ2;
+    float 	f1OverDet;
+    float 	fMaxVal;
+    float 	fInvMaxVal;
+    PITRI	pTri = *rpTri;
+    sgl_uint32	TSPAddr = *rTSPAddr;
 
-	while (nPolysInChunk--)
-	{
-		fZ2 = pTri->fZ[2];
-				
-		f1OverDet = pTri->f1OverDet;
+    while (nPolysInChunk--)
+    {
+        fZ2 = pTri->fZ[2];
 
-		fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
-		fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
+        f1OverDet = pTri->f1OverDet;
 
-		/*
-		// Compute initial A, B and C values before scaling, using the projected
-		// vertex positions:
-		//
-		// NOTE: I have changed the calculation to use a different basis system
-		// which means that the new "adjoint" which actually re-uses values from
-		// the adjoint we pass in except for the last row which is 0,0, Det.
-		//									    Simon.
-		*/
-		fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
+        fZ0 = (pTri->fZ[0] - fZ2) * f1OverDet;
+        fZ1 = (pTri->fZ[1] - fZ2) * f1OverDet;
 
-		fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
+        /*
+        // Compute initial A, B and C values before scaling, using the projected
+        // vertex positions:
+        //
+        // NOTE: I have changed the calculation to use a different basis system
+        // which means that the new "adjoint" which actually re-uses values from
+        // the adjoint we pass in except for the last row which is 0,0, Det.
+        //									    Simon.
+        */
+        fA = fZ0*pTri->fAdjoint[0][0] +  fZ1*pTri->fAdjoint[0][1];
 
-		fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
+        fB = fZ0*pTri->fAdjoint[1][0] +  fZ1*pTri->fAdjoint[1][1];
 
-		/*
-		// to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
-		// larger than I originally thought necessary)
-		*/
-		fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
+        fC = fZ0*pTri->fAdjoint[2][0] +  fZ1*pTri->fAdjoint[2][1] + fZ2;
 
-		/*
-		// Once again, this float value is always positive. On Pentium, the
-		// float compare is awful, so do it in INT instead.
-		*/
-	#if SLOW_FCMP && !MULTI_FP_REG
-		if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
-	#else
-		if (fMaxVal > INVMAGIC)
-	#endif
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				SFLOAT_20BIT_ZERO;
-			pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
-			
-		}
-		else
-		{
-			pPlaneMem[0+0] = forw_visib_fp |
-				((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
-				InPackTo20Bit (fA);
-			pPlaneMem[1+0] = (TSPAddr << 20) |
-				InPackTo20Bit (fB);
-			pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
-		}
+        /*
+        // to prevent the 20Bit SFLOATS from overflowing (currently they are 2x
+        // larger than I originally thought necessary)
+        */
+        fMaxVal = sfabs (fA + fB + (fC * INVMAGIC)) + (sfabs (fA) + sfabs (fB));
 
-		/* do first edge plane
-		 */
-		fA = pTri->fAdjoint[0][2];
-		fB = pTri->fAdjoint[1][2];
-		fC = pTri->fAdjoint[2][2];
+        /*
+        // Once again, this float value is always positive. On Pentium, the
+        // float compare is awful, so do it in INT instead.
+        */
+#if SLOW_FCMP && !MULTI_FP_REG
+        if (FLOAT_TO_LONG(fMaxVal) > LONG_INVMAGIC )
+#else
+        if (fMaxVal > INVMAGIC)
+#endif
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                SFLOAT_20BIT_ZERO;
+            pPlaneMem[2+0] = (sgl_int32) (fZ2 * FLOAT_TO_FIXED);
 
-		/* Change the range.
-		 */
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			pPlaneMem[0+3] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
-			pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20);
+        }
+        else
+        {
+            pPlaneMem[0+0] = forw_visib_fp |
+                ((UPPER_6_OF_TAG & TSPAddr) << (20 - 12)) |
+                InPackTo20Bit (fA);
+            pPlaneMem[1+0] = (TSPAddr << 20) |
+                InPackTo20Bit (fB);
+            pPlaneMem[2+0] = (sgl_int32) (fC * FLOAT_TO_FIXED);
+        }
 
-			/* Not used fInvMaxVal = 1.0f;	*/
+        /* do first edge plane
+         */
+        fA = pTri->fAdjoint[0][2];
+        fB = pTri->fAdjoint[1][2];
+        fC = pTri->fAdjoint[2][2];
 
-			if(fC < 0.0f)
-			{
-				pPlaneMem[2+3] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
-			}
-			else
-			{
-				pPlaneMem[2+3] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
-			}
-		}
-		else
-		{
-			fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+        /* Change the range.
+         */
+        if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
+        {
+            pPlaneMem[0+3] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
+            pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20);
 
-			pPlaneMem[0+3] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-				InPackTo20Bit (fA * fInvMaxVal);
-			pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
-				InPackTo20Bit (fB * fInvMaxVal);
-			pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
-		}
+            /* Not used fInvMaxVal = 1.0f;	*/
 
-		/* do second edge plane
-		 */
-		fA = pTri->fAdjoint[0][0];
-		fB = pTri->fAdjoint[1][0];
-		fC = pTri->fAdjoint[2][0];
-		
-		/* Change the range.
-		 */
-		if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
-		{
-			pPlaneMem[0+6] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
-			pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20);
+            if(fC < 0.0f)
+            {
+                pPlaneMem[2+3] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
+            }
+            else
+            {
+                pPlaneMem[2+3] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
+            }
+        }
+        else
+        {
+            fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-			/* Not used fInvMaxVal = 1.0f;	*/
+            pPlaneMem[0+3] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                InPackTo20Bit (fA * fInvMaxVal);
+            pPlaneMem[1+3] = (DEBUG_PERP_TAG << 20) |
+                InPackTo20Bit (fB * fInvMaxVal);
+            pPlaneMem[2+3] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+        }
 
-			if(fC < 0.0f)
-			{
-				pPlaneMem[2+6] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
-			}
-			else
-			{
-				pPlaneMem[2+6] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
-			}
-		}
-		else
-		{
-			fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
+        /* do second edge plane
+         */
+        fA = pTri->fAdjoint[0][0];
+        fB = pTri->fAdjoint[1][0];
+        fC = pTri->fAdjoint[2][0];
 
-			pPlaneMem[0+6] = forw_perp |
-				((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
-				InPackTo20Bit (fA * fInvMaxVal);
-			pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
-				InPackTo20Bit (fB * fInvMaxVal);
-			pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+        /* Change the range.
+         */
+        if(sfabs((2*INVMAGIC) * fC + fA + fB) > (sfabs(fA) + sfabs(fB)))
+        {
+            pPlaneMem[0+6] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12));
+            pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20);
 
-		}
+            /* Not used fInvMaxVal = 1.0f;	*/
 
-		/* Do the third and any remaining edge planes from *ppEdge */
-		pPlaneMem = PackISPPolyClipTested( pPlaneMem + (WORDS_PER_PLANE*3),
-												ppEdge, nExtraVertices );
-		
-		*((sgl_uint32 *) &pTri) += nIncrement;
-		TSPAddr += TSPIncrement;
-	}
+            if(fC < 0.0f)
+            {
+                pPlaneMem[2+6] = 0xCE800000; /* (-0.5f * FLOAT_TO_FIXED) */
+            }
+            else
+            {
+                pPlaneMem[2+6] = 0x4E800000; /* (0.5f * FLOAT_TO_FIXED) */
+            }
+        }
+        else
+        {
+            fInvMaxVal = ApproxRecip ((2 * MAGIC * (sfabs (fA) + sfabs (fB))) + sfabs (fC));
 
-	*rpTri = pTri;
-	*rTSPAddr = TSPAddr;
+            pPlaneMem[0+6] = forw_perp |
+                ((UPPER_6_OF_TAG & DEBUG_PERP_TAG) << (20 - 12)) |
+                InPackTo20Bit (fA * fInvMaxVal);
+            pPlaneMem[1+6] = (DEBUG_PERP_TAG << 20) |
+                InPackTo20Bit (fB * fInvMaxVal);
+            pPlaneMem[2+6] = (sgl_int32) (fC * fInvMaxVal * FLOAT_TO_FIXED);
+
+        }
+
+        /* Do the third and any remaining edge planes from *ppEdge */
+        pPlaneMem = PackISPPolyClipTested( pPlaneMem + (WORDS_PER_PLANE*3),
+                                                ppEdge, nExtraVertices );
+
+        *((sgl_uint32 *) &pTri) += nIncrement;
+        TSPAddr += TSPIncrement;
+    }
+
+    *rpTri = pTri;
+    *rTSPAddr = TSPAddr;
 } /* PackISPPolygonCoreClipTested */
 
 #else
 #define PackISPPolygonCoreClipTested _PackISPPolygonCoreClipTested
 
 extern void PackISPPolygonCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPolysInChunk,
-		sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
-											PIEDGE *ppEdge, int nExtraVertices);
+        sgl_uint32 *rTSPAddr, PITRI *rpTri, int nIncrement, sgl_uint32 TSPIncrement,
+                                            PIEDGE *ppEdge, int nExtraVertices);
 #endif /* #if PACKISPPOLYGONCORECLIPTESTED */
 
-#endif	/* #if PCX2	*/
+#endif    /* #if PCX2	*/
 
 
 /**********************************************************************
@@ -2571,88 +2511,74 @@ extern void PackISPPolygonCoreClipTested(sgl_uint32 *pPlaneMem, sgl_uint32 nPoly
 **
 **********************************************************************/
 
-int PackISPTri (PITRI pTri, int nTriangles, sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement)
-{
-	sgl_uint32	ChunkLimit, CurrentPos, DataSize, ChunkSize, nPolysInChunk;
-	int 	nPolys;
-	
-	SGL_TIME_START(PACK_ISPTRI_TIME)
+int PackISPTri(PITRI pTri, int nTriangles, sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement) {
+    sgl_uint32 ChunkLimit, CurrentPos, DataSize, ChunkSize, nPolysInChunk;
+    int nPolys;
 
-	nPolys = nTriangles;
-				
-	if (gPDC.TSPControlWord & MASK_TRANS)
-	{
-		GenerateDepthInfo (pTri, nPolys);
-	}
+    SGL_TIME_START(PACK_ISPTRI_TIME)
 
-	while (nPolys)
-	{
-		CurrentPos = GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, WORDS_PER_PLANE * 4);
+    nPolys = nTriangles;
 
-		if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-		{
-			break;
-		}
-		else
-		{
-			DataSize = WORDS_PER_PLANE * 4 * nPolys;
+    if (gPDC.TSPControlWord & MASK_TRANS) {
+        GenerateDepthInfo(pTri, nPolys);
+    }
 
-			ChunkLimit = GetSabreLimit (CurrentPos);
-			ChunkSize = ChunkLimit - CurrentPos;
+    while (nPolys) {
+        CurrentPos = GetStartOfObject(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, WORDS_PER_PLANE * 4);
 
-			if (DataSize < ChunkSize)
-			{
-				nPolysInChunk = nPolys;
-			}
-			else
-			{
-				nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * 4);
-				
-				if (!nPolysInChunk)
-				{
-					break;
-				}
-				/* Recalculate the DataSize for the new number of polys */
-				DataSize = WORDS_PER_PLANE * 4 * nPolysInChunk;
-			}
-			
-			AddRegionObjects((sgl_uint32 *) &(pTri->reg), sizeof (ITRI),
-								  4, nPolysInChunk, CurrentPos, gDepthInfo, sizeof(TRANS_REGION_DEPTHS_STRUCT));
+        if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+            break;
+        } else {
+            DataSize = WORDS_PER_PLANE * 4 * nPolys;
 
-			PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + DataSize;
+            ChunkLimit = GetSabreLimit(CurrentPos);
+            ChunkSize = ChunkLimit - CurrentPos;
 
-			nPolys -= nPolysInChunk;
-			
-			SGL_TIME_START(PACK_ISPCORE_TIME)
+            if (DataSize < ChunkSize) {
+                nPolysInChunk = nPolys;
+            } else {
+                nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * 4);
 
-			/*
-			// If we aren't guaranteed that vertices are on screen, then
-			// use the safer pack routine
-			*/
-			if(gPDC.Context.bDoClipping)
-			{
-				PackISPCoreClipTested( &(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-							nPolysInChunk, &TSPAddr, &pTri,
-							sizeof (ITRI), TSPIncrement );
-			}
-			else
-			{
-				PackISPCore( &(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-							nPolysInChunk, &TSPAddr, &pTri,
-							sizeof (ITRI), TSPIncrement );
-			}
-			SGL_TIME_STOP(PACK_ISPCORE_TIME)
-		}
-	}
-	
-	if (nPolys)
-	{
-		DPFDEV ((DBG_WARNING, "PackISPTri: Out of ISP buffer space"));
-	}
+                if (!nPolysInChunk) {
+                    break;
+                }
+                /* Recalculate the DataSize for the new number of polys */
+                DataSize = WORDS_PER_PLANE * 4 * nPolysInChunk;
+            }
 
-	SGL_TIME_STOP(PACK_ISPTRI_TIME)
+            AddRegionObjects((sgl_uint32 *) &(pTri->reg), sizeof(ITRI),
+                             4, nPolysInChunk, CurrentPos, gDepthInfo, sizeof(TRANS_REGION_DEPTHS_STRUCT));
 
-	return (nTriangles - nPolys);
+            PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + DataSize;
+
+            nPolys -= nPolysInChunk;
+
+            SGL_TIME_START(PACK_ISPCORE_TIME)
+
+            /*
+            // If we aren't guaranteed that vertices are on screen, then
+            // use the safer pack routine
+            */
+            if (gPDC.Context.bDoClipping) {
+                PackISPCoreClipTested(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                      nPolysInChunk, &TSPAddr, &pTri,
+                                      sizeof(ITRI), TSPIncrement);
+            } else {
+                PackISPCore(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                            nPolysInChunk, &TSPAddr, &pTri,
+                            sizeof(ITRI), TSPIncrement);
+            }
+            SGL_TIME_STOP(PACK_ISPCORE_TIME)
+        }
+    }
+
+    if (nPolys) {
+        DPFDEV ((DBG_WARNING, "PackISPTri: Out of ISP buffer space"));
+    }
+
+    SGL_TIME_STOP(PACK_ISPTRI_TIME)
+
+    return (nTriangles - nPolys);
 }
 
 #if (PCX2 || PCX2_003) && !FORCE_NO_FPU
@@ -2665,143 +2591,127 @@ int PackISPTri (PITRI pTri, int nTriangles, sgl_uint32 TSPAddr, sgl_uint32 TSPIn
 **
 **********************************************************************/
 
-int PackISPTriExtra (PITRI rpTri, PIMATERIAL rpMat, 
-					 int nTriangles, 
-					 sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement)
-{
-	sgl_uint32	ChunkLimit, CurrentPos, DataSize, ChunkSize, nPolysInChunk;
-	const sgl_uint32  TSPIncrementExtra = 8>>1; /* both the VFog and specular are flat textured */
-	int 	nPolys, i, nObjPlanesInWords;
-	int TSPSize = 0;
-	sgl_uint32 TSPOffsetAddr;
-	PIMATERIAL pMat = rpMat;
-	PITRI pTri = rpTri;
-	sgl_uint32 DataInc;
+int PackISPTriExtra(PITRI rpTri, PIMATERIAL rpMat,
+                    int nTriangles,
+                    sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement) {
+    sgl_uint32 ChunkLimit, CurrentPos, DataSize, ChunkSize, nPolysInChunk;
+    const sgl_uint32 TSPIncrementExtra = 8 >> 1; /* both the VFog and specular are flat textured */
+    int nPolys, i, nObjPlanesInWords;
+    int TSPSize = 0;
+    sgl_uint32 TSPOffsetAddr;
+    PIMATERIAL pMat = rpMat;
+    PITRI pTri = rpTri;
+    sgl_uint32 DataInc;
 
-	SGL_TIME_START(PACK_ISPTRI_TIME)
+    SGL_TIME_START(PACK_ISPTRI_TIME)
 
-	nPolys = nTriangles;
-				
-	TSPOffsetAddr = TSPAddr + TSPIncrement*nPolys;
+    nPolys = nTriangles;
 
-	if (gPDC.TSPControlWord & MASK_TRANS)
-	{
-		GenerateDepthInfo (pTri, nPolys);
-	}
+    TSPOffsetAddr = TSPAddr + TSPIncrement * nPolys;
 
-	while (nPolys)
-	{
-		nObjPlanesInWords = WORDS_PER_PLANE * 4 + 
-			((rpMat->nFogIndex)?WORDS_PER_PLANE:0) +
-			((rpMat->nSmoothSpecularIndex)?WORDS_PER_PLANE:0);
+    if (gPDC.TSPControlWord & MASK_TRANS) {
+        GenerateDepthInfo(pTri, nPolys);
+    }
 
-		CurrentPos = GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, nObjPlanesInWords);
+    while (nPolys) {
+        nObjPlanesInWords = WORDS_PER_PLANE * 4 +
+                            ((rpMat->nFogIndex) ? WORDS_PER_PLANE : 0) +
+                            ((rpMat->nSmoothSpecularIndex) ? WORDS_PER_PLANE : 0);
 
-		if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-		{
-			break;
-		}
-		else
-		{
-			DataInc = 0;
-			DataSize = WORDS_PER_PLANE * 4 * nPolys;
-			TSPSize += nPolys * TSPIncrement;
-			pMat = rpMat; /* points to unprocessed triangle materials */
-			for(i=0; i<nPolys; i++, pMat++)
-			{
-				DataInc += ((pMat->nFogIndex)?1:0);
-				DataInc += ((pMat->nSmoothSpecularIndex)?1:0);
-			}
-			TSPSize += (TSPIncrementExtra * DataInc);
-			DataSize += (WORDS_PER_PLANE * DataInc);
+        CurrentPos = GetStartOfObject(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, nObjPlanesInWords);
 
-			ChunkLimit = GetSabreLimit (CurrentPos);
-			ChunkSize = ChunkLimit - CurrentPos;
+        if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+            break;
+        } else {
+            DataInc = 0;
+            DataSize = WORDS_PER_PLANE * 4 * nPolys;
+            TSPSize += nPolys * TSPIncrement;
+            pMat = rpMat; /* points to unprocessed triangle materials */
+            for (i = 0; i < nPolys; i++, pMat++) {
+                DataInc += ((pMat->nFogIndex) ? 1 : 0);
+                DataInc += ((pMat->nSmoothSpecularIndex) ? 1 : 0);
+            }
+            TSPSize += (TSPIncrementExtra * DataInc);
+            DataSize += (WORDS_PER_PLANE * DataInc);
 
-			/* see if we can fit all the polys in this chunk... */
-			if (DataSize < ChunkSize)
-			{
-				nPolysInChunk = nPolys;
-			}
-			else
-			{
-				/* ...we cant, so see how many will go in */ 
-				DataSize=0;
-				DataInc=0;
-				pMat = rpMat; /* points to unprocessed triangle materials */
-				for(nPolysInChunk=0; ChunkSize>(WORDS_PER_PLANE * 4); 
-					nPolysInChunk++, DataSize+=DataInc, pMat++)
-				{
-					DataInc = WORDS_PER_PLANE * 4; 
-					DataInc += ((pMat->nFogIndex)?WORDS_PER_PLANE:0);
-					DataInc += ((pMat->nSmoothSpecularIndex)?WORDS_PER_PLANE:0);
-					ChunkSize -= DataInc;
-					/*nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * 4);*/
+            ChunkLimit = GetSabreLimit(CurrentPos);
+            ChunkSize = ChunkLimit - CurrentPos;
 
-				}
-				
-				if (!nPolysInChunk)
-				{
-					break;
-				}
+            /* see if we can fit all the polys in this chunk... */
+            if (DataSize < ChunkSize) {
+                nPolysInChunk = nPolys;
+            } else {
+                /* ...we cant, so see how many will go in */
+                DataSize = 0;
+                DataInc = 0;
+                pMat = rpMat; /* points to unprocessed triangle materials */
+                for (nPolysInChunk = 0; ChunkSize > (WORDS_PER_PLANE * 4);
+                     nPolysInChunk++, DataSize += DataInc, pMat++) {
+                    DataInc = WORDS_PER_PLANE * 4;
+                    DataInc += ((pMat->nFogIndex) ? WORDS_PER_PLANE : 0);
+                    DataInc += ((pMat->nSmoothSpecularIndex) ? WORDS_PER_PLANE : 0);
+                    ChunkSize -= DataInc;
+                    /*nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * 4);*/
 
-			}
-			
+                }
 
-			nPolys -= nPolysInChunk;
-			
-			SGL_TIME_START(PACK_ISPCORE_TIME);
+                if (!nPolysInChunk) {
+                    break;
+                }
 
-			/* require a safe copy of the pointer to the current triangle
-			** for adding regions, as isp packing updates the pTri pointer
-			*/
-			pTri = rpTri;
+            }
 
-			/*
-			// If we aren't guaranteed that vertices are on screen, then
-			// use the safer pack routine
-			*/
-			if(gPDC.Context.bDoClipping)
-			{
-				PackISPCoreClipTestedExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-										   nPolysInChunk, &TSPAddr, 
-										   &rpTri, sizeof (ITRI), 
-										   &rpMat, sizeof (IMATERIAL), 
-										   TSPIncrement, 
-										   &TSPOffsetAddr, TSPIncrementExtra );
-			}
-			else
-			{
-				PackISPCoreExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-								 nPolysInChunk, &TSPAddr, 
-								 &rpTri, sizeof (ITRI), 
-								 &rpMat, sizeof (IMATERIAL), 
-								 TSPIncrement, 
-								 &TSPOffsetAddr, TSPIncrementExtra );
-			}
 
-			/* add the objects after the extra status has been calculated */
-			AddRegionObjectsExtra((sgl_uint32 *) &(pTri->reg), sizeof (ITRI),
-								  4, nPolysInChunk, CurrentPos, 
-								  gDepthInfo, sizeof(TRANS_REGION_DEPTHS_STRUCT),
-								  eExtraStatus);
+            nPolys -= nPolysInChunk;
 
-			PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + DataSize;
+            SGL_TIME_START(PACK_ISPCORE_TIME);
 
-			SGL_TIME_STOP(PACK_ISPCORE_TIME);
-				
+            /* require a safe copy of the pointer to the current triangle
+            ** for adding regions, as isp packing updates the pTri pointer
+            */
+            pTri = rpTri;
 
-		}
-	}
-	
-	if (nPolys)
-	{
-		DPFDEV ((DBG_WARNING, "PackISPTriExtra: Out of ISP buffer space"));
-	}
+            /*
+            // If we aren't guaranteed that vertices are on screen, then
+            // use the safer pack routine
+            */
+            if (gPDC.Context.bDoClipping) {
+                PackISPCoreClipTestedExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                           nPolysInChunk, &TSPAddr,
+                                           &rpTri, sizeof(ITRI),
+                                           &rpMat, sizeof(IMATERIAL),
+                                           TSPIncrement,
+                                           &TSPOffsetAddr, TSPIncrementExtra);
+            } else {
+                PackISPCoreExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                 nPolysInChunk, &TSPAddr,
+                                 &rpTri, sizeof(ITRI),
+                                 &rpMat, sizeof(IMATERIAL),
+                                 TSPIncrement,
+                                 &TSPOffsetAddr, TSPIncrementExtra);
+            }
 
-	SGL_TIME_STOP(PACK_ISPTRI_TIME)
+            /* add the objects after the extra status has been calculated */
+            AddRegionObjectsExtra((sgl_uint32 *) &(pTri->reg), sizeof(ITRI),
+                                  4, nPolysInChunk, CurrentPos,
+                                  gDepthInfo, sizeof(TRANS_REGION_DEPTHS_STRUCT),
+                                  eExtraStatus);
 
-	return (TSPSize);
+            PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + DataSize;
+
+            SGL_TIME_STOP(PACK_ISPCORE_TIME);
+
+
+        }
+    }
+
+    if (nPolys) {
+        DPFDEV ((DBG_WARNING, "PackISPTriExtra: Out of ISP buffer space"));
+    }
+
+    SGL_TIME_STOP(PACK_ISPTRI_TIME)
+
+    return (TSPSize);
 }
 
 /**********************************************************************
@@ -2811,191 +2721,166 @@ int PackISPTriExtra (PITRI rpTri, PIMATERIAL rpMat,
 ** and does the extra stuff needed for vertex fog and gouraud specular
 **
 **********************************************************************/
-int PackISPPolygonExtra (PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolygons,
-					sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement)
-{
-	sgl_uint32	DataSize, CurrentPos, ChunkSize, ChunkLimit, nPolysInChunk;
-	int 	nPolys, nExtraVertices, nPlanePolys, nBurst, i, nObjPlanesInWords;
-	const sgl_uint32  TSPIncrementExtra = 8>>1; /* both the VFog and specular are flat textured */
-	int TSPSize = 0;
-	sgl_uint32 TSPOffsetAddr;
-	PIMATERIAL pMat = rpMat;
-	PITRI pTri = rpTri;
-	sgl_uint32 DataInc;
+int PackISPPolygonExtra(PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolygons,
+                        sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement) {
+    sgl_uint32 DataSize, CurrentPos, ChunkSize, ChunkLimit, nPolysInChunk;
+    int nPolys, nExtraVertices, nPlanePolys, nBurst, i, nObjPlanesInWords;
+    const sgl_uint32 TSPIncrementExtra = 8 >> 1; /* both the VFog and specular are flat textured */
+    int TSPSize = 0;
+    sgl_uint32 TSPOffsetAddr;
+    PIMATERIAL pMat = rpMat;
+    PITRI pTri = rpTri;
+    sgl_uint32 DataInc;
 
 
-	SGL_TIME_START(PACK_ISPTRI_TIME)
+    SGL_TIME_START(PACK_ISPTRI_TIME)
 
-	nPolys = nPolygons;
+    nPolys = nPolygons;
 
-	TSPOffsetAddr = TSPAddr + TSPIncrement*nPolys;
+    TSPOffsetAddr = TSPAddr + TSPIncrement * nPolys;
 
-	if (gPDC.TSPControlWord & MASK_TRANS)
-	{
-		GenerateDepthInfo (pTri, nPolys);
-	}
+    if (gPDC.TSPControlWord & MASK_TRANS) {
+        GenerateDepthInfo(pTri, nPolys);
+    }
 
-	nPlanePolys = nPolys;
+    nPlanePolys = nPolys;
 
-	while (nPolys)
-	{
-		nExtraVertices = pMat->NumExtraVertices;
+    while (nPolys) {
+        nExtraVertices = pMat->NumExtraVertices;
 
-		/* count the burst of polys of same size */
-		
-		do
-		{
-			--nPlanePolys;
-			++pMat;
-		}
-		while ((pMat->NumExtraVertices == (sgl_uint32) nExtraVertices) && nPlanePolys);
+        /* count the burst of polys of same size */
 
-		nBurst = nPolys - nPlanePolys;
-		
-		/* iterate through the burst */
-		
-		while (nBurst)
-		{
-			nObjPlanesInWords = WORDS_PER_PLANE * (4 + nExtraVertices) + 
-				((rpMat->nFogIndex)?WORDS_PER_PLANE:0) +
-				((rpMat->nSmoothSpecularIndex)?WORDS_PER_PLANE:0);
+        do {
+            --nPlanePolys;
+            ++pMat;
+        } while ((pMat->NumExtraVertices == (sgl_uint32) nExtraVertices) && nPlanePolys);
 
-			CurrentPos = GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, nObjPlanesInWords);
+        nBurst = nPolys - nPlanePolys;
 
-			if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-			{
-				SGL_TIME_STOP(PACK_ISPTRI_TIME)
+        /* iterate through the burst */
 
-				return (nPolygons - nPolys);
-			}
-			else
-			{
-				DataInc = 0;
-				DataSize = nBurst * (4 + nExtraVertices) * WORDS_PER_PLANE;
-				TSPSize += nBurst * TSPIncrement;
-				pMat = rpMat; /* points to unprocessed triangle materials */
-				for(i=0; i<nBurst; i++, pMat++)
-				{
-					DataInc += ((pMat->nFogIndex)?1:0);
-					DataInc += ((pMat->nSmoothSpecularIndex)?1:0);
-				}
-				TSPSize += (TSPIncrementExtra * DataInc);
-				DataSize += (WORDS_PER_PLANE * DataInc);
+        while (nBurst) {
+            nObjPlanesInWords = WORDS_PER_PLANE * (4 + nExtraVertices) +
+                                ((rpMat->nFogIndex) ? WORDS_PER_PLANE : 0) +
+                                ((rpMat->nSmoothSpecularIndex) ? WORDS_PER_PLANE : 0);
 
-				ChunkLimit = GetSabreLimit (CurrentPos);
-				ChunkSize = ChunkLimit - CurrentPos;
+            CurrentPos = GetStartOfObject(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, nObjPlanesInWords);
 
-				if (DataSize < ChunkSize)
-				{
-					nPolysInChunk = nBurst;
-				}
-				else
-				{
-					DataSize=0;
-					DataInc=0;
-					pMat = rpMat; /* points to unprocessed triangle materials */
-					for(nPolysInChunk=0; ChunkSize>(WORDS_PER_PLANE * (4 + nExtraVertices)); 
-						nPolysInChunk++, DataSize+=DataInc, pMat++)
-					{
-						DataInc = WORDS_PER_PLANE * (4 + nExtraVertices); 
-						DataInc += ((pMat->nFogIndex)?WORDS_PER_PLANE:0);
-						DataInc += ((pMat->nSmoothSpecularIndex)?WORDS_PER_PLANE:0);
-						ChunkSize -= DataInc;
-						/*nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * (4 + nExtraVertices));*/
+            if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+                SGL_TIME_STOP(PACK_ISPTRI_TIME)
 
-					}
-					
-					if (!nPolysInChunk)
-					{
-						SGL_TIME_STOP(PACK_ISPTRI_TIME)
+                return (nPolygons - nPolys);
+            } else {
+                DataInc = 0;
+                DataSize = nBurst * (4 + nExtraVertices) * WORDS_PER_PLANE;
+                TSPSize += nBurst * TSPIncrement;
+                pMat = rpMat; /* points to unprocessed triangle materials */
+                for (i = 0; i < nBurst; i++, pMat++) {
+                    DataInc += ((pMat->nFogIndex) ? 1 : 0);
+                    DataInc += ((pMat->nSmoothSpecularIndex) ? 1 : 0);
+                }
+                TSPSize += (TSPIncrementExtra * DataInc);
+                DataSize += (WORDS_PER_PLANE * DataInc);
 
-						return (nPolygons - nPolys);
-					}
-				}				
-				
-				nBurst -= nPolysInChunk;
+                ChunkLimit = GetSabreLimit(CurrentPos);
+                ChunkSize = ChunkLimit - CurrentPos;
 
-				SGL_TIME_START(PACK_ISPCORE_TIME);
+                if (DataSize < ChunkSize) {
+                    nPolysInChunk = nBurst;
+                } else {
+                    DataSize = 0;
+                    DataInc = 0;
+                    pMat = rpMat; /* points to unprocessed triangle materials */
+                    for (nPolysInChunk = 0; ChunkSize > (WORDS_PER_PLANE * (4 + nExtraVertices));
+                         nPolysInChunk++, DataSize += DataInc, pMat++) {
+                        DataInc = WORDS_PER_PLANE * (4 + nExtraVertices);
+                        DataInc += ((pMat->nFogIndex) ? WORDS_PER_PLANE : 0);
+                        DataInc += ((pMat->nSmoothSpecularIndex) ? WORDS_PER_PLANE : 0);
+                        ChunkSize -= DataInc;
+                        /*nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * (4 + nExtraVertices));*/
 
-				/* require a safe copy of the pointer to the current triangle
-				** for adding regions, as isp packing updates the pTri pointer
-				*/
-				pTri = rpTri;
-					
-				/*
-				// If we aren't guaranteed that vertices are on screen, then
-				// use the safer pack routine
-				*/
-				if(gPDC.Context.bDoClipping)
-				{
-					if (nExtraVertices == 0)
-					{
-						PackISPCoreClipTestedExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-										   nPolysInChunk, &TSPAddr, 
-										   &rpTri, sizeof (ITRI), 
-										   &rpMat, sizeof (IMATERIAL), 
-										   TSPIncrement, 
-										   &TSPOffsetAddr, TSPIncrementExtra );
-					}
-					else
-					{
-					  	PackISPPolygonCoreClipTestedExtra (&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-											nPolysInChunk, &TSPAddr, 
-											&rpTri,	sizeof(ITRI), 
-											&rpMat, sizeof (IMATERIAL),
-											TSPIncrement,
-											&pEdge, nExtraVertices,
-											&TSPOffsetAddr, TSPIncrementExtra);	
-					}
-				}
-				else
-				{
-					if (nExtraVertices == 0)
-					{
-						PackISPCoreExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-							   			 nPolysInChunk, &TSPAddr, 
-										 &rpTri, sizeof (ITRI), 
-										 &rpMat, sizeof (IMATERIAL), 
-									 	 TSPIncrement, 
-										 &TSPOffsetAddr, TSPIncrementExtra );
-					}
-					else
-					{
-					  	PackISPPolygonCoreExtra (&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-										nPolysInChunk, &TSPAddr,
-										&rpTri, sizeof(ITRI),
-										&rpMat, sizeof (IMATERIAL),  
-										TSPIncrement,
-										&pEdge, nExtraVertices,
-										&TSPOffsetAddr, TSPIncrementExtra );
-					}
-				}
+                    }
 
-				/* add the objects after the extra status has been calculated */
-				AddRegionObjectsExtra((sgl_uint32 *) &(pTri->reg.u), sizeof (ITRI),
-									  4 + nExtraVertices, nPolysInChunk, CurrentPos, 
-									  gDepthInfo + (nPolygons - nPolys), 
-									  sizeof(TRANS_REGION_DEPTHS_STRUCT),
-									  eExtraStatus);
-				
-			  	PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + DataSize;			
-							
-				SGL_TIME_STOP(PACK_ISPCORE_TIME)
-			}
-			
-		}
+                    if (!nPolysInChunk) {
+                        SGL_TIME_STOP(PACK_ISPTRI_TIME)
 
-		nPolys = nPlanePolys;
-	}
-		
-	if (nPolys)
-	{
-		DPFDEV ((DBG_WARNING, "PackISPPolygonExtra: Out of ISP buffer space"));		
-	}
+                        return (nPolygons - nPolys);
+                    }
+                }
 
-	SGL_TIME_STOP(PACK_ISPTRI_TIME)
+                nBurst -= nPolysInChunk;
 
-	return (TSPSize);
+                SGL_TIME_START(PACK_ISPCORE_TIME);
+
+                /* require a safe copy of the pointer to the current triangle
+                ** for adding regions, as isp packing updates the pTri pointer
+                */
+                pTri = rpTri;
+
+                /*
+                // If we aren't guaranteed that vertices are on screen, then
+                // use the safer pack routine
+                */
+                if (gPDC.Context.bDoClipping) {
+                    if (nExtraVertices == 0) {
+                        PackISPCoreClipTestedExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                                   nPolysInChunk, &TSPAddr,
+                                                   &rpTri, sizeof(ITRI),
+                                                   &rpMat, sizeof(IMATERIAL),
+                                                   TSPIncrement,
+                                                   &TSPOffsetAddr, TSPIncrementExtra);
+                    } else {
+                        PackISPPolygonCoreClipTestedExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                                          nPolysInChunk, &TSPAddr,
+                                                          &rpTri, sizeof(ITRI),
+                                                          &rpMat, sizeof(IMATERIAL),
+                                                          TSPIncrement,
+                                                          &pEdge, nExtraVertices,
+                                                          &TSPOffsetAddr, TSPIncrementExtra);
+                    }
+                } else {
+                    if (nExtraVertices == 0) {
+                        PackISPCoreExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                         nPolysInChunk, &TSPAddr,
+                                         &rpTri, sizeof(ITRI),
+                                         &rpMat, sizeof(IMATERIAL),
+                                         TSPIncrement,
+                                         &TSPOffsetAddr, TSPIncrementExtra);
+                    } else {
+                        PackISPPolygonCoreExtra(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                                nPolysInChunk, &TSPAddr,
+                                                &rpTri, sizeof(ITRI),
+                                                &rpMat, sizeof(IMATERIAL),
+                                                TSPIncrement,
+                                                &pEdge, nExtraVertices,
+                                                &TSPOffsetAddr, TSPIncrementExtra);
+                    }
+                }
+
+                /* add the objects after the extra status has been calculated */
+                AddRegionObjectsExtra((sgl_uint32 *) &(pTri->reg.u), sizeof(ITRI),
+                                      4 + nExtraVertices, nPolysInChunk, CurrentPos,
+                                      gDepthInfo + (nPolygons - nPolys),
+                                      sizeof(TRANS_REGION_DEPTHS_STRUCT),
+                                      eExtraStatus);
+
+                PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + DataSize;
+
+                SGL_TIME_STOP(PACK_ISPCORE_TIME)
+            }
+
+        }
+
+        nPolys = nPlanePolys;
+    }
+
+    if (nPolys) {
+        DPFDEV ((DBG_WARNING, "PackISPPolygonExtra: Out of ISP buffer space"));
+    }
+
+    SGL_TIME_STOP(PACK_ISPTRI_TIME)
+
+    return (TSPSize);
 
 } /* PackISPPolygonExtra */
 
@@ -3011,146 +2896,125 @@ int PackISPPolygonExtra (PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolyg
 **
 **********************************************************************/
 
-int PackISPPolygon (PITRI pTri, PIMATERIAL pMat, PIEDGE pEdge, int nPolygons,
-					sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement)
-{
-	sgl_uint32	DataSize, CurrentPos, ChunkSize, ChunkLimit;
-	int 	nPolys, nPolysInChunk, nExtraVertices, nPlanePolys, nBurst;
-	PIMATERIAL pThisMat = pMat;
-	
-	SGL_TIME_START(PACK_ISPTRI_TIME)
+int PackISPPolygon(PITRI pTri, PIMATERIAL pMat, PIEDGE pEdge, int nPolygons,
+                   sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement) {
+    sgl_uint32 DataSize, CurrentPos, ChunkSize, ChunkLimit;
+    int nPolys, nPolysInChunk, nExtraVertices, nPlanePolys, nBurst;
+    PIMATERIAL pThisMat = pMat;
 
-	nPolys = nPolygons;
+    SGL_TIME_START(PACK_ISPTRI_TIME)
 
-	if (gPDC.TSPControlWord & MASK_TRANS)
-	{
-		GenerateDepthInfo (pTri, nPolys);
-	}
+    nPolys = nPolygons;
 
-	nPlanePolys = nPolys;
+    if (gPDC.TSPControlWord & MASK_TRANS) {
+        GenerateDepthInfo(pTri, nPolys);
+    }
 
-	while (nPolys)
-	{
-		nExtraVertices = pMat->NumExtraVertices;
+    nPlanePolys = nPolys;
 
-		/* count the burst of polys of same size */
-		
-		do
-		{
-			--nPlanePolys;
-			++pMat;
-		}
-		while ((pMat->NumExtraVertices == (sgl_uint32) nExtraVertices) && nPlanePolys);
+    while (nPolys) {
+        nExtraVertices = pMat->NumExtraVertices;
 
-		nBurst = nPolys - nPlanePolys;
-		
-		/* iterate through the burst */
-		
-		while (nBurst)
-		{
-			CurrentPos = GetStartOfObject (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos, WORDS_PER_PLANE * (4 + nExtraVertices));
+        /* count the burst of polys of same size */
 
-			if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit)
-			{
-				SGL_TIME_STOP(PACK_ISPTRI_TIME)
+        do {
+            --nPlanePolys;
+            ++pMat;
+        } while ((pMat->NumExtraVertices == (sgl_uint32) nExtraVertices) && nPlanePolys);
 
-				return (nPolygons - nPolys);
-			}
-			else
-			{
-				DataSize = nBurst * (4 + nExtraVertices) * WORDS_PER_PLANE;
+        nBurst = nPolys - nPlanePolys;
 
-				ChunkLimit = GetSabreLimit (CurrentPos);
-				ChunkSize = ChunkLimit - CurrentPos;
+        /* iterate through the burst */
 
-				if (DataSize < ChunkSize)
-				{
-					nPolysInChunk = nBurst;
-				}
-				else
-				{
-					nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * (4 + nExtraVertices));
-					
-					if (!nPolysInChunk)
-					{
-						SGL_TIME_STOP(PACK_ISPTRI_TIME)
+        while (nBurst) {
+            CurrentPos = GetStartOfObject(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos,
+                                          WORDS_PER_PLANE * (4 + nExtraVertices));
 
-						return (nPolygons - nPolys);
-					}
-					/* Recalculate the DataSize for the new number of polys */
-					DataSize = (WORDS_PER_PLANE * (4 + nExtraVertices)) * nPolysInChunk;
-				}
+            if (CurrentPos == PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) {
+                SGL_TIME_STOP(PACK_ISPTRI_TIME)
 
-				PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos = CurrentPos + (nPolysInChunk * (4 + nExtraVertices) * WORDS_PER_PLANE);
-							
-				AddRegionObjects (&(pTri->reg.u), 
-								  sizeof (ITRI),
-				  				  4 + nExtraVertices, 
-								  nPolysInChunk, 
-								  CurrentPos, 
-								  gDepthInfo + (nPolygons - nPolys), 
-								  sizeof(TRANS_REGION_DEPTHS_STRUCT));
+                return (nPolygons - nPolys);
+            } else {
+                DataSize = nBurst * (4 + nExtraVertices) * WORDS_PER_PLANE;
 
-				SGL_TIME_START(PACK_ISPCORE_TIME)
-					
-				/*
-				// If we aren't guaranteed that vertices are on screen, then
-				// use the safer pack routine
-				*/
-				if(gPDC.Context.bDoClipping)
-				{
-					if (nExtraVertices == 0)
-					{
-						PackISPCoreClipTested (&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-									 nPolysInChunk, 
-									 &TSPAddr, &pTri,
-									 sizeof (ITRI), TSPIncrement );
-					}
-					else
-					{
-						PackISPPolygonCoreClipTested (&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-										nPolysInChunk,
-										&TSPAddr, &pTri,
-										sizeof(ITRI), TSPIncrement,
-										&pEdge, nExtraVertices);
-					}
-				}
-				else
-				{
-					if (nExtraVertices == 0)
-					{
-						PackISPCore (&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-									 nPolysInChunk, 
-									 &TSPAddr, &pTri,
-									 sizeof (ITRI), TSPIncrement );
-					}
-					else
-					{
-						PackISPPolygonCore (&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]), 
-										nPolysInChunk,
-										&TSPAddr, &pTri,
-										sizeof(ITRI), TSPIncrement,
-										&pEdge, nExtraVertices);
-					}
-				}
-							
-				SGL_TIME_STOP(PACK_ISPCORE_TIME)
-			}
-			
-			nBurst -= nPolysInChunk;
-		}
+                ChunkLimit = GetSabreLimit(CurrentPos);
+                ChunkSize = ChunkLimit - CurrentPos;
 
-		nPolys = nPlanePolys;
-	}
-		
-	if (nPolys)
-	{
-		DPFDEV ((DBG_WARNING, "PackISPPolygon: Out of ISP buffer space"));
-	}
+                if (DataSize < ChunkSize) {
+                    nPolysInChunk = nBurst;
+                } else {
+                    nPolysInChunk = ChunkSize / (WORDS_PER_PLANE * (4 + nExtraVertices));
 
-	SGL_TIME_STOP(PACK_ISPTRI_TIME)
+                    if (!nPolysInChunk) {
+                        SGL_TIME_STOP(PACK_ISPTRI_TIME)
 
-	return (nPolygons - nPolys);
+                        return (nPolygons - nPolys);
+                    }
+                    /* Recalculate the DataSize for the new number of polys */
+                    DataSize = (WORDS_PER_PLANE * (4 + nExtraVertices)) * nPolysInChunk;
+                }
+
+                PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos =
+                        CurrentPos + (nPolysInChunk * (4 + nExtraVertices) * WORDS_PER_PLANE);
+
+                AddRegionObjects(&(pTri->reg.u),
+                                 sizeof(ITRI),
+                                 4 + nExtraVertices,
+                                 nPolysInChunk,
+                                 CurrentPos,
+                                 gDepthInfo + (nPolygons - nPolys),
+                                 sizeof(TRANS_REGION_DEPTHS_STRUCT));
+
+                SGL_TIME_START(PACK_ISPCORE_TIME)
+
+                /*
+                // If we aren't guaranteed that vertices are on screen, then
+                // use the safer pack routine
+                */
+                if (gPDC.Context.bDoClipping) {
+                    if (nExtraVertices == 0) {
+                        PackISPCoreClipTested(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                              nPolysInChunk,
+                                              &TSPAddr, &pTri,
+                                              sizeof(ITRI), TSPIncrement);
+                    } else {
+                        PackISPPolygonCoreClipTested(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                                     nPolysInChunk,
+                                                     &TSPAddr, &pTri,
+                                                     sizeof(ITRI), TSPIncrement,
+                                                     &pEdge, nExtraVertices);
+                    }
+                } else {
+                    if (nExtraVertices == 0) {
+                        PackISPCore(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                    nPolysInChunk,
+                                    &TSPAddr, &pTri,
+                                    sizeof(ITRI), TSPIncrement);
+                    } else {
+                        PackISPPolygonCore(&(PVRParamBuffs[PVR_PARAM_TYPE_ISP].pBuffer[CurrentPos]),
+                                           nPolysInChunk,
+                                           &TSPAddr, &pTri,
+                                           sizeof(ITRI), TSPIncrement,
+                                           &pEdge, nExtraVertices);
+                    }
+                }
+
+                SGL_TIME_STOP(PACK_ISPCORE_TIME)
+            }
+
+            nBurst -= nPolysInChunk;
+        }
+
+        nPolys = nPlanePolys;
+    }
+
+    if (nPolys) {
+        DPFDEV ((DBG_WARNING, "PackISPPolygon: Out of ISP buffer space"));
+    }
+
+    SGL_TIME_STOP(PACK_ISPTRI_TIME)
+
+    return (nPolygons - nPolys);
 
 } /* PackISPPolygon */
 /* end of $RCSfile: disp.c,v $ */

@@ -151,9 +151,8 @@ RCS info:
  * ++	                				Includes		                       	 ++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- */	
+ */
 
-#include <stdlib.h>
 #include <string.h>
 
 #define __LIST_C__
@@ -162,7 +161,6 @@ RCS info:
 #include <sgl_defs.h>
 #include <sgl.h>
 #include <list.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
 
 /*
@@ -171,24 +169,20 @@ RCS info:
  * ++	                		static functions		                       	 ++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- */	
+ */
 
-void *InternalRealloc (void *OldPtr, int NewSize)
-{
-	void *Ret;
-	
-	/* PVROSRealloc should take zero pointers and act like malloc - but doesn't on the SUN!! */
+void *InternalRealloc(void *OldPtr, int NewSize) {
+    void *Ret;
 
-	if (OldPtr)
-	{
-		Ret = SGLRealloc (OldPtr, NewSize);
-	}
-	else
-	{
-		Ret = SGLMalloc (NewSize);
-	}
+    /* PVROSRealloc should take zero pointers and act like malloc - but doesn't on the SUN!! */
 
-	return (Ret);
+    if (OldPtr) {
+        Ret = SGLRealloc (OldPtr, NewSize);
+    } else {
+        Ret = SGLMalloc (NewSize);
+    }
+
+    return (Ret);
 }
 
 /*===========================================
@@ -204,24 +198,20 @@ void *InternalRealloc (void *OldPtr, int NewSize)
  *
  * Return:		void
  *========================================================================================*/
-static sgl_bool ExpandList (PLIST pvListData)
-{
-	LIST *pList = pvListData;
-	void *pNewItemList;
+static sgl_bool ExpandList(PLIST pvListData) {
+    LIST *pList = pvListData;
+    void *pNewItemList;
 
-	pNewItemList = InternalRealloc (pList->pList, (pList->uBlockSize + pList->uMaxItems) * pList->uItemSize);
-		
-	if (!pNewItemList)
-	{
-		DPF ((DBG_WARNING, "Error expanding list!"));
-	}
-	else
-	{
-		pList->pList = pNewItemList;
-		pList->uMaxItems += pList->uBlockSize;
-	}
+    pNewItemList = InternalRealloc(pList->pList, (pList->uBlockSize + pList->uMaxItems) * pList->uItemSize);
 
-	return (pList->pList != NULL);
+    if (!pNewItemList) {
+        DPF ((DBG_WARNING, "Error expanding list!"));
+    } else {
+        pList->pList = pNewItemList;
+        pList->uMaxItems += pList->uBlockSize;
+    }
+
+    return (pList->pList != NULL);
 }
 
 /*
@@ -230,7 +220,7 @@ static sgl_bool ExpandList (PLIST pvListData)
  * ++	                		entry point functions	                       	 ++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- */	
+ */
 
 /*===========================================
  * Function:	ListAddItem
@@ -245,29 +235,26 @@ static sgl_bool ExpandList (PLIST pvListData)
  * Return:		void *: ptr new item if succesful
  *						NULL if not
  *========================================================================================*/
-void * ListAddItem (PLIST pvListData)
-{
-	void *pNewItem;
-	LIST *pList;
+void *ListAddItem(PLIST pvListData) {
+    void *pNewItem;
+    LIST *pList;
 
-	pList = pvListData;
+    pList = pvListData;
 
-	ASSERT (pList);
+    ASSERT (pList);
 
-	if (pList->nItemsInList == (sgl_int32) pList->uMaxItems)
-	{
-		if (!ExpandList (pList))
-		{
-			return (NULL);
-		}
-	}
+    if (pList->nItemsInList == (sgl_int32) pList->uMaxItems) {
+        if (!ExpandList(pList)) {
+            return (NULL);
+        }
+    }
 
-	ASSERT (pList->pList != NULL);
+    ASSERT (pList->pList != NULL);
 
-	pNewItem = (void *) ((sgl_uint32) pList->pList + (pList->uItemSize * pList->nItemsInList));
-	pList->nItemsInList ++;
+    pNewItem = (void *) ((sgl_uint32) pList->pList + (pList->uItemSize * pList->nItemsInList));
+    pList->nItemsInList++;
 
-	return (pNewItem);
+    return (pNewItem);
 }
 
 /*===========================================
@@ -285,43 +272,34 @@ void * ListAddItem (PLIST pvListData)
  * Return:		void *: ptr to item if successful
  *						NULL if not
  *========================================================================================*/
-void * ListFindItem (PLIST pvListData, FINDITEMFN pfnFindItem, sgl_uint32 wFindItemData)
-{
-	void *pItem = NULL;
-	LIST *pList = pvListData;
-	
-	ASSERT (pList);
+void *ListFindItem(PLIST pvListData, FINDITEMFN pfnFindItem, sgl_uint32 wFindItemData) {
+    void *pItem = NULL;
+    LIST *pList = pvListData;
 
-	if (!pList->pList)
-	{
-		DPF ((DBG_WARNING, "ListFindItem: NULL list!"));
-	}
-	else
-	{
-		if (pfnFindItem)
-		{
-			int k;
-			void *pTempItem;
-			
-			pTempItem = pList->pList;
-			
-			for (k = 0;  k < pList->nItemsInList; ++k, 
-									pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize))
-			{
-				if (pfnFindItem (pTempItem, wFindItemData))
-				{
-					pItem = pTempItem;
-					break;
-				}
-			}
-		}
-		else
-		{
-			pItem = (void *) ((sgl_uint32) pList->pList + (wFindItemData * pList->uItemSize));
-		}
-	}
+    ASSERT (pList);
 
-	return (pItem);
+    if (!pList->pList) {
+        DPF ((DBG_WARNING, "ListFindItem: NULL list!"));
+    } else {
+        if (pfnFindItem) {
+            int k;
+            void *pTempItem;
+
+            pTempItem = pList->pList;
+
+            for (k = 0; k < pList->nItemsInList; ++k,
+                    pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize)) {
+                if (pfnFindItem(pTempItem, wFindItemData)) {
+                    pItem = pTempItem;
+                    break;
+                }
+            }
+        } else {
+            pItem = (void *) ((sgl_uint32) pList->pList + (wFindItemData * pList->uItemSize));
+        }
+    }
+
+    return (pItem);
 }
 
 /*===========================================
@@ -339,77 +317,67 @@ void * ListFindItem (PLIST pvListData, FINDITEMFN pfnFindItem, sgl_uint32 wFindI
  * Return:		TRUE if successful
  *				FALSE if not
  *========================================================================================*/
-sgl_bool ListRemoveItem (PLIST pvListData, FINDITEMFN pfnFindItem, sgl_uint32 wFindItemData)
-{
-	void *pItem = NULL;
-	LIST *pList = pvListData;
-	
-	ASSERT (pList);
+sgl_bool ListRemoveItem(PLIST pvListData, FINDITEMFN pfnFindItem, sgl_uint32 wFindItemData) {
+    void *pItem = NULL;
+    LIST *pList = pvListData;
 
-	if (!pList->pList)
-	{
-		DPF ((DBG_WARNING, "ListRemoveItem: NULL List"));
-	}
-	else
-	{
-		int which;
-										
-		if (pfnFindItem)
-		{
-			int k;
-			void *pTempItem;
-			
-			pTempItem = pList->pList;
-			
-			for (k = 0;  k < pList->nItemsInList; ++k, 
-										pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize))
-			{
-				if (pfnFindItem (pTempItem, wFindItemData))
-				{
-					which = k;
-					pItem = pTempItem;
-					break;
-				}
-			}
-		}
-		else
-		{
-			which = wFindItemData;
-			pItem = (void *) ((sgl_uint32) pList->pList + (wFindItemData * pList->uItemSize));
+    ASSERT (pList);
 
-			/*
-			// Check thawe haven't been asked to remove total crap
-			*/
-			ASSERT(which >=0);
-			ASSERT(which < pList->nItemsInList);
-		}
+    if (!pList->pList) {
+        DPF ((DBG_WARNING, "ListRemoveItem: NULL List"));
+    } else {
+        int which;
 
-		if (pItem != NULL)
-		{
-			#if defined sun || defined sparc
+        if (pfnFindItem) {
+            int k;
+            void *pTempItem;
 
-				int i;
-				/* for machines that I know dont have a memmove 
-				** add yours to the list if it doesnt either
-				*/
-				for(i=which+1; i<pList->nItemsInList; i++)
-					memcpy ((void *)((sgl_uint32)(pItem + pList->uItemSize*(i-1))), 
-							(void *)((sgl_uint32) (pItem + pList->uItemSize*i)), 
-							pList->uItemSize);
-			#else
+            pTempItem = pList->pList;
 
-				/* machines with a memmove */
-				memmove (pItem, (void *) ((sgl_uint32) pItem + pList->uItemSize), 
-						 (pList->nItemsInList - (which + 1)) * pList->uItemSize);
+            for (k = 0; k < pList->nItemsInList; ++k,
+                    pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize)) {
+                if (pfnFindItem(pTempItem, wFindItemData)) {
+                    which = k;
+                    pItem = pTempItem;
+                    break;
+                }
+            }
+        } else {
+            which = wFindItemData;
+            pItem = (void *) ((sgl_uint32) pList->pList + (wFindItemData * pList->uItemSize));
+
+            /*
+            // Check thawe haven't been asked to remove total crap
+            */
+            ASSERT(which >= 0);
+            ASSERT(which < pList->nItemsInList);
+        }
+
+        if (pItem != NULL) {
+#if defined sun || defined sparc
+
+            int i;
+            /* for machines that I know dont have a memmove
+            ** add yours to the list if it doesnt either
+            */
+            for(i=which+1; i<pList->nItemsInList; i++)
+                memcpy ((void *)((sgl_uint32)(pItem + pList->uItemSize*(i-1))),
+                        (void *)((sgl_uint32) (pItem + pList->uItemSize*i)),
+                        pList->uItemSize);
+#else
+
+            /* machines with a memmove */
+            memmove(pItem, (void *) ((sgl_uint32) pItem + pList->uItemSize),
+                    (pList->nItemsInList - (which + 1)) * pList->uItemSize);
 
 
-			#endif
-			
-			--pList->nItemsInList;
-		}
-	}
+#endif
 
-	return (pItem != NULL);
+            --pList->nItemsInList;
+        }
+    }
+
+    return (pItem != NULL);
 }
 
 /*===========================================
@@ -426,31 +394,26 @@ sgl_bool ListRemoveItem (PLIST pvListData, FINDITEMFN pfnFindItem, sgl_uint32 wF
  *
  * Return:		Always TRUE
  *========================================================================================*/
-sgl_bool ListEnumItems (PLIST pvListData, ENUMITEMFN pfnEnumItems, sgl_uint32 wEnumItemData)
-{
-	LIST *pList = pvListData;
+sgl_bool ListEnumItems(PLIST pvListData, ENUMITEMFN pfnEnumItems, sgl_uint32 wEnumItemData) {
+    LIST *pList = pvListData;
 
-	ASSERT (pList);
+    ASSERT (pList);
 
-	if (!pList->pList)
-	{
-		DPF ((DBG_WARNING, "ListEnumItems: NULL List"));
-	}
-	else
-	{
-		int k;
-		void *pTempItem = pList->pList;
+    if (!pList->pList) {
+        DPF ((DBG_WARNING, "ListEnumItems: NULL List"));
+    } else {
+        int k;
+        void *pTempItem = pList->pList;
 
-		ASSERT (pfnEnumItems)
-			
-		for (k = 0;  k < pList->nItemsInList; ++k, 
-						 pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize))
-		{
-			pfnEnumItems (pTempItem, wEnumItemData);
-		}
-	}
+        ASSERT (pfnEnumItems)
 
-	return (TRUE);
+        for (k = 0; k < pList->nItemsInList; ++k,
+                pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize)) {
+            pfnEnumItems(pTempItem, wEnumItemData);
+        }
+    }
+
+    return (TRUE);
 }
 
 /*===========================================
@@ -469,40 +432,34 @@ sgl_bool ListEnumItems (PLIST pvListData, ENUMITEMFN pfnEnumItems, sgl_uint32 wE
  *
  * Return:		Always TRUE
  *========================================================================================*/
-sgl_bool ListInitialiseList (PLIST *ppvListData, sgl_uint32 uItemSize, sgl_uint32 uBlockSize, DESTROYITEMFN pfnOnDestroyItem)
-{
-	LIST *pList = SGLMalloc (sizeof (LIST));
+sgl_bool
+ListInitialiseList(PLIST *ppvListData, sgl_uint32 uItemSize, sgl_uint32 uBlockSize, DESTROYITEMFN pfnOnDestroyItem) {
+    LIST *pList = SGLMalloc (sizeof(LIST));
 
-	ASSERT (ppvListData != NULL);
+    ASSERT (ppvListData != NULL);
 
-	if (pList)
-	{
-		pList->pList = NULL;
-		pList->pfnOnDestroyItem = pfnOnDestroyItem;	
+    if (pList) {
+        pList->pList = NULL;
+        pList->pfnOnDestroyItem = pfnOnDestroyItem;
 
-		if (uBlockSize)
-		{
-			pList->uBlockSize = uBlockSize;
-		}
-		else
-		{
-			ASSERT (uItemSize <= 4096);
+        if (uBlockSize) {
+            pList->uBlockSize = uBlockSize;
+        } else {
+            ASSERT (uItemSize <= 4096);
 
-			pList->uBlockSize = 4096 / uItemSize;
-		}
+            pList->uBlockSize = 4096 / uItemSize;
+        }
 
-		pList->uMaxItems = 0;
-		pList->uItemSize = uItemSize;
-		pList->nItemsInList = 0;
-				
-		*ppvListData = (PLIST) pList;
+        pList->uMaxItems = 0;
+        pList->uItemSize = uItemSize;
+        pList->nItemsInList = 0;
 
-		return (ExpandList (pList));
-	}
-	else
-	{
-		return (FALSE);
-	}
+        *ppvListData = (PLIST) pList;
+
+        return (ExpandList(pList));
+    } else {
+        return (FALSE);
+    }
 }
 
 /*===========================================
@@ -517,36 +474,31 @@ sgl_bool ListInitialiseList (PLIST *ppvListData, sgl_uint32 uItemSize, sgl_uint3
  *
  * Return:		Always TRUE
  *========================================================================================*/
-sgl_bool ListDeleteList (PLIST *ppvListData)
-{
-	LIST *pList = *ppvListData;
+sgl_bool ListDeleteList(PLIST *ppvListData) {
+    LIST *pList = *ppvListData;
 
-	ASSERT (ppvListData != NULL);
+    ASSERT (ppvListData != NULL);
 
-	if (pList)
-	{
-		if (pList->pList)
-		{
-			if (pList->pfnOnDestroyItem)
-			{
-				int k;
-				void *pTempItem = pList->pList;
+    if (pList) {
+        if (pList->pList) {
+            if (pList->pfnOnDestroyItem) {
+                int k;
+                void *pTempItem = pList->pList;
 
-				for (k = 0;  k < pList->nItemsInList; ++k, 
-						 pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize))
-				{
-					pList->pfnOnDestroyItem (pTempItem);
-				}
-			}
+                for (k = 0; k < pList->nItemsInList; ++k,
+                        pTempItem = (void *) ((sgl_uint32) pTempItem + pList->uItemSize)) {
+                    pList->pfnOnDestroyItem(pTempItem);
+                }
+            }
 
-			SGLFree (pList->pList);
-		}
+            SGLFree (pList->pList);
+        }
 
-		SGLFree (pList);
-		*ppvListData = NULL;
-	}
+        SGLFree (pList);
+        *ppvListData = NULL;
+    }
 
-	return (TRUE);
+    return (TRUE);
 }
 
 /* list.c */

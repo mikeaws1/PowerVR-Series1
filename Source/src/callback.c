@@ -78,188 +78,153 @@
 #include <pvrosapi.h>
 #include <debug.h>
 
-typedef struct PVRCALLBACK
-{
-	struct PVRCALLBACK *pNext;
-	PVROSCB			fn;
-	void			*pContext;
-	void			*pLogicalDev;
+typedef struct PVRCALLBACK {
+    struct PVRCALLBACK *pNext;
+    PVROSCB fn;
+    void *pContext;
+    void *pLogicalDev;
 } PVRCALLBACK, *PPVRCALLBACK;
 
-static PPVRCALLBACK	pCallback[CB_MAX];
+static PPVRCALLBACK pCallback[CB_MAX];
 
-static char *pszCB[] = 
-{
-	"pre render",
-	"post render",
-	"end of render",
-	"2d"
-};
+static char *pszCB[] =
+        {
+                "pre render",
+                "post render",
+                "end of render",
+                "2d"
+        };
 
-PVROSERR CALL_CONV PVROSCallbackRegister (void *pLogDevice, CALLBACK_TYPE cType, PVROSCB fn, void *pContext)
-{
-	if (!fn)
-	{
-		DPFDEV ((DBG_ERROR, "PVROSCallbackRegister: null fn ptr"));
-	}
-	else
-	{
-		PPVRCALLBACK pCB = PVROSMalloc (sizeof (PVRCALLBACK));
-		
-		if (!pCB)
-		{
-			DPF ((DBG_WARNING, "PVROSCallbackRegister: PVROSMalloc failed"));
-		}
-		else
-		{
-			if ((cType >= 0) && (cType < CB_MAX))
-			{
-				PPVRCALLBACK	*pCBRoot = pCallback + cType;
+PVROSERR CALL_CONV PVROSCallbackRegister(void *pLogDevice, CALLBACK_TYPE cType, PVROSCB fn, void *pContext) {
+    if (!fn) {
+        DPFDEV ((DBG_ERROR, "PVROSCallbackRegister: null fn ptr"));
+    } else {
+        PPVRCALLBACK pCB = PVROSMalloc(sizeof(PVRCALLBACK));
 
-				DPF ((DBG_MESSAGE, "PVROSCallbackRegister: %s callback registered", pszCB[cType]));
+        if (!pCB) {
+            DPF ((DBG_WARNING, "PVROSCallbackRegister: PVROSMalloc failed"));
+        } else {
+            if ((cType >= 0) && (cType < CB_MAX)) {
+                PPVRCALLBACK *pCBRoot = pCallback + cType;
 
-				if (*pCBRoot)
-				{
-					PPVRCALLBACK pCBThis = *pCBRoot;
-					
-					/* Search through the list of callbacks, new ones get
-					   added onto the tail. */
+                DPF ((DBG_MESSAGE, "PVROSCallbackRegister: %s callback registered", pszCB[cType]));
 
-					do
-					{
-						if ( (pCBThis->fn == fn) &&
-							 (pCBThis->pContext == pContext) &&
-							 (pCBThis->pLogicalDev == pLogDevice) )
-						{
-							/* Duplicate so don't replace*/
-							PVROSFree (pCB);					
-							return (PVROS_GROOVY);										
-						}
+                if (*pCBRoot) {
+                    PPVRCALLBACK pCBThis = *pCBRoot;
 
-						if (pCBThis->pNext != NULL)
-						{
-							pCBThis = pCBThis->pNext;
-						}
-					}
-					while(pCBThis->pNext != NULL);
-					
-					ASSERT (pCBThis != NULL);
-					if ( (pCBThis->fn == fn) &&
-						 (pCBThis->pContext == pContext) &&
-						 (pCBThis->pLogicalDev == pLogDevice) )
-					{
-						/* Duplicate so don't replace*/
-						PVROSFree (pCB);					
-						return (PVROS_GROOVY);										
-					}
-					
-					pCBThis->pNext = pCB;					
-				}
-				else
-				{
-					*pCBRoot = pCB;
-				}
-				
-				pCB->pNext = NULL;
-				pCB->fn = fn;
-				pCB->pContext = pContext;
-				pCB->pLogicalDev = pLogDevice;
-				return (PVROS_GROOVY);				
-			}
-			else
-			{
-				DPFDEV ((DBG_ERROR, "PVROSCallbackRegister: bad callback type"));			
-			}
+                    /* Search through the list of callbacks, new ones get
+                       added onto the tail. */
 
-			PVROSFree (pCB);		
-		}
-	}
-	
-	return (PVROS_DODGY);	
-}	
+                    do {
+                        if ((pCBThis->fn == fn) &&
+                            (pCBThis->pContext == pContext) &&
+                            (pCBThis->pLogicalDev == pLogDevice)) {
+                            /* Duplicate so don't replace*/
+                            PVROSFree(pCB);
+                            return (PVROS_GROOVY);
+                        }
 
-PVROSERR CALL_CONV PVROSCallbackUnRegister (void *pLogDevice, CALLBACK_TYPE cType, PVROSCB fn, void *pContext)
-{
-	if ((cType >= 0) && (cType < CB_MAX))
-	{
-		PPVRCALLBACK	*pCBRoot = pCallback + cType;
-		PPVRCALLBACK	pCB;
-		PPVRCALLBACK	pCBLast = NULL;
+                        if (pCBThis->pNext != NULL) {
+                            pCBThis = pCBThis->pNext;
+                        }
+                    } while (pCBThis->pNext != NULL);
 
-		pCB = *pCBRoot;
-		
-		while (pCB)
-		{
-			if ( (pCB->fn == fn) &&
-				 (pCB->pContext == pContext) &&
-				 (pCB->pLogicalDev == pLogDevice) )
-			{
-				DPF ((DBG_MESSAGE, "PVROSCallbackUnRegister: %s callback unregistered OK", pszCB[cType]));
-				
-				if (pCBLast)
-				{
-					pCBLast->pNext = pCB->pNext;
-				}
-				else
-				{
-					*pCBRoot = pCB->pNext;
-				}
-				
-				PVROSFree (pCB);					
-				
-				return (PVROS_GROOVY);				
-			}
-			
-			pCBLast = pCB;
-			pCB = pCB->pNext;			
-		}
+                    ASSERT (pCBThis != NULL);
+                    if ((pCBThis->fn == fn) &&
+                        (pCBThis->pContext == pContext) &&
+                        (pCBThis->pLogicalDev == pLogDevice)) {
+                        /* Duplicate so don't replace*/
+                        PVROSFree(pCB);
+                        return (PVROS_GROOVY);
+                    }
 
-		DPFDEV ((DBG_WARNING, "PVROSCallbackUnRegister: couldn't find %s callback", pszCB[cType]));	
-	}
-	else
-	{
-		DPFDEV ((DBG_ERROR, "PVROSCallbackUnRegister: bad callback type"));	
-	}
-	
-	return (PVROS_DODGY);	
-}	
+                    pCBThis->pNext = pCB;
+                } else {
+                    *pCBRoot = pCB;
+                }
 
-PVROSERR CALL_CONV PVROSCallback (void *pLogDevice, CALLBACK_TYPE cType, void *pCallbackData)
-{
-	PVROSERR Err = PVROS_DODGY;
-	
-	if ((cType >= 0) && (cType < CB_MAX))
-	{
-		PPVRCALLBACK	*pCBRoot = pCallback + cType;
-		PPVRCALLBACK 	pPC;
+                pCB->pNext = NULL;
+                pCB->fn = fn;
+                pCB->pContext = pContext;
+                pCB->pLogicalDev = pLogDevice;
+                return (PVROS_GROOVY);
+            } else {
+                DPFDEV ((DBG_ERROR, "PVROSCallbackRegister: bad callback type"));
+            }
 
-		DPF ((DBG_MESSAGE, "PVROSCallback: calling %s", pszCB[cType]));
+            PVROSFree(pCB);
+        }
+    }
 
-		pPC = *pCBRoot;
-		
-		while (pPC)
-		{
-			if (pPC->pLogicalDev == pLogDevice)
-			{
-				Err = pPC->fn (pCallbackData, pPC->pContext);
-				
-				if (Err != PVROS_GROOVY)
-				{
-					DPFDEV ((DBG_ERROR, "PVROSCallback: %s callback failed", pszCB[cType]));					
-					break;				
-				}
-			}
-						
-			pPC = pPC->pNext;
-		}
-	}
-	else
-	{
-		DPFDEV ((DBG_ERROR, "PVROSCallback: bad callback type"));
-	}
-	
-	return (Err);	
-}	
+    return (PVROS_DODGY);
+}
+
+PVROSERR CALL_CONV PVROSCallbackUnRegister(void *pLogDevice, CALLBACK_TYPE cType, PVROSCB fn, void *pContext) {
+    if ((cType >= 0) && (cType < CB_MAX)) {
+        PPVRCALLBACK *pCBRoot = pCallback + cType;
+        PPVRCALLBACK pCB;
+        PPVRCALLBACK pCBLast = NULL;
+
+        pCB = *pCBRoot;
+
+        while (pCB) {
+            if ((pCB->fn == fn) &&
+                (pCB->pContext == pContext) &&
+                (pCB->pLogicalDev == pLogDevice)) {
+                DPF ((DBG_MESSAGE, "PVROSCallbackUnRegister: %s callback unregistered OK", pszCB[cType]));
+
+                if (pCBLast) {
+                    pCBLast->pNext = pCB->pNext;
+                } else {
+                    *pCBRoot = pCB->pNext;
+                }
+
+                PVROSFree(pCB);
+
+                return (PVROS_GROOVY);
+            }
+
+            pCBLast = pCB;
+            pCB = pCB->pNext;
+        }
+
+        DPFDEV ((DBG_WARNING, "PVROSCallbackUnRegister: couldn't find %s callback", pszCB[cType]));
+    } else {
+        DPFDEV ((DBG_ERROR, "PVROSCallbackUnRegister: bad callback type"));
+    }
+
+    return (PVROS_DODGY);
+}
+
+PVROSERR CALL_CONV PVROSCallback(void *pLogDevice, CALLBACK_TYPE cType, void *pCallbackData) {
+    PVROSERR Err = PVROS_DODGY;
+
+    if ((cType >= 0) && (cType < CB_MAX)) {
+        PPVRCALLBACK *pCBRoot = pCallback + cType;
+        PPVRCALLBACK pPC;
+
+        DPF ((DBG_MESSAGE, "PVROSCallback: calling %s", pszCB[cType]));
+
+        pPC = *pCBRoot;
+
+        while (pPC) {
+            if (pPC->pLogicalDev == pLogDevice) {
+                Err = pPC->fn(pCallbackData, pPC->pContext);
+
+                if (Err != PVROS_GROOVY) {
+                    DPFDEV ((DBG_ERROR, "PVROSCallback: %s callback failed", pszCB[cType]));
+                    break;
+                }
+            }
+
+            pPC = pPC->pNext;
+        }
+    } else {
+        DPFDEV ((DBG_ERROR, "PVROSCallback: bad callback type"));
+    }
+
+    return (Err);
+}
 
 
 /* As Windows reuses process Ids, it appears sadly necessary to 
@@ -267,38 +232,31 @@ PVROSERR CALL_CONV PVROSCallback (void *pLogDevice, CALLBACK_TYPE cType, void *p
  * otherwise it'll get all confused and page-fault.
  */
 
-void ResetCallbacks(void *pLogDevice)
-{
-	int cType;
+void ResetCallbacks(void *pLogDevice) {
+    int cType;
 
-	for (cType=0 ; cType< CB_MAX ; ++cType)
-	{
-		PPVRCALLBACK	*pCBRoot = pCallback + cType;
-		PPVRCALLBACK	pCB = *pCBRoot;
-		PPVRCALLBACK	pCBLast = NULL;
-		
-	  	while (pCB)
-		{
-			if ((pCB->pLogicalDev == pLogDevice))
-			{
-				DPF ((DBG_MESSAGE, "ResetCallbacks: %s callback has being freed.", pszCB[cType]));
-	  								
-				if (pCBLast)
-				{
-					pCBLast->pNext = pCB->pNext;
-				}
-				else
-				{
-					*pCBRoot = pCB->pNext;
-				}
+    for (cType = 0; cType < CB_MAX; ++cType) {
+        PPVRCALLBACK *pCBRoot = pCallback + cType;
+        PPVRCALLBACK pCB = *pCBRoot;
+        PPVRCALLBACK pCBLast = NULL;
 
-				PVROSFree (pCB);
-				break;									
-			}
-			pCBLast = pCB;			
-			pCB = pCB->pNext;			
-		}
-	}
+        while (pCB) {
+            if ((pCB->pLogicalDev == pLogDevice)) {
+                DPF ((DBG_MESSAGE, "ResetCallbacks: %s callback has being freed.", pszCB[cType]));
+
+                if (pCBLast) {
+                    pCBLast->pNext = pCB->pNext;
+                } else {
+                    *pCBRoot = pCB->pNext;
+                }
+
+                PVROSFree(pCB);
+                break;
+            }
+            pCBLast = pCB;
+            pCB = pCB->pNext;
+        }
+    }
 }
 
 /* end of $RCSfile: callback.c,v $ */

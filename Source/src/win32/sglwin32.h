@@ -27,6 +27,8 @@ Revision Control System :
 #pragma message ("sglwin32.h: ddraw.h (DirectX SDK)")
 
 #ifndef __DRAW_INCLUDED__
+
 #include "ddraw.h"
+
 #endif
 

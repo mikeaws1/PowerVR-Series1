@@ -104,11 +104,10 @@
 #define MODE  "mode"
 
 
-
 static sgl_bool ModeDetermined = FALSE;
 
-static char   HWMode[100];
-static char   ConfigFile[100];
+static char HWMode[100];
+static char ConfigFile[100];
 /*
 // Overlay 
 */
@@ -117,8 +116,9 @@ static char   ConfigFile[100];
 
 /* Prototypes for functions from profile.c
  */
-sgl_bool GetHwIniStringFromRegistry (char *pszSection, char *pszEntry, char *pszBuffer, int pszBufferSize);
-sgl_bool GetManStringFromRegistry (char *pszBuffer);
+sgl_bool GetHwIniStringFromRegistry(char *pszSection, char *pszEntry, char *pszBuffer, int pszBufferSize);
+
+sgl_bool GetManStringFromRegistry(char *pszBuffer);
 
 /**************************************************************************
 * Function Name  : InitDetermineMode
@@ -135,123 +135,101 @@ sgl_bool GetManStringFromRegistry (char *pszBuffer);
 *
 **************************************************************************/
 
-static void InitDetermineMode(void)
-{
-	if(!ModeDetermined)
-	{
-		/*
-		// Init the name of the config file
-		*/
-		GetEnvironmentVariable (WINDOWS_ENV, ConfigFile, sizeof (ConfigFile)-1);
+static void InitDetermineMode(void) {
+    if (!ModeDetermined) {
+        /*
+        // Init the name of the config file
+        */
+        GetEnvironmentVariable(WINDOWS_ENV, ConfigFile, sizeof(ConfigFile) - 1);
 
-		strcat(ConfigFile, "\\");
-		strcat(ConfigFile, CONFIG_FILE);
+        strcat(ConfigFile, "\\");
+        strcat(ConfigFile, CONFIG_FILE);
 
-		DPF((DBG_MESSAGE, "Looking in %s for framestore config", ConfigFile));
+        DPF((DBG_MESSAGE, "Looking in %s for framestore config", ConfigFile));
 
-		/*
-		// get the mode from the file
-		*/
-		if(SglReadPrivateProfileString(MODE, MODE, "None", 
-									HWMode, 100,
-									ConfigFile))
-		{
-			/* ok done...*/
-			DPF((DBG_MESSAGE, "Selected mode is %s for HW config", HWMode));
-		}
-		else
-		{
-			DPF((DBG_WARNING, "Failed to read the MODE section"));
-		}
+        /*
+        // get the mode from the file
+        */
+        if (SglReadPrivateProfileString(MODE, MODE, "None",
+                                        HWMode, 100,
+                                        ConfigFile)) {
+            /* ok done...*/
+            DPF((DBG_MESSAGE, "Selected mode is %s for HW config", HWMode));
+        } else {
+            DPF((DBG_WARNING, "Failed to read the MODE section"));
+        }
 
 
-		ModeDetermined=TRUE;
-	}
+        ModeDetermined = TRUE;
+    }
 
 }
 
-sgl_bool GetApplicationHintString (char *pszHint, char *pszBuffer, int pszBufferSize)
-{
-	sgl_bool fRet = FALSE;
-	char szCaller[256];
-	char szKey[512];
+sgl_bool GetApplicationHintString(char *pszHint, char *pszBuffer, int pszBufferSize) {
+    sgl_bool fRet = FALSE;
+    char szCaller[256];
+    char szKey[512];
     unsigned long bufferSize = pszBufferSize;
 
-	/* Get the registry area depending on the hardware present ie Maxtrox m3D or PowerVR.
-	 */
-	if (GetManStringFromRegistry (szKey))
-	{
-		strcat (szKey, "App Hints\\");
+    /* Get the registry area depending on the hardware present ie Maxtrox m3D or PowerVR.
+     */
+    if (GetManStringFromRegistry(szKey)) {
+        strcat(szKey, "App Hints\\");
 
-		if (GetModuleFileName (NULL, szCaller, sizeof (szCaller)))
-		{
-			HKEY hKey;
-			char *pExe = strrchr (szCaller, '\\');
+        if (GetModuleFileName(NULL, szCaller, sizeof(szCaller))) {
+            HKEY hKey;
+            char *pExe = strrchr(szCaller, '\\');
 
-			if (pExe)
-			{
-				pExe++;
-			}
-			else
-			{
-				pExe = szCaller;
-			}
+            if (pExe) {
+                pExe++;
+            } else {
+                pExe = szCaller;
+            }
 
-			strcat (szKey, pExe);
+            strcat(szKey, pExe);
 
-			if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, szKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-			{
-				DWORD dwType;
+            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, szKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+                DWORD dwType;
 
-				if (RegQueryValueEx (hKey, pszHint, 0, &dwType, pszBuffer, &bufferSize) == ERROR_SUCCESS)
-				{
-					if (dwType == REG_SZ)
-					{
-						fRet = TRUE;
-					}
-					else
-					{
-						PVROSPrintf("Weird data type %s %s %lx\n", szKey, pszHint, dwType);
-					}
-				}
-				else
-				{
-					PVROSPrintf("Couldn't access key %s %s\n", szKey, pszHint);
-				}
+                if (RegQueryValueEx(hKey, pszHint, 0, &dwType, pszBuffer, &bufferSize) == ERROR_SUCCESS) {
+                    if (dwType == REG_SZ) {
+                        fRet = TRUE;
+                    } else {
+                        PVROSPrintf("Weird data type %s %s %lx\n", szKey, pszHint, dwType);
+                    }
+                } else {
+                    PVROSPrintf("Couldn't access key %s %s\n", szKey, pszHint);
+                }
 
-				RegCloseKey (hKey);
-			}
-		}
-	}
+                RegCloseKey(hKey);
+            }
+        }
+    }
 
-	return (fRet);
+    return (fRet);
 }
 
 
-sgl_bool GetApplicationHintInt (char *pszHint, sgl_int32 *pData)
-{
-	char szBuffer[128];
-	
-	if (GetApplicationHintString (pszHint, szBuffer, sizeof (szBuffer)))
-	{
-		*pData = atoi (szBuffer);
-		PVROSPrintf("%s: %d\n", pszHint, *pData);
-		return (TRUE);
-	}
-	return (FALSE);
+sgl_bool GetApplicationHintInt(char *pszHint, sgl_int32 *pData) {
+    char szBuffer[128];
+
+    if (GetApplicationHintString(pszHint, szBuffer, sizeof(szBuffer))) {
+        *pData = atoi(szBuffer);
+        PVROSPrintf("%s: %d\n", pszHint, *pData);
+        return (TRUE);
+    }
+    return (FALSE);
 }
 
-sgl_bool GetApplicationHintFloat (char *pszHint, float *pData)
-{
-	char szBuffer[128];
-	
-	if (GetApplicationHintString (pszHint, szBuffer, sizeof (szBuffer)))
-	{
-		*pData = (float)atof (szBuffer);
-		PVROSPrintf("%s: %s\n", pszHint, szBuffer);
-		return (TRUE);
-	}
-	return (FALSE);
+sgl_bool GetApplicationHintFloat(char *pszHint, float *pData) {
+    char szBuffer[128];
+
+    if (GetApplicationHintString(pszHint, szBuffer, sizeof(szBuffer))) {
+        *pData = (float) atof(szBuffer);
+        PVROSPrintf("%s: %s\n", pszHint, szBuffer);
+        return (TRUE);
+    }
+    return (FALSE);
 }
 
 
@@ -270,83 +248,75 @@ sgl_bool GetApplicationHintFloat (char *pszHint, float *pData)
 *
 **************************************************************************/
 
-sgl_int32 CALL_CONV HWRdValFileInt(char * RegName , sgl_int32 DefaultVal)
-{
-	char szText[32];
+sgl_int32 CALL_CONV HWRdValFileInt(char *RegName, sgl_int32 DefaultVal) {
+    char szText[32];
 
-	if(GetHwIniStringFromRegistry ("defaults", RegName, szText, 31))
-	{
-		DefaultVal = (sgl_int32) strtoul (szText, NULL, 0);
-	}
+    if (GetHwIniStringFromRegistry("defaults", RegName, szText, 31)) {
+        DefaultVal = (sgl_int32) strtoul(szText, NULL, 0);
+    }
 
-	GetApplicationHintInt (RegName, (sgl_int32 *)&DefaultVal);
+    GetApplicationHintInt(RegName, (sgl_int32 *) &DefaultVal);
 
-	/*
-	// Else try the default section
-	*/
-	DefaultVal = SglReadPrivateProfileInt("default", RegName, DefaultVal, "sglhw.ini");
-	
-	return DefaultVal;
+    /*
+    // Else try the default section
+    */
+    DefaultVal = SglReadPrivateProfileInt("default", RegName, DefaultVal, "sglhw.ini");
+
+    return DefaultVal;
 }
 
-float CALL_CONV HWRdValFileFloat(char * RegName , float DefaultVal)
-{
-	char szText[32];
+float CALL_CONV HWRdValFileFloat(char *RegName, float DefaultVal) {
+    char szText[32];
 
-	if(GetHwIniStringFromRegistry ("defaults", RegName, szText, 31))
-	{
-		DefaultVal = (float) atof (szText);
-	}
+    if (GetHwIniStringFromRegistry("defaults", RegName, szText, 31)) {
+        DefaultVal = (float) atof(szText);
+    }
 
-	GetApplicationHintFloat (RegName, &DefaultVal);
+    GetApplicationHintFloat(RegName, &DefaultVal);
 
-	/*
-	// Else try the default section
-	*/
-	DefaultVal = SglReadPrivateProfileFloat("default", RegName, DefaultVal, "sglhw.ini");
-	
-	return DefaultVal;
+    /*
+    // Else try the default section
+    */
+    DefaultVal = SglReadPrivateProfileFloat("default", RegName, DefaultVal, "sglhw.ini");
+
+    return DefaultVal;
 }
 
 
-sgl_uint32 CALL_CONV HWRdValFileUInt(char * RegName , sgl_uint32 DefaultVal)
-{
-	char szText[32];
+sgl_uint32 CALL_CONV HWRdValFileUInt(char *RegName, sgl_uint32 DefaultVal) {
+    char szText[32];
 
-	if(GetHwIniStringFromRegistry ("defaults", RegName, szText, 31))
-	{
-		DefaultVal = (sgl_uint32) strtoul (szText, NULL, 0);
-	}
+    if (GetHwIniStringFromRegistry("defaults", RegName, szText, 31)) {
+        DefaultVal = (sgl_uint32) strtoul(szText, NULL, 0);
+    }
 
-	GetApplicationHintInt (RegName, (sgl_int32 *)&DefaultVal);
+    GetApplicationHintInt(RegName, (sgl_int32 *) &DefaultVal);
 
-	/*
-	// Else try the default section
-	*/
-	DefaultVal = SglReadPrivateProfileInt("default", RegName, DefaultVal, "sglhw.ini");
-	
-	return DefaultVal;
+    /*
+    // Else try the default section
+    */
+    DefaultVal = SglReadPrivateProfileInt("default", RegName, DefaultVal, "sglhw.ini");
+
+    return DefaultVal;
 }
 
 
-sgl_bool CALL_CONV HWRdValFileString(char * RegName , char *pszBuffer,int pszBufferSize)
-{
-	char szText[128];
-	sgl_bool bResult;
+sgl_bool CALL_CONV HWRdValFileString(char *RegName, char *pszBuffer, int pszBufferSize) {
+    char szText[128];
+    sgl_bool bResult;
 
-	if(bResult = GetHwIniStringFromRegistry ("defaults", RegName, szText, 127))
-	{
-		strncpy(pszBuffer, szText, pszBufferSize); 
-	}
+    if (bResult = GetHwIniStringFromRegistry("defaults", RegName, szText, 127)) {
+        strncpy(pszBuffer, szText, pszBufferSize);
+    }
 
-	bResult = GetApplicationHintString (RegName, pszBuffer, pszBufferSize);
+    bResult = GetApplicationHintString(RegName, pszBuffer, pszBufferSize);
 
-	/*
-	// Else try the default section
-	*/
-	bResult = SglReadPrivateProfileString("default", RegName, pszBuffer, pszBuffer, pszBufferSize, "sglhw.ini");
-	
-	return bResult;
+    /*
+    // Else try the default section
+    */
+    bResult = SglReadPrivateProfileString("default", RegName, pszBuffer, pszBuffer, pszBufferSize, "sglhw.ini");
+
+    return bResult;
 }
 
 /*

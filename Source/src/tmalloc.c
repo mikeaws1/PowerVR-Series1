@@ -120,33 +120,32 @@
  *				  once it will unlink any list at the root, so main memory
  *				  will be lost. 
  *****************************************************************************/
-void InitTextureMemory(sgl_uint32 TextureMemorySize, HTEXHEAP hTexHeap)
-{	
-	((MNODE*)hTexHeap->pMemoryRoot)->Prev			= NULL;
-	((MNODE*)hTexHeap->pMemoryRoot)->Next			= NULL;
-	((MNODE*)hTexHeap->pMemoryRoot)->MemoryAddress	= 0;
-	((MNODE*)hTexHeap->pMemoryRoot)->BlockSize		= TextureMemorySize >> 1; 
-											/*the size of a bank in bytes*/
-	((MNODE*)hTexHeap->pMemoryRoot)->UsedStatus		= 0;
+void InitTextureMemory(sgl_uint32 TextureMemorySize, HTEXHEAP hTexHeap) {
+    ((MNODE *) hTexHeap->pMemoryRoot)->Prev = NULL;
+    ((MNODE *) hTexHeap->pMemoryRoot)->Next = NULL;
+    ((MNODE *) hTexHeap->pMemoryRoot)->MemoryAddress = 0;
+    ((MNODE *) hTexHeap->pMemoryRoot)->BlockSize = TextureMemorySize >> 1;
+    /*the size of a bank in bytes*/
+    ((MNODE *) hTexHeap->pMemoryRoot)->UsedStatus = 0;
 
-	((MNODE*)hTexHeap->pMemoryRoot)->NextFree		= NULL;
-	((MNODE*)hTexHeap->pMemoryRoot)->PrevFree		= NULL;
+    ((MNODE *) hTexHeap->pMemoryRoot)->NextFree = NULL;
+    ((MNODE *) hTexHeap->pMemoryRoot)->PrevFree = NULL;
 
-	((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy		= NULL;
-	((MNODE*)hTexHeap->pMemoryRoot)->PrevBuddy		= NULL;
+    ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy = NULL;
+    ((MNODE *) hTexHeap->pMemoryRoot)->PrevBuddy = NULL;
 
-	((MNODE*)hTexHeap->pMemoryRoot)->MemoryLeft		= TextureMemorySize;
+    ((MNODE *) hTexHeap->pMemoryRoot)->MemoryLeft = TextureMemorySize;
 
 #if TMALLOC_BACKWARDS
-	((MNODE*)hTexHeap->pMemoryRoot)->MemoryOffset	= 0;
-	/* 1 bank's worth - kept as a reference */
-	((MNODE*)hTexHeap->pMemoryRoot)->MemorySize		= TextureMemorySize >> 1;
+    ((MNODE *) hTexHeap->pMemoryRoot)->MemoryOffset = 0;
+    /* 1 bank's worth - kept as a reference */
+    ((MNODE *) hTexHeap->pMemoryRoot)->MemorySize = TextureMemorySize >> 1;
 #endif
 
-	((MNODE*)hTexHeap->pMemoryRoot)->BlockType		= NORMAL_BLOCK;
+    ((MNODE *) hTexHeap->pMemoryRoot)->BlockType = NORMAL_BLOCK;
 
-	((MNODE*)hTexHeap->pMemoryRoot)->AllocatedBlocks	= 0;
-	((MNODE*)hTexHeap->pMemoryRoot)->LowWaterMark		= hTexHeap->TexParamSize;
+    ((MNODE *) hTexHeap->pMemoryRoot)->AllocatedBlocks = 0;
+    ((MNODE *) hTexHeap->pMemoryRoot)->LowWaterMark = hTexHeap->TexParamSize;
 }
 
 /******************************************************************************
@@ -162,262 +161,253 @@ void InitTextureMemory(sgl_uint32 TextureMemorySize, HTEXHEAP hTexHeap)
  *		   		  implemented.
  * Pre-condition: InitTextureMemory has been called.
  *****************************************************************************/
-void TMalloc(sgl_uint32 RequestSize, HTEXHEAP hTexHeap, MNODE_BLOCK *FreeNode)
-{
-	MNODE *MemWalk;
-	MNODE *NewNode;
+void TMalloc(sgl_uint32 RequestSize, HTEXHEAP hTexHeap, MNODE_BLOCK *FreeNode) {
+    MNODE *MemWalk;
+    MNODE *NewNode;
 
-	/*
-	** search the buddy list for a free buddy of the exact size 
-	*/
+    /*
+    ** search the buddy list for a free buddy of the exact size
+    */
 
-	MemWalk = hTexHeap->pMemoryRoot;
+    MemWalk = hTexHeap->pMemoryRoot;
 
-	while(MemWalk->NextBuddy != NULL && 
-	(MemWalk->BlockSize != RequestSize || MemWalk->UsedStatus==0 || MemWalk->UsedStatus==3))
-		MemWalk=MemWalk->NextBuddy;
+    while (MemWalk->NextBuddy != NULL &&
+           (MemWalk->BlockSize != RequestSize || MemWalk->UsedStatus == 0 || MemWalk->UsedStatus == 3))
+        MemWalk = MemWalk->NextBuddy;
 
-	if(MemWalk->UsedStatus==A_BANK || MemWalk->UsedStatus==B_BANK)
-	{	
-		if(MemWalk->BlockSize == RequestSize)
-		{
+    if (MemWalk->UsedStatus == A_BANK || MemWalk->UsedStatus == B_BANK) {
+        if (MemWalk->BlockSize == RequestSize) {
 
-			/* remove this block from the buddy list */
+            /* remove this block from the buddy list */
 
-			if(MemWalk != (MNODE*) hTexHeap->pMemoryRoot)
- 			{
+            if (MemWalk != (MNODE *) hTexHeap->pMemoryRoot) {
 
-				MemWalk->PrevBuddy->NextBuddy=MemWalk->NextBuddy;
-				if(MemWalk->NextBuddy != NULL)
-					MemWalk->NextBuddy->PrevBuddy=MemWalk->PrevBuddy;
+                MemWalk->PrevBuddy->NextBuddy = MemWalk->NextBuddy;
+                if (MemWalk->NextBuddy != NULL)
+                    MemWalk->NextBuddy->PrevBuddy = MemWalk->PrevBuddy;
 
-			}
-			/* return the free buddy */
-	  
-		#if TMALLOC_BACKWARDS
-			MemWalk->MemoryAddress=((MNODE*)hTexHeap->pMemoryRoot)->MemorySize-MemWalk->MemoryOffset-RequestSize;
-		#endif
+            }
+            /* return the free buddy */
 
-			FreeNode->Status=MemWalk->UsedStatus ^ 3;
-			FreeNode->MNode=MemWalk;
-
-			/* mark this block as full */
-
-			MemWalk->UsedStatus=A_BANK | B_BANK;
-			
-			((MNODE*)hTexHeap->pMemoryRoot)->MemoryLeft-=RequestSize;
-			((MNODE*)hTexHeap->pMemoryRoot)->AllocatedBlocks ++;
-
-			return ;
-
-		}
-	}
-
-	/*
-	**
-	** There are NO correct Buddies,so do a first or best fit in the free list.
-	**
-	*/
-
-	MemWalk=hTexHeap->pMemoryRoot;
-
-#if BEST_FIT
-	{
-		sgl_uint32  u32BestSize = 0xffffffff;
-		MNODE  *pBestNode = MemWalk;
-
-		ASSERT(MemWalk != NULL);
-		do
-		{
-			if (MemWalk->UsedStatus == 0 && MemWalk->BlockSize >= RequestSize
-			  && MemWalk->BlockSize < u32BestSize)
-			{
-				u32BestSize = MemWalk->BlockSize;
-				pBestNode = MemWalk;
-			}
-			MemWalk=MemWalk->NextFree;
-
-		} while (MemWalk != NULL);
-
-		ASSERT(pBestNode != NULL);
-		MemWalk = pBestNode;
-	}
-#else
-	while (MemWalk->NextFree != NULL &&
-	  (MemWalk->BlockSize < RequestSize || MemWalk->UsedStatus!=0))
-	{
-		MemWalk=MemWalk->NextFree;
-	}
+#if TMALLOC_BACKWARDS
+            MemWalk->MemoryAddress =
+                    ((MNODE *) hTexHeap->pMemoryRoot)->MemorySize - MemWalk->MemoryOffset - RequestSize;
 #endif
 
-	if(MemWalk->UsedStatus==0 && MemWalk->BlockSize >= RequestSize) 
-	{
-		/* allocate from this space */
+            FreeNode->Status = MemWalk->UsedStatus ^ 3;
+            FreeNode->MNode = MemWalk;
 
-		/* unlink the node from the free list */
+            /* mark this block as full */
 
-		if(MemWalk != (MNODE*)hTexHeap->pMemoryRoot)
- 		{
-			MemWalk->PrevFree->NextFree=MemWalk->NextFree;
-			if(MemWalk->NextFree != NULL)
-				MemWalk->NextFree->PrevFree=MemWalk->PrevFree;
-		}
+            MemWalk->UsedStatus = A_BANK | B_BANK;
 
-		/* put the node on the buddy list*/
+            ((MNODE *) hTexHeap->pMemoryRoot)->MemoryLeft -= RequestSize;
+            ((MNODE *) hTexHeap->pMemoryRoot)->AllocatedBlocks++;
 
-		if(MemWalk != (MNODE*)hTexHeap->pMemoryRoot)
-		{
-			MemWalk->PrevBuddy = hTexHeap->pMemoryRoot;
-			MemWalk->NextBuddy = ((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy;
+            return;
 
-			if(((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy !=NULL)
-				((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy->PrevBuddy=MemWalk;
-			((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy=MemWalk;
-		}
+        }
+    }
 
-		if(MemWalk->BlockSize > RequestSize)
-		{
-			/*
-			**create a new free block for the left overs
-			*/
+    /*
+    **
+    ** There are NO correct Buddies,so do a first or best fit in the free list.
+    **
+    */
 
-			NewNode=(MNODE*)PVROSMalloc(sizeof(MNODE));
+    MemWalk = hTexHeap->pMemoryRoot;
 
-			/* link new node into the master list */
+#if BEST_FIT
+    {
+        sgl_uint32 u32BestSize = 0xffffffff;
+        MNODE *pBestNode = MemWalk;
 
-			NewNode->Prev=MemWalk;
-			NewNode->Next=MemWalk->Next;
+        ASSERT(MemWalk != NULL);
+        do {
+            if (MemWalk->UsedStatus == 0 && MemWalk->BlockSize >= RequestSize
+                && MemWalk->BlockSize < u32BestSize) {
+                u32BestSize = MemWalk->BlockSize;
+                pBestNode = MemWalk;
+            }
+            MemWalk = MemWalk->NextFree;
 
-			if(MemWalk->Next !=NULL)
-				MemWalk->Next->Prev=NewNode;
-			MemWalk->Next=NewNode;
+        } while (MemWalk != NULL);
 
-			/* fill out the other fields */
+        ASSERT(pBestNode != NULL);
+        MemWalk = pBestNode;
+    }
+#else
+    while (MemWalk->NextFree != NULL &&
+      (MemWalk->BlockSize < RequestSize || MemWalk->UsedStatus!=0))
+    {
+        MemWalk=MemWalk->NextFree;
+    }
+#endif
 
-		#if TMALLOC_BACKWARDS
-			NewNode->MemoryOffset=MemWalk->MemoryOffset + RequestSize;
-		#else
-			NewNode->MemoryAddress=MemWalk->MemoryAddress + RequestSize;
-		#endif
-			NewNode->BlockSize=MemWalk->BlockSize - RequestSize;
-			NewNode->UsedStatus=0;
+    if (MemWalk->UsedStatus == 0 && MemWalk->BlockSize >= RequestSize) {
+        /* allocate from this space */
 
-			/*link free node after root node*/
+        /* unlink the node from the free list */
 
-			NewNode->PrevFree=hTexHeap->pMemoryRoot;
-			NewNode->NextFree=((MNODE*)hTexHeap->pMemoryRoot)->NextFree;
+        if (MemWalk != (MNODE *) hTexHeap->pMemoryRoot) {
+            MemWalk->PrevFree->NextFree = MemWalk->NextFree;
+            if (MemWalk->NextFree != NULL)
+                MemWalk->NextFree->PrevFree = MemWalk->PrevFree;
+        }
 
-			if(((MNODE*)hTexHeap->pMemoryRoot)->NextFree !=NULL)
-				((MNODE*)hTexHeap->pMemoryRoot)->NextFree->PrevFree=NewNode;
-			((MNODE*)hTexHeap->pMemoryRoot)->NextFree=NewNode;
+        /* put the node on the buddy list*/
 
-			NewNode->NextBuddy=NULL; /*not strictly required */
-			NewNode->PrevBuddy=NULL;
+        if (MemWalk != (MNODE *) hTexHeap->pMemoryRoot) {
+            MemWalk->PrevBuddy = hTexHeap->pMemoryRoot;
+            MemWalk->NextBuddy = ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy;
 
-		}
+            if (((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy != NULL)
+                ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy->PrevBuddy = MemWalk;
+            ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy = MemWalk;
+        }
 
-		MemWalk->BlockSize=RequestSize;
-		MemWalk->UsedStatus=A_BANK;
+        if (MemWalk->BlockSize > RequestSize) {
+            /*
+            **create a new free block for the left overs
+            */
 
-		#if TMALLOC_BACKWARDS
-			MemWalk->MemoryAddress=((MNODE*)hTexHeap->pMemoryRoot)->MemorySize-MemWalk->MemoryOffset-RequestSize;
-		#endif
+            NewNode = (MNODE *) PVROSMalloc(sizeof(MNODE));
 
-		FreeNode->Status=A_BANK;
-		FreeNode->MNode=MemWalk;
+            /* link new node into the master list */
 
-		((MNODE*)hTexHeap->pMemoryRoot)->MemoryLeft-=RequestSize;
-		((MNODE*)hTexHeap->pMemoryRoot)->AllocatedBlocks ++;
+            NewNode->Prev = MemWalk;
+            NewNode->Next = MemWalk->Next;
 
-		return ;
-	}
-	
-	/* there is no free space, so return with an error */
+            if (MemWalk->Next != NULL)
+                MemWalk->Next->Prev = NewNode;
+            MemWalk->Next = NewNode;
 
-	FreeNode->Status=-1;
-	FreeNode->MNode=NULL;
+            /* fill out the other fields */
 
-	#if DEBUG
-	
-		{
-			sgl_uint32 Start, Size;
-			DPF((DBG_WARNING, "TMalloc failed!: Requested size was %d", RequestSize));
-			DPF((DBG_WARNING, "Set module debug level to 4 to dump texture heap"));
-		
-			MemWalk = hTexHeap->pMemoryRoot;
+#if TMALLOC_BACKWARDS
+            NewNode->MemoryOffset = MemWalk->MemoryOffset + RequestSize;
+#else
+            NewNode->MemoryAddress=MemWalk->MemoryAddress + RequestSize;
+#endif
+            NewNode->BlockSize = MemWalk->BlockSize - RequestSize;
+            NewNode->UsedStatus = 0;
 
-			while (MemWalk)
-			{
-				Start = MemWalk->MemoryOffset;
-				Size = MemWalk->BlockSize;
-				
-				switch (MemWalk->UsedStatus)
-				{
-					case 0:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Unused", Start, Size));
-						break;
-					}
-					case A_BANK:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank A used", Start, Size));
-						break;
-					}
-					case B_BANK:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank B used", Start, Size));
-						break;
-					}
-					case A_BANK | B_BANK:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Banks A&B used", Start, Size));
-						break;
-					}
-				}
-				
-				MemWalk = MemWalk->Next;
-			}
-			
-			DPF ((DBG_MESSAGE, "Free list:"));
+            /*link free node after root node*/
 
-			MemWalk = hTexHeap->pMemoryRoot;
+            NewNode->PrevFree = hTexHeap->pMemoryRoot;
+            NewNode->NextFree = ((MNODE *) hTexHeap->pMemoryRoot)->NextFree;
 
-			while (MemWalk)
-			{
-				Start = MemWalk->MemoryOffset;
-				Size = MemWalk->BlockSize;
-				
-				switch (MemWalk->UsedStatus)
-				{
-					case 0:
-					{
-					    DPF ((DBG_MESSAGE, "\t%08lx (%d): Unused", Start, Size));
-						break;
-					}
-					case A_BANK:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank A used", Start, Size));
-						break;
-					}
-					case B_BANK:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank B used", Start, Size));
-						break;
-					}
-					case A_BANK | B_BANK:
-					{
-						DPF ((DBG_MESSAGE, "\t%08lx (%d): Banks A&B used", Start, Size));
-						break;
-					}
-				}
-				
-				MemWalk = MemWalk->NextFree;
-			}
-			
-			DPF ((DBG_MESSAGE, "End of heap dump"));
-		}
-		
-	#endif
+            if (((MNODE *) hTexHeap->pMemoryRoot)->NextFree != NULL)
+                ((MNODE *) hTexHeap->pMemoryRoot)->NextFree->PrevFree = NewNode;
+            ((MNODE *) hTexHeap->pMemoryRoot)->NextFree = NewNode;
+
+            NewNode->NextBuddy = NULL; /*not strictly required */
+            NewNode->PrevBuddy = NULL;
+
+        }
+
+        MemWalk->BlockSize = RequestSize;
+        MemWalk->UsedStatus = A_BANK;
+
+#if TMALLOC_BACKWARDS
+        MemWalk->MemoryAddress = ((MNODE *) hTexHeap->pMemoryRoot)->MemorySize - MemWalk->MemoryOffset - RequestSize;
+#endif
+
+        FreeNode->Status = A_BANK;
+        FreeNode->MNode = MemWalk;
+
+        ((MNODE *) hTexHeap->pMemoryRoot)->MemoryLeft -= RequestSize;
+        ((MNODE *) hTexHeap->pMemoryRoot)->AllocatedBlocks++;
+
+        return;
+    }
+
+    /* there is no free space, so return with an error */
+
+    FreeNode->Status = -1;
+    FreeNode->MNode = NULL;
+
+#if DEBUG
+
+    {
+        sgl_uint32 Start, Size;
+        DPF((DBG_WARNING, "TMalloc failed!: Requested size was %d", RequestSize));
+        DPF((DBG_WARNING, "Set module debug level to 4 to dump texture heap"));
+
+        MemWalk = hTexHeap->pMemoryRoot;
+
+        while (MemWalk)
+        {
+            Start = MemWalk->MemoryOffset;
+            Size = MemWalk->BlockSize;
+
+            switch (MemWalk->UsedStatus)
+            {
+                case 0:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Unused", Start, Size));
+                    break;
+                }
+                case A_BANK:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank A used", Start, Size));
+                    break;
+                }
+                case B_BANK:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank B used", Start, Size));
+                    break;
+                }
+                case A_BANK | B_BANK:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Banks A&B used", Start, Size));
+                    break;
+                }
+            }
+
+            MemWalk = MemWalk->Next;
+        }
+
+        DPF ((DBG_MESSAGE, "Free list:"));
+
+        MemWalk = hTexHeap->pMemoryRoot;
+
+        while (MemWalk)
+        {
+            Start = MemWalk->MemoryOffset;
+            Size = MemWalk->BlockSize;
+
+            switch (MemWalk->UsedStatus)
+            {
+                case 0:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Unused", Start, Size));
+                    break;
+                }
+                case A_BANK:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank A used", Start, Size));
+                    break;
+                }
+                case B_BANK:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Bank B used", Start, Size));
+                    break;
+                }
+                case A_BANK | B_BANK:
+                {
+                    DPF ((DBG_MESSAGE, "\t%08lx (%d): Banks A&B used", Start, Size));
+                    break;
+                }
+            }
+
+            MemWalk = MemWalk->NextFree;
+        }
+
+        DPF ((DBG_MESSAGE, "End of heap dump"));
+    }
+
+#endif
 }
 
 
@@ -437,139 +427,129 @@ void TMalloc(sgl_uint32 RequestSize, HTEXHEAP hTexHeap, MNODE_BLOCK *FreeNode)
  * Pre-condition: InitTextureMemory has been called.
  *				: FreeNode is an allocated MNODE_BLOCK.
  *****************************************************************************/
-void TFree(MNODE_BLOCK *FreeNode, HTEXHEAP hTexHeap) 
-{
+void TFree(MNODE_BLOCK *FreeNode, HTEXHEAP hTexHeap) {
 
-	MNODE *TempNode;
+    MNODE *TempNode;
 
-	((MNODE*)hTexHeap->pMemoryRoot)->MemoryLeft += FreeNode->MNode->BlockSize;
+    ((MNODE *) hTexHeap->pMemoryRoot)->MemoryLeft += FreeNode->MNode->BlockSize;
 
-	/*
-	** do we need to create an empty buddy ?
-	*/
-
-
-	if(FreeNode->MNode->UsedStatus == (A_BANK | B_BANK))
-	{
-	 	/*
-		** insert the buddy after the root node.
-		*/
-
-		if(FreeNode->MNode != (MNODE*)hTexHeap->pMemoryRoot)
-		{
-			FreeNode->MNode->PrevBuddy=hTexHeap->pMemoryRoot;
-			FreeNode->MNode->NextBuddy=((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy;
-
-			if(((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy !=NULL)
-				((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy->PrevBuddy=FreeNode->MNode;
-			((MNODE*)hTexHeap->pMemoryRoot)->NextBuddy=FreeNode->MNode;
-		}
-
-		/* clear the used status of the buddy */
-
-		FreeNode->MNode->UsedStatus = FreeNode->Status ^ 3;
-
-	}
-	else
-	{
-		FreeNode->MNode->UsedStatus=0;
-
-		/*
-		**
-		** free up the memory and try and coalesce with adjacent memory.
-		**
-		*/
-
-		/* unlink the free buddy */
+    /*
+    ** do we need to create an empty buddy ?
+    */
 
 
-		if(FreeNode->MNode != (MNODE*)hTexHeap->pMemoryRoot)
-		{
-			FreeNode->MNode->PrevBuddy->NextBuddy=FreeNode->MNode->NextBuddy;
-			if(FreeNode->MNode->NextBuddy != NULL)
-				FreeNode->MNode->NextBuddy->PrevBuddy=FreeNode->MNode->PrevBuddy;
-		}
+    if (FreeNode->MNode->UsedStatus == (A_BANK | B_BANK)) {
+        /*
+       ** insert the buddy after the root node.
+       */
 
-		/* insert the free block after the root node */
+        if (FreeNode->MNode != (MNODE *) hTexHeap->pMemoryRoot) {
+            FreeNode->MNode->PrevBuddy = hTexHeap->pMemoryRoot;
+            FreeNode->MNode->NextBuddy = ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy;
 
-		if(FreeNode->MNode != (MNODE*)hTexHeap->pMemoryRoot)
-		{
-			FreeNode->MNode->PrevFree=hTexHeap->pMemoryRoot;
-			FreeNode->MNode->NextFree=((MNODE*)hTexHeap->pMemoryRoot)->NextFree;
+            if (((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy != NULL)
+                ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy->PrevBuddy = FreeNode->MNode;
+            ((MNODE *) hTexHeap->pMemoryRoot)->NextBuddy = FreeNode->MNode;
+        }
 
-			if(((MNODE*)hTexHeap->pMemoryRoot)->NextFree !=NULL)
-				((MNODE*)hTexHeap->pMemoryRoot)->NextFree->PrevFree=FreeNode->MNode;
-			((MNODE*)hTexHeap->pMemoryRoot)->NextFree=FreeNode->MNode;
-		}
+        /* clear the used status of the buddy */
 
-		/*
-		** try and coalesce the free block 
-		*/
+        FreeNode->MNode->UsedStatus = FreeNode->Status ^ 3;
 
-		/* first try coelescing the next block */
+    } else {
+        FreeNode->MNode->UsedStatus = 0;
 
-		if(FreeNode->MNode->Next != NULL && FreeNode->MNode->Next->UsedStatus==0)
-		{
-			TempNode=FreeNode->MNode->Next;
+        /*
+        **
+        ** free up the memory and try and coalesce with adjacent memory.
+        **
+        */
 
-			/* add the space togeather. */
- 
-			FreeNode->MNode->BlockSize += TempNode->BlockSize;
-
-			/* unlink the node from the free list */
-
-			TempNode->PrevFree->NextFree=TempNode->NextFree;
-			if(TempNode->NextFree != NULL)
-				TempNode->NextFree->PrevFree=TempNode->PrevFree;
+        /* unlink the free buddy */
 
 
-			/* unlink the node from the master list*/
+        if (FreeNode->MNode != (MNODE *) hTexHeap->pMemoryRoot) {
+            FreeNode->MNode->PrevBuddy->NextBuddy = FreeNode->MNode->NextBuddy;
+            if (FreeNode->MNode->NextBuddy != NULL)
+                FreeNode->MNode->NextBuddy->PrevBuddy = FreeNode->MNode->PrevBuddy;
+        }
 
-			FreeNode->MNode->Next=TempNode->Next;
-			if(TempNode->Next != NULL)
-				TempNode->Next->Prev=FreeNode->MNode;
+        /* insert the free block after the root node */
 
-			/* deallocate the MNode space */
+        if (FreeNode->MNode != (MNODE *) hTexHeap->pMemoryRoot) {
+            FreeNode->MNode->PrevFree = hTexHeap->pMemoryRoot;
+            FreeNode->MNode->NextFree = ((MNODE *) hTexHeap->pMemoryRoot)->NextFree;
 
-			PVROSFree(TempNode);
+            if (((MNODE *) hTexHeap->pMemoryRoot)->NextFree != NULL)
+                ((MNODE *) hTexHeap->pMemoryRoot)->NextFree->PrevFree = FreeNode->MNode;
+            ((MNODE *) hTexHeap->pMemoryRoot)->NextFree = FreeNode->MNode;
+        }
 
-		}
+        /*
+        ** try and coalesce the free block
+        */
 
-		/* secondly, try coelescing FreeNode with the previous block */
+        /* first try coelescing the next block */
 
-		if(FreeNode->MNode->Prev != NULL && FreeNode->MNode->Prev->UsedStatus==0)
-		{
-			/* add the space togeather. */
+        if (FreeNode->MNode->Next != NULL && FreeNode->MNode->Next->UsedStatus == 0) {
+            TempNode = FreeNode->MNode->Next;
 
-			FreeNode->MNode->Prev->BlockSize += FreeNode->MNode->BlockSize;
+            /* add the space togeather. */
 
-			/* unlink FreeNode from the free list */
+            FreeNode->MNode->BlockSize += TempNode->BlockSize;
 
-			FreeNode->MNode->PrevFree->NextFree=FreeNode->MNode->NextFree;
-			if(FreeNode->MNode->NextFree != NULL)
-				FreeNode->MNode->NextFree->PrevFree=FreeNode->MNode->PrevFree;
+            /* unlink the node from the free list */
 
-			/* unlink the node from the master list*/
+            TempNode->PrevFree->NextFree = TempNode->NextFree;
+            if (TempNode->NextFree != NULL)
+                TempNode->NextFree->PrevFree = TempNode->PrevFree;
 
-			FreeNode->MNode->Prev->Next=FreeNode->MNode->Next;
-			if(FreeNode->MNode->Next != NULL)
-				FreeNode->MNode->Next->Prev=FreeNode->MNode->Prev;
 
-			/* deallocate the MNode space */
+            /* unlink the node from the master list*/
 
-			PVROSFree(FreeNode->MNode);
+            FreeNode->MNode->Next = TempNode->Next;
+            if (TempNode->Next != NULL)
+                TempNode->Next->Prev = FreeNode->MNode;
 
-		}
-	}
+            /* deallocate the MNode space */
 
-	/* are we empty, and do we therefore need to reset the high water mark? */
-		
-	if (--((MNODE*)hTexHeap->pMemoryRoot)->AllocatedBlocks == 5)
-	{
-		DPF ((DBG_MESSAGE, "Setting high water mark: %d", ((MNODE*)hTexHeap->pMemoryRoot)->LowWaterMark));
-		
-		PVROSSetTSPHighWaterMark (hTexHeap, ((MNODE*)hTexHeap->pMemoryRoot)->LowWaterMark, TRUE);
-	}
+            PVROSFree(TempNode);
+
+        }
+
+        /* secondly, try coelescing FreeNode with the previous block */
+
+        if (FreeNode->MNode->Prev != NULL && FreeNode->MNode->Prev->UsedStatus == 0) {
+            /* add the space togeather. */
+
+            FreeNode->MNode->Prev->BlockSize += FreeNode->MNode->BlockSize;
+
+            /* unlink FreeNode from the free list */
+
+            FreeNode->MNode->PrevFree->NextFree = FreeNode->MNode->NextFree;
+            if (FreeNode->MNode->NextFree != NULL)
+                FreeNode->MNode->NextFree->PrevFree = FreeNode->MNode->PrevFree;
+
+            /* unlink the node from the master list*/
+
+            FreeNode->MNode->Prev->Next = FreeNode->MNode->Next;
+            if (FreeNode->MNode->Next != NULL)
+                FreeNode->MNode->Next->Prev = FreeNode->MNode->Prev;
+
+            /* deallocate the MNode space */
+
+            PVROSFree(FreeNode->MNode);
+
+        }
+    }
+
+    /* are we empty, and do we therefore need to reset the high water mark? */
+
+    if (--((MNODE *) hTexHeap->pMemoryRoot)->AllocatedBlocks == 5) {
+        DPF ((DBG_MESSAGE, "Setting high water mark: %d", ((MNODE *) hTexHeap->pMemoryRoot)->LowWaterMark));
+
+        PVROSSetTSPHighWaterMark(hTexHeap, ((MNODE *) hTexHeap->pMemoryRoot)->LowWaterMark, TRUE);
+    }
 }
 
 /******************************************************************************
@@ -582,73 +562,59 @@ void TFree(MNODE_BLOCK *FreeNode, HTEXHEAP hTexHeap)
  * Description  : 
  * Pre-condition: 
  *****************************************************************************/
-sgl_int32 CALL_CONV PVROSSetTSPHighWaterMark (PVRHANDLE TexHeap, sgl_int32 nRequested, sgl_bool bForceIt)
-{
-	MNODE 		*MemWalk;
-	sgl_int32	nCurrentPos;
-	HTEXHEAP	hTexHeap = TexHeap;
+sgl_int32 CALL_CONV PVROSSetTSPHighWaterMark(PVRHANDLE TexHeap, sgl_int32 nRequested, sgl_bool bForceIt) {
+    MNODE *MemWalk;
+    sgl_int32 nCurrentPos;
+    HTEXHEAP hTexHeap = TexHeap;
 
-	MemWalk = hTexHeap->pMemoryRoot;
+    MemWalk = hTexHeap->pMemoryRoot;
 
-	if (MemWalk->LowWaterMark > nRequested)
-	{
-		MemWalk->LowWaterMark = nRequested;
-	}
+    if (MemWalk->LowWaterMark > nRequested) {
+        MemWalk->LowWaterMark = nRequested;
+    }
 
-	while (MemWalk)
-	{
-		/*  we shouldn't ever get to the end, we should always have found the
-			overflow/TSP blocks by now!
-		*/
-		
-		ASSERT (MemWalk->Next);
-		
-		if (MemWalk->Next->BlockType != NORMAL_BLOCK)
-		{
-			nCurrentPos = (sgl_int32) ((MNODE*)hTexHeap->pMemoryRoot)->MemorySize - MemWalk->Next->MemoryOffset;
+    while (MemWalk) {
+        /*  we shouldn't ever get to the end, we should always have found the
+            overflow/TSP blocks by now!
+        */
 
-			if (MemWalk->Next->UsedStatus != A_BANK)
-			{
-				DPF((DBG_WARNING,"Can't move HWM - TSP Param block's buddy is in use"));
-			}
-			else if (MemWalk->UsedStatus != 0)
-			{
-				DPF((DBG_WARNING,"Can't move HWM - Top end of texture memory is in use"));
-			}
-			else if (!bForceIt && (nCurrentPos >= nRequested))
-			{
-				DPF((DBG_WARNING,"Requested HWM inside current limit (Req: %d, %d)", nRequested, nCurrentPos));
-				
-				nCurrentPos = nRequested;
-			}
-			else
-			{
-				sgl_int32 nOffset = nRequested - nCurrentPos;
+        ASSERT (MemWalk->Next);
 
-				if (nOffset > (sgl_int32) MemWalk->BlockSize)
-				{
-					DPF((DBG_WARNING,"Can't move HWM - Top end Memory block too small"));
-				}
-				else
-				{
-					DPF((DBG_MESSAGE,"Extending HWM: %d -> %d\n", nCurrentPos, nRequested));
+        if (MemWalk->Next->BlockType != NORMAL_BLOCK) {
+            nCurrentPos = (sgl_int32) ((MNODE *) hTexHeap->pMemoryRoot)->MemorySize - MemWalk->Next->MemoryOffset;
 
-					MemWalk->Next->BlockSize += nOffset;
-					MemWalk->Next->MemoryOffset -= nOffset;
+            if (MemWalk->Next->UsedStatus != A_BANK) {
+                DPF((DBG_WARNING, "Can't move HWM - TSP Param block's buddy is in use"));
+            } else if (MemWalk->UsedStatus != 0) {
+                DPF((DBG_WARNING, "Can't move HWM - Top end of texture memory is in use"));
+            } else if (!bForceIt && (nCurrentPos >= nRequested)) {
+                DPF((DBG_WARNING, "Requested HWM inside current limit (Req: %d, %d)", nRequested, nCurrentPos));
 
-					MemWalk->BlockSize -= nOffset;
-					
-					nCurrentPos = nRequested;
-				}
-			}
+                nCurrentPos = nRequested;
+            } else {
+                sgl_int32 nOffset = nRequested - nCurrentPos;
 
-			break;
-		}
+                if (nOffset > (sgl_int32) MemWalk->BlockSize) {
+                    DPF((DBG_WARNING, "Can't move HWM - Top end Memory block too small"));
+                } else {
+                    DPF((DBG_MESSAGE, "Extending HWM: %d -> %d\n", nCurrentPos, nRequested));
 
-		MemWalk = MemWalk->Next;
-	}
+                    MemWalk->Next->BlockSize += nOffset;
+                    MemWalk->Next->MemoryOffset -= nOffset;
 
-	return (nCurrentPos);
+                    MemWalk->BlockSize -= nOffset;
+
+                    nCurrentPos = nRequested;
+                }
+            }
+
+            break;
+        }
+
+        MemWalk = MemWalk->Next;
+    }
+
+    return (nCurrentPos);
 }
 
 /******************************************************************************
@@ -661,32 +627,29 @@ sgl_int32 CALL_CONV PVROSSetTSPHighWaterMark (PVRHANDLE TexHeap, sgl_int32 nRequ
  * Description  : 
  * Pre-condition: 
  *****************************************************************************/
-sgl_int32 CALL_CONV PVROSGetTSPHighWaterMark (PVRHANDLE TexHeap)
-{
-	MNODE 		*MemWalk;
-	HTEXHEAP	hTexHeap = TexHeap;
+sgl_int32 CALL_CONV PVROSGetTSPHighWaterMark(PVRHANDLE TexHeap) {
+    MNODE *MemWalk;
+    HTEXHEAP hTexHeap = TexHeap;
 
-	MemWalk = hTexHeap->pMemoryRoot;
+    MemWalk = hTexHeap->pMemoryRoot;
 
-	while (MemWalk)
-	{
-		/*  we shouldn't ever get to the end, we should always have found the
-			overflow/TSP blocks by now!
-		*/
-		
-		ASSERT (MemWalk->Next);
-		
-		if (MemWalk->Next->BlockType != NORMAL_BLOCK)
-		{
-			return ((sgl_int32) ((MNODE*)hTexHeap->pMemoryRoot)->MemorySize - MemWalk->Next->MemoryOffset);
-		}
+    while (MemWalk) {
+        /*  we shouldn't ever get to the end, we should always have found the
+            overflow/TSP blocks by now!
+        */
 
-		MemWalk = MemWalk->Next;
-	}
+        ASSERT (MemWalk->Next);
 
-	ASSERT (FALSE);
-	
-	return (0);
+        if (MemWalk->Next->BlockType != NORMAL_BLOCK) {
+            return ((sgl_int32) ((MNODE *) hTexHeap->pMemoryRoot)->MemorySize - MemWalk->Next->MemoryOffset);
+        }
+
+        MemWalk = MemWalk->Next;
+    }
+
+    ASSERT (FALSE);
+
+    return (0);
 }
 
 /*

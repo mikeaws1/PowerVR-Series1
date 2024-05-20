@@ -35,52 +35,48 @@
  *****************************************************************************/
 
 #include <sgl_defs.h>
-#include <sgl_init.h>
 #include <dlnodes.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
 
-void CALL_CONV sgl_new_translucent()
-{
-	NTRAN_NODE_STRUCT * pNode;
+void CALL_CONV sgl_new_translucent() {
+    NTRAN_NODE_STRUCT *pNode;
 
-	/*	
-		Initialise sgl if this hasn't yet been done		
-	*/
+    /*
+        Initialise sgl if this hasn't yet been done
+    */
 
 #if !WIN32
-	if(SglInitialise() != 0)
-	{
-		/*
-			We failed to initialise sgl
-		*/
-		SglError(sgl_err_failed_init);
+    if(SglInitialise() != 0)
+    {
+        /*
+            We failed to initialise sgl
+        */
+        SglError(sgl_err_failed_init);
 
-		return;
-	}
+        return;
+    }
 #endif
-	/* Create a new translucent node */
+    /* Create a new translucent node */
 
-	pNode = NEW(NTRAN_NODE_STRUCT);
+    pNode = NEW(NTRAN_NODE_STRUCT);
 
-   	if(pNode == NULL)
-	{
-   		/*
-   			Abort	   
-   		*/
-   		SglError(sgl_err_no_mem);
-   		return;
-   	} 
+    if (pNode == NULL) {
+        /*
+            Abort
+        */
+        SglError(sgl_err_no_mem);
+        return;
+    }
 
-	pNode->node_hdr.n16_node_type = (sgl_int16) nt_newtran;
-	pNode->node_hdr.n16_name	  = (sgl_int16) NM_INVALID_NAME;
-	pNode->node_hdr.next_node	  = NULL;
+    pNode->node_hdr.n16_node_type = (sgl_int16) nt_newtran;
+    pNode->node_hdr.n16_name = (sgl_int16) NM_INVALID_NAME;
+    pNode->node_hdr.next_node = NULL;
 
-	AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
+    AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 }
 
 /*--------------------------- End of File --------------------------------*/

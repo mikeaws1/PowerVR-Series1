@@ -67,25 +67,25 @@
  **************************************************************************/
 
 
-void	RnProcessTransformNode(TRANSFORM_NODE_STRUCT * tranNode,  /* transform node */
-						 TRANSFORM_STRUCT  * stateTransform) 	/* Updated state transform node */
+void RnProcessTransformNode(TRANSFORM_NODE_STRUCT *tranNode,  /* transform node */
+                            TRANSFORM_STRUCT *stateTransform)    /* Updated state transform node */
 {
 
 
-	/*  we are modifying the current transform state which is used
-		as the local to world matrix therefore the local projection
-		matrix will become invalid
-	*/
-	LOCAL_PROJECTION_STRUCT *pLocalProjectionMat = NULL;
+    /*  we are modifying the current transform state which is used
+        as the local to world matrix therefore the local projection
+        matrix will become invalid
+    */
+    LOCAL_PROJECTION_STRUCT *pLocalProjectionMat = NULL;
 
-	pLocalProjectionMat = RnGlobalGetLocalProjMat();
-	ASSERT(pLocalProjectionMat);
-	pLocalProjectionMat->valid = FALSE;
+    pLocalProjectionMat = RnGlobalGetLocalProjMat();
+    ASSERT(pLocalProjectionMat);
+    pLocalProjectionMat->valid = FALSE;
 
-	/*
-	// Multiply the matrices, and put the result back into
-	// the Transform state
-	*/
-	TransformMultiply(stateTransform, &tranNode->transform, stateTransform);
+    /*
+    // Multiply the matrices, and put the result back into
+    // the Transform state
+    */
+    TransformMultiply(stateTransform, &tranNode->transform, stateTransform);
 
 }

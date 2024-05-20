@@ -67,10 +67,14 @@
 #include <stdlib.h>
 
 #include <ddraw.h>
+
 #define API_TYPESONLY
+
 #include "sgl.h"
+
 #undef API_TYPESONLY
-#include "pvrosapi.h" 
+
+#include "pvrosapi.h"
 
 #include "sgl_defs.h" /* Includes hwregs.h */
 
@@ -78,11 +82,11 @@
 extern HLDEVICE gHLogicalDev;
 
 /* publics */
-static FRAME_BUFFER_MODE 	FrameBufferMode = FRAME_BUFFER_ACTIVE;
+static FRAME_BUFFER_MODE FrameBufferMode = FRAME_BUFFER_ACTIVE;
 static CALLBACK_ADDRESS_PARAMS gCAP;
 
 /* HWDEVICE.C stuff */
-void CALL_CONV HWSetFrameBufferMode( FRAME_BUFFER_MODE FrameBufferMode );
+void CALL_CONV HWSetFrameBufferMode(FRAME_BUFFER_MODE FrameBufferMode);
 
 /* Win32 SGL Extension exports */
 
@@ -93,26 +97,24 @@ void CALL_CONV HWSetFrameBufferMode( FRAME_BUFFER_MODE FrameBufferMode );
  * Returns		: 
  * Description  : Calls application back to get buffer info for render
  *****************************************************************************/
-PVROSERR AddressModePreRenderCallback (void *pData, void *pContext)
-{
-	PRE_RENDER_CB_STRUCT  *pPRCS = pData;
-	PROC_ADDRESS_CALLBACK	fnPAC = (PROC_ADDRESS_CALLBACK) pContext;
+PVROSERR AddressModePreRenderCallback(void *pData, void *pContext) {
+    PRE_RENDER_CB_STRUCT *pPRCS = pData;
+    PROC_ADDRESS_CALLBACK fnPAC = (PROC_ADDRESS_CALLBACK) pContext;
 
-	ASSERT (pData);
-	ASSERT (pContext);
+    ASSERT (pData);
+    ASSERT (pContext);
 
-	if (fnPAC && (fnPAC (&gCAP) == sgl_no_err))
-	{
-		pPRCS->PhysRenderBufferAddress 		= (sgl_uint32) gCAP.pMem;
-		pPRCS->PhysRenderBufferBitsPerPixel = gCAP.bBitsPerPixel;
-		pPRCS->PhysRenderBufferStride		= gCAP.wStride;
-		/* pPRCS->FlipRequested only used in DirectDraw mode */
-		return (PVROS_GROOVY);
-	}
+    if (fnPAC && (fnPAC(&gCAP) == sgl_no_err)) {
+        pPRCS->PhysRenderBufferAddress = (sgl_uint32) gCAP.pMem;
+        pPRCS->PhysRenderBufferBitsPerPixel = gCAP.bBitsPerPixel;
+        pPRCS->PhysRenderBufferStride = gCAP.wStride;
+        /* pPRCS->FlipRequested only used in DirectDraw mode */
+        return (PVROS_GROOVY);
+    }
 
-	DPFDEV((DBG_MESSAGE,"AddressModePreRenderCallback failed"));
-	return (PVROS_DODGY);	
-}	
+    DPFDEV((DBG_MESSAGE, "AddressModePreRenderCallback failed"));
+    return (PVROS_DODGY);
+}
 
 /******************************************************************************
  * Function Name: DDrawMode2dCallback 
@@ -121,29 +123,25 @@ PVROSERR AddressModePreRenderCallback (void *pData, void *pContext)
  * Returns		: 
  * Description  : Calls application back to get buffer info for render
  *****************************************************************************/
-PVROSERR DDrawMode2dCallback (void *pData, void *pContext)
-{
-	PROC_2D_CALLBACK fn2D = (PROC_2D_CALLBACK) pContext;
-	HDISPLAY		 hDisplay = pData;
+PVROSERR DDrawMode2dCallback(void *pData, void *pContext) {
+    PROC_2D_CALLBACK fn2D = (PROC_2D_CALLBACK) pContext;
+    HDISPLAY hDisplay = pData;
 
-	ASSERT (pData);
-	ASSERT (pContext);
+    ASSERT (pData);
+    ASSERT (pContext);
 
-	if (fn2D)
-	{
-		CALLBACK_SURFACE_PARAMS CSP;
+    if (fn2D) {
+        CALLBACK_SURFACE_PARAMS CSP;
 
-		if (GetDDraw2dCallbackInfo (hDisplay, &CSP) == PVROS_GROOVY)
-		{
-			if (fn2D (&CSP) == sgl_no_err)
-			{
-				return (PVROS_GROOVY);
-			}
-		}
-	}
-	DPFDEV((DBG_MESSAGE,"DDrawMode2dCallback failed"));
-	return (PVROS_DODGY);	
-}	
+        if (GetDDraw2dCallbackInfo(hDisplay, &CSP) == PVROS_GROOVY) {
+            if (fn2D(&CSP) == sgl_no_err) {
+                return (PVROS_GROOVY);
+            }
+        }
+    }
+    DPFDEV((DBG_MESSAGE, "DDrawMode2dCallback failed"));
+    return (PVROS_DODGY);
+}
 
 /******************************************************************************
  * Function Name: DDrawModeEORCallback 
@@ -152,19 +150,17 @@ PVROSERR DDrawMode2dCallback (void *pData, void *pContext)
  * Returns		: 
  * Description  : 
  *****************************************************************************/
-PVROSERR DDrawModeEORCallback (void *pData, void *pContext)
-{
-	PROC_END_OF_RENDER_CALLBACK fnEOR = (PROC_END_OF_RENDER_CALLBACK) pContext;
+PVROSERR DDrawModeEORCallback(void *pData, void *pContext) {
+    PROC_END_OF_RENDER_CALLBACK fnEOR = (PROC_END_OF_RENDER_CALLBACK) pContext;
 
-	ASSERT (pContext);
+    ASSERT (pContext);
 
-	if (fnEOR && (fnEOR () == sgl_no_err))
-	{
-		return (PVROS_GROOVY);
-	}
-	DPFDEV((DBG_MESSAGE,"DDrawModeEORCallback failed"));
-	return (PVROS_DODGY);	
-}	
+    if (fnEOR && (fnEOR() == sgl_no_err)) {
+        return (PVROS_GROOVY);
+    }
+    DPFDEV((DBG_MESSAGE, "DDrawModeEORCallback failed"));
+    return (PVROS_DODGY);
+}
 
 /******************************************************************************
  * Function Name: sgl_use_ddraw_mode
@@ -174,24 +170,22 @@ PVROSERR DDrawModeEORCallback (void *pData, void *pContext)
  * Description  : 
  *****************************************************************************/
 
-int CALL_CONV sgl_use_ddraw_mode (HWND hWnd, PROC_2D_CALLBACK Proc2dCallback)
-{
-	
-	PVROSSetDDrawWindowHandle((void *)hWnd);
-	
-	FrameBufferMode = FRAME_BUFFER_ACTIVE;
-		
-	HWSetFrameBufferMode (FRAME_BUFFER_ACTIVE);
+int CALL_CONV sgl_use_ddraw_mode(HWND hWnd, PROC_2D_CALLBACK Proc2dCallback) {
 
-	if (Proc2dCallback)
-	{
-		PVROSCallbackRegister (gHLogicalDev, CB_2D, DDrawMode2dCallback, Proc2dCallback);
-	}
+    PVROSSetDDrawWindowHandle((void *) hWnd);
 
-	DPFDEV((DBG_MESSAGE,"SGL in DDRAW mode"));
-	
-	return sgl_no_err;
-	
+    FrameBufferMode = FRAME_BUFFER_ACTIVE;
+
+    HWSetFrameBufferMode(FRAME_BUFFER_ACTIVE);
+
+    if (Proc2dCallback) {
+        PVROSCallbackRegister(gHLogicalDev, CB_2D, DDrawMode2dCallback, Proc2dCallback);
+    }
+
+    DPFDEV((DBG_MESSAGE, "SGL in DDRAW mode"));
+
+    return sgl_no_err;
+
 }/*sgl_use_ddraw_mode*/
 
 /******************************************************************************
@@ -202,21 +196,20 @@ int CALL_CONV sgl_use_ddraw_mode (HWND hWnd, PROC_2D_CALLBACK Proc2dCallback)
  * Description  : 
  *****************************************************************************/
 
-int CALL_CONV sgl_use_address_mode (PROC_ADDRESS_CALLBACK ProcNextAddress, sgl_uint32 **pStatus)
-{
+int CALL_CONV sgl_use_address_mode(PROC_ADDRESS_CALLBACK ProcNextAddress, sgl_uint32 **pStatus) {
 
-	*pStatus = (sgl_uint32 *) &gHLogicalDev->RenderStatus;
-	
-	FrameBufferMode = FRAME_BUFFER_PASSIVE;
+    *pStatus = (sgl_uint32 *) &gHLogicalDev->RenderStatus;
 
-	HWSetFrameBufferMode (FRAME_BUFFER_PASSIVE);
+    FrameBufferMode = FRAME_BUFFER_PASSIVE;
 
-	PVROSCallbackRegister (gHLogicalDev, CB_PRE_RENDER, AddressModePreRenderCallback, ProcNextAddress);
-	
-	DPFDEV((DBG_MESSAGE,"SGL in ADDRESS mode"));
-	
-	return sgl_no_err;
-	
+    HWSetFrameBufferMode(FRAME_BUFFER_PASSIVE);
+
+    PVROSCallbackRegister(gHLogicalDev, CB_PRE_RENDER, AddressModePreRenderCallback, ProcNextAddress);
+
+    DPFDEV((DBG_MESSAGE, "SGL in ADDRESS mode"));
+
+    return sgl_no_err;
+
 }/*sgl_use_address_mode*/
 
 /******************************************************************************
@@ -227,34 +220,31 @@ int CALL_CONV sgl_use_address_mode (PROC_ADDRESS_CALLBACK ProcNextAddress, sgl_u
  * Description  : App gives SGL where it's eor callback
  *****************************************************************************/
 
-int CALL_CONV sgl_use_eor_callback(PROC_END_OF_RENDER_CALLBACK ProcEOR)
-{
+int CALL_CONV sgl_use_eor_callback(PROC_END_OF_RENDER_CALLBACK ProcEOR) {
 
-	PVROSCallbackRegister (gHLogicalDev, CB_END_OF_RENDER, DDrawModeEORCallback, ProcEOR);
+    PVROSCallbackRegister(gHLogicalDev, CB_END_OF_RENDER, DDrawModeEORCallback, ProcEOR);
 
-	return 0;
+    return 0;
 }
 
 
-void GetFileVersion(char *File, char *FileVer, int size)
-{
-	char Buffer[1024];
-	sgl_uint32 WhatsThisFor, RetSize, VerSize;
-	void *Version;
-	char FullFile[512];
-	
-	GetEnvironmentVariable ("WINDIR", FullFile, sizeof (FullFile)-1);
-	strcat(FullFile, File);
+void GetFileVersion(char *File, char *FileVer, int size) {
+    char Buffer[1024];
+    sgl_uint32 WhatsThisFor, RetSize, VerSize;
+    void *Version;
+    char FullFile[512];
 
-	VerSize = (sgl_uint32)GetFileVersionInfoSize(FullFile,&WhatsThisFor);
-	if(VerSize)
-	{
-		GetFileVersionInfo(FullFile,WhatsThisFor,1024,Buffer);
-		VerQueryValue(Buffer,
-					  TEXT("\\StringFileInfo\\040904E4\\FileVersion"),
-					  &Version, &RetSize);
-		strncpy(FileVer, (char *)Version, size-1 );
-	}
+    GetEnvironmentVariable("WINDIR", FullFile, sizeof(FullFile) - 1);
+    strcat(FullFile, File);
+
+    VerSize = (sgl_uint32) GetFileVersionInfoSize(FullFile, &WhatsThisFor);
+    if (VerSize) {
+        GetFileVersionInfo(FullFile, WhatsThisFor, 1024, Buffer);
+        VerQueryValue(Buffer,
+                      TEXT("\\StringFileInfo\\040904E4\\FileVersion"),
+                      &Version, &RetSize);
+        strncpy(FileVer, (char *) Version, size - 1);
+    }
 
 }
 
@@ -265,112 +255,108 @@ void GetFileVersion(char *File, char *FileVer, int size)
  * Returns		: Pointer to internal versions structure
  * Description  : Gets win32 specific version info for software and hardware
  *****************************************************************************/
-sgl_win_versions *  CALL_CONV sgl_get_win_versions()
-{
+sgl_win_versions *CALL_CONV sgl_get_win_versions() {
 #if 0
-	sgl_uint16 	wISPRev;
-	sgl_uint16 	wTSPRev;
+    sgl_uint16 	wISPRev;
+    sgl_uint16 	wTSPRev;
 #endif
-	sgl_uint8	bTSPMem;
+    sgl_uint8 bTSPMem;
 
-	static 	sgl_win_versions  versions;
-	static char sgl_vxd_rev[16] = {0};
-	static char pci_bridge_vendor_id[16] = {0};
-	static char pci_bridge_device_id[16] = {0};
-	static char pci_bridge_rev[16] = {0};
-	static char pci_bridge_irq[16] = {0};
-	static char pci_bridge_io_base[16] = {0};
-	static char tsp_rev[16] = {0};
-	static char tsp_mem_size[16] = {0};
-	static char isp_rev[16] = {0};
-	static char mode[16] = {0};
-	static char status[16] = {0};
+    static sgl_win_versions versions;
+    static char sgl_vxd_rev[16] = {0};
+    static char pci_bridge_vendor_id[16] = {0};
+    static char pci_bridge_device_id[16] = {0};
+    static char pci_bridge_rev[16] = {0};
+    static char pci_bridge_irq[16] = {0};
+    static char pci_bridge_io_base[16] = {0};
+    static char tsp_rev[16] = {0};
+    static char tsp_mem_size[16] = {0};
+    static char isp_rev[16] = {0};
+    static char mode[16] = {0};
+    static char status[16] = {0};
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-		return NULL;
-	}
+    {
+        SglError(sgl_err_failed_init);
+        return NULL;
+    }
 #endif
-	/* required_sglwin32_header */
-	versions.required_sglwin32_header = SGL_WIN_HEADER_VERSION;
+    /* required_sglwin32_header */
+    versions.required_sglwin32_header = SGL_WIN_HEADER_VERSION;
 
-	/* pci_bridge_vendor_id */
-	wsprintf (pci_bridge_vendor_id, "0x1033");
-	versions.pci_bridge_vendor_id = pci_bridge_vendor_id;
+    /* pci_bridge_vendor_id */
+    wsprintf(pci_bridge_vendor_id, "0x1033");
+    versions.pci_bridge_vendor_id = pci_bridge_vendor_id;
 
 #if PCX2 || PCX2_003
-	/* pci_bridge_device_id */
-	wsprintf (pci_bridge_device_id, "0x0046");
-	versions.pci_bridge_device_id = pci_bridge_device_id;
+    /* pci_bridge_device_id */
+    wsprintf(pci_bridge_device_id, "0x0046");
+    versions.pci_bridge_device_id = pci_bridge_device_id;
 #elif PCX1
-	/* pci_bridge_device_id */
-	wsprintf (pci_bridge_device_id, "0x002A");
-	versions.pci_bridge_device_id = pci_bridge_device_id;
+    /* pci_bridge_device_id */
+    wsprintf (pci_bridge_device_id, "0x002A");
+    versions.pci_bridge_device_id = pci_bridge_device_id;
 #elif ISPTSP
-	/* pci_bridge_device_id */
-	wsprintf (pci_bridge_device_id, "0x001F");
-	versions.pci_bridge_device_id = pci_bridge_device_id;
+    /* pci_bridge_device_id */
+    wsprintf (pci_bridge_device_id, "0x001F");
+    versions.pci_bridge_device_id = pci_bridge_device_id;
 #endif
-	
-	/* sgl_vxd_rev */
-	GetFileVersion( "\\system\\vsgl.vxd",sgl_vxd_rev, 16);
-	versions.sgl_vxd_rev = sgl_vxd_rev;
+
+    /* sgl_vxd_rev */
+    GetFileVersion("\\system\\vsgl.vxd", sgl_vxd_rev, 16);
+    versions.sgl_vxd_rev = sgl_vxd_rev;
 
 #if 0
-	/* pci_bridge_rev */
-	itoa ((int) 0, pci_bridge_rev, 10);
-	versions.pci_bridge_rev = pci_bridge_rev;
-	
-	/* pci_bridge_irq */
-	itoa ((int)bIRQ, pci_bridge_irq, 10);
-	versions.pci_bridge_irq = pci_bridge_irq;
-	
-	/* pci_bridge_io_base */
-	wsprintf(pci_bridge_io_base, "%08Xh", dwIOBase);
-	versions.pci_bridge_io_base = pci_bridge_io_base;
-	
-	/* tsp_rev */
-	wTSPRev = (sgl_uint16)(sgl_uint32)*(pSCBusIOSpace+PCX_ID);
-	itoa ((int)wTSPRev, tsp_rev, 10);
-	versions.tsp_rev = tsp_rev;
+    /* pci_bridge_rev */
+    itoa ((int) 0, pci_bridge_rev, 10);
+    versions.pci_bridge_rev = pci_bridge_rev;
+
+    /* pci_bridge_irq */
+    itoa ((int)bIRQ, pci_bridge_irq, 10);
+    versions.pci_bridge_irq = pci_bridge_irq;
+
+    /* pci_bridge_io_base */
+    wsprintf(pci_bridge_io_base, "%08Xh", dwIOBase);
+    versions.pci_bridge_io_base = pci_bridge_io_base;
+
+    /* tsp_rev */
+    wTSPRev = (sgl_uint16)(sgl_uint32)*(pSCBusIOSpace+PCX_ID);
+    itoa ((int)wTSPRev, tsp_rev, 10);
+    versions.tsp_rev = tsp_rev;
 #endif
-	
-	/* tsp_mem_size */
-	bTSPMem = (sgl_uint8)(PVROSDetermineTexMemConfig(0) >> 20);
-	itoa ((int)bTSPMem, tsp_mem_size, 10);
-	versions.tsp_mem_size = tsp_mem_size;
+
+    /* tsp_mem_size */
+    bTSPMem = (sgl_uint8) (PVROSDetermineTexMemConfig(0) >> 20);
+    itoa((int) bTSPMem, tsp_mem_size, 10);
+    versions.tsp_mem_size = tsp_mem_size;
 
 #if 0
-	/* isp_rev */
-	wISPRev = (sgl_uint16)(sgl_uint32)*(pSCBusIOSpace+PCX_ID);
-	itoa ((int)wISPRev, isp_rev, 10);
-	versions.isp_rev = isp_rev;
+    /* isp_rev */
+    wISPRev = (sgl_uint16)(sgl_uint32)*(pSCBusIOSpace+PCX_ID);
+    itoa ((int)wISPRev, isp_rev, 10);
+    versions.isp_rev = isp_rev;
 #endif
-	
-	/* mode */
-	if (FrameBufferMode == FRAME_BUFFER_ACTIVE)
-	{
-		versions.mode = "active";
-	}
-	else
-	{
-		versions.mode = "passive";
-	}
-	
-	/* status */
-	versions.status = "";
-	
-	/* build_info */
-	#if DEBUG
-		versions.build_info = "Debug build";
-	#else
-		versions.build_info = "";
-	#endif
-	
-	return &versions;
-	
+
+    /* mode */
+    if (FrameBufferMode == FRAME_BUFFER_ACTIVE) {
+        versions.mode = "active";
+    } else {
+        versions.mode = "passive";
+    }
+
+    /* status */
+    versions.status = "";
+
+    /* build_info */
+#if DEBUG
+    versions.build_info = "Debug build";
+#else
+    versions.build_info = "";
+#endif
+
+    return &versions;
+
 }/*sgl_win_versions*/
 
 /* eof */

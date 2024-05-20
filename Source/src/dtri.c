@@ -569,23 +569,17 @@
 #define MODULE_ID MODID_DTRI
 
 #include <sgl_defs.h>
-#include <sgl_init.h>
 #include <pvrosapi.h>
 #include <metrics.h>
 #include <hwinterf.h>
-#include <sgl_math.h>
 
 #include <nm_intf.h>
-#include <getnamtb.h>
-#include <dlntypes.h>
 
 #include <dtri.h>
 #include <dshade.h>
 #include <dtex.h>
 #include <disp.h>
 #include <dtsp.h>
-#include <pmsabre.h>
-#include <dregion.h>
 #include <parmbuff.h>
 #include <pvrlims.h>
 #include <texapi.h>
@@ -594,14 +588,15 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 
 #if WIN32 || DOS32
 
-	#define DO_FPU_PRECISION TRUE
+#define DO_FPU_PRECISION TRUE
 
-	void __cdecl SetupFPU (void);
-	void __cdecl RestoreFPU (void);
+void __cdecl SetupFPU(void);
+
+void __cdecl RestoreFPU(void);
 
 #else
 
-	#define DO_FPU_PRECISION FALSE
+#define DO_FPU_PRECISION FALSE
 
 #endif
 
@@ -616,9 +611,9 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 /* Group adjacent, translucent objects into the same translucent pass */
 /* Note:the chunking version does not check for the SGLTT_NEWPASSPERTRI flag */
 #if ISPTSP
-	#define CHUNKING FALSE
+#define CHUNKING FALSE
 #elif PCX1 || PCX2 || PCX2_003
-	  #define CHUNKING FALSE /*TRUE*/
+#define CHUNKING FALSE /*TRUE*/
 #endif
 
 /*
@@ -627,12 +622,12 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 // ============================================================================
 */
 const PROCESSDATACONTEXT gPDC;
-PROCESSDATACONTEXT *const gpPDC = (PROCESSDATACONTEXT*) &gPDC;
+PROCESSDATACONTEXT *const gpPDC = (PROCESSDATACONTEXT *) &gPDC;
 
-ITRI		gpTri[IBUFFERSIZE];
-IEDGE		gpEdge[IEDGEBUFFERSIZE];
-IMATERIAL 	gpMat[IBUFFERSIZE];
-PIMATERIAL	gpMatCurrent = gpMat;
+ITRI gpTri[IBUFFERSIZE];
+IEDGE gpEdge[IEDGEBUFFERSIZE];
+IMATERIAL gpMat[IBUFFERSIZE];
+PIMATERIAL gpMatCurrent = gpMat;
 
 float gfDepthBias;
 
@@ -641,35 +636,37 @@ extern float fMinInvZ;
 extern float gfBogusInvZ;
 extern sgl_bool FogUsed;
 
-static int TSPDoubleBuffer = 0; /* disable TSP double buffing till PVROS sorted */ 
+static int TSPDoubleBuffer = 0; /* disable TSP double buffing till PVROS sorted */
 #pragma message ("Another extern to sort out")
 #pragma message ("TSP Double buffer hard coded to OFF")
 
 /* Variable to fix the pixel offset problem. The value is added to
  * all vertices in D3D and SGL-Lite.
  */
-extern float 	fAddToXY;
+extern float fAddToXY;
 
 int PackExtra(PITRI pTri, PIMATERIAL pMat, sgl_uint32 nPolys, sgl_uint32 TSPInc, sgl_uint32 *pTSP);
-int PackISPPolygonExtra (PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolygons, sgl_uint32 TSPAddr, sgl_uint32 TSPIncrement);
+
+int PackISPPolygonExtra(PITRI rpTri, PIMATERIAL rpMat, PIEDGE pEdge, int nPolygons, sgl_uint32 TSPAddr,
+                        sgl_uint32 TSPIncrement);
 
 /* typedef for the pack TSP parameter functions.
  */
-typedef	int (*PACKTSPFUNCTION) (PIMATERIAL, int, int, sgl_uint32, sgl_uint32 *, int);
+typedef int (*PACKTSPFUNCTION)(PIMATERIAL, int, int, sgl_uint32, sgl_uint32 *, int);
 
 PACKTSPFUNCTION PackTSPTexFn;
 
 /* Initialise the 4 pack functions. These are indexed as required.
  */
-static PACKTSPFUNCTION PackTSPFunctions[4] = {	PackTSPTex,
-												PackTSPMipMapTex,
-									   			PackTSPTexNonPer,
-								   				PackTSPMipMapTexNonPer
-									   			};
+static PACKTSPFUNCTION PackTSPFunctions[4] = {PackTSPTex,
+                                              PackTSPMipMapTex,
+                                              PackTSPTexNonPer,
+                                              PackTSPMipMapTexNonPer
+};
 
 /* typedef for the process TSP parameter functions.
  */
-typedef	void (*PROCESSTSPFUNCTION)(PITRI);
+typedef void (*PROCESSTSPFUNCTION)(PITRI);
 
 PROCESSTSPFUNCTION ProcessFlatTexFn;
 
@@ -677,21 +674,21 @@ PROCESSTSPFUNCTION ProcessFlatTexFn;
  * The SGLDirect and D3D non-perspective correct flat textured cases are
  * the same.
  */
-static PROCESSTSPFUNCTION ProcessD3DTSPFunctions[8] = {	ProcessD3DFlatTex,
-														ProcessD3DFlatTexWrapU,
-														ProcessD3DFlatTexWrapV,
-														ProcessD3DFlatTexWrapUV,
-														ProcessFlatTexNonPer,
-														ProcessD3DFlatTexWrapUNonPer,
-														ProcessD3DFlatTexWrapVNonPer,
-														ProcessD3DFlatTexWrapUVNonPer
-														};
+static PROCESSTSPFUNCTION ProcessD3DTSPFunctions[8] = {ProcessD3DFlatTex,
+                                                       ProcessD3DFlatTexWrapU,
+                                                       ProcessD3DFlatTexWrapV,
+                                                       ProcessD3DFlatTexWrapUV,
+                                                       ProcessFlatTexNonPer,
+                                                       ProcessD3DFlatTexWrapUNonPer,
+                                                       ProcessD3DFlatTexWrapVNonPer,
+                                                       ProcessD3DFlatTexWrapUVNonPer
+};
 
 /* Initialise the 2 pack functions. These are indexed as required.
  */
-static PROCESSTSPFUNCTION ProcessTSPFunctions[2] =	   {ProcessFlatTex,
-														ProcessFlatTexNonPer
-														};
+static PROCESSTSPFUNCTION ProcessTSPFunctions[2] = {ProcessFlatTex,
+                                                    ProcessFlatTexNonPer
+};
 
 
 #define FLATTEX 0x00000000
@@ -710,175 +707,152 @@ static PROCESSTSPFUNCTION ProcessTSPFunctions[2] =	   {ProcessFlatTex,
 **
 **********************************************************************/
 
-static void ProcessD3DPolys (PVRHANDLE TexHeap, PPIR pPerPolyfn, PBPR pPerBuffn, sgl_uint32 TSPWords)
-{
-	sgl_uint32	TSPAddr, TSPInc;
-	sgl_uint32 	TSPSpaceAvailable;
-	sgl_uint32	*pTSP;
-	sgl_uint32	NewObject = TRUE;
-	
-	while ( gpPDC->nInputTriangles != 0 )
-	{
-		int nBurst;
-		
-		SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
-		SGL_TIME_START(SGLTRI_PROCESS_TIME)
+static void ProcessD3DPolys(PVRHANDLE TexHeap, PPIR pPerPolyfn, PBPR pPerBuffn, sgl_uint32 TSPWords) {
+    sgl_uint32 TSPAddr, TSPInc;
+    sgl_uint32 TSPSpaceAvailable;
+    sgl_uint32 *pTSP;
+    sgl_uint32 NewObject = TRUE;
 
-		/* Process as many as possible or all the remainder        */
-		gpMatCurrent = gpMat;			/* pPerPolyFn updates this */
-		
-		if (gpPDC->TSPControlWord & MASK_TRANS)
-		{
-			nBurst = ProcessD3DStripTransCore ( pPerPolyfn, NewObject );
+    while (gpPDC->nInputTriangles != 0) {
+        int nBurst;
 
-			NewObject = FALSE;
-		}
-		else
-		{
-			nBurst = ProcessD3DStripCore ( pPerPolyfn );
-		}
-		
-		SGL_TIME_STOP(SGLTRI_PROCESS_TIME)
-		SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_START(SGLTRI_PROCESS_TIME)
 
-		/* Process the content of the buffer */
-		SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
-		SGL_TIME_START(SGLTRI_PACKTRI_TIME)
-		
-		/*
-			Work out how many triangle's worth of data we can
-			actually put in there ...
-		*/
-		TSPSpaceAvailable = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferLimit -
-							PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
-		
-#if PCX2 || PCX2_003
-		if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) && 
-		   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/* calculate maximum possible TSP usage - haven't a clue
-			** what the actual usage is yet
-			*/
-			if (TSPSpaceAvailable < (nBurst * (TSPWords + 16)))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * (TSPWords + 16)))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= (TSPWords + 16);
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		else if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) || 
-				(gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/* calculate maximum possible TSP usage - haven't a clue
-			** what the actual usage is yet
-			*/
-			if (TSPSpaceAvailable < (nBurst * (TSPWords + 8)))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * (TSPWords + 8)))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= (TSPWords + 8);
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		else
-#endif
-		{
+        /* Process as many as possible or all the remainder        */
+        gpMatCurrent = gpMat;            /* pPerPolyFn updates this */
 
-			if (TSPSpaceAvailable < (nBurst * TSPWords))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
+        if (gpPDC->TSPControlWord & MASK_TRANS) {
+            nBurst = ProcessD3DStripTransCore(pPerPolyfn, NewObject);
 
-				if (TSPSpaceAvailable < (nBurst * TSPWords))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-				
-					/*
-					   This division should only take place if the buffer
-				   	is nearly full
-					*/
-					TSPSpaceAvailable /= TSPWords;
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
+            NewObject = FALSE;
+        } else {
+            nBurst = ProcessD3DStripCore(pPerPolyfn);
+        }
 
-		/* Index of start of TSP parms */
-		TSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+        SGL_TIME_STOP(SGLTRI_PROCESS_TIME)
+        SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
 
-		/* Get address of buffer in host-land */
-		pTSP = PVRParamBuffs[PVR_PARAM_TYPE_TSP].pBuffer + TSPAddr;
+        /* Process the content of the buffer */
+        SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_START(SGLTRI_PACKTRI_TIME)
+
+        /*
+            Work out how many triangle's worth of data we can
+            actually put in there ...
+        */
+        TSPSpaceAvailable = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferLimit -
+                            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
 
 #if PCX2 || PCX2_003
-		if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) || 
-		   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/*
-			** Note: all the TSP data for the extra planes is stored 
-			** after the data for the normal planes - thererfore 
-			** a TSP offset needs be calculted for the planes STP pointer
-			*/
+        if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) &&
+            (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /* calculate maximum possible TSP usage - haven't a clue
+            ** what the actual usage is yet
+            */
+            if (TSPSpaceAvailable < (nBurst * (TSPWords + 16))) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
 
-			TSPInc = PackISPPolygonExtra(gpTri, gpMat, gpEdge, nBurst, 
-									 TSPAddr >> 1, TSPWords >> 1);
-			/* don't know how much tsp space used till return */
-			PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += (TSPInc<<1);
+                if (TSPSpaceAvailable < (nBurst * (TSPWords + 16))) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
 
-			if ( pPerBuffn != NULL )
-			{
-				/* Call additonal type specific handler */
-				pPerBuffn (pTSP, nBurst);
-			}
-			else
-			{
-				/* Call flat shading packer */
-				PackTSPFlat (gpTri, gpMat, nBurst, 2, pTSP);
-			}
-			/* I'm not sure if the TSP offset is correct */
-			PackExtra(gpTri, gpMat, nBurst, 8, pTSP+nBurst*TSPWords);
-		}
-		else
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= (TSPWords + 16);
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        } else if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) ||
+                   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /* calculate maximum possible TSP usage - haven't a clue
+            ** what the actual usage is yet
+            */
+            if (TSPSpaceAvailable < (nBurst * (TSPWords + 8))) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
+
+                if (TSPSpaceAvailable < (nBurst * (TSPWords + 8))) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
+
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= (TSPWords + 8);
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        } else
 #endif
-		{
-	  		PackISPPolygon (gpTri, gpMat, gpEdge, nBurst, TSPAddr >> 1, TSPWords >> 1);
-			/* all objects are of known TSP size */
-			PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += TSPWords * nBurst;
-		
-			if ( pPerBuffn != NULL )
-			{
-				/* Call additonal type specific handler */
-				pPerBuffn (pTSP, nBurst);
-			}
-			else
-			{
-				/* Call flat shading packer */
-				PackTSPFlat (gpTri, gpMat, nBurst, 2, pTSP);
-			}
-		}
-		SGL_TIME_STOP(SGLTRI_PACKTRI_TIME)
-		SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
-	}
+        {
+
+            if (TSPSpaceAvailable < (nBurst * TSPWords)) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
+
+                if (TSPSpaceAvailable < (nBurst * TSPWords)) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
+
+                    /*
+                       This division should only take place if the buffer
+                       is nearly full
+                    */
+                    TSPSpaceAvailable /= TSPWords;
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        }
+
+        /* Index of start of TSP parms */
+        TSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+
+        /* Get address of buffer in host-land */
+        pTSP = PVRParamBuffs[PVR_PARAM_TYPE_TSP].pBuffer + TSPAddr;
+
+#if PCX2 || PCX2_003
+        if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) ||
+            (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /*
+            ** Note: all the TSP data for the extra planes is stored
+            ** after the data for the normal planes - thererfore
+            ** a TSP offset needs be calculted for the planes STP pointer
+            */
+
+            TSPInc = PackISPPolygonExtra(gpTri, gpMat, gpEdge, nBurst,
+                                         TSPAddr >> 1, TSPWords >> 1);
+            /* don't know how much tsp space used till return */
+            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += (TSPInc << 1);
+
+            if (pPerBuffn != NULL) {
+                /* Call additonal type specific handler */
+                pPerBuffn(pTSP, nBurst);
+            } else {
+                /* Call flat shading packer */
+                PackTSPFlat(gpTri, gpMat, nBurst, 2, pTSP);
+            }
+            /* I'm not sure if the TSP offset is correct */
+            PackExtra(gpTri, gpMat, nBurst, 8, pTSP + nBurst * TSPWords);
+        } else
+#endif
+        {
+            PackISPPolygon(gpTri, gpMat, gpEdge, nBurst, TSPAddr >> 1, TSPWords >> 1);
+            /* all objects are of known TSP size */
+            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += TSPWords * nBurst;
+
+            if (pPerBuffn != NULL) {
+                /* Call additonal type specific handler */
+                pPerBuffn(pTSP, nBurst);
+            } else {
+                /* Call flat shading packer */
+                PackTSPFlat(gpTri, gpMat, nBurst, 2, pTSP);
+            }
+        }
+        SGL_TIME_STOP(SGLTRI_PACKTRI_TIME)
+        SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+    }
 }
 
 /**********************************************************************
@@ -888,169 +862,149 @@ static void ProcessD3DPolys (PVRHANDLE TexHeap, PPIR pPerPolyfn, PBPR pPerBuffn,
 **
 **********************************************************************/
 
-static void ProcessTris (PVRHANDLE TexHeap, 
-						 PPIR pPerPolyfn, 
-						 PBPR pPerBuffn, 
-						 sgl_uint32 TSPWords)
-{
-	sgl_uint32	TSPAddr, TSPInc;
-	sgl_uint32 	TSPSpaceAvailable;
-	sgl_uint32	*pTSP;
-	sgl_uint32	NewObject = TRUE;
-	
-	while ( gpPDC->nInputTriangles != 0 )
-	{
-		int nBurst;
-		
-		SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
-		SGL_TIME_START(SGLTRI_PROCESS_TIME)
+static void ProcessTris(PVRHANDLE TexHeap,
+                        PPIR pPerPolyfn,
+                        PBPR pPerBuffn,
+                        sgl_uint32 TSPWords) {
+    sgl_uint32 TSPAddr, TSPInc;
+    sgl_uint32 TSPSpaceAvailable;
+    sgl_uint32 *pTSP;
+    sgl_uint32 NewObject = TRUE;
 
-		/* Process as many as possible or all the remainder        */
-		gpMatCurrent = gpMat;			/* pPerPolyFn updates this */
+    while (gpPDC->nInputTriangles != 0) {
+        int nBurst;
 
-		nBurst = ProcessTriCoreLite ( pPerPolyfn, NewObject, 0);
-		NewObject = FALSE;
-		
-		SGL_TIME_STOP(SGLTRI_PROCESS_TIME)
-		SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_START(SGLTRI_PROCESS_TIME)
 
-		/* Process the content of the buffer */
-		SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
-		SGL_TIME_START(SGLTRI_PACKTRI_TIME)
-		
-		/*
-			Work out how many triangle's worth of data we can
-			actually put in there ...
-		*/
-		TSPSpaceAvailable = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferLimit -
-							PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
-		
-#if PCX2 || PCX2_003
-		if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) && 
-		   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/* calculate maximum possible TSP usage - haven't a clue
-			** what the actual usage is yet
-			*/
-			if (TSPSpaceAvailable < (nBurst * (TSPWords + 16)))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * (TSPWords + 16)))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= (TSPWords + 16);
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		else if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) || 
-				(gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/* calculate maximum possible TSP usage - haven't a clue
-			** what the actual usage is yet
-			*/
-			if (TSPSpaceAvailable < (nBurst * (TSPWords + 8)))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * (TSPWords + 8)))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= (TSPWords + 8);
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		else
-#endif
-		{
-			if (TSPSpaceAvailable < (nBurst * TSPWords))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * TSPWords))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= TSPWords;
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		/* Index of start of TSP parms */
-		TSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+        /* Process as many as possible or all the remainder        */
+        gpMatCurrent = gpMat;            /* pPerPolyFn updates this */
 
-		/* Get address of buffer in host-land */
-		pTSP = PVRParamBuffs[PVR_PARAM_TYPE_TSP].pBuffer + TSPAddr;
+        nBurst = ProcessTriCoreLite(pPerPolyfn, NewObject, 0);
+        NewObject = FALSE;
+
+        SGL_TIME_STOP(SGLTRI_PROCESS_TIME)
+        SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+
+        /* Process the content of the buffer */
+        SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_START(SGLTRI_PACKTRI_TIME)
+
+        /*
+            Work out how many triangle's worth of data we can
+            actually put in there ...
+        */
+        TSPSpaceAvailable = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferLimit -
+                            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
 
 #if PCX2 || PCX2_003
-		if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) || 
-		   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/*
-			** Note: all the TSP data for the extra planes is stored 
-			** after the data for the normal planes - thererfore 
-			** a TSP offset needs be calculted for the planes STP pointer
-			*/
+        if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) &&
+            (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /* calculate maximum possible TSP usage - haven't a clue
+            ** what the actual usage is yet
+            */
+            if (TSPSpaceAvailable < (nBurst * (TSPWords + 16))) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
 
-			TSPInc = PackISPTriExtra(gpTri, gpMat, nBurst, 
-									 TSPAddr >> 1, TSPWords >> 1);
-			/* don't know how much tsp space used till return */
-			PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += (TSPInc<<1);
+                if (TSPSpaceAvailable < (nBurst * (TSPWords + 16))) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
 
-			if ( pPerBuffn != NULL )
-			{
-				/* Call additonal type specific handler */
-				pPerBuffn (pTSP, nBurst);
-			}
-			else
-			{
-				/* Call flat shading packer */
-				PackTSPFlat (gpTri, gpMat, nBurst, 2, pTSP);
-			}
-			/* I'm not sure if the TSP offset is correct */
-			PackExtra(gpTri, gpMat, nBurst, 8, pTSP+nBurst*TSPWords);
-		}
-		else
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= (TSPWords + 16);
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        } else if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) ||
+                   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /* calculate maximum possible TSP usage - haven't a clue
+            ** what the actual usage is yet
+            */
+            if (TSPSpaceAvailable < (nBurst * (TSPWords + 8))) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
+
+                if (TSPSpaceAvailable < (nBurst * (TSPWords + 8))) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
+
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= (TSPWords + 8);
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        } else
 #endif
-		{
-			PackISPTri(gpTri, nBurst, TSPAddr >> 1, TSPWords >> 1);
-			/* all objects are of known TSP size */
-			PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += TSPWords * nBurst;
+        {
+            if (TSPSpaceAvailable < (nBurst * TSPWords)) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
 
-			if ( pPerBuffn != NULL )
-			{
-				/* Call additonal type specific handler */
-				pPerBuffn (pTSP, nBurst);
-			}
-			else
-			{
-				/* Call flat shading packer */
-				PackTSPFlat (gpTri, gpMat, nBurst, 2, pTSP);
-			}
-		}
+                if (TSPSpaceAvailable < (nBurst * TSPWords)) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
 
-		SGL_TIME_STOP(SGLTRI_PACKTRI_TIME)
-		SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
-	}
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= TSPWords;
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        }
+        /* Index of start of TSP parms */
+        TSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+
+        /* Get address of buffer in host-land */
+        pTSP = PVRParamBuffs[PVR_PARAM_TYPE_TSP].pBuffer + TSPAddr;
+
+#if PCX2 || PCX2_003
+        if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) ||
+            (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /*
+            ** Note: all the TSP data for the extra planes is stored
+            ** after the data for the normal planes - thererfore
+            ** a TSP offset needs be calculted for the planes STP pointer
+            */
+
+            TSPInc = PackISPTriExtra(gpTri, gpMat, nBurst,
+                                     TSPAddr >> 1, TSPWords >> 1);
+            /* don't know how much tsp space used till return */
+            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += (TSPInc << 1);
+
+            if (pPerBuffn != NULL) {
+                /* Call additonal type specific handler */
+                pPerBuffn(pTSP, nBurst);
+            } else {
+                /* Call flat shading packer */
+                PackTSPFlat(gpTri, gpMat, nBurst, 2, pTSP);
+            }
+            /* I'm not sure if the TSP offset is correct */
+            PackExtra(gpTri, gpMat, nBurst, 8, pTSP + nBurst * TSPWords);
+        } else
+#endif
+        {
+            PackISPTri(gpTri, nBurst, TSPAddr >> 1, TSPWords >> 1);
+            /* all objects are of known TSP size */
+            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += TSPWords * nBurst;
+
+            if (pPerBuffn != NULL) {
+                /* Call additonal type specific handler */
+                pPerBuffn(pTSP, nBurst);
+            } else {
+                /* Call flat shading packer */
+                PackTSPFlat(gpTri, gpMat, nBurst, 2, pTSP);
+            }
+        }
+
+        SGL_TIME_STOP(SGLTRI_PACKTRI_TIME)
+        SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+    }
 }
 
 /**********************************************************************
@@ -1060,169 +1014,149 @@ static void ProcessTris (PVRHANDLE TexHeap,
 **
 **********************************************************************/
 
-static void ProcessQuads (PVRHANDLE TexHeap, PPIR pPerPolyfn, PBPR pPerBuffn, sgl_uint32 TSPWords)
-{
-	sgl_uint32	TSPAddr, TSPInc;
-	sgl_uint32 	TSPSpaceAvailable;
-	sgl_uint32	*pTSP;
-	sgl_uint32	NewObject = TRUE;
-	
-	while ( gpPDC->nInputTriangles != 0 )
-	{
-		int nBurst;
-		
-		SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
-		SGL_TIME_START(SGLTRI_PROCESS_TIME)
+static void ProcessQuads(PVRHANDLE TexHeap, PPIR pPerPolyfn, PBPR pPerBuffn, sgl_uint32 TSPWords) {
+    sgl_uint32 TSPAddr, TSPInc;
+    sgl_uint32 TSPSpaceAvailable;
+    sgl_uint32 *pTSP;
+    sgl_uint32 NewObject = TRUE;
 
-		/* Process as many as possible or all the remainder        */
-		gpMatCurrent = gpMat;			/* pPerPolyFn updates this */
-		
-		nBurst = ProcessQuadCore ( pPerPolyfn, NewObject );
-		NewObject = FALSE;
-		
-		SGL_TIME_STOP(SGLTRI_PROCESS_TIME)
-		SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+    while (gpPDC->nInputTriangles != 0) {
+        int nBurst;
 
-		/* Process the content of the buffer */
-		SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
-		SGL_TIME_START(SGLTRI_PACKTRI_TIME)
-		
-		/*
-			Work out how many triangle's worth of data we can
-			actually put in there ...
-		*/
-		TSPSpaceAvailable = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferLimit -
-							PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
-		
-		
-#if PCX2 || PCX2_003
-		if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) && 
-		   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/* calculate maximum possible TSP usage - haven't a clue
-			** what the actual usage is yet
-			*/
-			if (TSPSpaceAvailable < (nBurst * (TSPWords + 16)))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * (TSPWords + 16)))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= (TSPWords + 16);
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		else if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) || 
-				(gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/* calculate maximum possible TSP usage - haven't a clue
-			** what the actual usage is yet
-			*/
-			if (TSPSpaceAvailable < (nBurst * (TSPWords + 8)))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
-				
-				if (TSPSpaceAvailable < (nBurst * (TSPWords + 8)))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-					
-					/*
-					  This division should only take place if the buffer
-					  is nearly full
-					  */
-					TSPSpaceAvailable /= (TSPWords + 8);
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
-		else
-#endif
-		{
-			if (TSPSpaceAvailable < (nBurst * TSPWords))
-			{
-				TSPSpaceAvailable = PVROSExtendTSPBuffer (gHLogicalDev);
+        SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_START(SGLTRI_PROCESS_TIME)
 
-				if (TSPSpaceAvailable < (nBurst * TSPWords))
-				{
-					/* buffer full so break after this pass */
-					gpPDC->nInputTriangles = 0;
-				
-					/*
-					   This division should only take place if the buffer
-				  	 is nearly full
-					*/
-					TSPSpaceAvailable /= TSPWords;
-					nBurst = TSPSpaceAvailable;
-				}
-			}
-		}
+        /* Process as many as possible or all the remainder        */
+        gpMatCurrent = gpMat;            /* pPerPolyFn updates this */
 
-		/* Index of start of TSP parms */
-		TSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+        nBurst = ProcessQuadCore(pPerPolyfn, NewObject);
+        NewObject = FALSE;
 
-		/* Get address of buffer in host-land */
-		pTSP = PVRParamBuffs[PVR_PARAM_TYPE_TSP].pBuffer + TSPAddr;
+        SGL_TIME_STOP(SGLTRI_PROCESS_TIME)
+        SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+
+        /* Process the content of the buffer */
+        SGL_TIME_SUSPEND(SGLTRI_TRIANGLES_TIME)
+        SGL_TIME_START(SGLTRI_PACKTRI_TIME)
+
+        /*
+            Work out how many triangle's worth of data we can
+            actually put in there ...
+        */
+        TSPSpaceAvailable = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferLimit -
+                            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+
 
 #if PCX2 || PCX2_003
-		if((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) || 
-		   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)))
-		{
-			/*
-			** Note: all the TSP data for the extra planes is stored 
-			** after the data for the normal planes - thererfore 
-			** a TSP offset needs be calculted for the planes STP pointer
-			*/
+        if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) &&
+            (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /* calculate maximum possible TSP usage - haven't a clue
+            ** what the actual usage is yet
+            */
+            if (TSPSpaceAvailable < (nBurst * (TSPWords + 16))) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
 
-			TSPInc = PackISPPolygonExtra (gpTri, gpMat, gpEdge, nBurst,
-									 TSPAddr >> 1, TSPWords >> 1);
+                if (TSPSpaceAvailable < (nBurst * (TSPWords + 16))) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
 
-			/* don't know how much tsp space used till return */
-			PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += (TSPInc<<1);
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= (TSPWords + 16);
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        } else if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) ||
+                   (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /* calculate maximum possible TSP usage - haven't a clue
+            ** what the actual usage is yet
+            */
+            if (TSPSpaceAvailable < (nBurst * (TSPWords + 8))) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
 
-			if ( pPerBuffn != NULL )
-			{
-				/* Call additonal type specific handler */
-				pPerBuffn (pTSP, nBurst);
-			}
-			else
-			{
-				/* Call flat shading packer */
-				PackTSPFlat (gpTri, gpMat, nBurst, 2, pTSP);
-			}
-			/* I'm not sure if the TSP offset is correct */
-			PackExtra(gpTri, gpMat, nBurst, 8, pTSP+nBurst*TSPWords);
-		}
-		else
+                if (TSPSpaceAvailable < (nBurst * (TSPWords + 8))) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
+
+                    /*
+                      This division should only take place if the buffer
+                      is nearly full
+                      */
+                    TSPSpaceAvailable /= (TSPWords + 8);
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        } else
 #endif
-		{
-			PackISPPolygon (gpTri, gpMat, gpEdge, nBurst, TSPAddr >> 1, TSPWords >> 1);
-			/* all objects are of known TSP size */
-			PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += TSPWords * nBurst;
-		
-			if ( pPerBuffn != NULL )
-			{
-				/* Call additonal type specific handler */
-				pPerBuffn (pTSP, nBurst);
-			}
-			else
-			{
-				/* Call flat shading packer */
-				PackTSPFlat (gpTri, gpMat, nBurst, 2, pTSP);
-			}
-		}
+        {
+            if (TSPSpaceAvailable < (nBurst * TSPWords)) {
+                TSPSpaceAvailable = PVROSExtendTSPBuffer(gHLogicalDev);
 
-		SGL_TIME_STOP(SGLTRI_PACKTRI_TIME)
-		SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
-	}
+                if (TSPSpaceAvailable < (nBurst * TSPWords)) {
+                    /* buffer full so break after this pass */
+                    gpPDC->nInputTriangles = 0;
+
+                    /*
+                       This division should only take place if the buffer
+                       is nearly full
+                    */
+                    TSPSpaceAvailable /= TSPWords;
+                    nBurst = TSPSpaceAvailable;
+                }
+            }
+        }
+
+        /* Index of start of TSP parms */
+        TSPAddr = PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos;
+
+        /* Get address of buffer in host-land */
+        pTSP = PVRParamBuffs[PVR_PARAM_TYPE_TSP].pBuffer + TSPAddr;
+
+#if PCX2 || PCX2_003
+        if ((gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) ||
+            (gpPDC->Context.u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))) {
+            /*
+            ** Note: all the TSP data for the extra planes is stored
+            ** after the data for the normal planes - thererfore
+            ** a TSP offset needs be calculted for the planes STP pointer
+            */
+
+            TSPInc = PackISPPolygonExtra(gpTri, gpMat, gpEdge, nBurst,
+                                         TSPAddr >> 1, TSPWords >> 1);
+
+            /* don't know how much tsp space used till return */
+            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += (TSPInc << 1);
+
+            if (pPerBuffn != NULL) {
+                /* Call additonal type specific handler */
+                pPerBuffn(pTSP, nBurst);
+            } else {
+                /* Call flat shading packer */
+                PackTSPFlat(gpTri, gpMat, nBurst, 2, pTSP);
+            }
+            /* I'm not sure if the TSP offset is correct */
+            PackExtra(gpTri, gpMat, nBurst, 8, pTSP + nBurst * TSPWords);
+        } else
+#endif
+        {
+            PackISPPolygon(gpTri, gpMat, gpEdge, nBurst, TSPAddr >> 1, TSPWords >> 1);
+            /* all objects are of known TSP size */
+            PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += TSPWords * nBurst;
+
+            if (pPerBuffn != NULL) {
+                /* Call additonal type specific handler */
+                pPerBuffn(pTSP, nBurst);
+            } else {
+                /* Call flat shading packer */
+                PackTSPFlat(gpTri, gpMat, nBurst, 2, pTSP);
+            }
+        }
+
+        SGL_TIME_STOP(SGLTRI_PACKTRI_TIME)
+        SGL_TIME_RESUME(SGLTRI_TRIANGLES_TIME)
+    }
 }
 
 /*
@@ -1243,7 +1177,7 @@ typedef struct
   PTEXTURESPEC pTextureSpec;
   MNODE_BLOCK MemBlock;
 
-} TPRIVATEDATA;	
+} TPRIVATEDATA;
 #endif /* PCX2_003 */
 
 #ifdef DLL_METRIC
@@ -1252,577 +1186,495 @@ extern sgl_uint32 nTransPolygonsInFrame, nOpaquePolygonsInFrame;
 
 extern DEVICE_REGION_INFO_STRUCT RegionInfo; /* In dregion.c */
 
-void DirectPolygons ( PVRHANDLE TexHeap,
-					  PSGLCONTEXT  pContext,
-						int  nNumFaces,
-					    int  pFaces[][3],
-						PSGLVERTEX  pVertices,
-						sgl_bool bQuads )
-{
-	TEXAS_PRECOMP_STRUCT  TPS;
-	PIFUNCBLOCK			  pFuncBlock;
-	PPIR				  fnPerPoly;
-	sgl_uint32			  uFuncBlockIndex;
-	sgl_int32 			  ISPSpaceAvailable;
-	sgl_uint32            nExtraPlanes = 0;  
+void DirectPolygons(PVRHANDLE TexHeap,
+                    PSGLCONTEXT pContext,
+                    int nNumFaces,
+                    int pFaces[][3],
+                    PSGLVERTEX pVertices,
+                    sgl_bool bQuads) {
+    TEXAS_PRECOMP_STRUCT TPS;
+    PIFUNCBLOCK pFuncBlock;
+    PPIR fnPerPoly;
+    sgl_uint32 uFuncBlockIndex;
+    sgl_int32 ISPSpaceAvailable;
+    sgl_uint32 nExtraPlanes = 0;
 
-	ISPSpaceAvailable = ( (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) -
-						  (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos) );
+    ISPSpaceAvailable = ((PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit) -
+                         (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferPos));
 
 
-	/* Calculate extra planes needed for pervertex for and gouraud highlights */
-	/* this will be the maximum - we might not need all this as if we detect
-	** that a poly has zero fog  we will not add the extra plane used for
-	** fogging
-	*/
-	if(pContext->u32Flags & SGLTT_VERTEXFOG)
-	{
-		nExtraPlanes++;
-	}
+    /* Calculate extra planes needed for pervertex for and gouraud highlights */
+    /* this will be the maximum - we might not need all this as if we detect
+    ** that a poly has zero fog  we will not add the extra plane used for
+    ** fogging
+    */
+    if (pContext->u32Flags & SGLTT_VERTEXFOG) {
+        nExtraPlanes++;
+    }
 
-	if(pContext->u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD))
-	{
-		nExtraPlanes++;
-	}
+    if (pContext->u32Flags & (SGLTT_HIGHLIGHT | SGLTT_GOURAUD)) {
+        nExtraPlanes++;
+    }
 
-	if(pContext->u32Flags & SGLTT_DEPTHBIAS)
-	{
-		gfDepthBias = BOGUSINVZ_INCREMENT * (float)(pContext->uDepthBias);
-	}
-	else
-	{
-		gfDepthBias = 0.0f;
-	}
+    if (pContext->u32Flags & SGLTT_DEPTHBIAS) {
+        gfDepthBias = BOGUSINVZ_INCREMENT * (float) (pContext->uDepthBias);
+    } else {
+        gfDepthBias = 0.0f;
+    }
 
-	if ( ISPSpaceAvailable < (nNumFaces * WORDS_PER_PLANE * 
-							  (4 + bQuads + nExtraPlanes)) )
-	{
-		if (ISPSpaceAvailable > 0)
-		{
-			/* only once per frame! */
+    if (ISPSpaceAvailable < (nNumFaces * WORDS_PER_PLANE *
+                             (4 + bQuads + nExtraPlanes))) {
+        if (ISPSpaceAvailable > 0) {
+            /* only once per frame! */
 
-			if (bQuads && !nExtraPlanes)
-			{
-				nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * 5);
-			}
-			else if(bQuads && nExtraPlanes)
-			{
-				nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * (5+nExtraPlanes));
-			}
-			else if(nExtraPlanes)
-			{
-				nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * (4+nExtraPlanes));
-			}
-			else
-			{
-				nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * 4);
-			}
-		}
-		else
-		{
-			DPFDEV ((DBG_ERROR, "DirectPolygons: ISP space overflowing"));
-			return;
-		}
-	}
+            if (bQuads && !nExtraPlanes) {
+                nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * 5);
+            } else if (bQuads && nExtraPlanes) {
+                nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * (5 + nExtraPlanes));
+            } else if (nExtraPlanes) {
+                nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * (4 + nExtraPlanes));
+            } else {
+                nNumFaces = ISPSpaceAvailable / (WORDS_PER_PLANE * 4);
+            }
+        } else {
+            DPFDEV ((DBG_ERROR, "DirectPolygons: ISP space overflowing"));
+            return;
+        }
+    }
 
-	/* ini PDC */
-	gpPDC->Context = *pContext; 
-	gpPDC->nInputTriangles = nNumFaces;
-	gpPDC->pVertices = pVertices; 
-	gpPDC->pFace = pFaces;
+    /* ini PDC */
+    gpPDC->Context = *pContext;
+    gpPDC->nInputTriangles = nNumFaces;
+    gpPDC->pVertices = pVertices;
+    gpPDC->pFace = pFaces;
 
-	/*
-	// init TSP control word to 0 or not fogged
-	*/
+    /*
+    // init TSP control word to 0 or not fogged
+    */
 
-	if (!gpPDC->Context.bFogOn)
-	{
-		gpPDC->TSPControlWord = MASK_DISABLE_FOG;
-	}
-	else
-	{
-		gpPDC->TSPControlWord = 0;
-		FogUsed = 1;
-	}
+    if (!gpPDC->Context.bFogOn) {
+        gpPDC->TSPControlWord = MASK_DISABLE_FOG;
+    } else {
+        gpPDC->TSPControlWord = 0;
+        FogUsed = 1;
+    }
 
-	/* Need to set the Boguz Inv Z value if it is provided by the user.
-	 * This is to be used for the ISP in the depth calculation.
-	 */
-	if (gpPDC->Context.u32Flags & SGLTT_BOGUSINVZPROVIDED)
-	{
-		/* Read the bogus inverse Z provided.
-		 * Scale the value correctly.
-		 */
-		gfBogusInvZ = (gpPDC->Context.fBogusInvZ * fMinInvZ);
-	}
+    /* Need to set the Boguz Inv Z value if it is provided by the user.
+     * This is to be used for the ISP in the depth calculation.
+     */
+    if (gpPDC->Context.u32Flags & SGLTT_BOGUSINVZPROVIDED) {
+        /* Read the bogus inverse Z provided.
+         * Scale the value correctly.
+         */
+        gfBogusInvZ = (gpPDC->Context.fBogusInvZ * fMinInvZ);
+    }
 
-	/*
-	// work out which function block we are using
-	*/
-	uFuncBlockIndex = gpPDC->Context.u32Flags & (SGLTT_GOURAUD | SGLTT_TEXTURE | SGLTT_HIGHLIGHT);
+    /*
+    // work out which function block we are using
+    */
+    uFuncBlockIndex = gpPDC->Context.u32Flags & (SGLTT_GOURAUD | SGLTT_TEXTURE | SGLTT_HIGHLIGHT);
 
-	if (gpPDC->Context.u32Flags & SGLTT_AVERAGECOLOUR)
-	{
-		if (gpPDC->Context.eShadowLightVolMode == NO_SHADOWS_OR_LIGHTVOLS)
-		{
-			if(gpPDC->Context.u32Flags & SGLTT_VERTEXFOG)
-			{
-				sgl_uint32 uFogColour;
+    if (gpPDC->Context.u32Flags & SGLTT_AVERAGECOLOUR) {
+        if (gpPDC->Context.eShadowLightVolMode == NO_SHADOWS_OR_LIGHTVOLS) {
+            if (gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) {
+                sgl_uint32 uFogColour;
 
-				uFogColour = 
-					((sgl_uint32)(gpPDC->Context.fFogR*255)<<16) |
-					((sgl_uint32)(gpPDC->Context.fFogG*255)<<8) |
-					((sgl_uint32)(gpPDC->Context.fFogB*255));
+                uFogColour =
+                        ((sgl_uint32) (gpPDC->Context.fFogR * 255) << 16) |
+                        ((sgl_uint32) (gpPDC->Context.fFogG * 255) << 8) |
+                        ((sgl_uint32) (gpPDC->Context.fFogB * 255));
 
-				gpPDC->VFogTSPControlWord[0] = ((uFogColour >> 16) & 0x000000FF);
-				gpPDC->VFogTSPControlWord[0] |= (MASK_TEXTURE | MASK_TRANS | MASK_DISABLE_FOG);
-				gpPDC->VFogTSPControlWord[1] = (uFogColour << 16);
-				pFuncBlock = NoVolAverageVFogFuncs;
-			}
-			else
+                gpPDC->VFogTSPControlWord[0] = ((uFogColour >> 16) & 0x000000FF);
+                gpPDC->VFogTSPControlWord[0] |= (MASK_TEXTURE | MASK_TRANS | MASK_DISABLE_FOG);
+                gpPDC->VFogTSPControlWord[1] = (uFogColour << 16);
+                pFuncBlock = NoVolAverageVFogFuncs;
+            } else
 #if 0
-			if (gpPDC->Context.u32Flags & SGLTT_NATIVESHADING)
-			{
-				pFuncBlock = NoVolAverageNativeFuncs;
-			}
-			else
+                if (gpPDC->Context.u32Flags & SGLTT_NATIVESHADING)
+                {
+                    pFuncBlock = NoVolAverageNativeFuncs;
+                }
+                else
 #endif
-			{
-				pFuncBlock = NoVolAverageFuncs;
-			}
-		}
-		else
-		{
-			if (gpPDC->Context.eShadowLightVolMode == ENABLE_SHADOWS)
-			{
-				pFuncBlock = ShadowAverageFuncs;
-			}
-			else
-			{
-				pFuncBlock = LightVolAverageFuncs;
-			}
-		}
-	}
-	else
-	{
-		if (gpPDC->Context.eShadowLightVolMode == NO_SHADOWS_OR_LIGHTVOLS)
-		{
-			if(gpPDC->Context.u32Flags & SGLTT_VERTEXFOG)
-			{
-				sgl_uint32 uFogColour;
+            {
+                pFuncBlock = NoVolAverageFuncs;
+            }
+        } else {
+            if (gpPDC->Context.eShadowLightVolMode == ENABLE_SHADOWS) {
+                pFuncBlock = ShadowAverageFuncs;
+            } else {
+                pFuncBlock = LightVolAverageFuncs;
+            }
+        }
+    } else {
+        if (gpPDC->Context.eShadowLightVolMode == NO_SHADOWS_OR_LIGHTVOLS) {
+            if (gpPDC->Context.u32Flags & SGLTT_VERTEXFOG) {
+                sgl_uint32 uFogColour;
 
-				uFogColour = 
-					((sgl_uint32)(gpPDC->Context.fFogR*255)<<16) |
-					((sgl_uint32)(gpPDC->Context.fFogG*255)<<8) |
-					((sgl_uint32)(gpPDC->Context.fFogB*255));
+                uFogColour =
+                        ((sgl_uint32) (gpPDC->Context.fFogR * 255) << 16) |
+                        ((sgl_uint32) (gpPDC->Context.fFogG * 255) << 8) |
+                        ((sgl_uint32) (gpPDC->Context.fFogB * 255));
 
-				gpPDC->VFogTSPControlWord[0] = ((uFogColour >> 16) & 0x000000FF);
-				gpPDC->VFogTSPControlWord[0] |= (MASK_TEXTURE | MASK_TRANS | MASK_DISABLE_FOG);
-				gpPDC->VFogTSPControlWord[1] = (uFogColour << 16);
-				pFuncBlock = NoVolVFogFuncs;
-			}
-			else
+                gpPDC->VFogTSPControlWord[0] = ((uFogColour >> 16) & 0x000000FF);
+                gpPDC->VFogTSPControlWord[0] |= (MASK_TEXTURE | MASK_TRANS | MASK_DISABLE_FOG);
+                gpPDC->VFogTSPControlWord[1] = (uFogColour << 16);
+                pFuncBlock = NoVolVFogFuncs;
+            } else
 #if 0
-			if (gpPDC->Context.u32Flags & SGLTT_NATIVESHADING)
-			{
-				pFuncBlock = NoVolNativeFuncs;
-			}
-			else
+                if (gpPDC->Context.u32Flags & SGLTT_NATIVESHADING)
+                {
+                    pFuncBlock = NoVolNativeFuncs;
+                }
+                else
 #endif
-			{
-				pFuncBlock = NoVolFuncs;
-			}
-		}
-		else
-		{
-			if (gpPDC->Context.eShadowLightVolMode == ENABLE_SHADOWS)
-			{
-				pFuncBlock = ShadowFuncs;
-			}
-			else
-			{
-				pFuncBlock = LightVolFuncs;
-			}
-		}
+            {
+                pFuncBlock = NoVolFuncs;
+            }
+        } else {
+            if (gpPDC->Context.eShadowLightVolMode == ENABLE_SHADOWS) {
+                pFuncBlock = ShadowFuncs;
+            } else {
+                pFuncBlock = LightVolFuncs;
+            }
+        }
 
-	} /* if average colour ... else */
+    } /* if average colour ... else */
 
 
-	/* set up for global translucency if necessary */
+    /* set up for global translucency if necessary */
 
-	if ((gpPDC->Context.u32Flags & SGLTT_GLOBALTRANS) 
-		&& (gpPDC->Context.u32GlobalTrans < 0xF0))
-	{
-		uFuncBlockIndex |= 0x08;		
+    if ((gpPDC->Context.u32Flags & SGLTT_GLOBALTRANS)
+        && (gpPDC->Context.u32GlobalTrans < 0xF0)) {
+        uFuncBlockIndex |= 0x08;
 
-		if (!(gpPDC->Context.u32Flags & SGLTT_VERTEXTRANS))
-		{
-			sgl_uint32 Alpha = 0xF - (gpPDC->Context.u32GlobalTrans >> 4);
-			gpPDC->TSPControlWord |= Alpha << 13;
-		}
-	}
-	
-	/* 
-	// set up for vertex trans 
-	// To speed up the Vertex translucency averaging calc,
-	// pre-compute 85 * the global trans value / 128.
-	*/
-	if (gpPDC->Context.u32Flags & SGLTT_VERTEXTRANS)
-	{
-		uFuncBlockIndex |= 0x10;
-		gpPDC->u32GlobalTransBy85div128 = (85 * gpPDC->Context.u32GlobalTrans) >> 7;
-	}
-	
+        if (!(gpPDC->Context.u32Flags & SGLTT_VERTEXTRANS)) {
+            sgl_uint32 Alpha = 0xF - (gpPDC->Context.u32GlobalTrans >> 4);
+            gpPDC->TSPControlWord |= Alpha << 13;
+        }
+    }
+
+    /*
+    // set up for vertex trans
+    // To speed up the Vertex translucency averaging calc,
+    // pre-compute 85 * the global trans value / 128.
+    */
+    if (gpPDC->Context.u32Flags & SGLTT_VERTEXTRANS) {
+        uFuncBlockIndex |= 0x10;
+        gpPDC->u32GlobalTransBy85div128 = (85 * gpPDC->Context.u32GlobalTrans) >> 7;
+    }
+
 #if PCX2_003
 
-	/* Set the (few) blending modes that we have */
-	if (!(gPDC.Context.u32Flags & SGLTT_BLENDDISABLE))
-	{
-		/* Source */
-		switch (gpPDC->Context.uBlendModes & 0xFF)
-		{
-			case sgl_blend_zero: /* Ignore */
-				gpPDC->TSPControlWord &= ~MASK_BLEND_ALPHA;
-				break; 
-			case sgl_blend_one: /* Set alpha bit */
-				gpPDC->TSPControlWord |= MASK_BLEND_ALPHA | MASK_TRANS;
-				break;
-			case sgl_blend_srcalpha: /* Clear alpha bit */
-				gpPDC->TSPControlWord &= ~MASK_BLEND_ALPHA;
-				break;
-		}
-		/* Destination */
-		switch ((gpPDC->Context.uBlendModes >> 8) & 0xFF)
-		{
-			case sgl_blend_zero: /* Ignore */
-				gpPDC->TSPControlWord &= ~MASK_BLEND_ONE_OVER_ALPHA;
-				break; 
-			case sgl_blend_one: /* Set 1/alpha bit */
-				gpPDC->TSPControlWord |= MASK_BLEND_ONE_OVER_ALPHA | MASK_TRANS | MASK_GLOBAL_TRANS;
-				break;
-			case sgl_blend_invsrcalpha: /* Clear 1/alpha bit */
-				gpPDC->TSPControlWord &= ~MASK_BLEND_ONE_OVER_ALPHA;
-				break;
-		}
-	}
+    /* Set the (few) blending modes that we have */
+    if (!(gPDC.Context.u32Flags & SGLTT_BLENDDISABLE))
+    {
+        /* Source */
+        switch (gpPDC->Context.uBlendModes & 0xFF)
+        {
+            case sgl_blend_zero: /* Ignore */
+                gpPDC->TSPControlWord &= ~MASK_BLEND_ALPHA;
+                break;
+            case sgl_blend_one: /* Set alpha bit */
+                gpPDC->TSPControlWord |= MASK_BLEND_ALPHA | MASK_TRANS;
+                break;
+            case sgl_blend_srcalpha: /* Clear alpha bit */
+                gpPDC->TSPControlWord &= ~MASK_BLEND_ALPHA;
+                break;
+        }
+        /* Destination */
+        switch ((gpPDC->Context.uBlendModes >> 8) & 0xFF)
+        {
+            case sgl_blend_zero: /* Ignore */
+                gpPDC->TSPControlWord &= ~MASK_BLEND_ONE_OVER_ALPHA;
+                break;
+            case sgl_blend_one: /* Set 1/alpha bit */
+                gpPDC->TSPControlWord |= MASK_BLEND_ONE_OVER_ALPHA | MASK_TRANS | MASK_GLOBAL_TRANS;
+                break;
+            case sgl_blend_invsrcalpha: /* Clear 1/alpha bit */
+                gpPDC->TSPControlWord &= ~MASK_BLEND_ONE_OVER_ALPHA;
+                break;
+        }
+    }
 
 #endif /* PCX2_003 */
-	
-	/* Y coordinate is in LINES NOT normal REGIONS */
-	gpPDC->Context.FirstYRegion *= RegionInfo.YSize;
-	
-	if ( ( (gpPDC->Context.LastYRegion+1) <= RegionInfo.NumYRegions ) ||
-		 ( !RegionInfo.HasLeftOver ) )
-	{
-		/* Calculate accurate end of the Y Region */
-		gpPDC->Context.LastYRegion = ( ( gpPDC->Context.LastYRegion + 1 ) *
-									 RegionInfo.YSize ) - 1;
-	}
-	else
-	{
-		/* Last region was not full size, go to last line on screen */
-		gpPDC->Context.LastYRegion = ( ( RegionInfo.NumYRegions - 1 ) *
-									 RegionInfo.YSize ) + RegionInfo.LeftOverY;
-	}
-	
-	/* XRegion scaling can be achieved with a shift */
-	gpPDC->ShiftRegX = 5;		/* Start at 32 */
-	
-	if ( RegionInfo.XSize > (1<<gpPDC->ShiftRegX) )
-	{
-		do
-		{
-			/* Larger shifts, for 64 perhaps */
-			gpPDC->ShiftRegX++;
-		}
-		while ( RegionInfo.XSize > (1<<gpPDC->ShiftRegX) );
-	}
-	else
-	{
-		while ( RegionInfo.XSize < (1<<gpPDC->ShiftRegX) )
-		{
-			/* Smaller Shifts ??? lets be future proof */
-			gpPDC->ShiftRegX--;
-		}
-	}
-	
-	ASSERT( ( RegionInfo.XSize == (1<<gpPDC->ShiftRegX) ) );
-	
-	/* validate the texture if it's there */
-	ProcessFlatTexFn = NULL;	
 
-	if (gpPDC->Context.u32Flags & SGLTT_TEXTURE)
-	{
-		sgl_bool	fTexIsOK = TRUE;
-		HTEXTURE hTexture;
-		int			nIndex = 0;
+    /* Y coordinate is in LINES NOT normal REGIONS */
+    gpPDC->Context.FirstYRegion *= RegionInfo.YSize;
+
+    if (((gpPDC->Context.LastYRegion + 1) <= RegionInfo.NumYRegions) ||
+        (!RegionInfo.HasLeftOver)) {
+        /* Calculate accurate end of the Y Region */
+        gpPDC->Context.LastYRegion = ((gpPDC->Context.LastYRegion + 1) *
+                                      RegionInfo.YSize) - 1;
+    } else {
+        /* Last region was not full size, go to last line on screen */
+        gpPDC->Context.LastYRegion = ((RegionInfo.NumYRegions - 1) *
+                                      RegionInfo.YSize) + RegionInfo.LeftOverY;
+    }
+
+    /* XRegion scaling can be achieved with a shift */
+    gpPDC->ShiftRegX = 5;        /* Start at 32 */
+
+    if (RegionInfo.XSize > (1 << gpPDC->ShiftRegX)) {
+        do {
+            /* Larger shifts, for 64 perhaps */
+            gpPDC->ShiftRegX++;
+        } while (RegionInfo.XSize > (1 << gpPDC->ShiftRegX));
+    } else {
+        while (RegionInfo.XSize < (1 << gpPDC->ShiftRegX)) {
+            /* Smaller Shifts ??? lets be future proof */
+            gpPDC->ShiftRegX--;
+        }
+    }
+
+    ASSERT((RegionInfo.XSize == (1 << gpPDC->ShiftRegX)));
+
+    /* validate the texture if it's there */
+    ProcessFlatTexFn = NULL;
+
+    if (gpPDC->Context.u32Flags & SGLTT_TEXTURE) {
+        sgl_bool fTexIsOK = TRUE;
+        HTEXTURE hTexture;
+        int nIndex;
 #if PCX2_003
-		TPRIVATEDATA *pTPD;
-		sgl_bool	HasTranslucent = FALSE;
+        TPRIVATEDATA *pTPD;
+        sgl_bool	HasTranslucent = FALSE;
 #endif
 
-		if (hTexture = GetTextureHandle (gpPDC->Context.nTextureName))
-		{			
-			TPS.TexAddress = hTexture->TSPTextureControlWord;
-			gpPDC->invTexSize = TexasGetInvTextureDimension (&TPS);
-			gpPDC->TexSize = 1.0f/gpPDC->invTexSize;
+        hTexture = GetTextureHandle(gpPDC->Context.nTextureName);
+        if (hTexture != NULL) {
+            TPS.TexAddress = hTexture->TSPTextureControlWord;
+            gpPDC->invTexSize = TexasGetInvTextureDimension(&TPS);
+            gpPDC->TexSize = 1.0f / gpPDC->invTexSize;
 #if PCX2_003
-			/*  SGL set translucent flag from the value of AlphaMask  */
-			pTPD = hTexture->pPrivateData;
-			
-			if(!(gpPDC->Context.u32Flags & SGLTT_BLENDDISABLE))
-			{
-				if ((pTPD->pTextureSpec->pFormat->AlphaMask == 0x0000F000) ||
-					(pTPD->pTextureSpec->pFormat->AlphaMask == 0x00008000))
-				{
-					HasTranslucent =  TRUE;
-				}
-			}
+            /*  SGL set translucent flag from the value of AlphaMask  */
+            pTPD = hTexture->pPrivateData;
+
+            if(!(gpPDC->Context.u32Flags & SGLTT_BLENDDISABLE))
+            {
+                if ((pTPD->pTextureSpec->pFormat->AlphaMask == 0x0000F000) ||
+                    (pTPD->pTextureSpec->pFormat->AlphaMask == 0x00008000))
+                {
+                    HasTranslucent =  TRUE;
+                }
+            }
 #endif
-		}
-		else
-		{
-			fTexIsOK = FALSE;
-		}
-		
-		if (fTexIsOK)
-		{
-			gpPDC->TexAddress = TPS.TexAddress;
-			TPS.LowWord = MASK_TEXTURE;
-			
-#if PCX2_003			
-			/* Need to set flag to indicate if bilinear filtering enabled.
-			 * Has to be done here since it requires the result of ->invTexSize.
-			 */
-	  		if (gpPDC->Context.u32Flags & SGLTT_BILINEAR)
-			{
-				gpPDC->fHalfTexel = gpPDC->invTexSize * 0.5f;						
-				gpPDC->TSPControlWord |= MASK_BILINEAR;
-			}
-			else
-			{
-				gpPDC->fHalfTexel = 0.0f;
-			}
+        } else {
+            fTexIsOK = FALSE;
+        }
+
+        if (fTexIsOK) {
+            gpPDC->TexAddress = TPS.TexAddress;
+            TPS.LowWord = MASK_TEXTURE;
+
+#if PCX2_003
+            /* Need to set flag to indicate if bilinear filtering enabled.
+             * Has to be done here since it requires the result of ->invTexSize.
+             */
+              if (gpPDC->Context.u32Flags & SGLTT_BILINEAR)
+            {
+                gpPDC->fHalfTexel = gpPDC->invTexSize * 0.5f;
+                gpPDC->TSPControlWord |= MASK_BILINEAR;
+            }
+            else
+            {
+                gpPDC->fHalfTexel = 0.0f;
+            }
 #elif PCX2
-			/* We have overriden the application settings so fix texel if
-			 * bilinear.
-			 */
-			if (bBilinearEnabled)
-			{
-		  		gpPDC->fHalfTexel = gpPDC->invTexSize * 0.5f;
-			}
-			else
-			{
-				gpPDC->fHalfTexel = 0.0f;
-			}
+            /* We have overriden the application settings so fix texel if
+             * bilinear.
+             */
+            if (bBilinearEnabled) {
+                gpPDC->fHalfTexel = gpPDC->invTexSize * 0.5f;
+            } else {
+                gpPDC->fHalfTexel = 0.0f;
+            }
 #else
-			/* Any card other than PCX2 family is assumed to be non-Bilinear.*/
-			gpPDC->fHalfTexel = 0.0f;
+            /* Any card other than PCX2 family is assumed to be non-Bilinear.*/
+            gpPDC->fHalfTexel = 0.0f;
 #endif
 
-			if (gpPDC->Context.bFlipU)
-			{
-				gpPDC->TSPControlWord |= MASK_FLIP_U;
-			}
+            if (gpPDC->Context.bFlipU) {
+                gpPDC->TSPControlWord |= MASK_FLIP_U;
+            }
 
-			if (gpPDC->Context.bFlipV)
-			{
-				gpPDC->TSPControlWord |= MASK_FLIP_V;
-			}
-		
+            if (gpPDC->Context.bFlipV) {
+                gpPDC->TSPControlWord |= MASK_FLIP_V;
+            }
+
 #if PCX2_003
-	  	   	if (HasTranslucent)
-#else		
-			if (TPS.TexAddress & MASK_4444_555)
+            if (HasTranslucent)
+#else
+            if (TPS.TexAddress & MASK_4444_555)
 #endif
-			{
-				gpPDC->TSPControlWord |= MASK_TRANS;
-				/* if it is a translucent texture we should make sure and
-				** flatten off smooth shading if there are shadows or L-Vs
-				** i.e. treat it as if global translucency is set 
-				*/
-				#define SMFLATTENMASK	(SGLTT_GOURAUD | SGLTT_GLOBALTRANS | SGLTT_VERTEXTRANS)
-				#define SMFLATTENRESULT	(SGLTT_GOURAUD)
-				
-				if (((gpPDC->Context.u32Flags & SMFLATTENMASK) == SMFLATTENRESULT)
-					&& (gpPDC->Context.eShadowLightVolMode != NO_SHADOWS_OR_LIGHTVOLS))
-				{
-					/* 
-					   no need to worry about the actual global trans
-					   value in TSPControlWord, it's 0 by default
-					*/
-					uFuncBlockIndex |= 0x08;
-				}
-			}
+            {
+                gpPDC->TSPControlWord |= MASK_TRANS;
+                /* if it is a translucent texture we should make sure and
+                ** flatten off smooth shading if there are shadows or L-Vs
+                ** i.e. treat it as if global translucency is set
+                */
+#define SMFLATTENMASK    (SGLTT_GOURAUD | SGLTT_GLOBALTRANS | SGLTT_VERTEXTRANS)
+#define SMFLATTENRESULT    (SGLTT_GOURAUD)
 
-			if (gpPDC->Context.u32Flags & SGLTT_MIPMAPOFFSET)
-			{
-				gpPDC->n32MipmapOffset = gpPDC->Context.n32MipmapOffset;
-			}
+                if (((gpPDC->Context.u32Flags & SMFLATTENMASK) == SMFLATTENRESULT)
+                    && (gpPDC->Context.eShadowLightVolMode != NO_SHADOWS_OR_LIGHTVOLS)) {
+                    /*
+                       no need to worry about the actual global trans
+                       value in TSPControlWord, it's 0 by default
+                    */
+                    uFuncBlockIndex |= 0x08;
+                }
+            }
 
-			/* One version does all. Bilinear and Non bilinear.
-			 */
-			if (gpPDC->Context.bDoUVTimesInvW)
-			{
-				/* Setup correct process texture handler. 8 choices:
-				 *
-				 *		0. D3D flat texture, perspective correct.
-				 *		1. D3D flat texture, wrap U, perspective correct.
-				 *		2. D3D flat texture, wrap V, perspective correct.
-				 *		3. D3D flat texture, wrap U, wrap V, perspective correct.
-				 *		4. D3D flat texture, non-perspective correct.
-				 *		5. D3D flat texture, wrap U, non-perspective correct.
-				 *		6. D3D flat texture, wrap V, non-perspective correct.
-				 *		7. D3D flat texture, wrap U, wrap V, non-perspective correct.
-				 */
-				/* Determine which function to call.
-				 */
-				nIndex = 0;
+            if (gpPDC->Context.u32Flags & SGLTT_MIPMAPOFFSET) {
+                gpPDC->n32MipmapOffset = gpPDC->Context.n32MipmapOffset;
+            }
 
-				if (gpPDC->Context.u32Flags & SGLTT_WRAPU)
-					nIndex += 0x1;
+            /* One version does all. Bilinear and Non bilinear.
+             */
+            if (gpPDC->Context.bDoUVTimesInvW) {
+                /* Setup correct process texture handler. 8 choices:
+                 *
+                 *		0. D3D flat texture, perspective correct.
+                 *		1. D3D flat texture, wrap U, perspective correct.
+                 *		2. D3D flat texture, wrap V, perspective correct.
+                 *		3. D3D flat texture, wrap U, wrap V, perspective correct.
+                 *		4. D3D flat texture, non-perspective correct.
+                 *		5. D3D flat texture, wrap U, non-perspective correct.
+                 *		6. D3D flat texture, wrap V, non-perspective correct.
+                 *		7. D3D flat texture, wrap U, wrap V, non-perspective correct.
+                 */
+                /* Determine which function to call.
+                 */
+                nIndex = 0;
 
-				if (gpPDC->Context.u32Flags & SGLTT_WRAPV)
-					nIndex += 0x2;
+                if (gpPDC->Context.u32Flags & SGLTT_WRAPU)
+                    nIndex += 0x1;
 
-				if (gpPDC->Context.u32Flags & SGLTT_NONPERSPTEX)
-					nIndex += 0x4;
+                if (gpPDC->Context.u32Flags & SGLTT_WRAPV)
+                    nIndex += 0x2;
 
-				ProcessFlatTexFn = ProcessD3DTSPFunctions[nIndex];
-			}
-			else
-			{
-				/* Setup correct process texture handler. 2 choices:
-				 *
-				 *		0. Flat texture, perspective correct.
-				 *		1. D3D flat texture, non-perspective correct.
-				 */
-				/* Determine which function to call.
-				 */
-				nIndex = 0;
+                if (gpPDC->Context.u32Flags & SGLTT_NONPERSPTEX)
+                    nIndex += 0x4;
 
-				if (gpPDC->Context.u32Flags & SGLTT_NONPERSPTEX)
-					nIndex += 0x1;
+                ProcessFlatTexFn = ProcessD3DTSPFunctions[nIndex];
+            } else {
+                /* Setup correct process texture handler. 2 choices:
+                 *
+                 *		0. Flat texture, perspective correct.
+                 *		1. D3D flat texture, non-perspective correct.
+                 */
+                /* Determine which function to call.
+                 */
+                nIndex = 0;
 
-				ProcessFlatTexFn = ProcessTSPFunctions[nIndex];
-			}
-		}
-		else
-		{
-			/* not a valid texture handle */
-			
-			uFuncBlockIndex &= ~MASK_TEXTURE;
-		}
+                if (gpPDC->Context.u32Flags & SGLTT_NONPERSPTEX)
+                    nIndex += 0x1;
 
-		/* Setup correct pack texture handler. 4 choices:
-		 *
-		 *		0. Non mip-mapped, perspective correct.
-		 *		1. Mip-mapped, perspective correct.
-		 *		2. Non mip-mapped, non-perspective correct.
-		 *		3. Mip mapped, non-perspective correct.
-		 */
-		/* Determine which function to call.
-		 */
-		nIndex = 0;
+                ProcessFlatTexFn = ProcessTSPFunctions[nIndex];
+            }
+        } else {
+            /* not a valid texture handle */
 
-		if (gpPDC->TexAddress & MASK_MIP_MAPPED)
-			nIndex += 0x1;
+            uFuncBlockIndex &= ~MASK_TEXTURE;
+        }
 
-		if (gpPDC->Context.u32Flags & SGLTT_NONPERSPTEX)
-			nIndex += 0x2;
+        /* Setup correct pack texture handler. 4 choices:
+         *
+         *		0. Non mip-mapped, perspective correct.
+         *		1. Mip-mapped, perspective correct.
+         *		2. Non mip-mapped, non-perspective correct.
+         *		3. Mip mapped, non-perspective correct.
+         */
+        /* Determine which function to call.
+         */
+        nIndex = 0;
 
-		PackTSPTexFn = PackTSPFunctions[nIndex];
-	}
-	else
-	{
-		/* Check for the allignment of the TSP parameters.
-		 * No problem with textured triangles.
-		 * Potential wastage but only when different triangles passed in single
-		 * calls.
-		 */
-		PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += 0x2;
-		PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos &= 0xFFFFFFFC;
-	}
+        if (gpPDC->TexAddress & MASK_MIP_MAPPED)
+            nIndex += 0x1;
 
-	#if DO_FPU_PRECISION
+        if (gpPDC->Context.u32Flags & SGLTT_NONPERSPTEX)
+            nIndex += 0x2;
 
-		SetupFPU ();
-		
-	#endif
+        PackTSPTexFn = PackTSPFunctions[nIndex];
+    } else {
+        /* Check for the allignment of the TSP parameters.
+         * No problem with textured triangles.
+         * Potential wastage but only when different triangles passed in single
+         * calls.
+         */
+        PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos += 0x2;
+        PVRParamBuffs[PVR_PARAM_TYPE_TSP].uBufferPos &= 0xFFFFFFFC;
+    }
 
-	ASSERT ((uFuncBlockIndex & 0xFFFFFFE0) == 0);
-	
-	pFuncBlock += uFuncBlockIndex;
+#if DO_FPU_PRECISION
 
-	gpPDC->TSPControlWord |= pFuncBlock->TSPControlWord;
+    SetupFPU();
 
-	fnPerPoly = pFuncBlock->fnPerPoly;
+#endif
 
-	if ( ( fnPerPoly == ProcessFlatTex ) && ( ProcessFlatTexFn != NULL ) )
-	{
-		/* Process loops do this for free if ProcessFlatTexFn != NULL */
-		fnPerPoly = NULL;
-	}
+    ASSERT ((uFuncBlockIndex & 0xFFFFFFE0) == 0);
+
+    pFuncBlock += uFuncBlockIndex;
+
+    gpPDC->TSPControlWord |= pFuncBlock->TSPControlWord;
+
+    fnPerPoly = pFuncBlock->fnPerPoly;
+
+    if ((fnPerPoly == ProcessFlatTex) && (ProcessFlatTexFn != NULL)) {
+        /* Process loops do this for free if ProcessFlatTexFn != NULL */
+        fnPerPoly = NULL;
+    }
 
 #ifdef DLL_METRIC
-	if (gpPDC->TSPControlWord & MASK_TRANS)
-	{
-		nTransPolygonsInFrame += nNumFaces;
-	}
-	else
-	{
-		nOpaquePolygonsInFrame += nNumFaces;
-	}
+    if (gpPDC->TSPControlWord & MASK_TRANS)
+    {
+        nTransPolygonsInFrame += nNumFaces;
+    }
+    else
+    {
+        nOpaquePolygonsInFrame += nNumFaces;
+    }
 #endif
-	
-	if (gpPDC->Context.u32Flags & SGLTT_FACESIND3DFORMAT)
-	{
-		if (bQuads)
-		{
-			DPFDEV ((DBG_ERROR, "sgltri_quads called with D3dFORMAT flag set"));
-		}
-		else if (gpPDC->Context.u32Flags & SGLTT_USED3DSTRIPFLAGS)
-		{
-#ifdef METRIC
-			Times[INPUT_D3DPOLY_COUNT].Count += 1;
-			Times[INPUT_D3DPOLY_COUNT].Total += nNumFaces;
-#endif
-			ProcessD3DPolys (TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
-		}		
-		else
-		{
-#ifdef METRIC
-			Times[INPUT_D3DTRI_COUNT].Count += 1;
-			Times[INPUT_D3DTRI_COUNT].Total += nNumFaces;
-#endif
-			ProcessTris (TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
-		}
-	}
-	else
-	{
-		if (bQuads)
-		{
-#ifdef METRIC
-			Times[INPUT_LITEQUAD_COUNT].Count += 1;
-			Times[INPUT_LITEQUAD_COUNT].Total += nNumFaces;
-#endif
-			ProcessQuads (TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
-		}
-		else
-		{
-#ifdef METRIC
-			Times[INPUT_LITETRI_COUNT].Count += 1;
-			Times[INPUT_LITETRI_COUNT].Total += nNumFaces;
-#endif
-			ProcessTris (TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
-		}
-	}
-	
-	#if DO_FPU_PRECISION
 
-		RestoreFPU ();
+    if (gpPDC->Context.u32Flags & SGLTT_FACESIND3DFORMAT) {
+        if (bQuads) {
+            DPFDEV ((DBG_ERROR, "sgltri_quads called with D3dFORMAT flag set"));
+        } else if (gpPDC->Context.u32Flags & SGLTT_USED3DSTRIPFLAGS) {
+#ifdef METRIC
+            Times[INPUT_D3DPOLY_COUNT].Count += 1;
+            Times[INPUT_D3DPOLY_COUNT].Total += nNumFaces;
+#endif
+            ProcessD3DPolys(TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
+        } else {
+#ifdef METRIC
+            Times[INPUT_D3DTRI_COUNT].Count += 1;
+            Times[INPUT_D3DTRI_COUNT].Total += nNumFaces;
+#endif
+            ProcessTris(TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
+        }
+    } else {
+        if (bQuads) {
+#ifdef METRIC
+            Times[INPUT_LITEQUAD_COUNT].Count += 1;
+            Times[INPUT_LITEQUAD_COUNT].Total += nNumFaces;
+#endif
+            ProcessQuads(TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
+        } else {
+#ifdef METRIC
+            Times[INPUT_LITETRI_COUNT].Count += 1;
+            Times[INPUT_LITETRI_COUNT].Total += nNumFaces;
+#endif
+            ProcessTris(TexHeap, fnPerPoly, pFuncBlock->fnPerBuffer, pFuncBlock->uSize);
+        }
+    }
 
-	#endif
+#if DO_FPU_PRECISION
+
+    RestoreFPU();
+
+#endif
 }
 
 /*------------------------------- End of File -------------------------------*/

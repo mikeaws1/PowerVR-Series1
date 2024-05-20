@@ -68,7 +68,7 @@
 /*
 // define Debug Module IDs
 */
-#define MODULE_ID	MODID_DL
+#define MODULE_ID    MODID_DL
 
 #include <sgl_defs.h>
 #include <dlnodes.h>
@@ -117,204 +117,195 @@
  *
  **************************************************************************/
 
-void DlDeleteNode(DL_NODE_STRUCT * pNode)
-{
-	/*
-	// Name and type of the node
-	*/
-	int name, type;
+void DlDeleteNode(DL_NODE_STRUCT *pNode) {
+    /*
+    // Name and type of the node
+    */
+    int name, type;
 
 
-	name = pNode->n16_name;
-	type = pNode->n16_node_type;
+    name = pNode->n16_name;
+    type = pNode->n16_node_type;
 
-	/*
-	// Assertion check to see if this is a valid node...
-	*/
-	ASSERT((type >= 0) && (type < nt_node_limit))
-
-
-
-	/*
-	// Do cross reference and extra memory cleaning up by calling
-	// specialised routines, wherever necessary.
-	//
-	// Also, if the deleted item was a current thing, set the current
-	// pointer to NULL.
-	*/
-	switch(type)
-	{
-		/*
-		// List node
-		*/
-		case nt_list_node:
-			 DlDeleteListNodeRefs(pNode);
-			 if((LIST_NODE_STRUCT*) pNode == dlUserGlobals.pCurrentList)
-			 {
-			 	dlUserGlobals.pCurrentList = NULL;
-			 }
-			 
-			 break;
-		/*
-		// Instance refs
-		*/	 
-		case nt_instance:
-			 DlDeleteInstanceNodeRefs(pNode);
-			 break;
-
-		/*
-		// Instance Substitution references
-		*/
-		case nt_inst_subs:
-			 DlDeleteSubstitutionNodeRefs(pNode);
-			 break;
-		
-		/*
-		// Convex primitives
-		*/
-		case nt_convex:
-			 DlDeleteConvexNodeRefs(pNode);
-			 if((CONVEX_NODE_STRUCT*)pNode == dlUserGlobals.pCurrentConvex)
-			 {
-			 	ASSERT(FALSE)
-			 	dlUserGlobals.pCurrentConvex = NULL;
-			 }
-			 break;
-
-		/*
-		// Mesh node
-		*/
-		case nt_mesh:
-			 DlDeleteMeshNodeRefs(pNode);
-			 if((MESH_NODE_STRUCT*)pNode == dlUserGlobals.pCurrentMesh)
-			 {
-			 	ASSERT(FALSE)
-			 	dlUserGlobals.pCurrentMesh = NULL;
-			 }
-			 break;
-
-			
-		/*
-		// Material defs
-		*/
-		case nt_material:
-			 DlDeleteMaterialNodeRefs(pNode);
-			 if((MATERIAL_NODE_STRUCT *)pNode == dlUserGlobals.pCurrentMaterial)
-			 {
-			 	ASSERT(FALSE)
-			 	dlUserGlobals.pCurrentMaterial = NULL;
-			 }
-			 break;
-
-		/*
-		// Light defs
-		*/
-		case nt_light:
-			 DlDeleteLightNodeRefs(pNode);
-			 break;
-
-		/*
-		// Light position node
-		*/			 
-		case nt_light_pos:
-			 DlDeleteLightPosNodeRefs(pNode);
-			 break;
-
-		/*
-		// Light switch node
-		*/			 
-		case nt_light_switch:
-			 DlDeleteLightSwitchNodeRefs(pNode);
-			 break;
-
-		/*
-		//  Level of detail node
-		*/
-		case nt_lod:
-			 DlDeleteLodNodeRefs(pNode);
-			 break;
-
-		/*
-		//  point node
-		*/
-		case nt_point:
-			 DlDeletePointNodeRefs(pNode);
-			 break;
-		/*
-		//  point position node
-		*/
-		case nt_point_pos:
-			 DlDeletePointPosNodeRefs(pNode);
-			 break;
-
-		/*
-		//  point switch node
-		*/
-		case nt_point_switch:
-			 DlDeletePointSwitchNodeRefs(pNode);
-			 break;
-
-		/*
-		// The transform is a simple structure, but
-		// has a global current pointer
-		*/
-		case nt_transform:	
-			 if((TRANSFORM_NODE_STRUCT*)pNode == dlUserGlobals.pCurrentTransform)
-			 {
-			 	ASSERT(FALSE)
-			 	dlUserGlobals.pCurrentTransform = NULL;
-			 }
-			 break;
+    /*
+    // Assertion check to see if this is a valid node...
+    */
+    ASSERT((type >= 0) && (type < nt_node_limit))
 
 
-		/*
-		// SIMPLE Node types - i.e. NO cross references etc.
-		*/	
-		case nt_camera:
-		case nt_quality:
-		case nt_dummy:
-	    case nt_newtran:
-	    case nt_shadow_limit:
-		{
-			break;
-		}
 
-		/*////////////////////////
-		// Any LEFT OVER CASES are errors
-		/////////////////////// */
-		default:
-			ASSERT(FALSE);
-			break;
+    /*
+    // Do cross reference and extra memory cleaning up by calling
+    // specialised routines, wherever necessary.
+    //
+    // Also, if the deleted item was a current thing, set the current
+    // pointer to NULL.
+    */
+    switch (type) {
+        /*
+        // List node
+        */
+        case nt_list_node:
+            DlDeleteListNodeRefs(pNode);
+            if ((LIST_NODE_STRUCT *) pNode == dlUserGlobals.pCurrentList) {
+                dlUserGlobals.pCurrentList = NULL;
+            }
 
-	} /*end switch*/
-	
-	/*
-	// Does this node have a name. NOTE. It is ASSUMED that this
-	// field is initialised either to a valid name or the constant
-	// NM_INVALID_NAME
-	*/
-	if(name != NM_INVALID_NAME)
-	{
-		/*
-		// DEBUG check that it IS in fact there...
-		// and that it is of the correct type
-		*/
-		ASSERT((void*)pNode == GetNamedItem(dlUserGlobals.pNamtab,	name))
-		ASSERT(type == 	GetNamedItemType(dlUserGlobals.pNamtab,	name))
+            break;
+            /*
+            // Instance refs
+            */
+        case nt_instance:
+            DlDeleteInstanceNodeRefs(pNode);
+            break;
 
-		/*
-		// Remove it from the name table
-		*/
-		DeleteNamedItem(dlUserGlobals.pNamtab,pNode->n16_name);
-		
-	}
+            /*
+            // Instance Substitution references
+            */
+        case nt_inst_subs:
+            DlDeleteSubstitutionNodeRefs(pNode);
+            break;
 
-	
-	/*
-	// Free the memory
-	*/
-	SGLFree(pNode);
-	
+            /*
+            // Convex primitives
+            */
+        case nt_convex:
+            DlDeleteConvexNodeRefs(pNode);
+            if ((CONVEX_NODE_STRUCT *) pNode == dlUserGlobals.pCurrentConvex) {
+                ASSERT(FALSE)
+                dlUserGlobals.pCurrentConvex = NULL;
+            }
+            break;
+
+            /*
+            // Mesh node
+            */
+        case nt_mesh:
+            DlDeleteMeshNodeRefs(pNode);
+            if ((MESH_NODE_STRUCT *) pNode == dlUserGlobals.pCurrentMesh) {
+                ASSERT(FALSE)
+                dlUserGlobals.pCurrentMesh = NULL;
+            }
+            break;
+
+
+            /*
+            // Material defs
+            */
+        case nt_material:
+            DlDeleteMaterialNodeRefs(pNode);
+            if ((MATERIAL_NODE_STRUCT *) pNode == dlUserGlobals.pCurrentMaterial) {
+                ASSERT(FALSE)
+                dlUserGlobals.pCurrentMaterial = NULL;
+            }
+            break;
+
+            /*
+            // Light defs
+            */
+        case nt_light:
+            DlDeleteLightNodeRefs(pNode);
+            break;
+
+            /*
+            // Light position node
+            */
+        case nt_light_pos:
+            DlDeleteLightPosNodeRefs(pNode);
+            break;
+
+            /*
+            // Light switch node
+            */
+        case nt_light_switch:
+            DlDeleteLightSwitchNodeRefs(pNode);
+            break;
+
+            /*
+            //  Level of detail node
+            */
+        case nt_lod:
+            DlDeleteLodNodeRefs(pNode);
+            break;
+
+            /*
+            //  point node
+            */
+        case nt_point:
+            DlDeletePointNodeRefs(pNode);
+            break;
+            /*
+            //  point position node
+            */
+        case nt_point_pos:
+            DlDeletePointPosNodeRefs(pNode);
+            break;
+
+            /*
+            //  point switch node
+            */
+        case nt_point_switch:
+            DlDeletePointSwitchNodeRefs(pNode);
+            break;
+
+            /*
+            // The transform is a simple structure, but
+            // has a global current pointer
+            */
+        case nt_transform:
+            if ((TRANSFORM_NODE_STRUCT *) pNode == dlUserGlobals.pCurrentTransform) {
+                ASSERT(FALSE)
+                dlUserGlobals.pCurrentTransform = NULL;
+            }
+            break;
+
+
+            /*
+            // SIMPLE Node types - i.e. NO cross references etc.
+            */
+        case nt_camera:
+        case nt_quality:
+        case nt_dummy:
+        case nt_newtran:
+        case nt_shadow_limit: {
+            break;
+        }
+
+            /*////////////////////////
+            // Any LEFT OVER CASES are errors
+            /////////////////////// */
+        default:
+            ASSERT(FALSE);
+            break;
+
+    } /*end switch*/
+
+    /*
+    // Does this node have a name. NOTE. It is ASSUMED that this
+    // field is initialised either to a valid name or the constant
+    // NM_INVALID_NAME
+    */
+    if (name != NM_INVALID_NAME) {
+        /*
+        // DEBUG check that it IS in fact there...
+        // and that it is of the correct type
+        */
+        ASSERT((void *) pNode == GetNamedItem(dlUserGlobals.pNamtab, name))
+        ASSERT(type == GetNamedItemType(dlUserGlobals.pNamtab, name))
+
+        /*
+        // Remove it from the name table
+        */
+        DeleteNamedItem(dlUserGlobals.pNamtab, pNode->n16_name);
+
+    }
+
+
+    /*
+    // Free the memory
+    */
+    SGLFree(pNode);
+
 
 }
 

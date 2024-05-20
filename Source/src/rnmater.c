@@ -120,57 +120,50 @@
  *				   
  **************************************************************************/
 
-static void	CopyTexWrapData(const MATERIAL_NODE_STRUCT 	* matNode,
-						 		  MATERIAL_STATE_STRUCT	* stateMaterial,
-						 		  TRANSFORM_STRUCT      * pTransformState)
+static void CopyTexWrapData(const MATERIAL_NODE_STRUCT *matNode,
+                            MATERIAL_STATE_STRUCT *stateMaterial,
+                            TRANSFORM_STRUCT *pTransformState) {
+    if ((matNode->data_flags) & mnf_has_smap) {
+        /* an s-map has been defined. Copy over all smap
+        data and set smap part in texture flags */
 
-{
-	if ((matNode->data_flags) & mnf_has_smap)
-	{
-   	   	/* an s-map has been defined. Copy over all smap 
-	   	   data and set smap part in texture flags */
+        /* clear the smap area of the texture_flags*/
+        stateMaterial->texture_flags &= ~SMAP_BITS;
+        stateMaterial->texture_flags |= matNode->pwrap_data->smap;
 
-		/* clear the smap area of the texture_flags*/
-	   	stateMaterial->texture_flags&=~SMAP_BITS;
-	   	stateMaterial->texture_flags|=matNode->pwrap_data->smap;
-							
-   		stateMaterial->su=matNode->pwrap_data->su;
-   		stateMaterial->sv=matNode->pwrap_data->sv;
-	 	stateMaterial->ou=matNode->pwrap_data->ou;
-   		stateMaterial->ov=matNode->pwrap_data->ov;
+        stateMaterial->su = matNode->pwrap_data->su;
+        stateMaterial->sv = matNode->pwrap_data->sv;
+        stateMaterial->ou = matNode->pwrap_data->ou;
+        stateMaterial->ov = matNode->pwrap_data->ov;
 
-   		stateMaterial->radius=matNode->pwrap_data->radius;
+        stateMaterial->radius = matNode->pwrap_data->radius;
 
-		/* make a copy of the current transformation */
+        /* make a copy of the current transformation */
 
-		RnGlobalSetWrappingTransform (pTransformState);
+        RnGlobalSetWrappingTransform(pTransformState);
 
-   	}
+    }
 
-   	if ((matNode->data_flags) & mnf_has_omap)
-   	{
-   		/* copy omap data and set data omap part in texture flags */
+    if ((matNode->data_flags) & mnf_has_omap) {
+        /* copy omap data and set data omap part in texture flags */
 
-		/* clear the Omap area of the texture_flags*/
-	   	stateMaterial->texture_flags&=~OMAP_BITS;
-  		stateMaterial->texture_flags|=matNode->pwrap_data->omap;
-   		stateMaterial->refrac_index=matNode->pwrap_data->refrac_index;
-	}
+        /* clear the Omap area of the texture_flags*/
+        stateMaterial->texture_flags &= ~OMAP_BITS;
+        stateMaterial->texture_flags |= matNode->pwrap_data->omap;
+        stateMaterial->refrac_index = matNode->pwrap_data->refrac_index;
+    }
 
 
-	/*
-	// Decide if texture wrapping is enabled - basically both SMap and Omap
-	// Must be defined
-	*/
-	if((stateMaterial->texture_flags & SMAP_BITS) && 
-			(stateMaterial->texture_flags & OMAP_BITS))
-	{
-		stateMaterial->texture_flags |= wrapping_on;		
-	}
-	else
-	{
-		stateMaterial->texture_flags &= ~wrapping_on;		
-	}
+    /*
+    // Decide if texture wrapping is enabled - basically both SMap and Omap
+    // Must be defined
+    */
+    if ((stateMaterial->texture_flags & SMAP_BITS) &&
+        (stateMaterial->texture_flags & OMAP_BITS)) {
+        stateMaterial->texture_flags |= wrapping_on;
+    } else {
+        stateMaterial->texture_flags &= ~wrapping_on;
+    }
 }
 
 /**************************************************************************
@@ -190,99 +183,88 @@ static void	CopyTexWrapData(const MATERIAL_NODE_STRUCT 	* matNode,
  *				   
  **************************************************************************/
 void RnCTPreprocessMaterialNode(const MATERIAL_NODE_STRUCT *matNode,
-								MASTER_STATE_STRUCT	*pState,
-								void ** pCachedTexture)
-{
-	int MatFlags;
-	INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState= pState->pInstanceSubState;
+                                MASTER_STATE_STRUCT *pState,
+                                void **pCachedTexture) {
+    int MatFlags;
+    INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState = pState->pInstanceSubState;
 
-	/*
-	// get the nodes flags so we know what is being changed
-	*/
-	MatFlags = matNode->data_flags;
+    /*
+    // get the nodes flags so we know what is being changed
+    */
+    MatFlags = matNode->data_flags;
 
-	/*
-	// If this is an instance, then get the material node we should
-	// be instancing, or get out.
-	//
-	// Note we can't instance a material node that itself is referencing
-	// an instance.
-	*/
-	if(MatFlags & mnf_instance_ref)
-	{
-		int i;
-		int itemType;
-		int InstanceName;
+    /*
+    // If this is an instance, then get the material node we should
+    // be instancing, or get out.
+    //
+    // Note we can't instance a material node that itself is referencing
+    // an instance.
+    */
+    if (MatFlags & mnf_instance_ref) {
+        int i;
+        int itemType;
+        int InstanceName;
 
-		InstanceName = matNode->instanced_material_name;
-		
-		for(i=0; i < pInstanceSubState->num_subs; i++)
-		{
-			if(pInstanceSubState->nSubs[i][0] == InstanceName)
-			{
-				InstanceName= pInstanceSubState->nSubs[i][1];
-				break;
-			}
-		}/*end for*/
+        InstanceName = matNode->instanced_material_name;
+
+        for (i = 0; i < pInstanceSubState->num_subs; i++) {
+            if (pInstanceSubState->nSubs[i][0] == InstanceName) {
+                InstanceName = pInstanceSubState->nSubs[i][1];
+                break;
+            }
+        }/*end for*/
 
 
-		/*
-		// Ok, check this instance.
-		*/
-		if(InstanceName == SGL_NULL_MATERIAL) 
-		{
-			/*
-			// It's null, do nothing
-			*/
-			return;
-		}
-		
-		/*
-		// Check if we have been given a valid material name
-		*/
-		matNode = GetNamedItemAndType(dlUserGlobals.pNamtab, InstanceName,
-															 &itemType);
-		if((matNode == NULL) || (itemType != nt_material))
-		{
-			/*
-			// No good, get out
-			*/
-			return;
-		}
+        /*
+        // Ok, check this instance.
+        */
+        if (InstanceName == SGL_NULL_MATERIAL) {
+            /*
+            // It's null, do nothing
+            */
+            return;
+        }
+
+        /*
+        // Check if we have been given a valid material name
+        */
+        matNode = GetNamedItemAndType(dlUserGlobals.pNamtab, InstanceName,
+                                      &itemType);
+        if ((matNode == NULL) || (itemType != nt_material)) {
+            /*
+            // No good, get out
+            */
+            return;
+        }
 
 
-		/*
-		// Ok, re-get the flags
-		*/
-		MatFlags = matNode->data_flags;
-	}/*end if instanced*/
+        /*
+        // Ok, re-get the flags
+        */
+        MatFlags = matNode->data_flags;
+    }/*end if instanced*/
 
 
 #if DEBUG
-   	if ((MatFlags & mnf_remove_texture) && (MatFlags & mnf_has_text_map))
-	{
-		DPF((DBG_FATAL, "WHAT THE XXXX! Remove AND define texture ???"));
-	}
+    if ((MatFlags & mnf_remove_texture) && (MatFlags & mnf_has_text_map))
+ {
+     DPF((DBG_FATAL, "WHAT THE XXXX! Remove AND define texture ???"));
+ }
 #endif
 
-   	if (MatFlags & mnf_remove_texture)
-   	{
-		/*
-		// Ok, turn off texturing
-		*/
-		*pCachedTexture = NULL;
-	}
+    if (MatFlags & mnf_remove_texture) {
+        /*
+        // Ok, turn off texturing
+        */
+        *pCachedTexture = NULL;
+    } else if (MatFlags & mnf_has_text_map) {
 
+        /*
+        //Return whether we have a cacheable texture
+        */
+        *pCachedTexture = matNode->pcached_texture;
 
-	else if (MatFlags & mnf_has_text_map)
-	{
-
-		/*
-		//Return whether we have a cacheable texture
-		*/
-		*pCachedTexture = matNode->pcached_texture;
-
-	}/*if has texture map*/
+    }/*if has texture map*/
 
 
 }
@@ -303,269 +285,240 @@ void RnCTPreprocessMaterialNode(const MATERIAL_NODE_STRUCT *matNode,
  **************************************************************************/
 
 
-void	RnProcessMaterialNode(const MATERIAL_NODE_STRUCT  * matNode,
-									MATERIAL_STATE_STRUCT * stateMaterial,
-									MASTER_STATE_STRUCT *pState)
-{
-	int MatFlags;
-	int InstanceName;
+void RnProcessMaterialNode(const MATERIAL_NODE_STRUCT *matNode,
+                           MATERIAL_STATE_STRUCT *stateMaterial,
+                           MASTER_STATE_STRUCT *pState) {
+    int MatFlags;
+    int InstanceName;
 
-	TRANSFORM_STRUCT      * pTransformState = pState->pTransformState;
-	INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState= pState->pInstanceSubState;
+    TRANSFORM_STRUCT *pTransformState = pState->pTransformState;
+    INSTANCE_SUBS_STATE_STRUCT *pInstanceSubState = pState->pInstanceSubState;
 
-	/*
-	// get the nodes flags so we know what is being changed
-	*/
-	MatFlags = matNode->data_flags;
+    /*
+    // get the nodes flags so we know what is being changed
+    */
+    MatFlags = matNode->data_flags;
 
-	/* check each bit individually */
+    /* check each bit individually */
 
-	/*
-	// If this is an instance, then get the material node we should
-	// be instancing, or get out.
-	//
-	// Note we can't instance a material node that itself is referencing
-	// an instance.
-	*/
-	if(MatFlags & mnf_instance_ref)
-	{
-		int i;
-		int itemType;
+    /*
+    // If this is an instance, then get the material node we should
+    // be instancing, or get out.
+    //
+    // Note we can't instance a material node that itself is referencing
+    // an instance.
+    */
+    if (MatFlags & mnf_instance_ref) {
+        int i;
+        int itemType;
 
-		InstanceName = matNode->instanced_material_name;
-		
-		for(i=0; i < pInstanceSubState->num_subs; i++)
-		{
-			if(pInstanceSubState->nSubs[i][0] == InstanceName)
-			{
-				InstanceName= pInstanceSubState->nSubs[i][1];
-				break;
-			}
-		}/*end for*/
+        InstanceName = matNode->instanced_material_name;
+
+        for (i = 0; i < pInstanceSubState->num_subs; i++) {
+            if (pInstanceSubState->nSubs[i][0] == InstanceName) {
+                InstanceName = pInstanceSubState->nSubs[i][1];
+                break;
+            }
+        }/*end for*/
 
 
-		/*
-		// Ok, check this instance.
-		*/
-		if(InstanceName == SGL_NULL_MATERIAL) 
-		{
-			/*
-			// It's null, do nothing
-			*/
-			return;
-		}
-		
-		/*
-		// Check if we have been given a valid material name
-		*/
-		matNode = GetNamedItemAndType(dlUserGlobals.pNamtab, InstanceName,
-															 &itemType);
-		if((matNode == NULL) || (itemType != nt_material))
-		{
-			/*
-			// No good, get out
-			*/
-			return;
-		}
+        /*
+        // Ok, check this instance.
+        */
+        if (InstanceName == SGL_NULL_MATERIAL) {
+            /*
+            // It's null, do nothing
+            */
+            return;
+        }
+
+        /*
+        // Check if we have been given a valid material name
+        */
+        matNode = GetNamedItemAndType(dlUserGlobals.pNamtab, InstanceName,
+                                      &itemType);
+        if ((matNode == NULL) || (itemType != nt_material)) {
+            /*
+            // No good, get out
+            */
+            return;
+        }
 
 
-		/*
-		// Ok, re-get the flags
-		*/
-		MatFlags = matNode->data_flags;
-	}/*end if instanced*/
+        /*
+        // Ok, re-get the flags
+        */
+        MatFlags = matNode->data_flags;
+    }/*end if instanced*/
 
 
-	if (MatFlags & mnf_has_diffuse)
-	{
-		VecCopy(matNode->diffuse_colour, stateMaterial->diffuse);
-	}
+    if (MatFlags & mnf_has_diffuse) {
+        VecCopy(matNode->diffuse_colour, stateMaterial->diffuse);
+    }
 
 
-   	if (MatFlags & mnf_has_ambient)
-	{	
-		VecCopy(matNode->ambient_colour, stateMaterial->ambient);
-	}
+    if (MatFlags & mnf_has_ambient) {
+        VecCopy(matNode->ambient_colour, stateMaterial->ambient);
+    }
 
 
-	if (MatFlags & mnf_has_specular)
-   	{	
-		VecCopy(matNode->specular_colour, stateMaterial->specular);
+    if (MatFlags & mnf_has_specular) {
+        VecCopy(matNode->specular_colour, stateMaterial->specular);
 
-		stateMaterial->specular_shininess=matNode->specular_shininess;
-		stateMaterial->specular_shininess_float=matNode->specular_shininess_float;
-	}
+        stateMaterial->specular_shininess = matNode->specular_shininess;
+        stateMaterial->specular_shininess_float = matNode->specular_shininess_float;
+    }
 
-	if (MatFlags & mnf_has_glow)
-	{	
-		VecCopy(matNode->glow_colour, stateMaterial->glow);
-	}
+    if (MatFlags & mnf_has_glow) {
+        VecCopy(matNode->glow_colour, stateMaterial->glow);
+    }
 
 #if DEBUG
-   	if ((MatFlags & mnf_remove_texture) && (MatFlags & mnf_has_text_map))
-	{
-		DPF((DBG_FATAL, "WHAT THE XXXX! Remove AND define texture ???"));
-	}
+    if ((MatFlags & mnf_remove_texture) && (MatFlags & mnf_has_text_map))
+ {
+     DPF((DBG_FATAL, "WHAT THE XXXX! Remove AND define texture ???"));
+ }
 #endif
 
-   	if (MatFlags & mnf_remove_texture)
-   	{
-		/*
-		// remove the texture flag
-		*/
-		stateMaterial->texture_flags&=~(MASK_FLIP_UV | MASK_TEXTURE);
-	}
+    if (MatFlags & mnf_remove_texture) {
+        /*
+        // remove the texture flag
+        */
+        stateMaterial->texture_flags &= ~(MASK_FLIP_UV | MASK_TEXTURE);
+    }
 
 
-	if (MatFlags & mnf_has_text_map)
-	{
-		/*
-		// if this is a normal (i.e. non cached) texture
-		*/
-		if(matNode->pcached_texture == NULL)
-		{
+    if (MatFlags & mnf_has_text_map) {
+        /*
+        // if this is a normal (i.e. non cached) texture
+        */
+        if (matNode->pcached_texture == NULL) {
 
-			/* copy over the texture address + control bits */
+            /* copy over the texture address + control bits */
 
-			stateMaterial->texas_precomp.TexAddress=matNode->texture_control;
+            stateMaterial->texas_precomp.TexAddress = matNode->texture_control;
 
-			/* add the relevant parts of texture flags */
-			stateMaterial->texture_flags&=~(MASK_FLIP_UV | MASK_TEXTURE);
-			stateMaterial->texture_flags|=
-				(matNode->text_effect)& (MASK_FLIP_UV | MASK_TEXTURE);
+            /* add the relevant parts of texture flags */
+            stateMaterial->texture_flags &= ~(MASK_FLIP_UV | MASK_TEXTURE);
+            stateMaterial->texture_flags |=
+                    (matNode->text_effect) & (MASK_FLIP_UV | MASK_TEXTURE);
 
-			/* keep the precomputed LowWord up to date */
-			stateMaterial->texas_precomp.LowWord &= ~(MASK_FLIP_UV | MASK_TEXTURE);
+            /* keep the precomputed LowWord up to date */
+            stateMaterial->texas_precomp.LowWord &= ~(MASK_FLIP_UV | MASK_TEXTURE);
 
-			stateMaterial->texas_precomp.LowWord|=
-				(matNode->text_effect)& (MASK_FLIP_UV | MASK_TEXTURE);
+            stateMaterial->texas_precomp.LowWord |=
+                    (matNode->text_effect) & (MASK_FLIP_UV | MASK_TEXTURE);
 
 
-			/*
-			// Check for possible translucency
-			// (ie either the texture is translucent or opacity!=1)
-			*/
-			if ((matNode->texture_control & MASK_4444_555) ||
-				(stateMaterial->opacity!=1.0f))
-			{
-				stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
-			}
-			else
-			{  
-				stateMaterial->texas_precomp.LowWord &= ~MASK_TRANS;
-			}
-		}
-		/*
-		// Ok, we have a cached texture. Get the real texture info for it
-		// (if any)
-		*/
-		else
-		{
-			HTEXTURE hTexture;
-			
-			hTexture = GetRealTexture(matNode->pcached_texture);
+            /*
+            // Check for possible translucency
+            // (ie either the texture is translucent or opacity!=1)
+            */
+            if ((matNode->texture_control & MASK_4444_555) ||
+                (stateMaterial->opacity != 1.0f)) {
+                stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
+            } else {
+                stateMaterial->texas_precomp.LowWord &= ~MASK_TRANS;
+            }
+        }
+            /*
+            // Ok, we have a cached texture. Get the real texture info for it
+            // (if any)
+            */
+        else {
+            HTEXTURE hTexture;
 
-			/*
-			// If texture is actually loaded (else leave as is)
-			*/
-			if(hTexture != NULL)
-			{
-				/*
-				// Copy over the texture address and control bits
-				*/
-				stateMaterial->texas_precomp.TexAddress =
-										hTexture->TSPTextureControlWord;
+            hTexture = GetRealTexture(matNode->pcached_texture);
 
-				/*
-				// add the relevant parts of texture flags 
-				*/
-				stateMaterial->texture_flags&=~(MASK_FLIP_UV | MASK_TEXTURE);
-				stateMaterial->texture_flags|=
-					(matNode->text_effect)& (MASK_FLIP_UV | MASK_TEXTURE);
+            /*
+            // If texture is actually loaded (else leave as is)
+            */
+            if (hTexture != NULL) {
+                /*
+                // Copy over the texture address and control bits
+                */
+                stateMaterial->texas_precomp.TexAddress =
+                        hTexture->TSPTextureControlWord;
 
-				/*
-				// keep the precomputed LowWord up to date 
-				*/
-				stateMaterial->texas_precomp.LowWord &= 
-										~(MASK_FLIP_UV | MASK_TEXTURE);
+                /*
+                // add the relevant parts of texture flags
+                */
+                stateMaterial->texture_flags &= ~(MASK_FLIP_UV | MASK_TEXTURE);
+                stateMaterial->texture_flags |=
+                        (matNode->text_effect) & (MASK_FLIP_UV | MASK_TEXTURE);
 
-				stateMaterial->texas_precomp.LowWord|=
-				  (matNode->text_effect)& (MASK_FLIP_UV | MASK_TEXTURE);
+                /*
+                // keep the precomputed LowWord up to date
+                */
+                stateMaterial->texas_precomp.LowWord &=
+                        ~(MASK_FLIP_UV | MASK_TEXTURE);
+
+                stateMaterial->texas_precomp.LowWord |=
+                        (matNode->text_effect) & (MASK_FLIP_UV | MASK_TEXTURE);
 
 
-				/*
-				// Check for possible translucency
-				// (ie either the texture is translucent or opacity!=1)
-				*/
-				if ((hTexture->TSPTextureControlWord & MASK_4444_555) ||
-					(stateMaterial->opacity!=1.0f))
-				{
-					stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
-				}
-				else
-				{
-					stateMaterial->texas_precomp.LowWord &= ~MASK_TRANS;
-				}
+                /*
+                // Check for possible translucency
+                // (ie either the texture is translucent or opacity!=1)
+                */
+                if ((hTexture->TSPTextureControlWord & MASK_4444_555) ||
+                    (stateMaterial->opacity != 1.0f)) {
+                    stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
+                } else {
+                    stateMaterial->texas_precomp.LowWord &= ~MASK_TRANS;
+                }
 
-			}/*end if textured*/
-			
-		}/*end else is a cached texture*/
-	}/*if has texture map*/
+            }/*end if textured*/
+
+        }/*end else is a cached texture*/
+    }/*if has texture map*/
 
 
-	if ((matNode->pwrap_data)!=NULL)
-	{
-		/* a texture wrap block has been defined */
-		CopyTexWrapData(matNode,stateMaterial,pTransformState);	
-	}
+    if ((matNode->pwrap_data) != NULL) {
+        /* a texture wrap block has been defined */
+        CopyTexWrapData(matNode, stateMaterial, pTransformState);
+    }
 
 
-	if (MatFlags & mnf_has_opacity)
-	{
-		stateMaterial->opacity=matNode->opacity;
-		stateMaterial->translucent_int=matNode->translucent_int;
+    if (MatFlags & mnf_has_opacity) {
+        stateMaterial->opacity = matNode->opacity;
+        stateMaterial->translucent_int = matNode->translucent_int;
 
-		 /* clear current value */
-		stateMaterial->texas_precomp.LowWord &= ~MASK_GLOBAL_TRANS;
-		stateMaterial->texas_precomp.LowWord |= 
-		 (((matNode->translucent_int) << SHIFT_GLOBAL_TRANS) & MASK_GLOBAL_TRANS);
+        /* clear current value */
+        stateMaterial->texas_precomp.LowWord &= ~MASK_GLOBAL_TRANS;
+        stateMaterial->texas_precomp.LowWord |=
+                (((matNode->translucent_int) << SHIFT_GLOBAL_TRANS) & MASK_GLOBAL_TRANS);
 
-		stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
+        stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
 
-		if( (stateMaterial->texas_precomp.LowWord & MASK_TEXTURE) &&
-			((matNode->opacity!=1.0f) || 
-			 (stateMaterial->texas_precomp.TexAddress	& MASK_4444_555)))
- 		{
- 			stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
- 		}
- 		else
- 		{
-			if(matNode->opacity==1.0f)
-			{
-				stateMaterial->texas_precomp.LowWord &= ~MASK_TRANS;
-			}
+        if ((stateMaterial->texas_precomp.LowWord & MASK_TEXTURE) &&
+            ((matNode->opacity != 1.0f) ||
+             (stateMaterial->texas_precomp.TexAddress & MASK_4444_555))) {
+            stateMaterial->texas_precomp.LowWord |= MASK_TRANS;
+        } else {
+            if (matNode->opacity == 1.0f) {
+                stateMaterial->texas_precomp.LowWord &= ~MASK_TRANS;
+            }
 
-		}
+        }
 
-	}
-	
+    }
 
 
-   	if (MatFlags & mnf_has_text_effect)
-	{
-		/*copy over the text_effects */
-   		stateMaterial->texture_flags&= ~( affect_ambient | 
-										  affect_diffuse |
-										  affect_specular|
-										  affect_glow);
+    if (MatFlags & mnf_has_text_effect) {
+        /*copy over the text_effects */
+        stateMaterial->texture_flags &= ~(affect_ambient |
+                                          affect_diffuse |
+                                          affect_specular |
+                                          affect_glow);
 
-   		stateMaterial->texture_flags|=(matNode->text_effect)& 
-										( affect_ambient | 
-										  affect_diffuse |
-										  affect_specular|
-										  affect_glow);
+        stateMaterial->texture_flags |= (matNode->text_effect) &
+                                        (affect_ambient |
+                                         affect_diffuse |
+                                         affect_specular |
+                                         affect_glow);
 
-	}
+    }
 
 
 }

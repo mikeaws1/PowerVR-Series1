@@ -107,11 +107,10 @@
  *
  *****************************************************************************/
 
-#define MODULE_ID	MODID_LDBMP
+#define MODULE_ID    MODID_LDBMP
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <sgl_defs.h>
 #include <list.h>
 #include <pvrosapi.h>
@@ -121,7 +120,7 @@
 #define UNIX_SEP '/'
 
 #if WIN32 || DOS32
-#define DIR_SEP  DOS_SEP 
+#define DIR_SEP  DOS_SEP
 #else
 #define DIR_SEP  UNIX_SEP
 #endif
@@ -132,18 +131,17 @@
 /*========================================================================================*/
 /*========================================================================================*/
 
-typedef struct tagTEXCACHEENTRY				/* structure stord in cache list */
+typedef struct tagTEXCACHEENTRY                /* structure stord in cache list */
 {
-	int		nTextureName;					/* name returned by sgl_create_texture */
-	int		nUsageCount;					/* number of times this texture has been 'Load'ed */
-	
-	struct
-	{
-		char			szFileName[128];	/* upper case filename of texture (with/without path??) */
-		sgl_bool 		bTranslucent;		/* parameters given to LoadBMPTexture */
-		sgl_mipmap_generation_options 		generate_mipmap;
-		sgl_bool 		dither;
-	} data;
+    int nTextureName;                    /* name returned by sgl_create_texture */
+    int nUsageCount;                    /* number of times this texture has been 'Load'ed */
+
+    struct {
+        char szFileName[128];    /* upper case filename of texture (with/without path??) */
+        sgl_bool bTranslucent;        /* parameters given to LoadBMPTexture */
+        sgl_mipmap_generation_options generate_mipmap;
+        sgl_bool dither;
+    } data;
 
 } TEXCACHEENTRY, *PTEXCACHEENTRY;
 
@@ -153,10 +151,10 @@ typedef struct tagTEXCACHEENTRY				/* structure stord in cache list */
 /*========================================================================================*/
 /*========================================================================================*/
 
-char TexturePath[]="";						/* path to texture directory */
+char TexturePath[] = "";                        /* path to texture directory */
 
-static PLIST 	gpTextureCache = NULL;		/* root of texture cache list */
-static sgl_bool gbCacheInitialised = FALSE;	/* TRUE if cache is initialised, FALSE if not */
+static PLIST gpTextureCache = NULL;        /* root of texture cache list */
+static sgl_bool gbCacheInitialised = FALSE;    /* TRUE if cache is initialised, FALSE if not */
 
 /*========================================================================================*/
 /*========================================================================================*/
@@ -176,15 +174,14 @@ static sgl_bool gbCacheInitialised = FALSE;	/* TRUE if cache is initialised, FAL
  *
  * Return:	      void
  *========================================================================================*/
-static void OnDeleteCacheEntry (PCVOID pData)
-{
-	PTEXCACHEENTRY pCE = (PTEXCACHEENTRY) pData;
+static void OnDeleteCacheEntry(PCVOID pData) {
+    PTEXCACHEENTRY pCE = (PTEXCACHEENTRY) pData;
 
-	ASSERT (pCE != NULL);
-	
-	sgl_delete_texture (pCE->nTextureName);
+    ASSERT (pCE != NULL);
 
-	DPF ((DBG_VERBOSE, "Cache entry (%s) deleted", pCE->data.szFileName));
+    sgl_delete_texture(pCE->nTextureName);
+
+    DPF ((DBG_VERBOSE, "Cache entry (%s) deleted", pCE->data.szFileName));
 }
 
 /*===========================================
@@ -199,18 +196,17 @@ static void OnDeleteCacheEntry (PCVOID pData)
  *
  * Return:	      TRUE if match found, FALSE if not
  *========================================================================================*/
-static sgl_bool OnFindCacheEntryByData (PCVOID pData, sgl_uint32 u32Extra)
-{
-	PTEXCACHEENTRY pCE = (PTEXCACHEENTRY) pData;
-	PTEXCACHEENTRY pCmp = (PTEXCACHEENTRY) u32Extra;
+static sgl_bool OnFindCacheEntryByData(PCVOID pData, sgl_uint32 u32Extra) {
+    PTEXCACHEENTRY pCE = (PTEXCACHEENTRY) pData;
+    PTEXCACHEENTRY pCmp = (PTEXCACHEENTRY) u32Extra;
 
-	ASSERT (pCE != NULL);
-	ASSERT (pCmp != NULL);
+    ASSERT (pCE != NULL);
+    ASSERT (pCmp != NULL);
 
-	return ((strncmp (pCE->data.szFileName, pCmp->data.szFileName, 128) == 0) &&
-			(pCE->data.bTranslucent == pCmp->data.bTranslucent) &&
-			(pCE->data.generate_mipmap == pCmp->data.generate_mipmap) &&
-			(pCE->data.dither == pCmp->data.dither));
+    return ((strncmp(pCE->data.szFileName, pCmp->data.szFileName, 128) == 0) &&
+            (pCE->data.bTranslucent == pCmp->data.bTranslucent) &&
+            (pCE->data.generate_mipmap == pCmp->data.generate_mipmap) &&
+            (pCE->data.dither == pCmp->data.dither));
 }
 
 /*===========================================
@@ -225,13 +221,12 @@ static sgl_bool OnFindCacheEntryByData (PCVOID pData, sgl_uint32 u32Extra)
  *
  * Return:	      TRUE if match found, FALSE if not
  *========================================================================================*/
-static int OnFindCacheEntryByName (PCVOID pData, sgl_uint32 u32Extra)
-{
-	PTEXCACHEENTRY pCE = (PTEXCACHEENTRY) pData;
+static int OnFindCacheEntryByName(PCVOID pData, sgl_uint32 u32Extra) {
+    PTEXCACHEENTRY pCE = (PTEXCACHEENTRY) pData;
 
-	ASSERT (pCE != NULL);
+    ASSERT (pCE != NULL);
 
-	return (pCE->nTextureName == (int) u32Extra);
+    return (pCE->nTextureName == (int) u32Extra);
 }
 
 /*===========================================
@@ -246,13 +241,11 @@ static int OnFindCacheEntryByName (PCVOID pData, sgl_uint32 u32Extra)
  *
  * Return:	      void
  *========================================================================================*/
-static sgl_bool InitBMPTextureCache ()
-{
-	if (!gbCacheInitialised)
-	{
-		gbCacheInitialised = ListInitialiseList (&gpTextureCache, sizeof (TEXCACHEENTRY), 20, OnDeleteCacheEntry);
-	}
-	return (gbCacheInitialised);
+static sgl_bool InitBMPTextureCache() {
+    if (!gbCacheInitialised) {
+        gbCacheInitialised = ListInitialiseList(&gpTextureCache, sizeof(TEXCACHEENTRY), 20, OnDeleteCacheEntry);
+    }
+    return (gbCacheInitialised);
 }
 
 /*========================================================================================*/
@@ -279,160 +272,128 @@ static sgl_bool InitBMPTextureCache ()
  *
  * Return:	    >= 0 name, or -ve if error
  *========================================================================================*/
-int CALL_CONV LoadBMPTexture( char *pszFilename, sgl_bool bTranslucent,
-							  sgl_mipmap_generation_options  generate_mipmap, sgl_bool dither )
-{
-	int nTexture, nNameLen = strlen (pszFilename);
-	
-	if ((nNameLen == 0) || (nNameLen > 127))
-	{
-		DPFDEV ((DBG_ERROR, "LoadBMPTexture: Filename %s bad length (%d)!", pszFilename, nNameLen));
-		nTexture = sgl_err_bad_parameter;
-	}
-	else
-	{
-		if (!InitBMPTextureCache ())
-		{
-			DPF ((DBG_ERROR, "Cache did not initialise properly"));
-			nTexture = sgl_err_no_mem;
-		}
-		else
-		{		
-			TEXCACHEENTRY	CE;
-			PTEXCACHEENTRY	pFCE;
-			
-			#if 0
+int CALL_CONV LoadBMPTexture(char *pszFilename, sgl_bool bTranslucent,
+                             sgl_mipmap_generation_options generate_mipmap, sgl_bool dither) {
+    int nTexture, nNameLen = strlen(pszFilename);
 
-			int k;
+    if ((nNameLen == 0) || (nNameLen > 127)) {
+        DPFDEV ((DBG_ERROR, "LoadBMPTexture: Filename %s bad length (%d)!", pszFilename, nNameLen));
+        nTexture = sgl_err_bad_parameter;
+    } else {
+        if (!InitBMPTextureCache()) {
+            DPF ((DBG_ERROR, "Cache did not initialise properly"));
+            nTexture = sgl_err_no_mem;
+        } else {
+            TEXCACHEENTRY CE;
+            PTEXCACHEENTRY pFCE;
 
-			strcpy (CE.data.szFileName, pszFilename);
+#if 0
 
-			/* make filename upper case */
-			
-			for (k = 0; k < nNameLen; ++k)
-			{
-				if (islower (CE.data.szFileName[k]))
-				{
-					CE.data.szFileName[k] -= 'a' - 'A';
-				}
-			}
-			
-			#else
-			
-			{
-				char *pSrc, *pDst;
+            int k;
 
-				pSrc = pszFilename;
-				pDst = CE.data.szFileName;
+            strcpy (CE.data.szFileName, pszFilename);
 
-				while (*pSrc)
-				{
-					if ((*pSrc >= 'a') && (*pSrc <= 'z'))
-					{
-						*pDst = *pSrc - ('a' - 'A');
-					}
-					else
-					{
-						*pDst = *pSrc;
-					}
+            /* make filename upper case */
 
-					pSrc++;
-					pDst++;
-				}
+            for (k = 0; k < nNameLen; ++k)
+            {
+                if (islower (CE.data.szFileName[k]))
+                {
+                    CE.data.szFileName[k] -= 'a' - 'A';
+                }
+            }
 
-				*pDst = 0;
-			}
+#else
 
-			#endif
+            {
+                char *pSrc, *pDst;
 
-			CE.data.bTranslucent = bTranslucent;
-			CE.data.generate_mipmap = generate_mipmap;
-			CE.data.dither = dither;
-	
-			pFCE = ListFindItem (gpTextureCache, (FINDITEMFN)OnFindCacheEntryByData,
-												 (sgl_uint32) &CE);
-			
-			if (pFCE)
-			{
-				DPF ((DBG_VERBOSE, "Identical texture already loaded [%s %s]", pszFilename, pFCE->data.szFileName));
-				pFCE->nUsageCount++;
-				nTexture = pFCE->nTextureName;
-			}
-			else
-			{
-				sgl_intermediate_map Imap = ConvertBMPtoSGL (pszFilename, bTranslucent);
-		
-				if (!Imap.pixels)	
-				{
-					DPF ((DBG_ERROR, "Error loading %s to intermediate map", pszFilename));
-					nTexture = sgl_err_bad_parameter;
-				}
-				else
-				{
-					sgl_map_types map_type;
-					sgl_map_sizes map_size;
+                pSrc = pszFilename;
+                pDst = CE.data.szFileName;
+
+                while (*pSrc) {
+                    if ((*pSrc >= 'a') && (*pSrc <= 'z')) {
+                        *pDst = *pSrc - ('a' - 'A');
+                    } else {
+                        *pDst = *pSrc;
+                    }
+
+                    pSrc++;
+                    pDst++;
+                }
+
+                *pDst = 0;
+            }
+
+#endif
+
+            CE.data.bTranslucent = bTranslucent;
+            CE.data.generate_mipmap = generate_mipmap;
+            CE.data.dither = dither;
+
+            pFCE = ListFindItem(gpTextureCache, (FINDITEMFN) OnFindCacheEntryByData,
+                                (sgl_uint32) &CE);
+
+            if (pFCE) {
+                DPF ((DBG_VERBOSE, "Identical texture already loaded [%s %s]", pszFilename, pFCE->data.szFileName));
+                pFCE->nUsageCount++;
+                nTexture = pFCE->nTextureName;
+            } else {
+                sgl_intermediate_map Imap = ConvertBMPtoSGL(pszFilename, bTranslucent);
+
+                if (!Imap.pixels) {
+                    DPF ((DBG_ERROR, "Error loading %s to intermediate map", pszFilename));
+                    nTexture = sgl_err_bad_parameter;
+                } else {
+                    sgl_map_types map_type;
+                    sgl_map_sizes map_size;
 
 
-					if(generate_mipmap)
-						map_type = bTranslucent ? sgl_map_trans16_mm : sgl_map_16bit_mm;
-					else
-						map_type = bTranslucent ? sgl_map_trans16 : sgl_map_16bit;
-			
-					if ((Imap.x_dim >= 256) && (Imap.y_dim >= 256))
-					{
-						map_size = sgl_map_256x256;
-					}
-					else if ((Imap.x_dim >= 128) && (Imap.y_dim >= 128))
-					{
-						map_size = sgl_map_128x128;
-					}
-					else if ((Imap.x_dim >= 64) && (Imap.y_dim >= 64))
-					{
-						map_size = sgl_map_64x64;
-					}
-					else if ((Imap.x_dim >= 32) && (Imap.y_dim >= 32))
-					{
-						map_size = sgl_map_32x32;
-					}
-					else
-					{
-						DPF ((DBG_ERROR, "Imap is weird size"));
-						nTexture = sgl_err_no_mem;
-					}
+                    if (generate_mipmap)
+                        map_type = bTranslucent ? sgl_map_trans16_mm : sgl_map_16bit_mm;
+                    else
+                        map_type = bTranslucent ? sgl_map_trans16 : sgl_map_16bit;
 
-					nTexture = sgl_create_texture (map_type, map_size, generate_mipmap, dither, &Imap, NULL);
-				
-					if (nTexture < 0)
-					{
-						DPF ((DBG_ERROR, "Error %d creating texture from %s", nTexture, pszFilename));
-						nTexture = sgl_err_bad_parameter;
-					}
-					else
-					{
-						pFCE = ListAddItem (gpTextureCache);
-	
-						if (pFCE)
-						{
-							DPF ((DBG_VERBOSE, "Texture %s loaded and cached", pszFilename));
-							pFCE->nTextureName = nTexture;
-							pFCE->nUsageCount = 1;
-							pFCE->data = CE.data;
-						}
-						else
-						{
-							DPF ((DBG_ERROR, "Error adding texture %s to cache", pszFilename));
-							sgl_delete_texture (nTexture);
-							nTexture = sgl_err_no_mem;
-						}
-					}
-		
-					SGLFree (Imap.pixels);
-				}
-			}
-		}
-	}
+                    if ((Imap.x_dim >= 256) && (Imap.y_dim >= 256)) {
+                        map_size = sgl_map_256x256;
+                    } else if ((Imap.x_dim >= 128) && (Imap.y_dim >= 128)) {
+                        map_size = sgl_map_128x128;
+                    } else if ((Imap.x_dim >= 64) && (Imap.y_dim >= 64)) {
+                        map_size = sgl_map_64x64;
+                    } else if ((Imap.x_dim >= 32) && (Imap.y_dim >= 32)) {
+                        map_size = sgl_map_32x32;
+                    } else {
+                        DPF ((DBG_ERROR, "Imap is weird size"));
+                        nTexture = sgl_err_no_mem;
+                    }
 
-	return (nTexture);
+                    nTexture = sgl_create_texture(map_type, map_size, generate_mipmap, dither, &Imap, NULL);
+
+                    if (nTexture < 0) {
+                        DPF ((DBG_ERROR, "Error %d creating texture from %s", nTexture, pszFilename));
+                        nTexture = sgl_err_bad_parameter;
+                    } else {
+                        pFCE = ListAddItem(gpTextureCache);
+
+                        if (pFCE) {
+                            DPF ((DBG_VERBOSE, "Texture %s loaded and cached", pszFilename));
+                            pFCE->nTextureName = nTexture;
+                            pFCE->nUsageCount = 1;
+                            pFCE->data = CE.data;
+                        } else {
+                            DPF ((DBG_ERROR, "Error adding texture %s to cache", pszFilename));
+                            sgl_delete_texture(nTexture);
+                            nTexture = sgl_err_no_mem;
+                        }
+                    }
+
+                    SGLFree (Imap.pixels);
+                }
+            }
+        }
+    }
+
+    return (nTexture);
 }
 
 /*===========================================
@@ -448,36 +409,26 @@ int CALL_CONV LoadBMPTexture( char *pszFilename, sgl_bool bTranslucent,
  *
  * Return:	    void
  *========================================================================================*/
-void CALL_CONV FreeBMPTexture( int nTextureName )
-{
-	PTEXCACHEENTRY pFCE;
-	
-	if (!InitBMPTextureCache ())
-	{
-		DPF ((DBG_ERROR, "Texture cache wouldn't initialise"));
-	}
-	else
-	{
-		pFCE = ListFindItem (gpTextureCache, (FINDITEMFN)OnFindCacheEntryByName, 
-											 (sgl_uint32) nTextureName);
-	
-		if (pFCE)
-		{
-			if (--pFCE->nUsageCount == 0)
-			{
-				ListRemoveItem (gpTextureCache, (FINDITEMFN)OnFindCacheEntryByName, 
-												(sgl_uint32) nTextureName);
-			}
-			else
-			{
-				DPF ((DBG_VERBOSE, "Texture %s - usage count decremented to %d", pFCE->data.szFileName, pFCE->nUsageCount));
-			}
-		}
-		else
-		{
-			DPFDEV ((DBG_WARNING, "FreeBMPTexture: Unable to find texture %d in cache", nTextureName));
-		}
-	}
+void CALL_CONV FreeBMPTexture(int nTextureName) {
+    PTEXCACHEENTRY pFCE;
+
+    if (!InitBMPTextureCache()) {
+        DPF ((DBG_ERROR, "Texture cache wouldn't initialise"));
+    } else {
+        pFCE = ListFindItem(gpTextureCache, (FINDITEMFN) OnFindCacheEntryByName,
+                            (sgl_uint32) nTextureName);
+
+        if (pFCE) {
+            if (--pFCE->nUsageCount == 0) {
+                ListRemoveItem(gpTextureCache, (FINDITEMFN) OnFindCacheEntryByName,
+                               (sgl_uint32) nTextureName);
+            } else {
+                DPF ((DBG_VERBOSE, "Texture %s - usage count decremented to %d", pFCE->data.szFileName, pFCE->nUsageCount));
+            }
+        } else {
+            DPFDEV ((DBG_WARNING, "FreeBMPTexture: Unable to find texture %d in cache", nTextureName));
+        }
+    }
 }
 
 /*===========================================
@@ -492,12 +443,10 @@ void CALL_CONV FreeBMPTexture( int nTextureName )
  *
  * Return:	    void
  *========================================================================================*/
-void CALL_CONV FreeAllBMPTextures()
-{
-	ListDeleteList (&gpTextureCache);
-	gbCacheInitialised = FALSE;
+void CALL_CONV FreeAllBMPTextures() {
+    ListDeleteList(&gpTextureCache);
+    gbCacheInitialised = FALSE;
 }
-
 
 
 /******************************************************************************
@@ -511,11 +460,11 @@ void CALL_CONV FreeAllBMPTextures()
  * Description  : Gets a short from a little endian file and puts it into the
  *				  correct endian for the computer running this function.
  *****************************************************************************/
-unsigned int GetShort(FILE *fp)
-{
-  int c, c1;
-  c = fgetc(fp);  c1 = fgetc(fp);
-  return ((unsigned int) c) + (((unsigned int) c1) << 8);
+unsigned int GetShort(FILE *fp) {
+    int c, c1;
+    c = fgetc(fp);
+    c1 = fgetc(fp);
+    return ((unsigned int) c) + (((unsigned int) c1) << 8);
 }
 
 /******************************************************************************
@@ -529,14 +478,16 @@ unsigned int GetShort(FILE *fp)
  * Description  : Gets a long from a little endian file and puts it into the
  *				  correct endian for the computer running this function.
  *****************************************************************************/
-unsigned long GetLong(FILE *fp)
-{
-  int c, c1, c2, c3;
-  c = fgetc(fp);  c1 = fgetc(fp);  c2 = fgetc(fp);  c3 = fgetc(fp);
-  return ((unsigned long) c) +
-         (((unsigned long) c1) << 8) + 
-	 (((unsigned long) c2) << 16) +
-	 (((unsigned long) c3) << 24);
+unsigned long GetLong(FILE *fp) {
+    int c, c1, c2, c3;
+    c = fgetc(fp);
+    c1 = fgetc(fp);
+    c2 = fgetc(fp);
+    c3 = fgetc(fp);
+    return ((unsigned long) c) +
+           (((unsigned long) c1) << 8) +
+           (((unsigned long) c2) << 16) +
+           (((unsigned long) c3) << 24);
 }
 
 /******************************************************************************
@@ -551,12 +502,13 @@ unsigned long GetLong(FILE *fp)
  * Description  : Puts a short into a little endian file. It does not matter
  *				  what endian the computer is.
  *****************************************************************************/
-void PutShort(FILE *fp,int i)
-{
-  int c, c1;
+void PutShort(FILE *fp, int i) {
+    int c, c1;
 
-  c = ((unsigned int ) i) & 0xff;  c1 = (((unsigned int) i)>>8) & 0xff;
-  fputc(c, fp);   fputc(c1,fp);
+    c = ((unsigned int) i) & 0xff;
+    c1 = (((unsigned int) i) >> 8) & 0xff;
+    fputc(c, fp);
+    fputc(c1, fp);
 }
 
 /******************************************************************************
@@ -571,15 +523,17 @@ void PutShort(FILE *fp,int i)
  * Description  : Puts a long into a little endian file. It does not matter
  *				  what endian the computer is.
  *****************************************************************************/
-void PutLong(FILE *fp,long i)
-{
-  int c, c1, c2, c3;
-  c  = ((unsigned long ) i)      & 0xff;  
-  c1 = (((unsigned long) i)>>8)  & 0xff;
-  c2 = (((unsigned long) i)>>16) & 0xff;
-  c3 = (((unsigned long) i)>>24) & 0xff;
+void PutLong(FILE *fp, long i) {
+    int c, c1, c2, c3;
+    c = ((unsigned long) i) & 0xff;
+    c1 = (((unsigned long) i) >> 8) & 0xff;
+    c2 = (((unsigned long) i) >> 16) & 0xff;
+    c3 = (((unsigned long) i) >> 24) & 0xff;
 
-  fputc(c, fp);   fputc(c1,fp);  fputc(c2,fp);  fputc(c3,fp);
+    fputc(c, fp);
+    fputc(c1, fp);
+    fputc(c2, fp);
+    fputc(c3, fp);
 }
 
 /******************************************************************************
@@ -601,309 +555,282 @@ void PutLong(FILE *fp,long i)
  *				  A 2x2 WILL NOT LOAD CORRECTLY BECAUSE A BMP LINE HAS TO BE
  *				  4 BYTE ALIGNED.
  *****************************************************************************/
-sgl_intermediate_map CALL_CONV ConvertBMPtoSGL( char *filename,
-												sgl_bool Translucent )
-{
-	sgl_intermediate_map ReturnMap;
-	char CombinedFilename[100];
+sgl_intermediate_map CALL_CONV ConvertBMPtoSGL(char *filename,
+                                               sgl_bool Translucent) {
+    sgl_intermediate_map ReturnMap;
+    char CombinedFilename[100];
 
-	char *pLineBuffer;
+    char *pLineBuffer;
 
-	char BaseName[100];
-	char PathName[100];
-	char *pC;
+    char BaseName[100];
+    char PathName[100];
+    char *pC;
 
-	FILE *infile;
-	sgl_uint32 x,y,TransX,TransY;
-	sgl_uint32 i,j;
+    FILE *infile;
+    sgl_uint32 x, y, TransX, TransY;
+    sgl_uint32 i, j;
 
-	sgl_map_pixel *OutDib;
+    sgl_map_pixel *OutDib;
 
-	
-	/*
-	// Convert the filename into a base and path.
-	*/
-	strcpy(PathName, filename);
+    ReturnMap.x_dim = 0;
+    ReturnMap.y_dim = 0;
+    ReturnMap.pixels = NULL;
 
-	/*
-	// Convert the slash types if we are working in DOS based environment
-	*/
-	#if WIN32 || DOS32
-		pC = strrchr(PathName, UNIX_SEP);
-		while (pC != NULL)
-		{
-			*pC = DOS_SEP;
-			pC = strrchr(PathName, UNIX_SEP);
-		}
-	#endif
 
-	/*
-	// find the last separator
-	*/
-	pC = strrchr(PathName, DIR_SEP);
-	/*
-	// No path
-	*/
-	if(pC == NULL)
-	{	  
-		strcpy(PathName, "");
-		strcpy(BaseName, filename);
-	}
-	/*
-	// Else extract the base name and path
-	*/
-	else
-	{
-		pC ++;
-		strcpy(BaseName, pC);
+    /*
+    // Convert the filename into a base and path.
+    */
+    strcpy(PathName, filename);
 
-		/*
-		// terminate the path string
-		*/
-		*pC = '\0';
-	}/*end if*/
-	
+    /*
+    // Convert the slash types if we are working in DOS based environment
+    */
+#if WIN32 || DOS32
+    pC = strrchr(PathName, UNIX_SEP);
+    while (pC != NULL) {
+        *pC = DOS_SEP;
+        pC = strrchr(PathName, UNIX_SEP);
+    }
+#endif
 
-	/*
-	** read the dib in from disk 
-	*/
-	strcpy(CombinedFilename, PathName);
-   	strcat(CombinedFilename,BaseName);	
+    /*
+    // find the last separator
+    */
+    pC = strrchr(PathName, DIR_SEP);
+    /*
+    // No path
+    */
+    if (pC == NULL) {
+        strcpy(PathName, "");
+        strcpy(BaseName, filename);
+    }
+        /*
+        // Else extract the base name and path
+        */
+    else {
+        pC++;
+        strcpy(BaseName, pC);
 
-	infile=fopen(CombinedFilename,"rb");
-	if (!infile)
-	{
-		PVROSPrintf ("ConvertBMPtoSGL: Could not open %s ABORTING PROGRAM\n", 
-						CombinedFilename);
-		exit(1);
+        /*
+        // terminate the path string
+        */
+        *pC = '\0';
+    }/*end if*/
 
-		ReturnMap.x_dim = 0;
-		ReturnMap.y_dim = 0;
-		ReturnMap.pixels = 0;
-	}
-	else
-	{
-		int DibLineLength;
 
-		/*
-		** work out the texture dimensions.
-		*/
-		#ifndef MIDAS_ARCADE
-		fseek(infile,18,0);
-		#else
-		/* fseek doesn't seem to work properly on MIDAS Arcade so do it differently */
-		#pragma message( "** FSEEK replaced by FREAD for MIDAS Arcade **" )
-		if (1)
-		{
-			char 	ReadBuff[18];
-			size_t	BytesRead;
-			BytesRead = fread((void *)ReadBuff, 1, 18, infile);
-		}
-		#endif
+    /*
+    ** read the dib in from disk
+    */
+    strcpy(CombinedFilename, PathName);
+    strcat(CombinedFilename, BaseName);
 
-		x=GetLong(infile);
-	
-		y=GetLong(infile);
-	
-		/*
-		// allocate the correct space
-		*/
-		OutDib=(sgl_map_pixel *) SGLMalloc(x*y*sizeof(sgl_map_pixel));
+    infile = fopen(CombinedFilename, "rb");
+    if (!infile) {
+        PVROSPrintf("ConvertBMPtoSGL: Could not open %s ABORTING PROGRAM\n",
+                    CombinedFilename);
+        exit(1);
+    } else {
+        int DibLineLength;
 
-		/*
-		// Allocate a line buffer, so we can read in a whole line at a time.
-		// NOTE that this is rounded UP to the nearest legal size for a Windows
-		// DIB. All rows are padded up to a multiple of 4 bytes.
-		*/
-		DibLineLength = ((x * 3) +3) & (~3);
-		pLineBuffer = (char *) SGLMalloc(DibLineLength);
+        /*
+        ** work out the texture dimensions.
+        */
+#ifndef MIDAS_ARCADE
+        fseek(infile, 18, 0);
+#else
+        /* fseek doesn't seem to work properly on MIDAS Arcade so do it differently */
+#pragma message( "** FSEEK replaced by FREAD for MIDAS Arcade **" )
+        if (1)
+        {
+            char 	ReadBuff[18];
+            size_t	BytesRead;
+            BytesRead = fread((void *)ReadBuff, 1, 18, infile);
+        }
+#endif
 
-		if (OutDib && pLineBuffer)
-		{
-			/*
-			// keep a pointer to the pixel we are storing, and where we are
-			// reading from.
-			*/
-			sgl_map_pixel * pPixel;
-			char *pSrc;
+        x = GetLong(infile);
 
-			/*skip to the pixel data */
-			#ifndef MIDAS_ARCADE
-			fseek(infile,28,1);
-			#else
-			#pragma message( "** FSEEK replaced by FREAD for MIDAS Arcade **" )
-			/* fseek doesn't seem to work properly on MIDAS Arcade so do it differently */
-			if (1)
-			{
-				char 	ReadBuff[28];
-				size_t	BytesRead;
-				BytesRead = fread((void *)ReadBuff, 1, 28, infile);
-			}
-			#endif
+        y = GetLong(infile);
 
-			/*
-			** load the BMP and
-			** Convert from RGB to sgl_map_pixel.
-			*/
-			pPixel = OutDib;
+        /*
+        // allocate the correct space
+        */
+        OutDib = (sgl_map_pixel *) SGLMalloc(x * y * sizeof(sgl_map_pixel));
 
-			for(i=y; i!= 0; i--)
-			{
-				/*
-				// Read in the next line, and put the pointer back to the
-				// start of the line
-				*/
-				fread(pLineBuffer, 1, DibLineLength, infile);
-				pSrc = pLineBuffer;
+        /*
+        // Allocate a line buffer, so we can read in a whole line at a time.
+        // NOTE that this is rounded UP to the nearest legal size for a Windows
+        // DIB. All rows are padded up to a multiple of 4 bytes.
+        */
+        DibLineLength = ((x * 3) + 3) & (~3);
+        pLineBuffer = (char *) SGLMalloc(DibLineLength);
 
-				/*
-				// Copy over the pixels
-				*/
-				for(j=x; j!=0; j--)
-				{
-					pPixel->blue  = pSrc[0];
-					pPixel->green = pSrc[1];
-					pPixel->red	  = pSrc[2];
-					pPixel->alpha = 0;
+        if (OutDib && pLineBuffer) {
+            /*
+            // keep a pointer to the pixel we are storing, and where we are
+            // reading from.
+            */
+            sgl_map_pixel *pPixel;
+            char *pSrc;
 
-					pPixel ++;
-					pSrc +=3;
-				}/*end for j*/
-			}/*end for y*/
-		
-			fclose(infile);
-		
-			if(Translucent)
-			{
-				/*
-				// append a 't' to the begining of the filename BUT after any
-				// directory paths.
-				//
-				// First find the last / (or \ depending on operating system)
-				*/
-				strcpy(CombinedFilename, PathName);
-				strcat(CombinedFilename,"t");	
-				strcat(CombinedFilename,BaseName);	
+            /*skip to the pixel data */
+#ifndef MIDAS_ARCADE
+            fseek(infile, 28, 1);
+#else
+#pragma message( "** FSEEK replaced by FREAD for MIDAS Arcade **" )
+            /* fseek doesn't seem to work properly on MIDAS Arcade so do it differently */
+            if (1)
+            {
+                char 	ReadBuff[28];
+                size_t	BytesRead;
+                BytesRead = fread((void *)ReadBuff, 1, 28, infile);
+            }
+#endif
 
-				infile=fopen(CombinedFilename,"rb");
-		
-				if (!infile)
-				{
-					PVROSPrintf ("ConvertBMPtoSGL: Could not open %s ABORTING PROGRAM\n", 
-						CombinedFilename);
+            /*
+            ** load the BMP and
+            ** Convert from RGB to sgl_map_pixel.
+            */
+            pPixel = OutDib;
 
-					exit(1);
+            for (i = y; i != 0; i--) {
+                /*
+                // Read in the next line, and put the pointer back to the
+                // start of the line
+                */
+                fread(pLineBuffer, 1, DibLineLength, infile);
+                pSrc = pLineBuffer;
 
-					ReturnMap.x_dim = 0;
-					ReturnMap.y_dim = 0;
-					ReturnMap.pixels = 0;
-				}
-				else
-				{
-					/*
-					** work out the texture dimensions.
-					*/
-			
-					fseek(infile,18,0);
-					TransX=GetLong(infile);
-			
-					TransY=GetLong(infile);
-			
-					if ((TransX != x) || (TransY != y)) 
-					{
-						DPF ((DBG_ERROR, "ConvertBMPtoSGL: %s. The translucent dib is not the same size", filename));
-						fclose (infile);
-						ReturnMap.x_dim = 0;
-						ReturnMap.y_dim = 0;
-						ReturnMap.pixels = 0;
-					}
-					else
-					{
-						fseek(infile,28,1);
-				
+                /*
+                // Copy over the pixels
+                */
+                for (j = x; j != 0; j--) {
+                    pPixel->blue = pSrc[0];
+                    pPixel->green = pSrc[1];
+                    pPixel->red = pSrc[2];
+                    pPixel->alpha = 0;
 
-						/* place the translucent info in the RGBA bitmap */
-						pPixel = OutDib;
+                    pPixel++;
+                    pSrc += 3;
+                }/*end for j*/
+            }/*end for y*/
 
-						for(i=0;i<y;i++)
-						{
-							/*
-							// Read in the next line, and put the pointer back to
-							// the start of the line
-							*/
-							fread(pLineBuffer, 1, DibLineLength, infile);
-							pSrc = pLineBuffer;
+            fclose(infile);
 
-							/*
-							// Copy over the pixels
-							*/
-							for(j=x; j!=0; j--)
-							{
-								pPixel->alpha = pSrc[2];
+            if (Translucent) {
+                /*
+                // append a 't' to the begining of the filename BUT after any
+                // directory paths.
+                //
+                // First find the last / (or \ depending on operating system)
+                */
+                strcpy(CombinedFilename, PathName);
+                strcat(CombinedFilename, "t");
+                strcat(CombinedFilename, BaseName);
 
-								pPixel ++;
-								pSrc +=3;
-							}/*end for j*/
+                infile = fopen(CombinedFilename, "rb");
 
-						}
-						fclose(infile);
-				
-						/*fill out the sgl_intermediate_map */
-				
-						ReturnMap.id[0]='I';
-						ReturnMap.id[1]='M';
-						ReturnMap.id[2]='A';
-						ReturnMap.id[3]='P';
-				
-						ReturnMap.x_dim=x;
-						ReturnMap.y_dim=y;
-				
-						ReturnMap.pixels=OutDib;
-					}
-				}
+                if (!infile) {
+                    PVROSPrintf("ConvertBMPtoSGL: Could not open %s ABORTING PROGRAM\n",
+                                CombinedFilename);
 
-			}
-			/*
-			// ELSE not translucent
-			*/
-			else
-			{
-				/*fill out the sgl_intermediate_map */
-			
-				ReturnMap.id[0]='I';
-				ReturnMap.id[1]='M';
-				ReturnMap.id[2]='A';
-				ReturnMap.id[3]='P';
-				
-				ReturnMap.x_dim=x;
-				ReturnMap.y_dim=y;
-				
-				ReturnMap.pixels=OutDib;
-			}
-			/*
-			// Free up the temporary space
-			*/
-			SGLFree(pLineBuffer);
-		}
-		/*
-		// Else failed to allocate memory. Free up the space we did manage to
-		// allocate
-		*/
-		else
-		{
-			if(pLineBuffer)
-			{
-				SGLFree(pLineBuffer);
-			}
-			if(OutDib)
-			{
-				SGLFree(OutDib);
-			}
-		}/*end if/else malloced OK*/
+                    exit(1);
+                } else {
+                    /*
+                    ** work out the texture dimensions.
+                    */
 
-	}/*end else FILE exists*/
-	
-	return(ReturnMap);
+                    fseek(infile, 18, 0);
+                    TransX = GetLong(infile);
+
+                    TransY = GetLong(infile);
+
+                    if ((TransX != x) || (TransY != y)) {
+                        DPF ((DBG_ERROR, "ConvertBMPtoSGL: %s. The translucent dib is not the same size", filename));
+                        fclose(infile);
+                        ReturnMap.x_dim = 0;
+                        ReturnMap.y_dim = 0;
+                        ReturnMap.pixels = 0;
+                    } else {
+                        fseek(infile, 28, 1);
+
+
+                        /* place the translucent info in the RGBA bitmap */
+                        pPixel = OutDib;
+
+                        for (i = 0; i < y; i++) {
+                            /*
+                            // Read in the next line, and put the pointer back to
+                            // the start of the line
+                            */
+                            fread(pLineBuffer, 1, DibLineLength, infile);
+                            pSrc = pLineBuffer;
+
+                            /*
+                            // Copy over the pixels
+                            */
+                            for (j = x; j != 0; j--) {
+                                pPixel->alpha = pSrc[2];
+
+                                pPixel++;
+                                pSrc += 3;
+                            }/*end for j*/
+
+                        }
+                        fclose(infile);
+
+                        /*fill out the sgl_intermediate_map */
+
+                        ReturnMap.id[0] = 'I';
+                        ReturnMap.id[1] = 'M';
+                        ReturnMap.id[2] = 'A';
+                        ReturnMap.id[3] = 'P';
+
+                        ReturnMap.x_dim = x;
+                        ReturnMap.y_dim = y;
+
+                        ReturnMap.pixels = OutDib;
+                    }
+                }
+
+            }
+                /*
+                // ELSE not translucent
+                */
+            else {
+                /*fill out the sgl_intermediate_map */
+
+                ReturnMap.id[0] = 'I';
+                ReturnMap.id[1] = 'M';
+                ReturnMap.id[2] = 'A';
+                ReturnMap.id[3] = 'P';
+
+                ReturnMap.x_dim = x;
+                ReturnMap.y_dim = y;
+
+                ReturnMap.pixels = OutDib;
+            }
+            /*
+            // Free up the temporary space
+            */
+            SGLFree(pLineBuffer);
+        }
+            /*
+            // Else failed to allocate memory. Free up the space we did manage to
+            // allocate
+            */
+        else {
+            if (pLineBuffer) {
+                SGLFree(pLineBuffer);
+            }
+            if (OutDib) {
+                SGLFree(OutDib);
+            }
+        }/*end if/else malloced OK*/
+
+    }/*end else FILE exists*/
+
+    return (ReturnMap);
 }
 
 

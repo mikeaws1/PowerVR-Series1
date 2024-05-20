@@ -111,7 +111,7 @@
 #define INV_LOG_OF_2 (1.442695041f)
 
 
-#define MESSAGE_CLAMP(out,in,min,max,name)\
+#define MESSAGE_CLAMP(out, in, min, max, name)\
   if ((in) < (min))\
   {\
       DPF(( DBG_WARNING,"%s was too small.",(name) ));\
@@ -125,9 +125,8 @@
 #if PCX2 || PCX2_003
 /* If PCX2 drivers and hardware need to set fog colour.
  */
-extern sgl_colour	cFastFogColour;
+extern sgl_colour cFastFogColour;
 #endif
-
 
 
 /******************************************************************************
@@ -146,21 +145,20 @@ extern sgl_colour	cFastFogColour;
  *                other parameters: The new camera information.
  *****************************************************************************/
 static void WriteData(CAMERA_NODE_STRUCT *pNode, float fZoomFactor,
-						float fForeground, 
-						float fInvBackground)
-{
-	ASSERT(pNode)
+                      float fForeground,
+                      float fInvBackground) {
+    ASSERT(pNode)
 
-	MESSAGE_CLAMP(pNode->zoom_factor, fZoomFactor, 0.4f, 200.0f,
-	  "Zoom factor");
-	  
-	MESSAGE_CLAMP(pNode->foreground_dist, fForeground, 1.0E-6f,
-					1.0E+10f, "Foregound dist");
+    MESSAGE_CLAMP(pNode->zoom_factor, fZoomFactor, 0.4f, 200.0f,
+                  "Zoom factor");
 
-	DPF((DBG_MESSAGE," Not sure of limits on foreground distance"));
+    MESSAGE_CLAMP(pNode->foreground_dist, fForeground, 1.0E-6f,
+                  1.0E+10f, "Foregound dist");
 
-	MESSAGE_CLAMP(pNode->inv_background_dist, fInvBackground, 0.0f,
-	  1.0f/pNode->foreground_dist, "Background distance");
+    DPF((DBG_MESSAGE, " Not sure of limits on foreground distance"));
+
+    MESSAGE_CLAMP(pNode->inv_background_dist, fInvBackground, 0.0f,
+                  1.0f / pNode->foreground_dist, "Background distance");
 }
 
 
@@ -174,10 +172,9 @@ static void WriteData(CAMERA_NODE_STRUCT *pNode, float fZoomFactor,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_create_camera( float fZoomFactor,
-								 float fForeground,
-								 float fInvBackground )
-{
+int CALL_CONV sgl_create_camera(float fZoomFactor,
+                                float fForeground,
+                                float fInvBackground) {
     /*
 	// -----------
 	// INITIALISE:
@@ -187,67 +184,65 @@ int CALL_CONV sgl_create_camera( float fZoomFactor,
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
+    {
+        return SglError(sgl_err_failed_init);
+    }
 #endif
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-	/*
-	// ----------
-	// MAKE NODE:
-	// ----------
-	*/
+    /*
+    // ----------
+    // MAKE NODE:
+    // ----------
+    */
     pNode = NEW(CAMERA_NODE_STRUCT);
-	if (pNode == NULL)
-	{
-		return SglError(sgl_err_no_mem);
-	}
+    if (pNode == NULL) {
+        return SglError(sgl_err_no_mem);
+    }
 
     pNode->node_hdr.n16_node_type = nt_camera;
     pNode->node_hdr.n16_name =
-      AddNamedItem(dlUserGlobals.pNamtab, pNode, nt_camera);
-	if (pNode->node_hdr.n16_name == sgl_err_no_name)
-	{
-		SGLFree(pNode);
-		return SglError(sgl_err_no_name);
-	}
-	
-	/*
-	// Save a pointer to the cameras list
-	*/
-	pNode->pparent = dlUserGlobals.pCurrentList;
+            AddNamedItem(dlUserGlobals.pNamtab, pNode, nt_camera);
+    if (pNode->node_hdr.n16_name == sgl_err_no_name) {
+        SGLFree(pNode);
+        return SglError(sgl_err_no_name);
+    }
 
-    WriteData(pNode,fZoomFactor, fForeground,fInvBackground);
+    /*
+    // Save a pointer to the cameras list
+    */
+    pNode->pparent = dlUserGlobals.pCurrentList;
 
-	pNode->backgroundColour[0] = 0.0f;
-	pNode->backgroundColour[1] = 0.0f;
-	pNode->backgroundColour[2] = 0.0f;
+    WriteData(pNode, fZoomFactor, fForeground, fInvBackground);
 
-	/*
-	// pack the default fog colour
-	*/
-	pNode->FogCol.red	 =	0;
-	pNode->FogCol.green  =	0;
-	pNode->FogCol.blue	 =	0;
-	pNode->FogCol.alpha  =	0;
+    pNode->backgroundColour[0] = 0.0f;
+    pNode->backgroundColour[1] = 0.0f;
+    pNode->backgroundColour[2] = 0.0f;
 
-	/*
-	// store the default fog density values, so that we get NO
-	// fog- use a very negative number for the power.
-	*/ 
-	pNode->invlogfogFraction = 1.0f;
-	pNode->logfogPower = (INT_MIN / 2); 
+    /*
+    // pack the default fog colour
+    */
+    pNode->FogCol.red = 0;
+    pNode->FogCol.green = 0;
+    pNode->FogCol.blue = 0;
+    pNode->FogCol.alpha = 0;
+
+    /*
+    // store the default fog density values, so that we get NO
+    // fog- use a very negative number for the power.
+    */
+    pNode->invlogfogFraction = 1.0f;
+    pNode->logfogPower = (INT_MIN / 2);
 
 
-	/*
-	// ------------
-	// ADD TO LIST:
-	// ------------
-	*/
+    /*
+    // ------------
+    // ADD TO LIST:
+    // ------------
+    */
     AppendNodeToList(dlUserGlobals.pCurrentList, pNode);
 
     /*
@@ -269,31 +264,29 @@ int CALL_CONV sgl_create_camera( float fZoomFactor,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-int CALL_CONV sgl_get_camera( int nName, float *fpZoomFactor, 
- 							  float *fpForeground, float *fpInvBackground )
-{
+int CALL_CONV sgl_get_camera(int nName, float *fpZoomFactor,
+                             float *fpForeground, float *fpInvBackground) {
     CAMERA_NODE_STRUCT *pNode;
 
-	ASSERT(fpZoomFactor)
-	ASSERT(fpForeground)
-	ASSERT(fpInvBackground)
+    ASSERT(fpZoomFactor)
+    ASSERT(fpForeground)
+    ASSERT(fpInvBackground)
 
 #if !WIN32
     if (SglInitialise())
-	{
-		return SglError(sgl_err_failed_init);
-	}
+    {
+        return SglError(sgl_err_failed_init);
+    }
 #endif
-    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_camera)
-	{
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_camera) {
         return SglError(sgl_err_bad_name);
-	}
+    }
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, nName);
 
-	*fpZoomFactor    = pNode->zoom_factor;
-	*fpForeground    = pNode->foreground_dist;
-	*fpInvBackground = pNode->inv_background_dist;
+    *fpZoomFactor = pNode->zoom_factor;
+    *fpForeground = pNode->foreground_dist;
+    *fpInvBackground = pNode->inv_background_dist;
 
     return SglError(sgl_no_err);
 }
@@ -309,32 +302,30 @@ int CALL_CONV sgl_get_camera( int nName, float *fpZoomFactor,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_set_camera( int nName, float fZoomFactor,
-							   float fForeground, float fInvBackground )
-{
+void CALL_CONV sgl_set_camera(int nName, float fZoomFactor,
+                              float fForeground, float fInvBackground) {
     CAMERA_NODE_STRUCT *pNode;
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_camera)
-    {
-		SglError(sgl_err_bad_name);
-		return;
-	}
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nName) != nt_camera) {
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, nName);
 
-    WriteData(pNode,fZoomFactor,fForeground,fInvBackground);
+    WriteData(pNode, fZoomFactor, fForeground, fInvBackground);
 
     SglError(sgl_no_err);
 }
@@ -350,109 +341,103 @@ void CALL_CONV sgl_set_camera( int nName, float fZoomFactor,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_set_fog( int nCamera, sgl_colour colour, 
-							float density )
-{
-	CAMERA_NODE_STRUCT *pNode;
+void CALL_CONV sgl_set_fog(int nCamera, sgl_colour colour,
+                           float density) {
+    CAMERA_NODE_STRUCT *pNode;
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-    if (GetNamedItemType(dlUserGlobals.pNamtab, nCamera) != nt_camera)
-    {
-		SglError(sgl_err_bad_name);
-		return;
-	}
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nCamera) != nt_camera) {
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, nCamera);
-	ASSERT(pNode)
+    ASSERT(pNode)
 
-	ASSERT(colour)
+    ASSERT(colour)
 
 
-	/*
-	// pack the fog colour
-	*/
-	pNode->FogCol.red	 =	(int) (255.0 * CLAMP(colour[0], 0.0f, 1.0f));
-	pNode->FogCol.green  =	(int) (255.0 * CLAMP(colour[1], 0.0f, 1.0f));
-	pNode->FogCol.blue	 =	(int) (255.0 * CLAMP(colour[2], 0.0f, 1.0f));
-	pNode->FogCol.alpha  =	0; /*This shouldnt matter*/
-	
+    /*
+    // pack the fog colour
+    */
+    pNode->FogCol.red = (int) (255.0 * CLAMP(colour[0], 0.0f, 1.0f));
+    pNode->FogCol.green = (int) (255.0 * CLAMP(colour[1], 0.0f, 1.0f));
+    pNode->FogCol.blue = (int) (255.0 * CLAMP(colour[2], 0.0f, 1.0f));
+    pNode->FogCol.alpha = 0; /*This shouldnt matter*/
+
 #if PCX2 || PCX2_003
-	/* Set fast fog value for background plane.
-	 */
-	cFastFogColour[0] = CLAMP(colour[0], 0.0f, 1.0f);
-	cFastFogColour[1] =	CLAMP(colour[1], 0.0f, 1.0f);
-	cFastFogColour[2] = CLAMP(colour[2], 0.0f, 1.0f);
+    /* Set fast fog value for background plane.
+     */
+    cFastFogColour[0] = CLAMP(colour[0], 0.0f, 1.0f);
+    cFastFogColour[1] = CLAMP(colour[1], 0.0f, 1.0f);
+    cFastFogColour[2] = CLAMP(colour[2], 0.0f, 1.0f);
 #endif
 
-	/*
-	// Get 1-fog density and clip to legal range
-	*/
-	density = CLAMP((1.0f - density), 0.0f, 1.0f);
+    /*
+    // Get 1-fog density and clip to legal range
+    */
+    density = CLAMP((1.0f - density), 0.0f, 1.0f);
 
-	/*
-	// Get the log of this to the base 2, but check that we CAN actually
-	// get this value
-	*/
-  #if defined (MIDAS_ARCADE)
+    /*
+    // Get the log of this to the base 2, but check that we CAN actually
+    // get this value
+    */
+#if defined (MIDAS_ARCADE)
 
-	/* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
-	if(density > 1.0E-3)
+    /* MIDAS Arcade gets FP execeptions if we use 1.0e-20f.  1.0e-3f seems to be okay */
+    if(density > 1.0E-3)
 
-  #else
+#else
 
-	if(density > 1.0E-20)
+    if (density > 1.0E-20)
 
-  #endif
-	{
-		/*
-		// Get the log and negate it
-		*/
-		density = -(float)log(density) * INV_LOG_OF_2;
-		/*
-		// Get the fraction and power of two from this...
-		*/
-		pNode->invlogfogFraction = (float)frexp(density, & pNode->logfogPower);
+#endif
+    {
+        /*
+        // Get the log and negate it
+        */
+        density = -(float) log(density) * INV_LOG_OF_2;
+        /*
+        // Get the fraction and power of two from this...
+        */
+        pNode->invlogfogFraction = (float) frexp(density, &pNode->logfogPower);
 
-		/*
-		// if we got zero, then the fog density is Very low, set the
-		// shift value to be extremely negative
-		*/
-		if(pNode->invlogfogFraction == 0.0)
-		{
-			pNode->invlogfogFraction = 1.0f;
-			pNode->logfogPower = -1000;
-		}
-		/*
-		// Else it is in the normal sort of range
-		*/
-		else
-		{
-			pNode->invlogfogFraction = 1.0f/pNode->invlogfogFraction;
-		}
-	}
-	/*
-	// Else the fog denisty is VERY high, so set the shift value high
-	*/
-	else
-	{
-		pNode->invlogfogFraction = 1.0f;
-		pNode->logfogPower = 1000;
-	}
+        /*
+        // if we got zero, then the fog density is Very low, set the
+        // shift value to be extremely negative
+        */
+        if (pNode->invlogfogFraction == 0.0) {
+            pNode->invlogfogFraction = 1.0f;
+            pNode->logfogPower = -1000;
+        }
+            /*
+            // Else it is in the normal sort of range
+            */
+        else {
+            pNode->invlogfogFraction = 1.0f / pNode->invlogfogFraction;
+        }
+    }
+        /*
+        // Else the fog denisty is VERY high, so set the shift value high
+        */
+    else {
+        pNode->invlogfogFraction = 1.0f;
+        pNode->logfogPower = 1000;
+    }
 
-		
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 }
 
 
@@ -466,41 +451,39 @@ void CALL_CONV sgl_set_fog( int nCamera, sgl_colour colour,
  *
  * Description  : SGL API function: see specification document.
  *****************************************************************************/
-void CALL_CONV sgl_set_background_colour( int nCamera, sgl_colour colour )
-{
-	CAMERA_NODE_STRUCT *pNode;
+void CALL_CONV sgl_set_background_colour(int nCamera, sgl_colour colour) {
+    CAMERA_NODE_STRUCT *pNode;
 
 #if !WIN32
     if (SglInitialise())
-	{
-		SglError(sgl_err_failed_init);
-		return;
-	}
+    {
+        SglError(sgl_err_failed_init);
+        return;
+    }
 #endif
 
     DlCompleteCurrentTransform();
-	DlCompleteCurrentConvex();
-	DlCompleteCurrentMaterial();
-	DlCompleteCurrentMesh();
+    DlCompleteCurrentConvex();
+    DlCompleteCurrentMaterial();
+    DlCompleteCurrentMesh();
 
-    if (GetNamedItemType(dlUserGlobals.pNamtab, nCamera) != nt_camera)
-    {
-		SglError(sgl_err_bad_name);
-		return;
-	}
+    if (GetNamedItemType(dlUserGlobals.pNamtab, nCamera) != nt_camera) {
+        SglError(sgl_err_bad_name);
+        return;
+    }
 
     pNode = GetNamedItem(dlUserGlobals.pNamtab, nCamera);
-	ASSERT(pNode)
+    ASSERT(pNode)
 
-	ASSERT(colour)
-	MESSAGE_CLAMP(pNode->backgroundColour[0], colour[0], 0.0f, 1.0f,
-	  "Background colour");
-	MESSAGE_CLAMP(pNode->backgroundColour[1], colour[1], 0.0f, 1.0f,
-	  "Background colour");
-	MESSAGE_CLAMP(pNode->backgroundColour[2], colour[2], 0.0f, 1.0f,
-	  "Background colour");
+    ASSERT(colour)
+    MESSAGE_CLAMP(pNode->backgroundColour[0], colour[0], 0.0f, 1.0f,
+                  "Background colour");
+    MESSAGE_CLAMP(pNode->backgroundColour[1], colour[1], 0.0f, 1.0f,
+                  "Background colour");
+    MESSAGE_CLAMP(pNode->backgroundColour[2], colour[2], 0.0f, 1.0f,
+                  "Background colour");
 
-	SglError(sgl_no_err);
+    SglError(sgl_no_err);
 }
 
 /*------------------------------- End of File -------------------------------*/

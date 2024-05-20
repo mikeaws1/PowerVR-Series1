@@ -422,51 +422,55 @@
 #include "heap.h"
 
 #define API_FNBLOCK
+
 #include "sgl.h"
+
 #undef API_FNBLOCK
 
 #define API_INSTANTIATE
+
 #include "sgl.h"
+
 #undef API_INSTANTIATE
 
 /*------------------- INSTANCE DATA SECTION ---------------------*/
 
-HINSTANCE 	ghInstance = 0;
+HINSTANCE ghInstance = 0;
 
 /*-------------------- SHARED DATA SECTION ----------------------*/
 
 #pragma data_seg(".onetime")
 
-HINSTANCE	hSystemInstance = NULL;
+HINSTANCE hSystemInstance = NULL;
 
 int gnInstances = 0;
 
-BOOL bStrictLocks=FALSE;
+BOOL bStrictLocks = FALSE;
 
 #pragma data_seg()
 
 /*************** External Prototypes ********************************/
-int   CALL_CONV SglInitialise(void);
-void  CALL_CONV PVROSAPIExit ();
-int   CALL_CONV PVROSAPIInit ();
+int CALL_CONV SglInitialise(void);
+
+void CALL_CONV PVROSAPIExit();
+
+int CALL_CONV PVROSAPIInit();
+
 /********************************************************************/
 
 
-int CALL_CONV LoadSglBin (char *pszFileName,	
-					 int *noMeshes,		int **meshIDs, 	
-					 int *noMaterials,	int **materialIDs,
-					 int *noBMPTextures, int **BMPTextureIDs)
-{
-	return (-1);
-}	
+int CALL_CONV LoadSglBin(char *pszFileName,
+                         int *noMeshes, int **meshIDs,
+                         int *noMaterials, int **materialIDs,
+                         int *noBMPTextures, int **BMPTextureIDs) {
+    return (-1);
+}
 
-void CALL_CONV FreeSglBinTextures (int noBMPTextures, int *BMPTextureIDs)
-{
-}	
+void CALL_CONV FreeSglBinTextures(int noBMPTextures, int *BMPTextureIDs) {
+}
 
-void CALL_CONV TexasWriteBMP (char * filename)
-{
-}	
+void CALL_CONV TexasWriteBMP(char *filename) {
+}
 
 #if DEBUG || DEBUGDEV
 #if PCX1
@@ -489,30 +493,28 @@ char sDllName[] = "SGLMID5a: ";
  *
  * Description  : init board - now done mostly in VxD, now just sets a global
  *****************************************************************************/
-sgl_bool CALL_CONV InitEnvironment ()
-{
-	if (!hSystemInstance)
-	{
-		hSystemInstance = ghInstance;		
-	}
-	
-	return(TRUE);
+sgl_bool CALL_CONV InitEnvironment() {
+    if (!hSystemInstance) {
+        hSystemInstance = ghInstance;
+    }
+
+    return (TRUE);
 }
 
 
 sgl_uint32 gu32UsedFlags;
 #define RESERVED_FLAGS (      \
-	0x00000008 | 0x00000010 | \
-	SGLTT_WRAPU |             \
-	SGLTT_WRAPV |             \
-	0x00000100  |             \
-	SGLTT_TRANSBACKGROUND |   \
-	0x00100000 |              \
-	0x04000000 |              \
-	0x08000000 | 0x10000000 | \
-	0x20000000 |              \
-	SGLTT_DIRECT_EXTENSIONS | \
-	SGLTT_HAL_RESERVED )
+    0x00000008 | 0x00000010 | \
+    SGLTT_WRAPU |             \
+    SGLTT_WRAPV |             \
+    0x00000100  |             \
+    SGLTT_TRANSBACKGROUND |   \
+    0x00100000 |              \
+    0x04000000 |              \
+    0x08000000 | 0x10000000 | \
+    0x20000000 |              \
+    SGLTT_DIRECT_EXTENSIONS | \
+    SGLTT_HAL_RESERVED )
 
 
 /******************************************************************************
@@ -526,92 +528,78 @@ sgl_uint32 gu32UsedFlags;
  * Description  : 32 bit DLL entry point - see SDK
  *****************************************************************************/
 
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-	BOOL fRet = FALSE;
-   
-	switch (fdwReason)
-	{
-		case DLL_PROCESS_ATTACH:
-		{
-			if (gnInstances == 0)
-			{
-				fRet = MemInit ();
-			}
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+    BOOL fRet = FALSE;
 
-			if (fRet && PVROSAPIInit ())
-			{
-				if(SglInitialise())
-				{
-					DPF((DBG_ERROR,"Failed to Initialise SGL"));
-					fRet = FALSE;
+    switch (fdwReason) {
+        case DLL_PROCESS_ATTACH: {
+            if (gnInstances == 0) {
+                fRet = MemInit();
+            }
 
-					MemFini ();
-				}
-				else
-				{
-					DPF((DBG_MESSAGE,"SGLMID DLL_PROCESS_ATTACH"));
-					
-					ghInstance = hinstDLL;
+            if (fRet && PVROSAPIInit()) {
+                if (SglInitialise()) {
+                    DPF((DBG_ERROR, "Failed to Initialise SGL"));
+                    fRet = FALSE;
 
-					++gnInstances;
-					
-					fRet = TRUE;
+                    MemFini();
+                } else {
+                    DPF((DBG_MESSAGE, "SGLMID DLL_PROCESS_ATTACH"));
 
-				}
-			}
-			break;
-		}
+                    ghInstance = hinstDLL;
 
-		case DLL_PROCESS_DETACH:
-		{
-			PVROSPrintf("SGLMID : MESSAGE : Context Flags set by App : %#08lx\n",gu32UsedFlags); 
-			if(gu32UsedFlags & RESERVED_FLAGS)
-			{
-				PVROSPrintf("SGLMID : WARNING : Reserved Context Flags set by App : %#08lx\n",
-							gu32UsedFlags & RESERVED_FLAGS); 
-			}
+                    ++gnInstances;
 
-			DPF((DBG_MESSAGE,"SGLMID DLL_PROCESS_DETACH"));
-						
-			--gnInstances;
-			
-			if (hSystemInstance == ghInstance)
-			{
-				hSystemInstance = NULL;
-			}
+                    fRet = TRUE;
 
-			PVROSAPIExit ();
-			
-			if (gnInstances == 0)
-			{
-				MemFini ();
-			}
+                }
+            }
+            break;
+        }
 
-			fRet = TRUE;
+        case DLL_PROCESS_DETACH: {
+            PVROSPrintf("SGLMID : MESSAGE : Context Flags set by App : %#08lx\n", gu32UsedFlags);
+            if (gu32UsedFlags & RESERVED_FLAGS) {
+                PVROSPrintf("SGLMID : WARNING : Reserved Context Flags set by App : %#08lx\n",
+                            gu32UsedFlags & RESERVED_FLAGS);
+            }
+
+            DPF((DBG_MESSAGE, "SGLMID DLL_PROCESS_DETACH"));
+
+            --gnInstances;
+
+            if (hSystemInstance == ghInstance) {
+                hSystemInstance = NULL;
+            }
+
+            PVROSAPIExit();
+
+            if (gnInstances == 0) {
+                MemFini();
+            }
+
+            fRet = TRUE;
 
 #if DEBUGDEV || TIMING
-			DebugDeinit ();
+            DebugDeinit ();
 #endif
-			break;
-		}
+            break;
+        }
 
-		case DLL_THREAD_ATTACH:
-		{
-			DPF((DBG_MESSAGE,"SGLMID DLL_THREAD_ATTACH"));
-			fRet = TRUE;
-			break;
-		}
+        case DLL_THREAD_ATTACH: {
+            DPF((DBG_MESSAGE, "SGLMID DLL_THREAD_ATTACH"));
+            fRet = TRUE;
+            break;
+        }
 
-		case DLL_THREAD_DETACH:
-		{
-			DPF((DBG_MESSAGE,"SGLMID DLL_THREAD_DETACH"));
-			fRet = TRUE;
-			break;
-		}
-	}
-	
-	return (fRet);
+        case DLL_THREAD_DETACH: {
+            DPF((DBG_MESSAGE, "SGLMID DLL_THREAD_DETACH"));
+            fRet = TRUE;
+            break;
+        }
+    }
+
+    return (fRet);
 }
 
 /* end of $RCSfile: w32dll.c,v $ */

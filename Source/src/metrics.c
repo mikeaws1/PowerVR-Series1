@@ -20,7 +20,9 @@ sgl_uint32 nTotalPolygonsInFrame, nTransPolygonsInFrame, nOpaquePolygonsInFrame;
 /************************************************/
 
 #pragma warning ( disable : 117 )
+
 #include <windows.h>
+
 #pragma warning ( default : 117 )
 
 /*===========================================
@@ -36,24 +38,23 @@ sgl_uint32 nTotalPolygonsInFrame, nTransPolygonsInFrame, nOpaquePolygonsInFrame;
  * Return:		unsigned int value being the current 32bit clock tick with ref
  *		        to the CPU Speed.
  *========================================================================================*/
-sgl_uint32  SglTimeNow(void)
-{
-	static sgl_uint32 Time;
+sgl_uint32 SglTimeNow(void) {
+    static sgl_uint32 Time;
 #ifndef __GNUC__
-	__asm
-		{
-			push	eax
-			push	edx
+    __asm
+        {
+            push	eax
+            push	edx
 
-			_emit 0Fh
-			_emit 31h
+            _emit 0Fh
+            _emit 31h
 
-			shrd	eax, edx, 4
+            shrd	eax, edx, 4
 
-			mov		Time, eax
-			pop		edx
-			pop		eax
-		}
+            mov		Time, eax
+            pop		edx
+            pop		eax
+        }
 #else
     __asm__ __volatile__(
             "push %%eax\n"
@@ -68,7 +69,7 @@ sgl_uint32  SglTimeNow(void)
 
 #endif
 
-	return Time;
+    return Time;
 }
 
 /*===========================================
@@ -84,31 +85,31 @@ sgl_uint32  SglTimeNow(void)
  * Return:		float value being the the CPU frequency.
  *========================================================================================*/
 
-float  SglCPUFreq(void)
-{
- static sgl_uint32 Time1, Time2;
-   LARGE_INTEGER AccClock1, AccClock2, AccFreq;
-   sgl_uint32 AccTime;
-   float TPS;
+float SglCPUFreq(void) {
+    static sgl_uint32 Time1, Time2;
+    LARGE_INTEGER AccClock1, AccClock2, AccFreq;
+    sgl_uint32 AccTime;
+    float TPS;
 
-   QueryPerformanceCounter( &AccClock1);
-   Time1 = SglTimeNow();
-      Sleep(1000);
-   Time2 = SglTimeNow();
-   QueryPerformanceCounter( &AccClock2);
+    QueryPerformanceCounter(&AccClock1);
+    Time1 = SglTimeNow();
+    Sleep(1000);
+    Time2 = SglTimeNow();
+    QueryPerformanceCounter(&AccClock2);
 
-   QueryPerformanceFrequency( &AccFreq );
+    QueryPerformanceFrequency(&AccFreq);
 
-   Time1 = (Time2 - Time1);
-   AccTime = ( AccClock2.s.LowPart - AccClock1.s.LowPart);
-   TPS = (float)Time1 / ((float)AccTime/(float)(AccFreq.s.LowPart));
+    Time1 = (Time2 - Time1);
+    AccTime = (AccClock2.s.LowPart - AccClock1.s.LowPart);
+    TPS = (float) Time1 / ((float) AccTime / (float) (AccFreq.s.LowPart));
 
-   if ( Time1 != 0 ) 
-      return TPS;
-   else
-      return 1.0f;
+    if (Time1 != 0)
+        return TPS;
+    else
+        return 1.0f;
 
 }
+
 #else
 
 #if defined (MIDAS_ARCADE) || defined (ZEUS_ARCADE)
@@ -146,27 +147,27 @@ static sgl_bool BallRolling = FALSE;
  *========================================================================================*/
 sgl_uint32  SglTimeNow(void)
 {
-	sgl_uint32	u32Temp;
+    sgl_uint32	u32Temp;
 
 
-	u32Temp = (HWGetTick() >> TICK_SHIFTER) & 0x0FFFFFFF;
+    u32Temp = (HWGetTick() >> TICK_SHIFTER) & 0x0FFFFFFF;
 
-	/* Have we gone around the clock again ?? */
-	if (BallRolling)
-	{
-		if (u32Temp < LastTick)
-		{
-			/* Yup - we've gone around the clock */
-			BigTick += BIG_TICK;
-		}
-	}
-	else
-	{
-		BallRolling = TRUE;
-	}
-	LastTick = u32Temp;
+    /* Have we gone around the clock again ?? */
+    if (BallRolling)
+    {
+        if (u32Temp < LastTick)
+        {
+            /* Yup - we've gone around the clock */
+            BigTick += BIG_TICK;
+        }
+    }
+    else
+    {
+        BallRolling = TRUE;
+    }
+    LastTick = u32Temp;
 
-	return(u32Temp + BigTick);
+    return(u32Temp + BigTick);
 }
 
 /*===========================================
@@ -186,7 +187,7 @@ long _sbd_cpufreq (void);
 
 float  SglCPUFreq(void)
 {
-	  return (float)( /* (_sbd_cpufreq()) */ 100000000 >> TICK_SHIFTER);
+      return (float)( /* (_sbd_cpufreq()) */ 100000000 >> TICK_SHIFTER);
 }
 
 /*===========================================
@@ -203,19 +204,19 @@ float  SglCPUFreq(void)
  *========================================================================================*/
 void  SglMetricInit(void)
 {
-	BigTick = 0;
-	LastTick = 0;
-	BallRolling = FALSE;
+    BigTick = 0;
+    LastTick = 0;
+    BallRolling = FALSE;
 }
 
 #ifdef ZEUS_ARCADE
 sgl_uint32 HWGetTick(void)
 {
-	sgl_uint32 ticks;
-	
-	ticks = r4kc0_get(9); /* Read coprocessor 0 counter */
-	
-	return ticks;
+    sgl_uint32 ticks;
+
+    ticks = r4kc0_get(9); /* Read coprocessor 0 counter */
+
+    return ticks;
 }
 
 #endif /*ZEUS_ARCADE*/

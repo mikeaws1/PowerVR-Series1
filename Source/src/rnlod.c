@@ -96,102 +96,95 @@
  *				  OTHER RESULTS IF TRANSFORMATION MATRIX AND/OR BOX DEFINITION
  *				  HAVE NOT CHANGED FROM THE PREVIOUS FRAME ?
  *****************************************************************************/
-int RnProcessLodNode(LOD_NODE_STRUCT *pNode, TRANSFORM_STRUCT *pTransformState)
-{
-    float	   fDotProd1,fDotProd2, fLargestDotProdOffset;
-	sgl_vector cameraToBoxCentre, cameraToBoxVertex1, cameraToBoxVertex2,
-			   cameraLC;  /* camera position in local coordinates */
+int RnProcessLodNode(LOD_NODE_STRUCT *pNode, TRANSFORM_STRUCT *pTransformState) {
+    float fDotProd1, fDotProd2, fLargestDotProdOffset;
+    sgl_vector cameraToBoxCentre, cameraToBoxVertex1, cameraToBoxVertex2,
+            cameraLC;  /* camera position in local coordinates */
 
-	PROJECTION_MATRIX_STRUCT  * const pProjMat = RnGlobalGetProjMat ();
-	float fCosAnglePerCentralPixel = pProjMat->fCosAnglePerCentralPixel;
+    PROJECTION_MATRIX_STRUCT *const pProjMat = RnGlobalGetProjMat();
+    float fCosAnglePerCentralPixel = pProjMat->fCosAnglePerCentralPixel;
 
-	ASSERT(pNode != NULL);
-	ASSERT(pTransformState != NULL);
+    ASSERT(pNode != NULL);
+    ASSERT(pTransformState != NULL);
 
-	if (pTransformState->scale_flag == arbitrary_scale)
-	{
-		/*
-		// -----------------------------------------
-		// Calculations are now in world coordinates
-		// -----------------------------------------
-		// This is slower than the local coordinate method (see description
-		// above).
-		*/
-		TransformVector(pTransformState, pNode->boxCentre, cameraToBoxCentre);
-		TransformVector(pTransformState, pNode->boxVertex1,cameraToBoxVertex1);
-		TransformVector(pTransformState, pNode->boxVertex2,cameraToBoxVertex2);
-	}
-	else
-	{
-		/*
-		// -----------------------------------------
-		// Calculations are now in local coordinates
-		// -----------------------------------------
-		*/
-		cameraLC[0] = pTransformState->inv[0][3];
-		cameraLC[1] = pTransformState->inv[1][3];
-		cameraLC[2] = pTransformState->inv[2][3];
+    if (pTransformState->scale_flag == arbitrary_scale) {
+        /*
+        // -----------------------------------------
+        // Calculations are now in world coordinates
+        // -----------------------------------------
+        // This is slower than the local coordinate method (see description
+        // above).
+        */
+        TransformVector(pTransformState, pNode->boxCentre, cameraToBoxCentre);
+        TransformVector(pTransformState, pNode->boxVertex1, cameraToBoxVertex1);
+        TransformVector(pTransformState, pNode->boxVertex2, cameraToBoxVertex2);
+    } else {
+        /*
+        // -----------------------------------------
+        // Calculations are now in local coordinates
+        // -----------------------------------------
+        */
+        cameraLC[0] = pTransformState->inv[0][3];
+        cameraLC[1] = pTransformState->inv[1][3];
+        cameraLC[2] = pTransformState->inv[2][3];
 
-		VecSub(pNode->boxCentre,cameraLC, cameraToBoxCentre);
-		VecSub(pNode->boxVertex1,cameraLC, cameraToBoxVertex1);
-		VecSub(pNode->boxVertex2,cameraLC, cameraToBoxVertex2);
-	}
+        VecSub(pNode->boxCentre, cameraLC, cameraToBoxCentre);
+        VecSub(pNode->boxVertex1, cameraLC, cameraToBoxVertex1);
+        VecSub(pNode->boxVertex2, cameraLC, cameraToBoxVertex2);
+    }
 
-	/*
-	// If we cannot normalise cameraToBoxCentre because it is too short (use
-	// sum of squares of ordinates - Pythagoras without the square root)...
-	*/
-	/* OPTIMISATION ? MAKE THIS TEST PART OF THE
-	   VecNormalise(cameraToBoxCentre) BELOW */
-	if ( DotProd(cameraToBoxCentre, cameraToBoxCentre) < 1.0e-10f )
-	{
-		/*
-		// Return the largest level of detail since the box centre is very
-		// close to the camera.  This will not happen very often, so it is not
-		// important that cameraToBoxVertex1 & 2 may have been calculated
-		// unnecessarily.
-		*/
-		DPF((DBG_MESSAGE,"camera close to box centre"));
-		return pNode->pn16Models[0];
-	}
+    /*
+    // If we cannot normalise cameraToBoxCentre because it is too short (use
+    // sum of squares of ordinates - Pythagoras without the square root)...
+    */
+    /* OPTIMISATION ? MAKE THIS TEST PART OF THE
+       VecNormalise(cameraToBoxCentre) BELOW */
+    if (DotProd(cameraToBoxCentre, cameraToBoxCentre) < 1.0e-10f) {
+        /*
+        // Return the largest level of detail since the box centre is very
+        // close to the camera.  This will not happen very often, so it is not
+        // important that cameraToBoxVertex1 & 2 may have been calculated
+        // unnecessarily.
+        */
+        DPF((DBG_MESSAGE, "camera close to box centre"));
+        return pNode->pn16Models[0];
+    }
 
-	VecNormalise(cameraToBoxCentre);
-	VecNormalise(cameraToBoxVertex1);
-	VecNormalise(cameraToBoxVertex2);
+    VecNormalise(cameraToBoxCentre);
+    VecNormalise(cameraToBoxVertex1);
+    VecNormalise(cameraToBoxVertex2);
 
-	fDotProd1 = DotProd(cameraToBoxCentre, cameraToBoxVertex1);
-	fDotProd2 = DotProd(cameraToBoxCentre, cameraToBoxVertex2);
-	/*
-	// fLargestDotProdOffset represents the largest angle (see description
-	// above).  The dot products will usually be just less than 1.0 since the
-	// angles are small so we use the offset from 1.0 to compare with
-	// fCosAnglePerCentralPixel to retain sufficient accuracy.  Floats close to
-	// zero benefit from the exponent whereas values close to 1.0 do not.
-	*/
-	fLargestDotProdOffset = 1.0f - MIN(fDotProd1,fDotProd2);
+    fDotProd1 = DotProd(cameraToBoxCentre, cameraToBoxVertex1);
+    fDotProd2 = DotProd(cameraToBoxCentre, cameraToBoxVertex2);
+    /*
+    // fLargestDotProdOffset represents the largest angle (see description
+    // above).  The dot products will usually be just less than 1.0 since the
+    // angles are small so we use the offset from 1.0 to compare with
+    // fCosAnglePerCentralPixel to retain sufficient accuracy.  Floats close to
+    // zero benefit from the exponent whereas values close to 1.0 do not.
+    */
+    fLargestDotProdOffset = 1.0f - MIN(fDotProd1, fDotProd2);
 
-	/*
-	// An approximation here is to assume that for a range of small angles
-	// the cosine of these angles is approximated by a 1 - x*x curve.
-	*/
-	DPF((DBG_MESSAGE,"value: %e",fLargestDotProdOffset));
-	DPF((DBG_MESSAGE,"thresholds: %e, %e",
-	  pNode->pfHalfThresholds[0] * fCosAnglePerCentralPixel,
-	  pNode->pfHalfThresholds[1] * fCosAnglePerCentralPixel));
+    /*
+    // An approximation here is to assume that for a range of small angles
+    // the cosine of these angles is approximated by a 1 - x*x curve.
+    */
+    DPF((DBG_MESSAGE, "value: %e", fLargestDotProdOffset));
+    DPF((DBG_MESSAGE, "thresholds: %e, %e",
+            pNode->pfHalfThresholds[0] * fCosAnglePerCentralPixel,
+            pNode->pfHalfThresholds[1] * fCosAnglePerCentralPixel));
 
-	if ( fLargestDotProdOffset <
-	  pNode->pfHalfThresholds[0] * fCosAnglePerCentralPixel )
-	{
-		return pNode->pn16Models[2];  /* least detailed */
-	}
+    if (fLargestDotProdOffset <
+        pNode->pfHalfThresholds[0] * fCosAnglePerCentralPixel) {
+        return pNode->pn16Models[2];  /* least detailed */
+    }
 
-	if ( fLargestDotProdOffset >
-	  pNode->pfHalfThresholds[1] * fCosAnglePerCentralPixel )
-	{
-		return pNode->pn16Models[0];  /* most detailed */
-	}
+    if (fLargestDotProdOffset >
+        pNode->pfHalfThresholds[1] * fCosAnglePerCentralPixel) {
+        return pNode->pn16Models[0];  /* most detailed */
+    }
 
-	return pNode->pn16Models[1];  /* middle level of detail */
+    return pNode->pn16Models[1];  /* middle level of detail */
 }
 
 

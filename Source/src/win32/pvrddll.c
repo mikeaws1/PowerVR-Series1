@@ -86,17 +86,17 @@
 #include "pvrosapi.h"
 #include "hwregs.h"
 #include "heap.h"
-#include "pvrlims.h" /* for DAG_TRANS_SORTING */ 
+#include "pvrlims.h" /* for DAG_TRANS_SORTING */
 
 /*------------------- INSTANCE DATA SECTION ---------------------*/
 
-HINSTANCE 	ghInstance = 0;
+HINSTANCE ghInstance = 0;
 
 /*-------------------- SHARED DATA SECTION ----------------------*/
 
 #pragma data_seg(".onetime")
 
-HINSTANCE	hSystemInstance = NULL;
+HINSTANCE hSystemInstance = NULL;
 
 int gnInstances = 0;
 
@@ -105,11 +105,16 @@ sgl_uint32 gu32UsedFlags;
 #pragma data_seg()
 
 /*************** External Prototypes ********************************/
-int   CALL_CONV SglInitialise(void);
-void  CALL_CONV PVROSAPIExit ();
-int   CALL_CONV PVROSAPIInit ();
+int CALL_CONV SglInitialise(void);
+
+void CALL_CONV PVROSAPIExit();
+
+int CALL_CONV PVROSAPIInit();
+
 #if DAG_TRANS_SORTING
-	extern void CloseRegionDataL();
+
+extern void CloseRegionDataL();
+
 #endif /* DAG_TRANS_SORTING */
 /********************************************************************/
 
@@ -135,85 +140,78 @@ char sDllName[] = "PVRMID5a: ";
  * Description  : Fills out LastD3DApp in LastApp key of registry.
  *****************************************************************************/
 
-static void WriteLastAppName()
-{
-	HKEY	hKey;
-	char	szCallingProcess[256];
-	char 	pszKey[512], szText[32];
-	MANUFACTURER_TYPE	eManufacturerType = VIDEOLOGIC_3D;
-	DWORD	dwType, dwSize = sizeof(szText);
+static void WriteLastAppName() {
+    HKEY hKey;
+    char szCallingProcess[256];
+    char pszKey[512], szText[32];
+    MANUFACTURER_TYPE eManufacturerType = VIDEOLOGIC_3D;
+    DWORD dwType, dwSize = sizeof(szText);
 
-	/* Detect the hardware present ie Maxtrox m3D or PowerVR.
-	 */
-	if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, WHICH_CARD_REGISTRY_STRING, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-	{
-		if (RegQueryValueEx (hKey, "BoardType", 0, &dwType, (LPBYTE)szText, (LPDWORD)&dwSize) == ERROR_SUCCESS)
-		{
-			if (dwType == REG_SZ)
-			{
-				eManufacturerType = (MANUFACTURER_TYPE) strtoul (szText, NULL, 0);
+    /* Detect the hardware present ie Maxtrox m3D or PowerVR.
+     */
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, WHICH_CARD_REGISTRY_STRING, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        if (RegQueryValueEx(hKey, "BoardType", 0, &dwType, (LPBYTE) szText, (LPDWORD) &dwSize) == ERROR_SUCCESS) {
+            if (dwType == REG_SZ) {
+                eManufacturerType = (MANUFACTURER_TYPE) strtoul(szText, NULL, 0);
 
-				/* Which registry to use.
-				 */
-				switch (eManufacturerType)
-				{
-					case VIDEOLOGIC_3D:	strcpy(pszKey, VL_REGISTRY_STRING);
-										break;
+                /* Which registry to use.
+                 */
+                switch (eManufacturerType) {
+                    case VIDEOLOGIC_3D:
+                        strcpy(pszKey, VL_REGISTRY_STRING);
+                        break;
 
-					case MATROX_M3D:	strcpy(pszKey, MATROX_REGISTRY_STRING);
-										break;
+                    case MATROX_M3D:
+                        strcpy(pszKey, MATROX_REGISTRY_STRING);
+                        break;
 
-					default:			strcpy(pszKey, VL_REGISTRY_STRING);
-										break;
-				}
-				strcat(pszKey,"LastApp");
+                    default:
+                        strcpy(pszKey, VL_REGISTRY_STRING);
+                        break;
+                }
+                strcat(pszKey, "LastApp");
 
-				/* 
-					Sort out optional extra's.
-				*/
-				GetModuleFileName (NULL, szCallingProcess, sizeof (szCallingProcess));
+                /*
+                    Sort out optional extra's.
+                */
+                GetModuleFileName(NULL, szCallingProcess, sizeof(szCallingProcess));
 
-				if (!strstr(szCallingProcess, "DDHELP.EXE"))
-				{
-					DWORD dwDisposition;
+                if (!strstr(szCallingProcess, "DDHELP.EXE")) {
+                    DWORD dwDisposition;
 
-					/*
-						Set the D3DLastApp registry string to help the "user" to determine
-						the executable name to use in app hints.
-					*/
-					if (RegCreateKeyEx (HKEY_LOCAL_MACHINE, 
-										pszKey,
-										0,
-										"", 
-										REG_OPTION_NON_VOLATILE,
-										KEY_READ | KEY_WRITE,
-										NULL,
-										&hKey, 
-										&dwDisposition) == ERROR_SUCCESS)
-					{
-						char *pszExe;
+                    /*
+                        Set the D3DLastApp registry string to help the "user" to determine
+                        the executable name to use in app hints.
+                    */
+                    if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,
+                                       pszKey,
+                                       0,
+                                       "",
+                                       REG_OPTION_NON_VOLATILE,
+                                       KEY_READ | KEY_WRITE,
+                                       NULL,
+                                       &hKey,
+                                       &dwDisposition) == ERROR_SUCCESS) {
+                        char *pszExe;
 
-						pszExe = strrchr (szCallingProcess, '\\');
+                        pszExe = strrchr(szCallingProcess, '\\');
 
-						if (pszExe)
-						{
-							pszExe++;
-						}
-						else
-						{
-							pszExe = szCallingProcess;
-						}
+                        if (pszExe) {
+                            pszExe++;
+                        } else {
+                            pszExe = szCallingProcess;
+                        }
 
-						RegSetValueEx(hKey,"LastD3DApp",0,REG_SZ,pszExe,strlen(pszExe)+1);
-						RegCloseKey(hKey);
-					}
-					 
-				}
-			}
-		}
+                        RegSetValueEx(hKey, "LastD3DApp", 0, REG_SZ, pszExe, strlen(pszExe) + 1);
+                        RegCloseKey(hKey);
+                    }
 
-		RegCloseKey(hKey);
-	}
+                }
+            }
+        }
+
+        RegCloseKey(hKey);
+    }
 }
 
 
@@ -228,95 +226,82 @@ static void WriteLastAppName()
  * Description  : 32 bit DLL entry point - see SDK
  *****************************************************************************/
 
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-	BOOL fRet = FALSE;
-	
-	switch (fdwReason)
-	{
-		case DLL_PROCESS_ATTACH:
-		{
-			/* Try and write the name of the app before we do anything
-			** as this will leave the name of a failed app regardless
-			*/
-			WriteLastAppName();
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
+    BOOL fRet = FALSE;
 
-			if (gnInstances == 0)
-			{
-				fRet = MemInit ();
-			}
+    switch (fdwReason) {
+        case DLL_PROCESS_ATTACH: {
+            /* Try and write the name of the app before we do anything
+            ** as this will leave the name of a failed app regardless
+            */
+            WriteLastAppName();
 
-			if (fRet && PVROSAPIInit ())
-			{
-				PVROSPrintf("PVRDMID DLL_PROCESS_ATTACH\n");
+            if (gnInstances == 0) {
+                fRet = MemInit();
+            }
 
-				if(SglInitialise())
-				{
-					PVROSPrintf("Failed to Initialise SGL\n");
-					fRet = FALSE;
-					
-					MemFini ();
-				}
-				else
-				{
-					ghInstance = hinstDLL;
+            if (fRet && PVROSAPIInit()) {
+                PVROSPrintf("PVRDMID DLL_PROCESS_ATTACH\n");
 
-					++gnInstances;
-					
-					fRet = TRUE;
+                if (SglInitialise()) {
+                    PVROSPrintf("Failed to Initialise SGL\n");
+                    fRet = FALSE;
 
-				}
-			}
-			break;
-		}
+                    MemFini();
+                } else {
+                    ghInstance = hinstDLL;
 
-		case DLL_PROCESS_DETACH:
-		{
-			PVROSPrintf("PVRDMID DLL_PROCESS_DETACH\n");
-			
-			#if DAG_TRANS_SORTING			
-				CloseRegionDataL();
-			#endif /* DAG_TRANS_SORTING */
-				
-			--gnInstances;
-			
-			if (hSystemInstance == ghInstance)
-			{
-				hSystemInstance = NULL;
-			}
+                    ++gnInstances;
 
-			PVROSAPIExit ();
-			
-			if (gnInstances == 0)
-			{
-				MemFini ();
-			}
+                    fRet = TRUE;
 
-			fRet = TRUE;
+                }
+            }
+            break;
+        }
+
+        case DLL_PROCESS_DETACH: {
+            PVROSPrintf("PVRDMID DLL_PROCESS_DETACH\n");
+
+#if DAG_TRANS_SORTING
+            CloseRegionDataL();
+#endif /* DAG_TRANS_SORTING */
+
+            --gnInstances;
+
+            if (hSystemInstance == ghInstance) {
+                hSystemInstance = NULL;
+            }
+
+            PVROSAPIExit();
+
+            if (gnInstances == 0) {
+                MemFini();
+            }
+
+            fRet = TRUE;
 
 #if DEBUGDEV || TIMING
-			DebugDeinit ();
+            DebugDeinit ();
 #endif
 
-			break;
-		}
+            break;
+        }
 
-		case DLL_THREAD_ATTACH:
-		{
-			PVROSPrintf("Calling application is attaching a thread\n");
-			fRet = TRUE;
-			break;
-		}
+        case DLL_THREAD_ATTACH: {
+            PVROSPrintf("Calling application is attaching a thread\n");
+            fRet = TRUE;
+            break;
+        }
 
-		case DLL_THREAD_DETACH:
-		{
-			PVROSPrintf("Calling application is killing a thread\n");
-			fRet = TRUE;
-			break;
-		}
-	}
-	
-	return (fRet);
+        case DLL_THREAD_DETACH: {
+            PVROSPrintf("Calling application is killing a thread\n");
+            fRet = TRUE;
+            break;
+        }
+    }
+
+    return (fRet);
 }
 
 /* end of $RCSfile: pvrddll.c,v $ */

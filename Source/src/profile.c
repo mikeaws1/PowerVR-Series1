@@ -123,7 +123,9 @@ RCS info:
 #if WIN32
 #pragma message ("Using windows ReadPrivateProfileString")
 #pragma warning ( disable : 117 )
+
 #include <windows.h>
+
 #pragma warning ( default : 117 )
 #endif
 
@@ -131,13 +133,13 @@ RCS info:
 
 typedef struct tagPROFILE
 {
-	char *szFilename;
-	char *Buffer;
-	int	 nSection;
-	int  nStartEntry;
-	int  nEndEntry;
-	long lSize;
-	
+    char *szFilename;
+    char *Buffer;
+    int	 nSection;
+    int  nStartEntry;
+    int  nEndEntry;
+    long lSize;
+
 } PROFILE, *PPROFILE;
 
 
@@ -156,35 +158,35 @@ typedef struct tagPROFILE
  *========================================================================================*/
 static int strncmpCI (char * pS1, char * pS2, int len)
 {
-	char c1, c2;
+    char c1, c2;
 
-	for(/*NIL*/; len != 0; len --, pS1++, pS2++)
-	{
-		c1 = tolower(*pS1);
-		c2 = tolower(*pS2);
+    for(/*NIL*/; len != 0; len --, pS1++, pS2++)
+    {
+        c1 = tolower(*pS1);
+        c2 = tolower(*pS2);
 
-		if(c1 == '\0')
-		{
-			if(c2 == '\0')
-				return (0);
-			else
-				return(1);
-		}
-		else if(c2 == '\0')
-		{
-			return(1);
-		}
-		else if(c1 != c2)
-		{
-			return(1);
-		}
-		/*
-		// Move on to the next one
-		*/
-	}
+        if(c1 == '\0')
+        {
+            if(c2 == '\0')
+                return (0);
+            else
+                return(1);
+        }
+        else if(c2 == '\0')
+        {
+            return(1);
+        }
+        else if(c1 != c2)
+        {
+            return(1);
+        }
+        /*
+        // Move on to the next one
+        */
+    }
 
 
-	return (0);
+    return (0);
 }
 
 
@@ -204,44 +206,44 @@ static int strncmpCI (char * pS1, char * pS2, int len)
  *========================================================================================*/
 static sgl_bool SglOpenProfile (PPROFILE pP)
 {
-	sgl_bool bRet = FALSE;
-	FILE *fp = fopen (pP->szFilename, "rt");
+    sgl_bool bRet = FALSE;
+    FILE *fp = fopen (pP->szFilename, "rt");
 
-	pP->Buffer = NULL;
-	pP->lSize = 0;
-		
-	if (fp)
-	{
-		fseek (fp, 0, SEEK_END);
-		
-		pP->lSize = ftell (fp);
+    pP->Buffer = NULL;
+    pP->lSize = 0;
 
-		fseek (fp, 0, SEEK_SET);
+    if (fp)
+    {
+        fseek (fp, 0, SEEK_END);
 
-		bRet = TRUE;
-		
-		if (pP->lSize > 0)
-		{
-			pP->Buffer = PVROSMalloc (pP->lSize + 1);
+        pP->lSize = ftell (fp);
 
-			if (!pP->Buffer)
-			{
-				DPF ((DBG_ERROR, "Error allocating profile buffer"));
-				bRet = FALSE;
-			}
-			else
-			{
-				pP->lSize = fread (pP->Buffer, 1, pP->lSize, fp);
+        fseek (fp, 0, SEEK_SET);
 
-				// zero terminate the buffer
-				pP->Buffer[pP->lSize] = 0;
-			}
-		}
+        bRet = TRUE;
 
-		fclose (fp);
-	}
+        if (pP->lSize > 0)
+        {
+            pP->Buffer = PVROSMalloc (pP->lSize + 1);
 
-	return (bRet);
+            if (!pP->Buffer)
+            {
+                DPF ((DBG_ERROR, "Error allocating profile buffer"));
+                bRet = FALSE;
+            }
+            else
+            {
+                pP->lSize = fread (pP->Buffer, 1, pP->lSize, fp);
+
+                // zero terminate the buffer
+                pP->Buffer[pP->lSize] = 0;
+            }
+        }
+
+        fclose (fp);
+    }
+
+    return (bRet);
 }
 
 /*===========================================
@@ -260,34 +262,34 @@ static sgl_bool SglOpenProfile (PPROFILE pP)
  *========================================================================================*/
 static sgl_bool SglFindProfileSection (PPROFILE pP, char *szEntry)
 {
-	if (pP->Buffer)
-	{
-		char *pS, *pE;
-		char *pBr[2] = {"[", "\n["}, *pB;
+    if (pP->Buffer)
+    {
+        char *pS, *pE;
+        char *pBr[2] = {"[", "\n["}, *pB;
 
-		pP->nSection = -1;
+        pP->nSection = -1;
 
-		pB = pBr[0];
-		pS = strstr (pP->Buffer, pB);
-			
-		while (pS)
-		{
-			pS += strlen (pB);
-			pE = strstr (pS, "]\n");
+        pB = pBr[0];
+        pS = strstr (pP->Buffer, pB);
 
-			if (pE && !strncmpCI (pS, szEntry, (int) pE - (int) pS))
-			{
-				/* section found */
-				pP->nSection = (int) (pE + 2) - (int) pP->Buffer;
-				return (TRUE);
-			}
+        while (pS)
+        {
+            pS += strlen (pB);
+            pE = strstr (pS, "]\n");
 
-			pB = pBr[1];
-			pS = strstr (pS, pB);
-		}
-	}
+            if (pE && !strncmpCI (pS, szEntry, (int) pE - (int) pS))
+            {
+                /* section found */
+                pP->nSection = (int) (pE + 2) - (int) pP->Buffer;
+                return (TRUE);
+            }
 
-	return (FALSE);
+            pB = pBr[1];
+            pS = strstr (pS, pB);
+        }
+    }
+
+    return (FALSE);
 }
 
 /*===========================================
@@ -307,64 +309,64 @@ static sgl_bool SglFindProfileSection (PPROFILE pP, char *szEntry)
  *========================================================================================*/
 static sgl_bool SglFindProfileEntry (PPROFILE pP, char *szEntry)
 {
-	sgl_bool bRet = FALSE;
-	
-	pP->nStartEntry = -1;
-	pP->nEndEntry = -1;
+    sgl_bool bRet = FALSE;
 
-	if (pP->Buffer && (pP->nSection != -1))
-	{
-		char *pNextSection = strstr (&pP->Buffer[pP->nSection], "\n[");
-		char szTemp[128];
-		char *pEntry;
-		char *pEndEntry;
+    pP->nStartEntry = -1;
+    pP->nEndEntry = -1;
 
-		strcpy (szTemp, szEntry);
-		strcat (szTemp, "=");
+    if (pP->Buffer && (pP->nSection != -1))
+    {
+        char *pNextSection = strstr (&pP->Buffer[pP->nSection], "\n[");
+        char szTemp[128];
+        char *pEntry;
+        char *pEndEntry;
 
-		/*
-		// Search for the Entry with = concatentated.  BUT if the previous
-		// character was a ";" (i.e. a comment) then search again
-		*/
-		pEntry = strstr (&pP->Buffer[pP->nSection], szTemp);
-		while(pEntry!=NULL)
-		{
-			if(pEntry[-1]!= ';')
-			{
-				break;
-			}
-			/*
-			// Search again
-			*/
-			pEntry = strstr (pEntry+1, szTemp);
-			
-		}
+        strcpy (szTemp, szEntry);
+        strcat (szTemp, "=");
+
+        /*
+        // Search for the Entry with = concatentated.  BUT if the previous
+        // character was a ";" (i.e. a comment) then search again
+        */
+        pEntry = strstr (&pP->Buffer[pP->nSection], szTemp);
+        while(pEntry!=NULL)
+        {
+            if(pEntry[-1]!= ';')
+            {
+                break;
+            }
+            /*
+            // Search again
+            */
+            pEntry = strstr (pEntry+1, szTemp);
+
+        }
 
 
-		if (pEntry!=NULL)
-		{
-			pEntry += strlen (szTemp);
-			pEndEntry = strchr (pEntry, '\n');
-			
-			if (pNextSection)
-			{
-				if (pEntry < pNextSection)
-				{
-					pP->nStartEntry = (int) (pEntry - pP->Buffer);
-					pP->nEndEntry = (int) (pEndEntry - pP->Buffer);
-					bRet = TRUE;
-				}
-			}
-			else
-			{
-				pP->nStartEntry = (int) (pEntry - pP->Buffer);
-				pP->nEndEntry = (int) (pEndEntry - pP->Buffer);
-				bRet = TRUE;
-			}
-		}
-	}		
+        if (pEntry!=NULL)
+        {
+            pEntry += strlen (szTemp);
+            pEndEntry = strchr (pEntry, '\n');
 
-	return (bRet);
+            if (pNextSection)
+            {
+                if (pEntry < pNextSection)
+                {
+                    pP->nStartEntry = (int) (pEntry - pP->Buffer);
+                    pP->nEndEntry = (int) (pEndEntry - pP->Buffer);
+                    bRet = TRUE;
+                }
+            }
+            else
+            {
+                pP->nStartEntry = (int) (pEntry - pP->Buffer);
+                pP->nEndEntry = (int) (pEndEntry - pP->Buffer);
+                bRet = TRUE;
+            }
+        }
+    }
+
+    return (bRet);
 }
 
 /*===========================================
@@ -386,92 +388,92 @@ static sgl_bool SglFindProfileEntry (PPROFILE pP, char *szEntry)
 static sgl_bool SglWriteProfile (PPROFILE pP, char *szSection, char *szEntry, char *szText)
 {
 #ifndef MIDAS_ARCADE
-	sgl_bool bRet = FALSE, bBackup = TRUE;
-	char szTempfile[256];
-	FILE *fp;
-	
-	strcpy (szTempfile, pP->szFilename);
-	strcat (szTempfile, ".temp");
-	
-	if (rename (pP->szFilename, szTempfile))
-	{
-		DPF ((DBG_MESSAGE, "Error renaming temp ini file"));
-		bBackup = FALSE;
-	}
+    sgl_bool bRet = FALSE, bBackup = TRUE;
+    char szTempfile[256];
+    FILE *fp;
 
-	fp = fopen (pP->szFilename, "wt");
+    strcpy (szTempfile, pP->szFilename);
+    strcat (szTempfile, ".temp");
 
-	if (fp)
-	{
-		if (pP->Buffer)
-		{
-			if (pP->nSection != -1)
-			{
-				if (pP->nStartEntry != -1)
-				{
-					if (fwrite (pP->Buffer, 1, pP->nStartEntry, fp) > 0)
-					{
-						if (fprintf (fp, "%s", szText) > 0)
-						{
-							if (fwrite (&pP->Buffer[pP->nEndEntry], 1, pP->lSize - pP->nEndEntry, fp) > 0)
-							{
-								bRet = TRUE;
-							}
-						}
-					}
-				}
-				else
-				{
-					if (fwrite (pP->Buffer, 1, pP->nSection, fp) > 0)
-					{
-						if (fprintf (fp, "%s=%s\n", szEntry, szText) > 0)
-						{
-							if (fwrite (&pP->Buffer[pP->nSection], 1, pP->lSize - pP->nSection, fp) > 0)
-							{
-								bRet = TRUE;
-							}
-						}
-					}
-				}
-			}
-			else
-			{
-				if (fwrite (pP->Buffer, 1, pP->lSize, fp) > 0)
-				{
-					if (fprintf (fp, "\n\n[%s]\n%s=%s\n", szSection, szEntry, szText) > 0)
-					{
-						bRet = TRUE;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (fprintf (fp, "SGL private initialisation file: %s\n\n[%s]\n%s=%s\n", pP->szFilename, szSection, szEntry, szText) > 0)
-			{
-				bRet = TRUE;
-			}
-		}
+    if (rename (pP->szFilename, szTempfile))
+    {
+        DPF ((DBG_MESSAGE, "Error renaming temp ini file"));
+        bBackup = FALSE;
+    }
 
-		fclose (fp);
-	}
+    fp = fopen (pP->szFilename, "wt");
 
-	if (bBackup)
-	{
-		if (bRet)
-		{
-			remove (szTempfile);
-		}
-		else
-		{
-			remove (pP->szFilename);
-			rename (szTempfile, pP->szFilename);
-		}
-	}
-	
-	return (bRet);
+    if (fp)
+    {
+        if (pP->Buffer)
+        {
+            if (pP->nSection != -1)
+            {
+                if (pP->nStartEntry != -1)
+                {
+                    if (fwrite (pP->Buffer, 1, pP->nStartEntry, fp) > 0)
+                    {
+                        if (fprintf (fp, "%s", szText) > 0)
+                        {
+                            if (fwrite (&pP->Buffer[pP->nEndEntry], 1, pP->lSize - pP->nEndEntry, fp) > 0)
+                            {
+                                bRet = TRUE;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if (fwrite (pP->Buffer, 1, pP->nSection, fp) > 0)
+                    {
+                        if (fprintf (fp, "%s=%s\n", szEntry, szText) > 0)
+                        {
+                            if (fwrite (&pP->Buffer[pP->nSection], 1, pP->lSize - pP->nSection, fp) > 0)
+                            {
+                                bRet = TRUE;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (fwrite (pP->Buffer, 1, pP->lSize, fp) > 0)
+                {
+                    if (fprintf (fp, "\n\n[%s]\n%s=%s\n", szSection, szEntry, szText) > 0)
+                    {
+                        bRet = TRUE;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (fprintf (fp, "SGL private initialisation file: %s\n\n[%s]\n%s=%s\n", pP->szFilename, szSection, szEntry, szText) > 0)
+            {
+                bRet = TRUE;
+            }
+        }
+
+        fclose (fp);
+    }
+
+    if (bBackup)
+    {
+        if (bRet)
+        {
+            remove (szTempfile);
+        }
+        else
+        {
+            remove (pP->szFilename);
+            rename (szTempfile, pP->szFilename);
+        }
+    }
+
+    return (bRet);
 #else
-	return (TRUE);
+    return (TRUE);
 #endif
 }
 
@@ -489,13 +491,13 @@ static sgl_bool SglWriteProfile (PPROFILE pP, char *szSection, char *szEntry, ch
  *========================================================================================*/
 static sgl_bool SglCloseProfile (PPROFILE pP)
 {
-	if (pP->Buffer)
-	{
-		PVROSFree (pP->Buffer);
-		pP->Buffer = NULL;
-	}
+    if (pP->Buffer)
+    {
+        PVROSFree (pP->Buffer);
+        pP->Buffer = NULL;
+    }
 
-	return (TRUE);
+    return (TRUE);
 }
 
 #else /* !WIN32 */
@@ -512,58 +514,50 @@ static sgl_bool SglCloseProfile (PPROFILE pP)
  *
  * Return:		
  *========================================================================================*/
-sgl_bool GetManStringFromRegistry (char *pszBuffer)
-{
-	sgl_bool 	fRet = FALSE;
-	char 		szText[32];
-	HKEY 		hKey;
-	MANUFACTURER_TYPE	eManufacturerType = VIDEOLOGIC_3D;
-	DWORD		dwType, dwSize = sizeof(szText);
+sgl_bool GetManStringFromRegistry(char *pszBuffer) {
+    sgl_bool fRet = FALSE;
+    char szText[32];
+    HKEY hKey;
+    MANUFACTURER_TYPE eManufacturerType = VIDEOLOGIC_3D;
+    DWORD dwType, dwSize = sizeof(szText);
 
-	/* Detect the hardware present ie Maxtrox m3D or PowerVR.
-	 */
-	if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, WHICH_CARD_REGISTRY_STRING, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-	{
-		if (RegQueryValueEx (hKey, "BoardType", 0, &dwType, (LPBYTE)szText, (LPDWORD)&dwSize) == ERROR_SUCCESS)
-		{
-			if (dwType == REG_SZ)
-			{
-				eManufacturerType = (MANUFACTURER_TYPE) strtoul (szText, NULL, 0);
+    /* Detect the hardware present ie Maxtrox m3D or PowerVR.
+     */
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, WHICH_CARD_REGISTRY_STRING, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        if (RegQueryValueEx(hKey, "BoardType", 0, &dwType, (LPBYTE) szText, (LPDWORD) &dwSize) == ERROR_SUCCESS) {
+            if (dwType == REG_SZ) {
+                eManufacturerType = (MANUFACTURER_TYPE) strtoul(szText, NULL, 0);
 
-				/* Which registry to use.
-				 */
-				switch (eManufacturerType)
-				{
-					case VIDEOLOGIC_3D:	strcpy(pszBuffer, VL_REGISTRY_STRING);
-										break;
+                /* Which registry to use.
+                 */
+                switch (eManufacturerType) {
+                    case VIDEOLOGIC_3D:
+                        strcpy(pszBuffer, VL_REGISTRY_STRING);
+                        break;
 
-					case MATROX_M3D:	strcpy(pszBuffer, MATROX_REGISTRY_STRING);
-										break;
+                    case MATROX_M3D:
+                        strcpy(pszBuffer, MATROX_REGISTRY_STRING);
+                        break;
 
-					default:			strcpy(pszBuffer, VL_REGISTRY_STRING);
-										break;
-				}
+                    default:
+                        strcpy(pszBuffer, VL_REGISTRY_STRING);
+                        break;
+                }
 
-				fRet = TRUE;
-			}
-			else
-			{
-				PVROSPrintf("Weird data type SOFTWARE\\PowerVR\\StartUp BoardType\n");
-			}
-		}
-		else
-		{
-			PVROSPrintf("Couldn't access string SOFTWARE\\PowerVR\\StartUp BoardType\n");
-		}
+                fRet = TRUE;
+            } else {
+                PVROSPrintf("Weird data type SOFTWARE\\PowerVR\\StartUp BoardType\n");
+            }
+        } else {
+            PVROSPrintf("Couldn't access string SOFTWARE\\PowerVR\\StartUp BoardType\n");
+        }
 
-		RegCloseKey(hKey);
-	}
-	else
-	{
-		PVROSPrintf("Couldn't access key SOFTWARE\\PowerVR\\StartUp\n");
-	}
+        RegCloseKey(hKey);
+    } else {
+        PVROSPrintf("Couldn't access key SOFTWARE\\PowerVR\\StartUp\n");
+    }
 
-	return (fRet);
+    return (fRet);
 }
 
 
@@ -579,46 +573,38 @@ sgl_bool GetManStringFromRegistry (char *pszBuffer)
  *
  * Return:		
  *========================================================================================*/
-sgl_bool GetHwIniStringFromRegistry (char *pszSection, char *pszEntry, char *pszBuffer, int pszBufferSize)
-{
-	sgl_bool 	fRet = FALSE;
-	char 		szKey[512];
-	HKEY 		hKey;
-	MANUFACTURER_TYPE	eManufacturerType = VIDEOLOGIC_3D;
-	DWORD		dwType;
+sgl_bool GetHwIniStringFromRegistry(char *pszSection, char *pszEntry, char *pszBuffer, int pszBufferSize) {
+    sgl_bool fRet = FALSE;
+    char szKey[512];
+    HKEY hKey;
+    MANUFACTURER_TYPE eManufacturerType = VIDEOLOGIC_3D;
+    DWORD dwType;
 
-	/* Get the registry area depending on the hardware present ie Maxtrox m3D or PowerVR.
-	 */
-	if (GetManStringFromRegistry (szKey))
-	{
-		/* Go to hardware section.
-		 */
-		strcat (szKey, "HWINI\\");
-		strcat (szKey, pszSection);
+    /* Get the registry area depending on the hardware present ie Maxtrox m3D or PowerVR.
+     */
+    if (GetManStringFromRegistry(szKey)) {
+        /* Go to hardware section.
+         */
+        strcat(szKey, "HWINI\\");
+        strcat(szKey, pszSection);
 
-		if (RegOpenKeyEx (HKEY_LOCAL_MACHINE, szKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS)
-		{
-			if (RegQueryValueEx (hKey, pszEntry, 0, &dwType, (LPBYTE)pszBuffer, (LPDWORD)&pszBufferSize) == ERROR_SUCCESS)
-			{
-				if (dwType == REG_SZ)
-				{
-					fRet = TRUE;
-				}
-				else
-				{
-					DPF ((DBG_ERROR, "Weird data type %s %s %lx\n", szKey, pszEntry, dwType));
-				}
-			}
-			else
-			{
-				DPF ((DBG_MESSAGE, "Couldn't access key %s %s\n", szKey, pszEntry));
-			}
+        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, szKey, 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            if (RegQueryValueEx(hKey, pszEntry, 0, &dwType, (LPBYTE) pszBuffer, (LPDWORD) &pszBufferSize) ==
+                ERROR_SUCCESS) {
+                if (dwType == REG_SZ) {
+                    fRet = TRUE;
+                } else {
+                    DPF ((DBG_ERROR, "Weird data type %s %s %lx\n", szKey, pszEntry, dwType));
+                }
+            } else {
+                DPF ((DBG_MESSAGE, "Couldn't access key %s %s\n", szKey, pszEntry));
+            }
 
-			RegCloseKey (hKey);
-		}
-	}
+            RegCloseKey(hKey);
+        }
+    }
 
-	return (fRet);
+    return (fRet);
 }
 
 #endif
@@ -639,33 +625,32 @@ sgl_bool GetHwIniStringFromRegistry (char *pszSection, char *pszEntry, char *psz
  *
  * Return:		TRUE if successfully written
  *========================================================================================*/
-sgl_bool CALL_CONV SglWritePrivateProfileString (char *szSection, char *szEntry, char *szText, char *szFilename)
-{
-	#if WIN32
+sgl_bool CALL_CONV SglWritePrivateProfileString(char *szSection, char *szEntry, char *szText, char *szFilename) {
+#if WIN32
 
-		return (WritePrivateProfileString (szSection, szEntry, szText, szFilename));
+    return (WritePrivateProfileString(szSection, szEntry, szText, szFilename));
 
-	#else
+#else
 
-		sgl_bool bRet = FALSE;
-		PROFILE P;
+    sgl_bool bRet = FALSE;
+    PROFILE P;
 
-		P.szFilename = szFilename;
+    P.szFilename = szFilename;
 
-		if (SglOpenProfile (&P))
-		{
-			SglFindProfileSection (&P, szSection);
-			SglFindProfileEntry (&P, szEntry);
-		}
+    if (SglOpenProfile (&P))
+    {
+        SglFindProfileSection (&P, szSection);
+        SglFindProfileEntry (&P, szEntry);
+    }
 
-		if (SglWriteProfile (&P, szSection, szEntry, szText))
-		{
-			bRet = TRUE;
-		}
+    if (SglWriteProfile (&P, szSection, szEntry, szText))
+    {
+        bRet = TRUE;
+    }
 
-		return (bRet);
+    return (bRet);
 
-	#endif
+#endif
 }
 
 /*===========================================
@@ -684,13 +669,12 @@ sgl_bool CALL_CONV SglWritePrivateProfileString (char *szSection, char *szEntry,
  *
  * Return:		TRUE if successfully written
  *========================================================================================*/
-sgl_bool CALL_CONV SglWritePrivateProfileInt (char *szSection, char *szEntry, int nValue, char *szFilename)
-{
-	char szText[32];
+sgl_bool CALL_CONV SglWritePrivateProfileInt(char *szSection, char *szEntry, int nValue, char *szFilename) {
+    char szText[32];
 
-	sprintf (szText, "%d", nValue);
-	
-	return (SglWritePrivateProfileString (szSection, szEntry, szText, szFilename));
+    sprintf(szText, "%d", nValue);
+
+    return (SglWritePrivateProfileString(szSection, szEntry, szText, szFilename));
 }
 
 /*===========================================
@@ -711,51 +695,52 @@ sgl_bool CALL_CONV SglWritePrivateProfileInt (char *szSection, char *szEntry, in
  *
  * Return:		TRUE if successfully read
  *========================================================================================*/
-sgl_bool CALL_CONV SglReadPrivateProfileString (char *szSection, char *szEntry, char *szDefault, char *szText, int nTextSize, char *szFilename)
-{
-	#if WIN32
+sgl_bool CALL_CONV
+SglReadPrivateProfileString(char *szSection, char *szEntry, char *szDefault, char *szText, int nTextSize,
+                            char *szFilename) {
+#if WIN32
 
-		return (GetPrivateProfileString (szSection, szEntry, szDefault, szText, nTextSize, szFilename));
+    return (GetPrivateProfileString(szSection, szEntry, szDefault, szText, nTextSize, szFilename));
 
-	#else
+#else
 
-		sgl_bool bRet = FALSE;
-		PROFILE P;
+    sgl_bool bRet = FALSE;
+    PROFILE P;
 
-		P.szFilename = szFilename;
+    P.szFilename = szFilename;
 
-		if (!SglOpenProfile (&P))
-		{
-			/* Mac has no profile/prefs file yet so this gets called a lot! */
-			DPF ((DBG_VERBOSE, "Error opening profile"));
-		}
-		else
-		{
-			if (SglFindProfileSection (&P, szSection))
-			{
-				if (SglFindProfileEntry (&P, szEntry))
-				{
-					int nProfileSize = (P.nEndEntry - P.nStartEntry);
+    if (!SglOpenProfile (&P))
+    {
+        /* Mac has no profile/prefs file yet so this gets called a lot! */
+        DPF ((DBG_VERBOSE, "Error opening profile"));
+    }
+    else
+    {
+        if (SglFindProfileSection (&P, szSection))
+        {
+            if (SglFindProfileEntry (&P, szEntry))
+            {
+                int nProfileSize = (P.nEndEntry - P.nStartEntry);
 
-					CHOOSE_MIN (nTextSize, nProfileSize);
+                CHOOSE_MIN (nTextSize, nProfileSize);
 
-					strncpy (szText, &P.Buffer[P.nStartEntry], nTextSize);
-					szText[nTextSize] = 0;
-					bRet = TRUE;
-				}
-			}
+                strncpy (szText, &P.Buffer[P.nStartEntry], nTextSize);
+                szText[nTextSize] = 0;
+                bRet = TRUE;
+            }
+        }
 
-			if (!bRet)
-			{
-				strncpy (szText, szDefault, nTextSize);
-			}
-			
-			SglCloseProfile (&P);
-		}
+        if (!bRet)
+        {
+            strncpy (szText, szDefault, nTextSize);
+        }
 
-		return (bRet);
+        SglCloseProfile (&P);
+    }
 
-	#endif
+    return (bRet);
+
+#endif
 }
 
 /*===========================================
@@ -774,25 +759,23 @@ sgl_bool CALL_CONV SglReadPrivateProfileString (char *szSection, char *szEntry, 
  *
  * Return:		int value from ini file if successful, or nDefault on failure
  *========================================================================================*/
-int CALL_CONV SglReadPrivateProfileInt (char *szSection, char *szEntry, int nDefault, char *szFilename)
-{
-	int nResult;
-	char szText[32], szDefault[32];
+int CALL_CONV SglReadPrivateProfileInt(char *szSection, char *szEntry, int nDefault, char *szFilename) {
+    int nResult;
+    char szText[32], szDefault[32];
 
-	nResult = nDefault;
-	sprintf (szDefault, "%d", nDefault);
-	
-	if (SglReadPrivateProfileString (szSection, szEntry, szDefault, szText, 
-									sizeof (szText), szFilename))
-	{
-		#if WIN32
-		nResult = (int) strtoul (szText, NULL, 0);
-		#else
-		nResult = (int) strtol (szText, NULL, 0);
-		#endif
-	}
+    nResult = nDefault;
+    sprintf(szDefault, "%d", nDefault);
 
-	return (nResult);
+    if (SglReadPrivateProfileString(szSection, szEntry, szDefault, szText,
+                                    sizeof(szText), szFilename)) {
+#if WIN32
+        nResult = (int) strtoul(szText, NULL, 0);
+#else
+        nResult = (int) strtol (szText, NULL, 0);
+#endif
+    }
+
+    return (nResult);
 }
 
 /*===========================================
@@ -810,21 +793,19 @@ int CALL_CONV SglReadPrivateProfileInt (char *szSection, char *szEntry, int nDef
  *
  * Return:		int value from ini file if successful, or nDefault on failure
  *========================================================================================*/
-float CALL_CONV SglReadPrivateProfileFloat (char *szSection, char *szEntry, float fDefault, char *szFilename)
-{
-	float fResult;
-	char szText[32], szDefault[32];
+float CALL_CONV SglReadPrivateProfileFloat(char *szSection, char *szEntry, float fDefault, char *szFilename) {
+    float fResult;
+    char szText[32], szDefault[32];
 
-	fResult = fDefault;
-	sprintf (szDefault, "%f", fDefault);
-	
-	if (SglReadPrivateProfileString (szSection, szEntry, szDefault, szText, 
-									sizeof (szText), szFilename))
-	{
-		fResult = (float) atof (szText);
-	}
+    fResult = fDefault;
+    sprintf(szDefault, "%f", fDefault);
 
-	return (fResult);
+    if (SglReadPrivateProfileString(szSection, szEntry, szDefault, szText,
+                                    sizeof(szText), szFilename)) {
+        fResult = (float) atof(szText);
+    }
+
+    return (fResult);
 }
 /* end of $Source: /user/rcs/revfiles/sabre/sgl/RCS/profile.c,v $ */
 

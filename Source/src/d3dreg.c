@@ -167,32 +167,34 @@
 #include <pvrlims.h>
 #include <syscon.h>
 #include <dregion.h>
-#include <stdlib.h>		/* JWF added for missing prototypes */
-#include <stdio.h>		/* JWF added for missing prototypes */
-#include <string.h>		/* JWF added for missing prototypes */
+#include <stdlib.h>        /* JWF added for missing prototypes */
+#include <stdio.h>        /* JWF added for missing prototypes */
+#include <string.h>        /* JWF added for missing prototypes */
 #include <pvrosapi.h>
 #include <parmbuff.h>
 #include <sglmem.h>
 
 #if DAG_TRANS_SORTING
-	#include <dtri.h> /* for ITRI structure */
-	#include <sgl_math.h> /* for sfabs */
-	#include <d3dtsort.h>
+
+#include <dtri.h> /* for ITRI structure */
+#include <sgl_math.h> /* for sfabs */
+#include <d3dtsort.h>
+
 #endif /*DAG_TRANS_SORTING*/
 
 SGL_EXTERN_TIME_REF /* if we are timing code */
 
 #undef OPAQUE
-#define OPAQUE		PACKED_TYPE_OPAQUE
-#define OPAQUETRANS	PACKED_TYPE_OPAQUETRANS
-#define LIGHTVOL	PACKED_TYPE_LIGHTVOL
-#define SHADOW		PACKED_TYPE_SHADOW
+#define OPAQUE        PACKED_TYPE_OPAQUE
+#define OPAQUETRANS    PACKED_TYPE_OPAQUETRANS
+#define LIGHTVOL    PACKED_TYPE_LIGHTVOL
+#define SHADOW        PACKED_TYPE_SHADOW
 
-#define TRANSLUCENT			PACKED_TYPE_TRANSLUCENT
-#define GOURAUDHIGHLIGHT	PACKED_TYPE_GOURAUDHIGHLIGHT
-#define VERTEXFOG			PACKED_TYPE_VERTEXFOG
-#define TRANS_GOURAUDHIGHLIGHT	PACKED_TYPE_TRANS_GOURAUDHIGHLIGHT
-#define TRANS_VERTEXFOG			PACKED_TYPE_TRANS_VERTEXFOG
+#define TRANSLUCENT            PACKED_TYPE_TRANSLUCENT
+#define GOURAUDHIGHLIGHT    PACKED_TYPE_GOURAUDHIGHLIGHT
+#define VERTEXFOG            PACKED_TYPE_VERTEXFOG
+#define TRANS_GOURAUDHIGHLIGHT    PACKED_TYPE_TRANS_GOURAUDHIGHLIGHT
+#define TRANS_VERTEXFOG            PACKED_TYPE_TRANS_VERTEXFOG
 
 #define DOING_SGL_STYLE_SORTING 1
 /**************************************************************************
@@ -214,41 +216,41 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 	A pointer reference to a block always points at the last sgl_uint32 entry
 	in the block or the link field at the base of the block in the
 	degenerate 'empty' case corresponding to blocks on the free list.
-	
+
 	Blocks are always aligned on a sizeof(BLOCK) boundary so that the LSB's
 	of the pointer correspond directly to the number of data items currently
 	stored in the block (not counting the link field as an item).
 
 	In the case of the OBJECT_BLOCK lists used for OPAQUE objects a sgl_uint32
-	slot is reserved at the end of each block to permit the blocks to be 
+	slot is reserved at the end of each block to permit the blocks to be
 	directly allocated from parameter memory and a PCX2 link to be inserted
 	at the end of even a 'full' block so that the copying of the lists by
 	the GeneratePtr phase can be avoided.
-	
+
 	To allow for this we or 3 into the LSB of any Entry count as we expect
 	the number of Entries quoted to be one or two less than the size of a
 	block in sgl_uint32's.
-	
+
 *****************************************************************************/
 
 /* Empty SET pointers (set has all slots free) point at the LINK field */
-#define PTR_SET_EMPTY( Ptr, Entries )\
-	 ( ( (((sgl_uint32) (Ptr))/sizeof(sgl_uint32)) & (Entries|3) ) == 0 )
+#define PTR_SET_EMPTY(Ptr, Entries)\
+     ( ( (((sgl_uint32) (Ptr))/sizeof(sgl_uint32)) & (Entries|3) ) == 0 )
 
 /* Full SET pointers (set has no slots free) point at the end of the SET */
-#define PTR_SET_FULL( Ptr, Entries ) ( ( (Ptr) == NULL ) || \
-	 ( ( (((sgl_uint32) (Ptr))/sizeof(sgl_uint32)) & (Entries|3) ) == (Entries) ) )
+#define PTR_SET_FULL(Ptr, Entries) ( ( (Ptr) == NULL ) || \
+     ( ( (((sgl_uint32) (Ptr))/sizeof(sgl_uint32)) & (Entries|3) ) == (Entries) ) )
 
 /* You can find out the number of entries currently in any SET */
-#define PTR_SET_SIZE( Ptr, Entries )\
-	 ( (((sgl_uint32) (Ptr))/sizeof(sgl_uint32)) & (Entries|3) )
+#define PTR_SET_SIZE(Ptr, Entries)\
+     ( (((sgl_uint32) (Ptr))/sizeof(sgl_uint32)) & (Entries|3) )
 
 /* To add an entry to a SET; please make sure it's not FULL first */
-#define PTR_SET_ADD( Ptr, Entry )\
-	 *(++(Ptr)) = (sgl_uint32) (Entry)
+#define PTR_SET_ADD(Ptr, Entry)\
+     *(++(Ptr)) = (sgl_uint32) (Entry)
 
 /* To read the next entry out of a SET, make sure it's not EMPTY first */
-#define PTR_SET_SUB( Ptr ) *(Ptr)--
+#define PTR_SET_SUB(Ptr) *(Ptr)--
 
 /*****************************************************************************
 
@@ -256,7 +258,7 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 	rendering pass.	No two translucent objects in the same pass can overlap
 	in X and Y. Multiple passes over the same area need to be done in deepest
 	first order.
-	
+
 	We have to optimise for the case where the set size is very small because
 	of the division of translucent forms (which may be a simple as 2 objects
 	in the first place) into these smaller sub-sets.
@@ -275,18 +277,18 @@ SGL_EXTERN_TIME_REF /* if we are timing code */
 *****************************************************************************/
 
 typedef struct _transface_list {
-	sgl_uint32 *pLastSlot;				/* Pointer to last object inserted.     */
-	float MaxInvZ;						/* Sort FACE objects into inverse Z order*/
-	struct _transface_list *pPre;		/* During the Z sort we doubly link the */
-	struct _transface_list *pPost;		/* list of faces in a region.           */
+    sgl_uint32 *pLastSlot;                /* Pointer to last object inserted.     */
+    float MaxInvZ;                        /* Sort FACE objects into inverse Z order*/
+    struct _transface_list *pPre;        /* During the Z sort we doubly link the */
+    struct _transface_list *pPost;        /* list of faces in a region.           */
 } TRANSFACE_LIST;
 
 /* A TRANSOBJ_BLOCK needs to be the same size as a TRANSFACE_LIST */
 #define TRANSOBJS_PER_BLOCK ((sizeof(TRANSFACE_LIST)/sizeof(sgl_uint32))-1)
 
 typedef struct _transobj_block {
-	sgl_uint32 *pPrev;
-	sgl_uint32 Objects[TRANSOBJS_PER_BLOCK];
+    sgl_uint32 *pPrev;
+    sgl_uint32 Objects[TRANSOBJS_PER_BLOCK];
 } TRANSOBJ_BLOCK;
 
 /*****************************************************************************
@@ -299,12 +301,12 @@ typedef struct _transobj_block {
 
 *****************************************************************************/
 
-#define	OBJECTS_PER_BLOCK	(((TRANSOBJS_PER_BLOCK+1)*16)-2)
+#define    OBJECTS_PER_BLOCK    (((TRANSOBJS_PER_BLOCK+1)*16)-2)
 
 typedef struct _object_block {
-	sgl_uint32 *pPrev;							/* Previous block	    */
-	sgl_uint32 Objects[OBJECTS_PER_BLOCK];		/* Object pointer data  */
-	struct _object_block *pNext;			/* See OutputOpaqueList */
+    sgl_uint32 *pPrev;                            /* Previous block	    */
+    sgl_uint32 Objects[OBJECTS_PER_BLOCK];        /* Object pointer data  */
+    struct _object_block *pNext;            /* See OutputOpaqueList */
 } OBJECT_BLOCK;
 
 /*****************************************************************************
@@ -312,7 +314,7 @@ typedef struct _object_block {
    To achieve sizeof(OBJECT_BLOCK) alignment of OBJECT_BLOCKS we need to
    allocate chunks of OBJECT_BLOCKs with space for an extra block in order
    to then align the OBJECT_BLOCK pointers within it.
-   
+
    We use up to half the 'wasted' space as a permanent free list using a
    'chunk header' with the same alignment tricks used throughout. The size of
    this header is half the size of an OBJECT_BLOCK so it can be itself aligned
@@ -321,11 +323,11 @@ typedef struct _object_block {
 
 *****************************************************************************/
 
-#define	BLOCKS_PER_CHUNK (((OBJECTS_PER_BLOCK+2)/2)-1)
+#define    BLOCKS_PER_CHUNK (((OBJECTS_PER_BLOCK+2)/2)-1)
 
 typedef struct _object_chunk_hdr {
-	sgl_uint32 *pPrev;							/* Previous chunk of blocks	*/
-	sgl_uint32 FreeBlks[BLOCKS_PER_CHUNK];		/* Object block pointers	*/
+    sgl_uint32 *pPrev;                            /* Previous chunk of blocks	*/
+    sgl_uint32 FreeBlks[BLOCKS_PER_CHUNK];        /* Object block pointers	*/
 } OBJECT_CHUNK_HDR;
 
 /************************************************************************
@@ -352,33 +354,33 @@ typedef struct _object_chunk_hdr {
 
 	Every object placed in one of the lists of each region will be recorded
 	in one (and only one) of these counters.
-	
+
 ************************************************************************/
 
-#define HAPPY 0					/* HeightStats counter offsets			*/
+#define HAPPY 0                    /* HeightStats counter offsets			*/
 #define BUSY  1
 #define SAD   2
 
-typedef struct	_region_header {
-	sgl_uint32 *pLastSlots[5];		/* Opaque, LightVol, and Shadow lists	*/
-	sgl_uint32 *pExtraSlots[4];		/* Gouraud Highlight and Vertex Fog lists	*/ 
+typedef struct _region_header {
+    sgl_uint32 *pLastSlots[5];        /* Opaque, LightVol, and Shadow lists	*/
+    sgl_uint32 *pExtraSlots[4];        /* Gouraud Highlight and Vertex Fog lists	*/
 #if PCX1
-	/* Disable for PCX2.
+                                                                                                                            /* Disable for PCX2.
 	 */
 	sgl_uint32 HeightStats[3];		/* How we are doing on variable height?	*/
 #endif
 #if DAG_TRANS_SORTING
-	PTRANSTRIINDEX_STRUCT uTransTriList;
-	sgl_uint16 usTransTriCounter;	  /* Total number of tris */
+    PTRANSTRIINDEX_STRUCT uTransTriList;
+    sgl_uint16 usTransTriCounter;      /* Total number of tris */
 #endif /* DAG_TRANS_SORTING */
-	sgl_uint32 CurTSetId[2];			/* Current TRANSSET Ids					*/
-	sgl_uint16 nPassCount;			/* Number of translucent passes in a tile.	*/
-	TRANSFACE_LIST *pCurTSet[2];		/* Current TRANSSET Objects	- reqd for strips */
-	sgl_uint16 OpaquePlanes; 		/* Total planes added to pLastSlots[0]  */
-	sgl_uint16 TransOpaquePlanes; 	/* Total planes added to pLastSlots[OPAQUETRANS]  */
-	sgl_uint16 ExtraPlanes[4]; 	    /* Total planes added to pLastSlots[GOURAUDHIGHLIGHT->TRANSVERTEXFOG]  */
-	sgl_uint32 PrevOpaqueId;		/* Can combine adjacent OPAQUE objects  */
-	sgl_uint32 PrevTransOpaqueId;	/* Can combine adjacent OPAQUE objects  */
+    sgl_uint32 CurTSetId[2];            /* Current TRANSSET Ids					*/
+    sgl_uint16 nPassCount;            /* Number of translucent passes in a tile.	*/
+    TRANSFACE_LIST *pCurTSet[2];        /* Current TRANSSET Objects	- reqd for strips */
+    sgl_uint16 OpaquePlanes;        /* Total planes added to pLastSlots[0]  */
+    sgl_uint16 TransOpaquePlanes;    /* Total planes added to pLastSlots[OPAQUETRANS]  */
+    sgl_uint16 ExtraPlanes[4];        /* Total planes added to pLastSlots[GOURAUDHIGHLIGHT->TRANSVERTEXFOG]  */
+    sgl_uint32 PrevOpaqueId;        /* Can combine adjacent OPAQUE objects  */
+    sgl_uint32 PrevTransOpaqueId;    /* Can combine adjacent OPAQUE objects  */
 
 } REGION_HEADER;
 
@@ -394,27 +396,26 @@ typedef struct	_region_header {
 
 ************************************************************************/
 
-typedef struct tagREGION_STRIP_EXTRA
-{
-	sgl_uint32	*StartOfFirstRegion;/* ptr to first object in first tile	  */
-	sgl_uint32	*EndOfLastRegion;	/* ptr to end of last visible region	  */
-	int		nRegionsInStrip;	/* number of vis. contiguous regions	  */
-	int		nLeftX;				/* start of leftmost region in pixels 	  */
-	int		nRightX;			/* right of rightmost region in pixels 	  */
+typedef struct tagREGION_STRIP_EXTRA {
+    sgl_uint32 *StartOfFirstRegion;/* ptr to first object in first tile	  */
+    sgl_uint32 *EndOfLastRegion;    /* ptr to end of last visible region	  */
+    int nRegionsInStrip;    /* number of vis. contiguous regions	  */
+    int nLeftX;                /* start of leftmost region in pixels 	  */
+    int nRightX;            /* right of rightmost region in pixels 	  */
 } REGION_STRIP_EXTRA;
 
 typedef struct _region_strip {
-	REGION_HEADER Regions[MAX_X_REGIONS];
-	sgl_uint32 RegionWordY;			/* Region word with YPos and YSize set  */
+    REGION_HEADER Regions[MAX_X_REGIONS];
+    sgl_uint32 RegionWordY;            /* Region word with YPos and YSize set  */
 #if PCX1
-	/* Disable for PCX2.
+                                                                                                                            /* Disable for PCX2.
 	 */
 	int PlaneTally;				/* Average number of planes in a strip  */
 #endif
-	int Width; 					/* Boolean, 0 -> XSize, 1 -> (XSize*2)  */
-	int Height;					/* 2 to 64 in powers of two				*/
-	REGION_STRIP_EXTRA *pExtra; /* ptr to extra data for strips			*/ 
-	struct _region_strip *pNext;/* Next strip down the screen           */
+    int Width;                    /* Boolean, 0 -> XSize, 1 -> (XSize*2)  */
+    int Height;                    /* 2 to 64 in powers of two				*/
+    REGION_STRIP_EXTRA *pExtra; /* ptr to extra data for strips			*/
+    struct _region_strip *pNext;/* Next strip down the screen           */
 } REGION_STRIP;
 
 /**************************************************************************
@@ -427,25 +428,25 @@ typedef struct _region_strip {
 
 /* Defined in PVRD.c .
  */
-extern sgl_uint32	nMaxPassCount;
-extern sgl_uint32	bFullSort;
+extern sgl_uint32 nMaxPassCount;
+extern sgl_uint32 bFullSort;
 
 /* No sort method, 1 fro no sort, 2 for reversed no sort */
 extern int gNoSortTransFaces;
 
 
 #if DUMP_PARAMS
-	extern sgl_uint32 *curAddr;
+extern sgl_uint32 *curAddr;
 #endif
 
-#define MAX_Y_RESOLUTION (768+64)	/* Allow for MAX overlap in Y */
+#define MAX_Y_RESOLUTION (768+64)    /* Allow for MAX overlap in Y */
 
 /* To directly access a region strip use the Y coordinate in here */
-static REGION_STRIP *pRegionStrips[(MAX_Y_RESOLUTION/2)+1];
-static int BaseOfStrips[(MAX_Y_RESOLUTION/2)+1], OutputHeight, LastTileLimit;
+static REGION_STRIP *pRegionStrips[(MAX_Y_RESOLUTION / 2) + 1];
+static int BaseOfStrips[(MAX_Y_RESOLUTION / 2) + 1], OutputHeight, LastTileLimit;
 
 /* strip extra data */
-static REGION_STRIP_EXTRA RegionStripExtra[(MAX_Y_RESOLUTION/2)+1];
+static REGION_STRIP_EXTRA RegionStripExtra[(MAX_Y_RESOLUTION / 2) + 1];
 
 /* We can use the following mask to aid object merging in AddRegionObjects */
 static sgl_uint32 SigXYMask;
@@ -466,7 +467,7 @@ static sgl_uint32 CurrentTransSetId;
 
 
 /* As we go along we may build up some free STRIPs */
-	static REGION_STRIP *FreeRegionStrip;
+static REGION_STRIP *FreeRegionStrip;
 
 /* OBJECT_BLOCKs can be reused via the permanent Chunk header list */
 static sgl_uint32 **FreeObjChunk, *AllChunkHdrs;
@@ -477,13 +478,13 @@ static TRANSFACE_LIST *pNextTransFace;
 /* Special object addresses or pointers */
 static sgl_uint32 DummyObjData = ULONG_MAX;
 
-	#if DAG_TRANS_SORTING /* Required by DoDisplay */
-	sgl_uint32 DummyFlushData = ULONG_MAX;
-	sgl_uint32 DummyTransData = ULONG_MAX;
-	sgl_uint32 DummyTransFlushData = ULONG_MAX;
-	sgl_uint32 DummyObjDataLarge = ULONG_MAX;
-	#else
-	static sgl_uint32 DummyFlushData = ULONG_MAX;
+#if DAG_TRANS_SORTING /* Required by DoDisplay */
+sgl_uint32 DummyFlushData = ULONG_MAX;
+sgl_uint32 DummyTransData = ULONG_MAX;
+sgl_uint32 DummyTransFlushData = ULONG_MAX;
+sgl_uint32 DummyObjDataLarge = ULONG_MAX;
+#else
+                                                                                                                        static sgl_uint32 DummyFlushData = ULONG_MAX;
 	static sgl_uint32 DummyTransFlushData = ULONG_MAX;
 	static sgl_uint32 DummyTransData = ULONG_MAX;
 
@@ -493,9 +494,9 @@ static sgl_uint32 DummyObjData = ULONG_MAX;
 	static sgl_uint32 DummyObjDataLarge = ULONG_MAX;
 	#endif
 
-	#endif /* DAG_TRANS_SORTING */
+#endif /* DAG_TRANS_SORTING */
 
-static sgl_uint32 CompleteShadowAddress= ULONG_MAX;
+static sgl_uint32 CompleteShadowAddress = ULONG_MAX;
 #if PCX1
 static sgl_uint32 DummyTransObjData = ULONG_MAX;
 #endif
@@ -515,47 +516,47 @@ sgl_uint16 guTransTriCounter;
 TRANSTRI_STRUCT *gpTransTris;
 
 /* Space for translucent triangles per region */
-static char *gpcTransTriIndicesWorkspace; 
-static char* gpcTransTriIndicesWorkspacePtr;
+static char *gpcTransTriIndicesWorkspace;
+static char *gpcTransTriIndicesWorkspacePtr;
 static sgl_uint32 gpcTransTriIndicesWorkspaceStart;
 #endif /* DAG_TRANS_SORTING */
 
 #if WIN32 || DOS32 || MAC
 
-	#define NoOfSabres 0
+#define NoOfSabres 0
 
-	#if (PCX1 || ((PCX2 || PCX2_003) && !(POINTERS_IN_TLB && POINTERS_FOLLOW_PLANES)))
+#if (PCX1 || ((PCX2 || PCX2_003) && !(POINTERS_IN_TLB && POINTERS_FOLLOW_PLANES)))
 
-		extern int PCXRegionDataPages;		
+extern int PCXRegionDataPages;
 
-	#endif
-	
+#endif
+
 #endif
 
 /* We use RegionXMagic value to improove performance in RegionWord calc. */
 static sgl_uint32 RegionXMagic = 32;
 
-#define CalcRegionXMagicVal( RegionXSize ) \
-	for ( RegionXMagic = 0;\
-		  ( (1<<RegionXMagic) != ((RegionXSize) / NUM_SABRE_CELLS) );\
-		  RegionXMagic++ )\
-		ASSERT(( (1<<RegionXMagic) < ((RegionXSize) / NUM_SABRE_CELLS) ))
+#define CalcRegionXMagicVal(RegionXSize) \
+    for ( RegionXMagic = 0;\
+          ( (1<<RegionXMagic) != ((RegionXSize) / NUM_SABRE_CELLS) );\
+          RegionXMagic++ )\
+        ASSERT(( (1<<RegionXMagic) < ((RegionXSize) / NUM_SABRE_CELLS) ))
 
 /* This calculates the RegionWordY which is stored on each strip */
-#define RegionWordYVal( YBase, Lines, Width ) (\
-	REG_COMPULSARY_BITS + (( 1 << ( (Width) + RegionXMagic ) )-1) +\
-	( (( (Lines) / (NoOfSabres+1) )-1) << REG_YSIZE_SHIFT ) +\
-	(  ( ((YBase)<<Y_SHIFT) / (NoOfSabres+1) ) << REG_YPOS_SHIFT ) )
-	
+#define RegionWordYVal(YBase, Lines, Width) (\
+    REG_COMPULSARY_BITS + (( 1 << ( (Width) + RegionXMagic ) )-1) +\
+    ( (( (Lines) / (NoOfSabres+1) )-1) << REG_YSIZE_SHIFT ) +\
+    (  ( ((YBase)<<Y_SHIFT) / (NoOfSabres+1) ) << REG_YPOS_SHIFT ) )
+
 /* To generate for a specified X region on a strip add this to RegionWordY */
-#define AddRegionWordXData( XReg, Width ) (\
-	( (XReg) << ( (Width) + RegionXMagic + REG_XPOS_SHIFT ) ) )
+#define AddRegionWordXData(XReg, Width) (\
+    ( (XReg) << ( (Width) + RegionXMagic + REG_XPOS_SHIFT ) ) )
 
 /* To move between X regions on a strip add/sub this to/from RegionWord */
-#define DeltaRegionWordX( Width ) \
-	( 1 << ( (Width) + RegionXMagic + REG_XPOS_SHIFT ) )
+#define DeltaRegionWordX(Width) \
+    ( 1 << ( (Width) + RegionXMagic + REG_XPOS_SHIFT ) )
 
-	
+
 /**************************************************************************
  **************************************************************************
 
@@ -569,183 +570,166 @@ static sgl_uint32 RegionXMagic = 32;
  * Inputs         : int YBase  - Base of strip = (Y/MIN_REGION_HEIGHT)
  *                : int Height - Height of new strip / MIN_REGION_HEIGHT
  *                : int Width  - Height of new strip / MIN_REGION_HEIGHT
- * Outputs        : 
- * Input/Output	  : 
+ * Outputs        :
+ * Input/Output	  :
  * Returns        :	REGION_STRIP * - new region strip or NULL
  * Global Used    : pRegionStrips
  * Description    : Creates a new region strip at generates references to
  *					it in pRegionStrips vector.
- *				   
+ *
  **************************************************************************/
-static INLINE REGION_STRIP *AllocRegionStrip( int YBase, int Height, int Width )
-{
-	REGION_STRIP *pStrip = FreeRegionStrip;
-	int YReg;
-	
-	if ( pStrip == NULL )
-	{
-		/* Need to allocate one it seems */
-		pStrip = NEW(REGION_STRIP);
-		ASSERT(( pStrip != NULL));
-	}
-	else
-	{
-		/* Got it */
-		FreeRegionStrip = pStrip->pNext;
-	}
+static INLINE REGION_STRIP *AllocRegionStrip(int YBase, int Height, int Width) {
+    REGION_STRIP *pStrip = FreeRegionStrip;
+    int YReg;
 
-	if ( pStrip != NULL )
-	{
-		/* Initialise whole object to 0 */
-		memset(pStrip, 0, sizeof(REGION_STRIP));
+    if (pStrip == NULL) {
+        /* Need to allocate one it seems */
+        pStrip = NEW(REGION_STRIP);
+        ASSERT((pStrip != NULL));
+    } else {
+        /* Got it */
+        FreeRegionStrip = pStrip->pNext;
+    }
 
-		/* Set height and width */
-		pStrip->Height = Height;
-		pStrip->Width = Width;
+    if (pStrip != NULL) {
+        /* Initialise whole object to 0 */
+        memset(pStrip, 0, sizeof(REGION_STRIP));
 
-		if ( ( Height + YBase ) <= (LastTileLimit>>Y_SHIFT) )
-		{
-			/* Calculate the base descriptor for regions in the strip */
-			pStrip->RegionWordY = RegionWordYVal( YBase,
-									Height<<Y_SHIFT, Width );
-												
-			DPF((DBG_VERBOSE,"Strip at %d, H %d, W %d - RWord %X", YBase,
-										Height, Width, pStrip->RegionWordY));
-		}
-		else
-		if ( (YBase<<Y_SHIFT) < LastTileLimit )
-		{
-			/* Sadly this one overlaps the bottom of the screen */
-			pStrip->RegionWordY = RegionWordYVal( YBase,
-							LastTileLimit - (YBase<<Y_SHIFT), Width );
-							
-			DPF((DBG_VERBOSE,"Last strip at %d H < %d, W %d - RWord %X",
-								YBase, Height, Width,  pStrip->RegionWordY));
-		}
-		else
-		{
-			/* This forms a guard band past the bottom of the screen */
-			pStrip->RegionWordY = 0;
-			
-			DPF((DBG_VERBOSE,"Strip at %d height %d off bottom of screen",
-													YBase, Height));
-		}
+        /* Set height and width */
+        pStrip->Height = Height;
+        pStrip->Width = Width;
 
-		/* Create references */
-		YReg = YBase;
+        if ((Height + YBase) <= (LastTileLimit >> Y_SHIFT)) {
+            /* Calculate the base descriptor for regions in the strip */
+            pStrip->RegionWordY = RegionWordYVal(YBase,
+                                                 Height << Y_SHIFT, Width);
 
-		if ( YReg > 0 )
-		{
-			/* Create link to strip from previous strip */
-			pRegionStrips[YReg-1]->pNext = pStrip;
-		}
+            DPF((DBG_VERBOSE, "Strip at %d, H %d, W %d - RWord %X", YBase,
+                    Height, Width, pStrip->RegionWordY));
+        } else if ((YBase << Y_SHIFT) < LastTileLimit) {
+            /* Sadly this one overlaps the bottom of the screen */
+            pStrip->RegionWordY = RegionWordYVal(YBase,
+                                                 LastTileLimit - (YBase << Y_SHIFT), Width);
 
-		while ( Height-- != 0 )
-		{
-			/* Create references */
-			pRegionStrips[YReg] = pStrip;
-			BaseOfStrips[YReg]  = YBase;
-			YReg++;
-		}
+            DPF((DBG_VERBOSE, "Last strip at %d H < %d, W %d - RWord %X",
+                    YBase, Height, Width, pStrip->RegionWordY));
+        } else {
+            /* This forms a guard band past the bottom of the screen */
+            pStrip->RegionWordY = 0;
 
-		/* And setup the next strip pointer */
-		pStrip->pNext = pRegionStrips[YReg];
-	}
+            DPF((DBG_VERBOSE, "Strip at %d height %d off bottom of screen",
+                    YBase, Height));
+        }
 
-	return (pStrip);
+        /* Create references */
+        YReg = YBase;
+
+        if (YReg > 0) {
+            /* Create link to strip from previous strip */
+            pRegionStrips[YReg - 1]->pNext = pStrip;
+        }
+
+        while (Height-- != 0) {
+            /* Create references */
+            pRegionStrips[YReg] = pStrip;
+            BaseOfStrips[YReg] = YBase;
+            YReg++;
+        }
+
+        /* And setup the next strip pointer */
+        pStrip->pNext = pRegionStrips[YReg];
+    }
+
+    return (pStrip);
 }
 
-static void AllocObjectChunk( void );
+static void AllocObjectChunk(void);
 
 /**************************************************************************
  * Function Name  : InitRegionDataL
- * Inputs         :  
- * Outputs        : 
- * Input/Output	  : 
+ * Inputs         :
+ * Outputs        :
+ * Input/Output	  :
  * Returns        :
  * Global Used    : All
  * Description    : Sets up the global structures at the start
- *				   
+ *
  **************************************************************************/
-void InitRegionDataL()
-{
-	/* Reset all globals */
+void InitRegionDataL() {
+    /* Reset all globals */
 #if DOING_SGL_STYLE_SORTING
-	CurrentTransSetId[0] = 0;
-	CurrentTransSetId[1] = 1;
+    CurrentTransSetId[0] = 0;
+    CurrentTransSetId[1] = 1;
 #else
-	CurrentTransSetId    = 0;
+    CurrentTransSetId    = 0;
 #endif
 
 
-	FreeRegionStrip		 = NULL;
-	pNextTransFace       = NULL;
-	OutputHeight         = 0;
-	RegionXMagic         = 32;
-	MaxHeight			 = 0;
-	MinHeight			 = 0;
-	MergeHeight			 = 0;
-	LastTileLimit        = 0;
-	SigXYMask            = (sgl_uint32) ~0;
-	OpaqueId             = 0;
-	TransOpaqueId        = 0;
-	memset( &pRegionStrips, 0, sizeof(pRegionStrips) );
-	memset( &BaseOfStrips, 0, sizeof(BaseOfStrips) );
-	memset( &RegionInfo, 0, sizeof(DEVICE_REGION_INFO_STRUCT) );
+    FreeRegionStrip = NULL;
+    pNextTransFace = NULL;
+    OutputHeight = 0;
+    RegionXMagic = 32;
+    MaxHeight = 0;
+    MinHeight = 0;
+    MergeHeight = 0;
+    LastTileLimit = 0;
+    SigXYMask = (sgl_uint32) ~0;
+    OpaqueId = 0;
+    TransOpaqueId = 0;
+    memset(&pRegionStrips, 0, sizeof(pRegionStrips));
+    memset(&BaseOfStrips, 0, sizeof(BaseOfStrips));
+    memset(&RegionInfo, 0, sizeof(DEVICE_REGION_INFO_STRUCT));
 
-	#if DAG_TRANS_SORTING
-	/* Grab some space for triangle data and references */
-	if (bFullSort)
-	{
-		gpcTransTriIndicesWorkspaceStart = sizeof(TRANSTRIINDEX_STRUCT)* MAX_NUM_INDEX_BLOCKS;
-		gpcTransTriIndicesWorkspace = SGLMalloc( gpcTransTriIndicesWorkspaceStart );
+#if DAG_TRANS_SORTING
+    /* Grab some space for triangle data and references */
+    if (bFullSort) {
+        gpcTransTriIndicesWorkspaceStart = sizeof(TRANSTRIINDEX_STRUCT) * MAX_NUM_INDEX_BLOCKS;
+        gpcTransTriIndicesWorkspace = SGLMalloc(gpcTransTriIndicesWorkspaceStart);
 
-		guTransTriCounter = 0;
-		gpTransTris = SGLMalloc(sizeof(TRANSTRI_STRUCT) * MAX_NUM_SCENE_TRIS); 
-		if (!(gpcTransTriIndicesWorkspace && gpTransTris && InitialiseTransortMemory()))
-		{
-			PVROSPrintf("Transorting Memory Allocation failed - using Depth sorting.\n");
-			bFullSort = FALSE;		
-		}
-	}
-	#endif /*DAG_TRANS_SORTING*/
+        guTransTriCounter = 0;
+        gpTransTris = SGLMalloc(sizeof(TRANSTRI_STRUCT) * MAX_NUM_SCENE_TRIS);
+        if (!(gpcTransTriIndicesWorkspace && gpTransTris && InitialiseTransortMemory())) {
+            PVROSPrintf("Transorting Memory Allocation failed - using Depth sorting.\n");
+            bFullSort = FALSE;
+        }
+    }
+#endif /*DAG_TRANS_SORTING*/
 
-	/* We need at least one chunk's worth of space to simplify startup */
-	FreeObjChunk = &AllChunkHdrs;
-	AllocObjectChunk();
+    /* We need at least one chunk's worth of space to simplify startup */
+    FreeObjChunk = &AllChunkHdrs;
+    AllocObjectChunk();
 
 }
 
 #if DAG_TRANS_SORTING
+
 /**************************************************************************
  * Function Name  : CloseRegionDataL
  * Inputs         :  -
  * Outputs        :  -
- * Input/Output	  : 
+ * Input/Output	  :
  * Returns        :
  * Global Used    : gpcTransTriIndicesWorkspace, gpTransTris
  * Description    : Frees allocated memory - called during process detach
- *				   
+ *
  **************************************************************************/
-void CloseRegionDataL()
-{
-	if (gpcTransTriIndicesWorkspace)
-	{
-		DPF((DBG_MESSAGE,"Releasing Triangle Indices Workspace memory"));
-		SGLFree( gpcTransTriIndicesWorkspace );
-	}
-	if (gpTransTris)	
-	{
-		DPF((DBG_MESSAGE,"Releasing Triangle memory"));
-		SGLFree( gpTransTris );		
-	}
+void CloseRegionDataL() {
+    if (gpcTransTriIndicesWorkspace) {
+        DPF((DBG_MESSAGE, "Releasing Triangle Indices Workspace memory"));
+        SGLFree(gpcTransTriIndicesWorkspace);
+    }
+    if (gpTransTris) {
+        DPF((DBG_MESSAGE, "Releasing Triangle memory"));
+        SGLFree(gpTransTris);
+    }
 
-	/* Reset the pointers */
-	gpTransTris = NULL;
-	gpcTransTriIndicesWorkspace = NULL;
-	
-	FinalizeTransortMemory();
+    /* Reset the pointers */
+    gpTransTris = NULL;
+    gpcTransTriIndicesWorkspace = NULL;
+
+    FinalizeTransortMemory();
 }
+
 #endif /*DAG_TRANS_SORTING*/
 
 /**************************************************************************
@@ -753,144 +737,125 @@ void CloseRegionDataL()
  * Inputs         : int YBase  - Base of current region
  *                : int Height - Height of current region
  *                : int Width  - Width of current region
- * Outputs        : 
- * Input/Output	  : 
+ * Outputs        :
+ * Input/Output	  :
  * Returns        : int YNext  - Base of next uneffected region
  * Global Used    : FreeRegion list
  * Description    : Modifies the pRegionStrips table and allocates/releases
  *				      REGION_STRIPs to tile the area effected.
  **************************************************************************/
-static INLINE int ResetRegionStrip( int YBase, int Height, int Width )
-{
-	REGION_STRIP *pStrip, *pNext, *pTemp;
-	int YNext;
+static INLINE int ResetRegionStrip(int YBase, int Height, int Width) {
+    REGION_STRIP *pStrip, *pNext, *pTemp;
+    int YNext;
 
-	/* Access current strip object in same base slot */
-	pStrip = pRegionStrips[YBase];
+    /* Access current strip object in same base slot */
+    pStrip = pRegionStrips[YBase];
 
-	/* Normally the next uneffected one is what you might expect */
-	YNext = YBase + Height;
+    /* Normally the next uneffected one is what you might expect */
+    YNext = YBase + Height;
 
-	if ( ( Height != pStrip->Height ) || ( pStrip->Width != Width ) )
-	{
-		/* Recalculate size dependant data stored on a strip */
-		int Lines;
-		
-		if ( ( Height + YBase ) <= (LastTileLimit>>Y_SHIFT) )
-		{
-			/* Normal full height strip */
-			Lines = Height<<Y_SHIFT;
-		}
-		else
-		if ( (YBase<<Y_SHIFT) < LastTileLimit )
-		{
-			/* Last strip */
-			Lines = LastTileLimit - (YBase<<Y_SHIFT);			
-		}
-		else
-		{
-			/* This forms a guard band past the bottom of the screen */
-			Lines = 0;
-		}
-		
-		/* Recalculate the RegionWordY for this strip */		
-		pStrip->RegionWordY = RegionWordYVal( YBase, Lines, Width );
+    if ((Height != pStrip->Height) || (pStrip->Width != Width)) {
+        /* Recalculate size dependant data stored on a strip */
+        int Lines;
 
-		/* Update Width */
-		pStrip->Width = Width;
+        if ((Height + YBase) <= (LastTileLimit >> Y_SHIFT)) {
+            /* Normal full height strip */
+            Lines = Height << Y_SHIFT;
+        } else if ((YBase << Y_SHIFT) < LastTileLimit) {
+            /* Last strip */
+            Lines = LastTileLimit - (YBase << Y_SHIFT);
+        } else {
+            /* This forms a guard band past the bottom of the screen */
+            Lines = 0;
+        }
 
-		DPF((DBG_VERBOSE,"Strip at %d, Lines %d, W %d - RWord %X", YBase,
-										Lines, Width, pStrip->RegionWordY));
-	}
-	
-	if ( pStrip->Height != Height )
-	{
-		/* If the height has changed we need more or fewer strips.
+        /* Recalculate the RegionWordY for this strip */
+        pStrip->RegionWordY = RegionWordYVal(YBase, Lines, Width);
+
+        /* Update Width */
+        pStrip->Width = Width;
+
+        DPF((DBG_VERBOSE, "Strip at %d, Lines %d, W %d - RWord %X", YBase,
+                Lines, Width, pStrip->RegionWordY));
+    }
+
+    if (pStrip->Height != Height) {
+        /* If the height has changed we need more or fewer strips.
 		   We always keep this one at the same YBase and play with others. */
-		
-		while ( pStrip->Height < Height )
-		{
-			/* Need to merge strips next will start after current strip */
-			for ( YBase += pStrip->Height; ( YBase != YNext ); YBase++ )
-			{
-				/* Create references to new bigger object */
-				pRegionStrips[YBase] = pStrip;
-				BaseOfStrips[YBase]  = YNext - Height;
-			}
 
-			/* Access next strip */
-			pNext = pStrip->pNext;
+        while (pStrip->Height < Height) {
+            /* Need to merge strips next will start after current strip */
+            for (YBase += pStrip->Height; (YBase != YNext); YBase++) {
+                /* Create references to new bigger object */
+                pRegionStrips[YBase] = pStrip;
+                BaseOfStrips[YBase] = YNext - Height;
+            }
 
-			do
-			{
-				/* Merge with next strip */
-				pStrip->Height += pNext->Height;
+            /* Access next strip */
+            pNext = pStrip->pNext;
 
-				/* Get next next strip */
-				pTemp = pNext->pNext;
+            do {
+                /* Merge with next strip */
+                pStrip->Height += pNext->Height;
 
-				/* Put strip into free Region structure list */
-				pNext->pNext = FreeRegionStrip;
-				FreeRegionStrip = pNext;
+                /* Get next next strip */
+                pTemp = pNext->pNext;
 
-				/* Advance to next next strip for next time */
-				pStrip->pNext = pTemp;
+                /* Put strip into free Region structure list */
+                pNext->pNext = FreeRegionStrip;
+                FreeRegionStrip = pNext;
 
-				/* Don't go on for ever if things have gone wrong */
-				ASSERT((pStrip->Height <= Height));
-			}
-			while ( pStrip->Height != Height );
-		}	 
-		
-		if ( pStrip->Height > Height )
-		{
-			/* Need to fragment strips, next uneffected based on old Height */
-			YNext = YBase + pStrip->Height;
+                /* Advance to next next strip for next time */
+                pStrip->pNext = pTemp;
 
-			/* Convert current strip into first strip of new height */
-			pStrip->Height = Height;
+                /* Don't go on for ever if things have gone wrong */
+                ASSERT((pStrip->Height <= Height));
+            } while (pStrip->Height != Height);
+        }
 
-			/* Move to the base of the next strip needed */
-			YBase += Height;
+        if (pStrip->Height > Height) {
+            /* Need to fragment strips, next uneffected based on old Height */
+            YNext = YBase + pStrip->Height;
 
-			while ( ( YBase + Height ) < YNext )
-			{
-				/* New objects of same Width and Height */
-				(void) AllocRegionStrip( YBase, Height, Width );
-				YBase += Height;
-			}
+            /* Convert current strip into first strip of new height */
+            pStrip->Height = Height;
 
-			/* Final fragment, allow for it to be an irregular height */						
-			AllocRegionStrip( YBase, YNext - YBase, Width );
-		}
-	}
-	else
-	{
-		/* Update Width parameter and RegionWordY */		
-		
-		if ( ((YBase + Height)<<Y_SHIFT) >= LastTileLimit ) /* Last strip */
-		{
-			pStrip->RegionWordY = RegionWordYVal( YBase, LastTileLimit - (YBase<<Y_SHIFT), Width );
-		}
-		else
-		{
-			pStrip->RegionWordY = RegionWordYVal( YBase, Height<<Y_SHIFT, Width );
-		}
-		pStrip->Width = Width;
-	}
+            /* Move to the base of the next strip needed */
+            YBase += Height;
 
-	/* Setup for next pass; quickest to set all region descriptors to 0 */
-	memset( pStrip->Regions, 0, sizeof(REGION_HEADER)  *
-	                            RegionInfo.NumXRegions   );
+            while ((YBase + Height) < YNext) {
+                /* New objects of same Width and Height */
+                (void) AllocRegionStrip(YBase, Height, Width);
+                YBase += Height;
+            }
+
+            /* Final fragment, allow for it to be an irregular height */
+            AllocRegionStrip(YBase, YNext - YBase, Width);
+        }
+    } else {
+        /* Update Width parameter and RegionWordY */
+
+        if (((YBase + Height) << Y_SHIFT) >= LastTileLimit) /* Last strip */
+        {
+            pStrip->RegionWordY = RegionWordYVal(YBase, LastTileLimit - (YBase << Y_SHIFT), Width);
+        } else {
+            pStrip->RegionWordY = RegionWordYVal(YBase, Height << Y_SHIFT, Width);
+        }
+        pStrip->Width = Width;
+    }
+
+    /* Setup for next pass; quickest to set all region descriptors to 0 */
+    memset(pStrip->Regions, 0, sizeof(REGION_HEADER) *
+                               RegionInfo.NumXRegions);
 
 #if PCX1
-	/* Disable for PCX2.
+                                                                                                                            /* Disable for PCX2.
 	 */
 	/* Plus per frame statistics */
 	pStrip->PlaneTally = 0;
 #endif
 
-	return (YNext);
+    return (YNext);
 }
 
 /**************************************************************************
@@ -902,87 +867,80 @@ static INLINE int ResetRegionStrip( int YBase, int Height, int Width )
  * Global Used    : pRegionStrips
  * Description    : Prepares for a further render frame, can redistribute
  *					tiles by altering the height of REGION_STRIPs.
- *				   
+ *
  **************************************************************************/
-void ResetRegionDataL(sgl_bool bForceReset)
-{
+void ResetRegionDataL(sgl_bool bForceReset) {
 #if PCX1
-	REGION_STRIP *pStrip;
+    REGION_STRIP *pStrip;
 #endif
-	int YReg, YBase = 0, Width = 0;
-	int CurrentMinHeight = 0xff;
+    int YReg, YBase = 0, Width = 0;
+    int CurrentMinHeight = 0xff;
 
 #ifdef DLL_METRIC
-	InResetRegionData();
+    InResetRegionData();
 #endif
 
-	if ( (OutputHeight == 0) || (bForceReset) )
-	{
-		/* We need RegionInfo to setup the RegionWords on strips */
-		YReg = HWGetRegionInfo(0, &RegionInfo);
-		ASSERT(YReg==0); 
-	
-		/* Precalculate magic value for RegionWord calcs based on XSize */
-		CalcRegionXMagicVal( RegionInfo.XSize );
-		
-		/* Set values from ini file for dynamic tile sizing boundaries */
-		MaxHeight = RegionInfo.YSize >> Y_SHIFT;	
-		MinHeight = RegionInfo.MinYSize >> Y_SHIFT;
-		MergeHeight = RegionInfo.MergeHeight >> Y_SHIFT;
-		
-		/* Set the initial Width using the same formula as we use later */		
-		 Width = ( (MaxHeight > MergeHeight) &&
-		           (RegionInfo.XSize == 32)     ) ? 1 : 0; 
-		/* Because the .ini file setting is altered in win32/hwdevice.c 
+    if ((OutputHeight == 0) || (bForceReset)) {
+        /* We need RegionInfo to setup the RegionWords on strips */
+        YReg = HWGetRegionInfo(0, &RegionInfo);
+        ASSERT(YReg == 0);
+
+        /* Precalculate magic value for RegionWord calcs based on XSize */
+        CalcRegionXMagicVal(RegionInfo.XSize);
+
+        /* Set values from ini file for dynamic tile sizing boundaries */
+        MaxHeight = RegionInfo.YSize >> Y_SHIFT;
+        MinHeight = RegionInfo.MinYSize >> Y_SHIFT;
+        MergeHeight = RegionInfo.MergeHeight >> Y_SHIFT;
+
+        /* Set the initial Width using the same formula as we use later */
+        Width = ((MaxHeight > MergeHeight) &&
+                 (RegionInfo.XSize == 32)) ? 1 : 0;
+        /* Because the .ini file setting is altered in win32/hwdevice.c
 		 * this line will not incorrectly resize a 32x32 region - but is
 		 * still needed as it's presence improves D3D test.
 		 */
 
-		/* Calculate accurate height of screen */
-		OutputHeight = RegionInfo.NumYRegions * RegionInfo.YSize;
-		LastTileLimit = OutputHeight;
-		
-		if ( RegionInfo.HasLeftOver )
-		{
-			/* Allow for overlap at the bottom of the screen */
-			LastTileLimit -= (RegionInfo.YSize - RegionInfo.LeftOverY);
-		}
+        /* Calculate accurate height of screen */
+        OutputHeight = RegionInfo.NumYRegions * RegionInfo.YSize;
+        LastTileLimit = OutputHeight;
 
-		for ( YBase = 0, YReg = RegionInfo.NumYRegions;
-	    	  ( YReg-- != 0 ); YBase += RegionInfo.YSize )
-		{
-			/* All new region strips have a nominal height to start with */
+        if (RegionInfo.HasLeftOver) {
+            /* Allow for overlap at the bottom of the screen */
+            LastTileLimit -= (RegionInfo.YSize - RegionInfo.LeftOverY);
+        }
+
+        for (YBase = 0, YReg = RegionInfo.NumYRegions;
+             (YReg-- != 0); YBase += RegionInfo.YSize) {
+            /* All new region strips have a nominal height to start with */
 #if PCX1
-			pStrip = 
-#endif			
-			AllocRegionStrip( YBase>>Y_SHIFT, RegionInfo.YSize>>Y_SHIFT, Width);			
+            pStrip =
+#endif
+            AllocRegionStrip(YBase >> Y_SHIFT, RegionInfo.YSize >> Y_SHIFT, Width);
 #if PCX1
-	/* Disable for PCX2.
+                                                                                                                                    /* Disable for PCX2.
 	 */
 			/* Respond immediately/agressively to overload on 1st frame */
 			pStrip->PlaneTally = REGION_PLANE_LIM >> 1;
 #endif
-		}
+        }
 
-		/* Have deal in minimum Y units */
-		OutputHeight = YBase>>Y_SHIFT;
+        /* Have deal in minimum Y units */
+        OutputHeight = YBase >> Y_SHIFT;
 
-		/* Terminate the lists without ever needing any special cases */
-		AllocRegionStrip( OutputHeight, 1, 0);
-		
-		/* All strips can be treated as equal height to start with */
-		CurrentMinHeight = RegionInfo.YSize>>Y_SHIFT;
-	}
-else
-	{			
-		while ( YBase < OutputHeight )
-		{
-			int Height = pRegionStrips[YBase]->Height;
-			
-			Width = pRegionStrips[YBase]->Width;
+        /* Terminate the lists without ever needing any special cases */
+        AllocRegionStrip(OutputHeight, 1, 0);
+
+        /* All strips can be treated as equal height to start with */
+        CurrentMinHeight = RegionInfo.YSize >> Y_SHIFT;
+    } else {
+        while (YBase < OutputHeight) {
+            int Height = pRegionStrips[YBase]->Height;
+
+            Width = pRegionStrips[YBase]->Width;
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2. Optimum is 32 by 32.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2. Optimum is 32 by 32.
  */
 
 			if ( (pRegionStrips[YBase]->PlaneTally > ((REGION_PLANE_LIM * 9)/10) ) &&
@@ -993,11 +951,11 @@ else
 				 */
 
 				if ( ( Height != 1 ) &&
-					 ( (Height + YBase) != OutputHeight) )				
+					 ( (Height + YBase) != OutputHeight) )
 				{
-					/* Sub-divide strip - as the plane limit will be 
-					 * known during compilation, we can approximate the 
-					 * division. The figures are adjusted for the D3D 
+					/* Sub-divide strip - as the plane limit will be
+					 * known during compilation, we can approximate the
+					 * division. The figures are adjusted for the D3D
 					 * Polygon throughput test.
 					 */
 
@@ -1014,7 +972,7 @@ else
 						/* Don't overshoot */
 						Height >>= 1;
 					}
-					/* Leave the plane counter, with some idea of its previous size 
+					/* Leave the plane counter, with some idea of its previous size
 					 */
 
 					pRegionStrips[YBase]->PlaneTally >>= 1;
@@ -1024,17 +982,17 @@ else
 					          ( Height > MergeHeight )) ? 1 : 0 ;
 				}
 			}
-			else if( (pRegionStrips[YBase]->PlaneTally < -( SAFETY_MARGIN_OPAQ * 2 )) 
-					&& ( Height == pRegionStrips[YBase+Height]->Height ) 
+			else if( (pRegionStrips[YBase]->PlaneTally < -( SAFETY_MARGIN_OPAQ * 2 ))
+					&& ( Height == pRegionStrips[YBase+Height]->Height )
 					&& ( ( YBase & ((Height<<Y_SHIFT)-1) ) == 0 ))
 			{
 				/* This strip is too small, do something about it, splitting at twice the
 				 * safety margin favours the D3D Intersection, but severely hampers the
 				 * D3D Fill Rate tests.
 				 */
-				
-				/* Set this counter to zero, 
-				 * to try to maintain this tile size for a while 
+
+				/* Set this counter to zero,
+				 * to try to maintain this tile size for a while
 				 */
 				pRegionStrips[YBase]->PlaneTally = 0;
 
@@ -1049,59 +1007,54 @@ else
 			/* else... do nothing, leave the PlaneTally count as it is. */
 #endif
 
-			/* Reset the strip */
-			YBase = ResetRegionStrip( YBase, Height, Width );
+            /* Reset the strip */
+            YBase = ResetRegionStrip(YBase, Height, Width);
 
-			if ( Height < CurrentMinHeight )
-			{
-				/* Record minimum height */
-				CurrentMinHeight = Height;
-			}
-		}
+            if (Height < CurrentMinHeight) {
+                /* Record minimum height */
+                CurrentMinHeight = Height;
+            }
+        }
 
-		/* Reset translucent set counter */
+        /* Reset translucent set counter */
 #if DOING_SGL_STYLE_SORTING
-		CurrentTransSetId[0] = 0;
-		CurrentTransSetId[1] = 1;
+        CurrentTransSetId[0] = 0;
+        CurrentTransSetId[1] = 1;
 #else
-		CurrentTransSetId = 0;
+        CurrentTransSetId = 0;
 #endif
-		/* Recycle all OBJECT_BLOCKs */
-		FreeObjChunk = (sgl_uint32 **) AllChunkHdrs;
+        /* Recycle all OBJECT_BLOCKs */
+        FreeObjChunk = (sgl_uint32 **) AllChunkHdrs;
 
-		/* Reset TRANSFACE_LIST allocator too */
-		pNextTransFace = NULL;
-	}
+        /* Reset TRANSFACE_LIST allocator too */
+        pNextTransFace = NULL;
+    }
 
-	/* Always set OpaqueId to a value unlikely to match an ISPAddr later */
-	OpaqueId = 0x80000000;
-	TransOpaqueId = 0x80000000;
-	
-	if ( CurrentMinHeight > MinHeight )
-	{
-		/* Normally we need to be accurate to half the current minimum */
-		CurrentMinHeight = ( CurrentMinHeight >> 1 ) | 1;
-	}
-	else
-	{
-		/* Since we are limited by the INI setting,
+    /* Always set OpaqueId to a value unlikely to match an ISPAddr later */
+    OpaqueId = 0x80000000;
+    TransOpaqueId = 0x80000000;
+
+    if (CurrentMinHeight > MinHeight) {
+        /* Normally we need to be accurate to half the current minimum */
+        CurrentMinHeight = (CurrentMinHeight >> 1) | 1;
+    } else {
+        /* Since we are limited by the INI setting,
 		   we don't need to preserve half-tile accuracy as we
 		   never sub-divide strips of this height anyway.     */
-		CurrentMinHeight = MinHeight;
-	}
+        CurrentMinHeight = MinHeight;
+    }
 
-	/* Initially SigXYMask contains all possible bits */
-	for ( SigXYMask = (sgl_uint32) ~0; ( CurrentMinHeight > 1 ); CurrentMinHeight >>= 1 )
-	{
-		/* Halve the Y accuracy required during this frame */
-		#define Y_ONLY ((0x1ff<<19)+(0x1ff<<10))
-		SigXYMask = ( SigXYMask & (~Y_ONLY) )                  |
-		            ( ( (SigXYMask & Y_ONLY) << 1 ) & Y_ONLY )   ;
-		#undef Y_ONLY
-	}
+    /* Initially SigXYMask contains all possible bits */
+    for (SigXYMask = (sgl_uint32) ~0; (CurrentMinHeight > 1); CurrentMinHeight >>= 1) {
+        /* Halve the Y accuracy required during this frame */
+#define Y_ONLY ((0x1ff<<19)+(0x1ff<<10))
+        SigXYMask = (SigXYMask & (~Y_ONLY)) |
+                    (((SigXYMask & Y_ONLY) << 1) & Y_ONLY);
+#undef Y_ONLY
+    }
 
 #if DAG_TRANS_SORTING
-	gpcTransTriIndicesWorkspacePtr = gpcTransTriIndicesWorkspace;
+    gpcTransTriIndicesWorkspacePtr = gpcTransTriIndicesWorkspace;
 #endif /* DAG_TRANS_SORTING */
 }
 
@@ -1115,21 +1068,19 @@ else
  * Description    : Currently quite simple, but lets allow for future
  *                  change to be implemented cleanly.
  **************************************************************************/
-int MaxRegionHeight( void )
-{
+int MaxRegionHeight(void) {
 
-	if ( OutputHeight == 0 )
-	{   /* We need RegionInfo to setup the RegionWords on strips */		
-		#if DEBUG
-		 sgl_uint32 YReg;
-		 YReg = 	
-		#endif
-		HWGetRegionInfo(0, &RegionInfo);
-		ASSERT(YReg==0); 
-	}
-		
-	/* Currently it's what you might have assumed */
-	return ( RegionInfo.MinYSize );
+    if (OutputHeight == 0) {   /* We need RegionInfo to setup the RegionWords on strips */
+#if DEBUG
+                                                                                                                                sgl_uint32 YReg;
+		 YReg =
+#endif
+        HWGetRegionInfo(0, &RegionInfo);
+        ASSERT(YReg == 0);
+    }
+
+    /* Currently it's what you might have assumed */
+    return (RegionInfo.MinYSize);
 }
 
 /**************************************************************************
@@ -1142,30 +1093,25 @@ int MaxRegionHeight( void )
  * Description    : We can double the nominal width of a tile if we can
  *                  reach the MergeHeight in Y.
  **************************************************************************/
-int MaxRegionWidth( void )
-{
-	
-	if ( OutputHeight == 0 )
-	{   /* We need RegionInfo to setup the RegionWords on strips */
-		#if DEBUG
-		 sgl_uint32 YReg;
-		 YReg = 
-		#endif
-		HWGetRegionInfo(0, &RegionInfo);
-		ASSERT(YReg==0); 
-	}
-		
-	if ( ( RegionInfo.MergeHeight >= RegionInfo.YSize ) ||
-	     ( RegionInfo.XSize != 32 )                        )
-	{
-		/* We are limited to the basic minimum width */
-		return ( RegionInfo.XSize );
-	}
-	else
-	{
-		/* We could start using double width tiles at any time */
-		return ( RegionInfo.XSize*2 );
-	}
+int MaxRegionWidth(void) {
+
+    if (OutputHeight == 0) {   /* We need RegionInfo to setup the RegionWords on strips */
+#if DEBUG
+                                                                                                                                sgl_uint32 YReg;
+		 YReg =
+#endif
+        HWGetRegionInfo(0, &RegionInfo);
+        ASSERT(YReg == 0);
+    }
+
+    if ((RegionInfo.MergeHeight >= RegionInfo.YSize) ||
+        (RegionInfo.XSize != 32)) {
+        /* We are limited to the basic minimum width */
+        return (RegionInfo.XSize);
+    } else {
+        /* We could start using double width tiles at any time */
+        return (RegionInfo.XSize * 2);
+    }
 }
 
 /**************************************************************************
@@ -1190,50 +1136,44 @@ int MaxRegionWidth( void )
 **************************************************************************/
 
 struct _object_chunk {
-	OBJECT_BLOCK Blocks[BLOCKS_PER_CHUNK+1];
+    OBJECT_BLOCK Blocks[BLOCKS_PER_CHUNK + 1];
 };
 
-static void AllocObjectChunk( void )
-{
-	sgl_uint8 *pData = (sgl_uint8 *) NEW(struct _object_chunk);	/* Never returns NULL */
-	OBJECT_BLOCK *pBlock, *pEnd;
-	sgl_uint32 *pChunkHdr;
-	unsigned int FirstFragSize;
-	
-	ASSERT((pData != NULL));
+static void AllocObjectChunk(void) {
+    sgl_uint8 *pData = (sgl_uint8 *) NEW(struct _object_chunk);    /* Never returns NULL */
+    OBJECT_BLOCK *pBlock, *pEnd;
+    sgl_uint32 *pChunkHdr;
+    unsigned int FirstFragSize;
 
-	/* Calculate gap at start to achieve OBJECT_BLOCK alignment */
-	FirstFragSize = sizeof(OBJECT_BLOCK) -
-	                ( ((sgl_uint32) pData) & (sizeof(OBJECT_BLOCK)-1) );
+    ASSERT((pData != NULL));
 
-	/* Position the OBJECT_BLOCKS */
-	pBlock = (OBJECT_BLOCK *) (pData + FirstFragSize);
-	pEnd   = pBlock + BLOCKS_PER_CHUNK;
+    /* Calculate gap at start to achieve OBJECT_BLOCK alignment */
+    FirstFragSize = sizeof(OBJECT_BLOCK) -
+                    (((sgl_uint32) pData) & (sizeof(OBJECT_BLOCK) - 1));
 
-	if ( FirstFragSize < sizeof(OBJECT_CHUNK_HDR) )
-	{
-		/* Allocate chunk header after objects */
-		pChunkHdr = (sgl_uint32 *) pEnd;
-	}
-	else
-	{
-		/* Allocate before objects */
-		pChunkHdr = (sgl_uint32 *) (((OBJECT_CHUNK_HDR *) pBlock) - 1);
-	}
+    /* Position the OBJECT_BLOCKS */
+    pBlock = (OBJECT_BLOCK *) (pData + FirstFragSize);
+    pEnd = pBlock + BLOCKS_PER_CHUNK;
 
-	/* Terminate chunk header list */
-	pChunkHdr[0] = (sgl_uint32) NULL;
+    if (FirstFragSize < sizeof(OBJECT_CHUNK_HDR)) {
+        /* Allocate chunk header after objects */
+        pChunkHdr = (sgl_uint32 *) pEnd;
+    } else {
+        /* Allocate before objects */
+        pChunkHdr = (sgl_uint32 *) (((OBJECT_CHUNK_HDR *) pBlock) - 1);
+    }
 
-	do
-	{
-		/* Setup OBJECT_BLOCK pointers to indicate blocks are empty */
-		PTR_SET_ADD( pChunkHdr, (sgl_uint32) pBlock );
-	}
-	while ( ++pBlock != pEnd );
+    /* Terminate chunk header list */
+    pChunkHdr[0] = (sgl_uint32) NULL;
 
-	/* Extend free list and set next free */
-	*FreeObjChunk = pChunkHdr;
-	FreeObjChunk = (sgl_uint32 **) pChunkHdr;
+    do {
+        /* Setup OBJECT_BLOCK pointers to indicate blocks are empty */
+        PTR_SET_ADD(pChunkHdr, (sgl_uint32) pBlock);
+    } while (++pBlock != pEnd);
+
+    /* Extend free list and set next free */
+    *FreeObjChunk = pChunkHdr;
+    FreeObjChunk = (sgl_uint32 **) pChunkHdr;
 }
 
 /**************************************************************************
@@ -1246,38 +1186,33 @@ static void AllocObjectChunk( void )
  * Globals Used   : FreeObjChunk
  * Description    : Called when an OBJECT_BLOCK list is to be extended
  **************************************************************************/
-static INLINE sgl_uint32 *AllocObjectBlock( sgl_uint32 **rpLastSlot, sgl_uint32 Entry )
-{
-	sgl_uint32 *pBlock = PTR_SET_SUB( FreeObjChunk );
+static INLINE sgl_uint32 *AllocObjectBlock(sgl_uint32 **rpLastSlot, sgl_uint32 Entry) {
+    sgl_uint32 *pBlock = PTR_SET_SUB(FreeObjChunk);
 
-	if ( PTR_SET_EMPTY(FreeObjChunk, BLOCKS_PER_CHUNK) )
-	{
-		/* Don't leave the FreeObjChunk pointer on EMPTY */
+    if (PTR_SET_EMPTY(FreeObjChunk, BLOCKS_PER_CHUNK)) {
+        /* Don't leave the FreeObjChunk pointer on EMPTY */
 
-		if ( *FreeObjChunk == NULL )
-		{
-			/* Allocate a new chunk of blocks */
-			AllocObjectChunk();
-		}
-		else
-		{
-			/* Advance to the next pre-allocated chunk */
-			FreeObjChunk = (sgl_uint32 **) *FreeObjChunk;
-		}
-	}
+        if (*FreeObjChunk == NULL) {
+            /* Allocate a new chunk of blocks */
+            AllocObjectChunk();
+        } else {
+            /* Advance to the next pre-allocated chunk */
+            FreeObjChunk = (sgl_uint32 **) *FreeObjChunk;
+        }
+    }
 
-	ASSERT( PTR_SET_EMPTY( pBlock, OBJECTS_PER_BLOCK ) );
+    ASSERT(PTR_SET_EMPTY(pBlock, OBJECTS_PER_BLOCK));
 
-	/* Setup link to previous block */
-	pBlock[0] = (sgl_uint32) *rpLastSlot;
+    /* Setup link to previous block */
+    pBlock[0] = (sgl_uint32) *rpLastSlot;
 
-	/* Insert entry */
-	pBlock[1] = Entry;
+    /* Insert entry */
+    pBlock[1] = Entry;
 
-	/* Prepare for next entry */
-	*rpLastSlot = &pBlock[1];
-	
-	return ( pBlock );
+    /* Prepare for next entry */
+    *rpLastSlot = &pBlock[1];
+
+    return (pBlock);
 }
 
 
@@ -1294,33 +1229,29 @@ static INLINE sgl_uint32 *AllocObjectBlock( sgl_uint32 **rpLastSlot, sgl_uint32 
  *                  lists provided we reserve the remainder of a new
  *                  OBJECT_BLOCK for further TRANSOBJ_BLOCKs.
  **************************************************************************/
-static INLINE void AllocTransObjBlock( sgl_uint32 **rpLastSlot, sgl_uint32 Entry )
-{
-	if ( PTR_SET_EMPTY( pNextTransFace, OBJECTS_PER_BLOCK ) )
-	{
-		/* Allocate new OBJECT_BLOCK to store this entry */
-		pNextTransFace = ((TRANSFACE_LIST *)
-								AllocObjectBlock( rpLastSlot, Entry )) + 1;
-	}
-	else
-	{
-		/* Allocate from remainder of current pNextTransFace block */
-		TRANSOBJ_BLOCK *pBlock = (TRANSOBJ_BLOCK *) pNextTransFace++;
-		
-		ASSERT( PTR_SET_FULL( *rpLastSlot, TRANSOBJS_PER_BLOCK ) );
-		ASSERT( PTR_SET_EMPTY( pBlock, TRANSOBJS_PER_BLOCK ) );
+static INLINE void AllocTransObjBlock(sgl_uint32 **rpLastSlot, sgl_uint32 Entry) {
+    if (PTR_SET_EMPTY(pNextTransFace, OBJECTS_PER_BLOCK)) {
+        /* Allocate new OBJECT_BLOCK to store this entry */
+        pNextTransFace = ((TRANSFACE_LIST *)
+                AllocObjectBlock(rpLastSlot, Entry)) + 1;
+    } else {
+        /* Allocate from remainder of current pNextTransFace block */
+        TRANSOBJ_BLOCK *pBlock = (TRANSOBJ_BLOCK *) pNextTransFace++;
 
-		/* Setup link to previous block (if any) */
-		pBlock->pPrev = *rpLastSlot;
+        ASSERT(PTR_SET_FULL(*rpLastSlot, TRANSOBJS_PER_BLOCK));
+        ASSERT(PTR_SET_EMPTY(pBlock, TRANSOBJS_PER_BLOCK));
 
-		/* Insert entry, and prepare for next */
-		pBlock->Objects[0] = Entry;
-		*rpLastSlot = &pBlock->Objects[0];
-	}
+        /* Setup link to previous block (if any) */
+        pBlock->pPrev = *rpLastSlot;
+
+        /* Insert entry, and prepare for next */
+        pBlock->Objects[0] = Entry;
+        *rpLastSlot = &pBlock->Objects[0];
+    }
 }
 
 #if !DOING_SGL_STYLE_SORTING
-/**************************************************************************
+                                                                                                                        /**************************************************************************
  * Function Name  : InsertionSort
  * Inputs         : None
  * Outputs        : None
@@ -1328,7 +1259,7 @@ static INLINE void AllocTransObjBlock( sgl_uint32 **rpLastSlot, sgl_uint32 Entry
  *                : pElement	- Element to add
  * Returns        : New pHead value, first TRANSFACE_LIST to process
  * Global Used    : None
- * Description    : Sorts the translucent face sets into increasing 
+ * Description    : Sorts the translucent face sets into increasing
  *                  values of inverse depth.
  *
  **************************************************************************/
@@ -1402,48 +1333,44 @@ static INLINE TRANSFACE_LIST *InsertionSort(TRANSFACE_LIST *pHead,
  * Returns        : NONE
  * Globals Used   : pNextTransFace, FreeObjChunk
  * Description    : Called when pRegion->CurTSetId needs to change
- *				   
+ *
 **************************************************************************/
-static INLINE void AllocTransFaceList( REGION_HEADER *pRegion,
-						sgl_uint32 SetId, sgl_uint32 Entry, float EntryZ )
-{
-	TRANSFACE_LIST *pNew = pNextTransFace++;
+static INLINE void AllocTransFaceList(REGION_HEADER *pRegion,
+                                      sgl_uint32 SetId, sgl_uint32 Entry, float EntryZ) {
+    TRANSFACE_LIST *pNew = pNextTransFace++;
 
-	if ( PTR_SET_EMPTY( pNew, OBJECTS_PER_BLOCK ) )
-	{
-		sgl_uint32 *pBlock = NULL;
-		
-		/* Allocate new OBJECT_BLOCK to hold head of TRANSOBJ_BLOCK list */
-		pNew = ((TRANSFACE_LIST *) AllocObjectBlock( &pBlock, Entry )) + 1;
+    if (PTR_SET_EMPTY(pNew, OBJECTS_PER_BLOCK)) {
+        sgl_uint32 *pBlock = NULL;
 
-		/* We use the next segment of the OBJECT_BLOCK as the TRANSFACE_LIST */
-		pNew->pLastSlot = pBlock;
+        /* Allocate new OBJECT_BLOCK to hold head of TRANSOBJ_BLOCK list */
+        pNew = ((TRANSFACE_LIST *) AllocObjectBlock(&pBlock, Entry)) + 1;
 
-		/* Setup next allocation */
-		pNextTransFace = pNew + 1;
-	}
-	else
-	{
-		/* List is initially empty so insert first entry */
-		pNew->pLastSlot = NULL;
-		AllocTransObjBlock( &pNew->pLastSlot, Entry );
-	}
+        /* We use the next segment of the OBJECT_BLOCK as the TRANSFACE_LIST */
+        pNew->pLastSlot = pBlock;
+
+        /* Setup next allocation */
+        pNextTransFace = pNew + 1;
+    } else {
+        /* List is initially empty so insert first entry */
+        pNew->pLastSlot = NULL;
+        AllocTransObjBlock(&pNew->pLastSlot, Entry);
+    }
 
 
-	/* Initialise new TRANSFACE_LIST with NearestZ of first EntryZ */
-	pNew->MaxInvZ   = EntryZ;
+    /* Initialise new TRANSFACE_LIST with NearestZ of first EntryZ */
+    pNew->MaxInvZ = EntryZ;
 
-ASSERT(pNew);
+    ASSERT(pNew);
 
 #if DOING_SGL_STYLE_SORTING
-	pNew->pPre       = pRegion->pCurTSet[SetId & 1];
-	/* pNew->pPost     = ?; is done later when list is sorted */
+    pNew->pPre = pRegion->pCurTSet[SetId & 1];
+    /* pNew->pPost     = ?; is done later when list is sorted */
 
-	/* Setup new TRANS SET fields on region */
-	pRegion->pCurTSet[SetId & 1] = pNew;
-	pRegion->CurTSetId[SetId & 1] = SetId;
+    /* Setup new TRANS SET fields on region */
+    pRegion->pCurTSet[SetId & 1] = pNew;
+    pRegion->CurTSetId[SetId & 1] = SetId;
 #else
-	/* Setup new TRANS SET fields on region */
+                                                                                                                            /* Setup new TRANS SET fields on region */
 	/* Try and insertion sort the passes.
 	 */
 	pRegion->pCurTSet = InsertionSort(pRegion->pCurTSet,pNew);
@@ -1467,48 +1394,46 @@ ASSERT(pNew);
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : Adds a single OPAQUE object to the scene
 **************************************************************************/
-void AddRegionSolid( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
-{
-	sgl_uint32 NextISPAddr;
-	int RY0, RY1, RX0, RX1;
-#if PCX1 
-	int HSlot;
+void AddRegionSolid(sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr) {
+    sgl_uint32 NextISPAddr;
+    int RY0, RY1, RX0, RX1;
+#if PCX1
+    int HSlot;
 #endif
 
-	ASSERT((ISPAddr<(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
+    ASSERT((ISPAddr < (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
 
-	/* Need to predict NextISPAddr for future use */	
-#if PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
-	ASSERT(WORDS_PER_PLANE == 3);
+    /* Need to predict NextISPAddr for future use */
+#if PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+                                                                                                                            ASSERT(WORDS_PER_PLANE == 3);
 	NextISPAddr = ISPAddr + Planes + Planes + Planes;
 #else
-	ASSERT(WORDS_PER_PLANE == 4);
-	NextISPAddr = ISPAddr + (Planes << 2) ;
+    ASSERT(WORDS_PER_PLANE == 4);
+    NextISPAddr = ISPAddr + (Planes << 2);
 #endif
 
-	OpaqueId++;
+    OpaqueId++;
 
-	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
-		
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-		/* Advance RY0 to first line of next strip */
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
+
+        /* Advance RY0 to first line of next strip */
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
  		RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
-		
+
 		if ( RY0 <= RY1 )
 		{
 			/* If object extends to next strip it is SAD */
@@ -1526,67 +1451,58 @@ void AddRegionSolid( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
 			HSlot = BUSY;
 		}
 #else
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
 #endif
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-		do
-		{
-			sgl_uint32 DeltaId;
+        do {
+            sgl_uint32 DeltaId;
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			/* Record object catagory within each region */
 			pRegion->HeightStats[HSlot] += Planes;
 #endif
 
-			if ( ( pRegion->OpaquePlanes += Planes ) >=
-				 (REGION_PLANE_LIM-(SAFETY_MARGIN_OPAQ*2)) )
-			{
-				/* Too many opaque objects make you sad */
-				 pRegion->OpaquePlanes -=Planes;
-				continue;
-			}
-		
-			/* Setup for recognition of next object */
-			DeltaId = OpaqueId - pRegion->PrevOpaqueId;
-			pRegion->PrevOpaqueId = NextISPAddr;
-	
-			if ( DeltaId == 1 )
-			{
-				/* Previous OPAQUE can merge with this object */
-				DeltaId = *(pRegion->pLastSlots[OPAQUE]);
-						
-				/* Accumulate plane count */
-				DeltaId += ( Planes << OBJ_PCOUNT_SHIFT );
+            if ((pRegion->OpaquePlanes += Planes) >=
+                (REGION_PLANE_LIM - (SAFETY_MARGIN_OPAQ * 2))) {
+                /* Too many opaque objects make you sad */
+                pRegion->OpaquePlanes -= Planes;
+                continue;
+            }
 
-				*(pRegion->pLastSlots[OPAQUE]) = DeltaId;
-			}
-			else
-			if ( !PTR_SET_FULL( pRegion->pLastSlots[OPAQUE],
-													OBJECTS_PER_BLOCK ) )
-			{
-				/* Add the data */
-				PTR_SET_ADD( pRegion->pLastSlots[OPAQUE],
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-			else
-			{
-				/* New block to hold this entry please */
-				AllocObjectBlock( pRegion->pLastSlots+OPAQUE,
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-		}
-		while ( ++pRegion != pLastReg );
-	}
+            /* Setup for recognition of next object */
+            DeltaId = OpaqueId - pRegion->PrevOpaqueId;
+            pRegion->PrevOpaqueId = NextISPAddr;
+
+            if (DeltaId == 1) {
+                /* Previous OPAQUE can merge with this object */
+                DeltaId = *(pRegion->pLastSlots[OPAQUE]);
+
+                /* Accumulate plane count */
+                DeltaId += (Planes << OBJ_PCOUNT_SHIFT);
+
+                *(pRegion->pLastSlots[OPAQUE]) = DeltaId;
+            } else if (!PTR_SET_FULL(pRegion->pLastSlots[OPAQUE],
+                                     OBJECTS_PER_BLOCK)) {
+                /* Add the data */
+                PTR_SET_ADD(pRegion->pLastSlots[OPAQUE],
+                            ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            } else {
+                /* New block to hold this entry please */
+                AllocObjectBlock(pRegion->pLastSlots + OPAQUE,
+                                 ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            }
+        } while (++pRegion != pLastReg);
+    }
 #if PCX1
-	while ( HSlot == SAD );
+        while ( HSlot == SAD );
 #else
-	while ( RY0 <= RY1 );
+    while (RY0 <= RY1);
 #endif
 }
 
@@ -1598,52 +1514,50 @@ void AddRegionSolid( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : Adds a LIGHTVOL or SHADOW object to the scene for SGL
  *                  This uses long lists as auto generated shadows can cause
  *                  Hundreds off shadow objects to be added
 **************************************************************************/
-void AddRegionAtmos( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
-{
-	sgl_uint32 NextISPAddr;
-	int RY0, RY1, RX0, RX1;
-	int Type = (XYData>>29); /* Shadow or Light Vol */
+void AddRegionAtmos(sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr) {
+    sgl_uint32 NextISPAddr;
+    int RY0, RY1, RX0, RX1;
+    int Type = (XYData >> 29); /* Shadow or Light Vol */
 #if PCX1
-	int HSlot;
+    int HSlot;
 #endif
 
-	ASSERT((ISPAddr<(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
+    ASSERT((ISPAddr < (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
 
-	/* Need to predict NextISPAddr for future use */	
-#if PCX1   || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
-	ASSERT(WORDS_PER_PLANE == 3);
+    /* Need to predict NextISPAddr for future use */
+#if PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+                                                                                                                            ASSERT(WORDS_PER_PLANE == 3);
 	NextISPAddr = ISPAddr + Planes + Planes + Planes;
 #else
-	ASSERT(WORDS_PER_PLANE == 4);
-	NextISPAddr = ISPAddr + (Planes << 2) ;
+    ASSERT(WORDS_PER_PLANE == 4);
+    NextISPAddr = ISPAddr + (Planes << 2);
 #endif
 
-	OpaqueId++;
+    OpaqueId++;
 
-	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
-		
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-		/* Advance RY0 to first line of next strip */
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
+
+        /* Advance RY0 to first line of next strip */
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
  		RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
-		
+
 		if ( RY0 <= RY1 )
 		{
 			/* If object extends to next strip it is SAD */
@@ -1661,59 +1575,51 @@ void AddRegionAtmos( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
 			HSlot = BUSY;
 		}
 #else
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
 #endif
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-		do
-		{
-			sgl_uint32 DeltaId;
-			
+        do {
+            sgl_uint32 DeltaId;
+
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			/* Record object catagory within each region */
 			pRegion->HeightStats[HSlot] += Planes;
 #endif
 
-			/* Setup for recognition of next object */
-			DeltaId = OpaqueId - pRegion->PrevOpaqueId;
-			pRegion->PrevOpaqueId = NextISPAddr;
-	
-			if ( DeltaId == 1 )
-			{
-				/* Previous OPAQUE can merge with this object */
-				DeltaId = *(pRegion->pLastSlots[Type]);
-						
-				/* Accumulate plane count */
-				DeltaId += ( Planes << OBJ_PCOUNT_SHIFT );
+            /* Setup for recognition of next object */
+            DeltaId = OpaqueId - pRegion->PrevOpaqueId;
+            pRegion->PrevOpaqueId = NextISPAddr;
 
-				*(pRegion->pLastSlots[Type]) = DeltaId;
-			}
-			else
-			if ( !PTR_SET_FULL( pRegion->pLastSlots[Type],
-													OBJECTS_PER_BLOCK ) )
-			{
-				/* Add the data */
-				PTR_SET_ADD( pRegion->pLastSlots[Type],
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-			else
-			{
-				/* New block to hold this entry please */
-				AllocObjectBlock( pRegion->pLastSlots+Type,
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-		}
-		while ( ++pRegion != pLastReg );
-	}
+            if (DeltaId == 1) {
+                /* Previous OPAQUE can merge with this object */
+                DeltaId = *(pRegion->pLastSlots[Type]);
+
+                /* Accumulate plane count */
+                DeltaId += (Planes << OBJ_PCOUNT_SHIFT);
+
+                *(pRegion->pLastSlots[Type]) = DeltaId;
+            } else if (!PTR_SET_FULL(pRegion->pLastSlots[Type],
+                                     OBJECTS_PER_BLOCK)) {
+                /* Add the data */
+                PTR_SET_ADD(pRegion->pLastSlots[Type],
+                            ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            } else {
+                /* New block to hold this entry please */
+                AllocObjectBlock(pRegion->pLastSlots + Type,
+                                 ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            }
+        } while (++pRegion != pLastReg);
+    }
 #if PCX1
-	while ( HSlot == SAD );
+        while ( HSlot == SAD );
 #else
-	while ( RY0 <= RY1 );
+    while (RY0 <= RY1);
 #endif
 }
 
@@ -1725,36 +1631,34 @@ void AddRegionAtmos( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
- * Description    : Adds a single LIGHTVOL or SHADOW object to the scene 
+ * Globals Used   :
+ * Description    : Adds a single LIGHTVOL or SHADOW object to the scene
  *                  for SGLLite - thus this routine is local to this module.
 **************************************************************************/
-static void AddRegionShadorLV( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
-{
-	int RY0, RY1, RX0, RX1;
+static void AddRegionShadorLV(sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr) {
+    int RY0, RY1, RX0, RX1;
 #if PCX1
-	int HSlot;
+    int HSlot;
 #endif
-	
-	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
 
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-		/* Advance RY0 to first line of next strip */
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
+
+        /* Advance RY0 to first line of next strip */
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
 		RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
-		
+
 		if ( RY0 <= RY1 )
 		{
 			/* If object extends to next strip it is SAD */
@@ -1772,43 +1676,38 @@ static void AddRegionShadorLV( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 
 			HSlot = BUSY;
 		}
 #else
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
 #endif
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-		do
-		{
-			sgl_uint32 **rpLastSlot = pRegion->pLastSlots + (XYData>>29);
+        do {
+            sgl_uint32 **rpLastSlot = pRegion->pLastSlots + (XYData >> 29);
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			/* Record object catagory within each region */
 			pRegion->HeightStats[HSlot] += Planes;
 #endif
 
-			if ( !PTR_SET_FULL( *rpLastSlot, TRANSOBJS_PER_BLOCK) )
-			{
-				/* Add the data */
-				PTR_SET_ADD( *rpLastSlot, ISPAddr +
-							(Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-			else
-			{
-				/* New block to hold this entry please */
-				AllocTransObjBlock( rpLastSlot, ISPAddr +
-								    (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-		}
-		while ( ++pRegion != pLastReg );
-	}
+            if (!PTR_SET_FULL(*rpLastSlot, TRANSOBJS_PER_BLOCK)) {
+                /* Add the data */
+                PTR_SET_ADD(*rpLastSlot, ISPAddr +
+                                         (Planes << OBJ_PCOUNT_SHIFT));
+            } else {
+                /* New block to hold this entry please */
+                AllocTransObjBlock(rpLastSlot, ISPAddr +
+                                               (Planes << OBJ_PCOUNT_SHIFT));
+            }
+        } while (++pRegion != pLastReg);
+    }
 #if PCX1
-	while ( HSlot == SAD );
+        while ( HSlot == SAD );
 #else
-	while ( RY0 <= RY1 );
+    while (RY0 <= RY1);
 #endif
 }
 
@@ -1823,44 +1722,42 @@ static void AddRegionShadorLV( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : Adds a single Translucent object to the scene.
- *                  
+ *
 **************************************************************************/
-void AddRegionSeeThru( sgl_uint32 XYData, sgl_uint32 TransSetId, sgl_uint32 Planes,
-					   sgl_uint32 ISPAddr, const TRANS_REGION_DEPTHS_STRUCT *pZData)
-{
-	int RY0, RY1, RX0, RX1;
+void AddRegionSeeThru(sgl_uint32 XYData, sgl_uint32 TransSetId, sgl_uint32 Planes,
+                      sgl_uint32 ISPAddr, const TRANS_REGION_DEPTHS_STRUCT *pZData) {
+    int RY0, RY1, RX0, RX1;
 #if  PCX1
-	int HSlot;
+    int HSlot;
 #endif
 
-   	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
-	
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
-		float Depth;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-		/* Advance RY0 to first line of next strip, then Calculate 
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
+        float Depth;
+
+        /* Advance RY0 to first line of next strip, then Calculate
 		   starting depth of object on this strip (mid Y used) */
 #if PCX1
-		RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
+                                                                                                                                RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
 		Depth = pZData->BaseDepth;
 #else
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
-		Depth = pZData->BaseDepth;
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        Depth = pZData->BaseDepth;
 #endif
 
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
 		if ( RY0 <= RY1 )
 		{
@@ -1880,90 +1777,84 @@ void AddRegionSeeThru( sgl_uint32 XYData, sgl_uint32 TransSetId, sgl_uint32 Plan
 		}
 #endif
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-		do
-		{
-			TRANSFACE_LIST *pList;
+        do {
+            TRANSFACE_LIST *pList;
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			/* Record object catagory within each region */
 			pRegion->HeightStats[HSlot] += Planes;
 #endif
-			/* Here is where we decide if a new pass is needed.
+            /* Here is where we decide if a new pass is needed.
 			 * Need to check if maximum allowable number of passes
 			 * has been exceeded.
 			 */
 #if DOING_SGL_STYLE_SORTING
-			if (TransSetId != pRegion->CurTSetId[TransSetId&1])
+            if (TransSetId != pRegion->CurTSetId[TransSetId & 1])
 #else
-			if (TransSetId != pRegion->CurTSetId)
+                if (TransSetId != pRegion->CurTSetId)
 #endif
-			{
-				/* Increment pass count.
+            {
+                /* Increment pass count.
 				 */
-				pRegion->nPassCount++;
+                pRegion->nPassCount++;
 
-				/* Setup a new list */
-				AllocTransFaceList( pRegion, TransSetId, ISPAddr+
-									(Planes<<OBJ_PCOUNT_SHIFT), Depth );
-				continue;
-			}
-						
-			/* Add to current set */
+                /* Setup a new list */
+                AllocTransFaceList(pRegion, TransSetId, ISPAddr +
+                                                        (Planes << OBJ_PCOUNT_SHIFT), Depth);
+                continue;
+            }
+
+            /* Add to current set */
 #if DOING_SGL_STYLE_SORTING
-			pList = pRegion->pCurTSet[TransSetId&1];
+            pList = pRegion->pCurTSet[TransSetId & 1];
 
-			if(!pList)
-			{
-				pList = pRegion->pCurTSet[(~TransSetId)&1];
-			}
+            if (!pList) {
+                pList = pRegion->pCurTSet[(~TransSetId) & 1];
+            }
 
 #else
-			pList = pRegion->pCurTSet;
+                                                                                                                                    pList = pRegion->pCurTSet;
 
 			ASSERT(pList);
 #endif
 
-			if ( Depth > pList->MaxInvZ )
-			{
-				/* New nearest object invZ gets smaller with deeper objects */
-				pList->MaxInvZ = Depth;
-			}
+            if (Depth > pList->MaxInvZ) {
+                /* New nearest object invZ gets smaller with deeper objects */
+                pList->MaxInvZ = Depth;
+            }
 
-			if ( !PTR_SET_FULL(pList->pLastSlot, TRANSOBJS_PER_BLOCK) )
-			{
-				/* Add the data */
-				PTR_SET_ADD( pList->pLastSlot, ISPAddr +
-								(Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-			else
-			{
-				/* New block to hold this entry please */
-				AllocTransObjBlock( &(pList->pLastSlot), ISPAddr +
-								    (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-		}
-		while ( ++pRegion != pLastReg );
-	}
+            if (!PTR_SET_FULL(pList->pLastSlot, TRANSOBJS_PER_BLOCK)) {
+                /* Add the data */
+                PTR_SET_ADD(pList->pLastSlot, ISPAddr +
+                                              (Planes << OBJ_PCOUNT_SHIFT));
+            } else {
+                /* New block to hold this entry please */
+                AllocTransObjBlock(&(pList->pLastSlot), ISPAddr +
+                                                        (Planes << OBJ_PCOUNT_SHIFT));
+            }
+        } while (++pRegion != pLastReg);
+    }
 #if PCX1
-	while ( HSlot == SAD );
+        while ( HSlot == SAD );
 #else
-	while ( RY0 <= RY1 );
+    while (RY0 <= RY1);
 #endif
 
 #if DAG_TRANS_SORTING
-	/* Increment the tranlucent triangle count.
+    /* Increment the tranlucent triangle count.
 	 */
-	guTransTriCounter++;
+    guTransTriCounter++;
 #endif
 }
 
 #if DAG_TRANS_SORTING
+
 /**************************************************************************
  * Function Name  : AllocNewTransTriIndices
  * Inputs         : NONE
@@ -1975,23 +1866,21 @@ void AddRegionSeeThru( sgl_uint32 XYData, sgl_uint32 TransSetId, sgl_uint32 Plan
  *					triangles in this region.
 **************************************************************************/
 
-static PTRANSTRIINDEX_STRUCT AllocNewTransTriIndices( void )
-{
-	PTRANSTRIINDEX_STRUCT	psTriIndex;
-	
-	if (gpcTransTriIndicesWorkspacePtr >
-		(gpcTransTriIndicesWorkspace + gpcTransTriIndicesWorkspaceStart) )
-	{
-		DPF((DBG_ERROR,"AllocNewTransTriIndices: ws=%08X, ptr=%08x, ws+limit=%08X\n",
-					 gpcTransTriIndicesWorkspace, gpcTransTriIndicesWorkspacePtr,
-					 (gpcTransTriIndicesWorkspace + gpcTransTriIndicesWorkspaceStart)));
+static PTRANSTRIINDEX_STRUCT AllocNewTransTriIndices(void) {
+    PTRANSTRIINDEX_STRUCT psTriIndex;
 
-		return (NULL);
-	}
-	psTriIndex = (PTRANSTRIINDEX_STRUCT)gpcTransTriIndicesWorkspacePtr;
-	gpcTransTriIndicesWorkspacePtr +=sizeof( TRANSTRIINDEX_STRUCT );
-	
-	return (psTriIndex);
+    if (gpcTransTriIndicesWorkspacePtr >
+        (gpcTransTriIndicesWorkspace + gpcTransTriIndicesWorkspaceStart)) {
+        DPF((DBG_ERROR, "AllocNewTransTriIndices: ws=%08X, ptr=%08x, ws+limit=%08X\n",
+                gpcTransTriIndicesWorkspace, gpcTransTriIndicesWorkspacePtr,
+                (gpcTransTriIndicesWorkspace + gpcTransTriIndicesWorkspaceStart)));
+
+        return (NULL);
+    }
+    psTriIndex = (PTRANSTRIINDEX_STRUCT) gpcTransTriIndicesWorkspacePtr;
+    gpcTransTriIndicesWorkspacePtr += sizeof(TRANSTRIINDEX_STRUCT);
+
+    return (psTriIndex);
 }
 
 /**************************************************************************
@@ -2005,115 +1894,113 @@ static PTRANSTRIINDEX_STRUCT AllocNewTransTriIndices( void )
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : Adds a single Translucent object to the scene.
- *                  
+ *
 **************************************************************************/
-static void AddRegionSeeThruD3D( PITRI *rpTri, sgl_uint32 XYData, 
-								 PITRIPLUS *rpTriPlus, sgl_uint32 Planes,
-								 sgl_uint32 ISPAddr )
-{
-	int RY0, RY1, RX0, RX1;
-	PITRI	pTri = *rpTri;	
-	PITRIPLUS	pTriPlus = *rpTriPlus;
-	float fInvNorm[3];
-	float fTemp0, fTemp1, fTemp2;
+static void AddRegionSeeThruD3D(PITRI *rpTri, sgl_uint32 XYData,
+                                PITRIPLUS *rpTriPlus, sgl_uint32 Planes,
+                                sgl_uint32 ISPAddr) {
+    int RY0, RY1, RX0, RX1;
+    PITRI pTri = *rpTri;
+    PITRIPLUS pTriPlus = *rpTriPlus;
+    float fInvNorm[3];
+    float fTemp0, fTemp1, fTemp2;
 
 #if PCX1
-	int HSlot;
+    int HSlot;
 #endif
 
-	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-	/* Add the triangle (once) to the global array */
+    /* Add the triangle (once) to the global array */
 
-	fTemp0 = sfabs(pTri->fAdjoint[0][0]) + sfabs(pTri->fAdjoint[1][0]);
-	fTemp1 = sfabs(pTri->fAdjoint[0][1]) + sfabs(pTri->fAdjoint[1][1]);
-	fTemp2 = sfabs(pTri->fAdjoint[0][2]) + sfabs(pTri->fAdjoint[1][2]);
+    fTemp0 = sfabs(pTri->fAdjoint[0][0]) + sfabs(pTri->fAdjoint[1][0]);
+    fTemp1 = sfabs(pTri->fAdjoint[0][1]) + sfabs(pTri->fAdjoint[1][1]);
+    fTemp2 = sfabs(pTri->fAdjoint[0][2]) + sfabs(pTri->fAdjoint[1][2]);
 
-	fInvNorm[0] = 1.0f / fTemp0;
-	fInvNorm[1] = 1.0f / fTemp1;
-	fInvNorm[2] = 1.0f / fTemp2;
+    fInvNorm[0] = 1.0f / fTemp0;
+    fInvNorm[1] = 1.0f / fTemp1;
+    fInvNorm[2] = 1.0f / fTemp2;
 
-	/* Try to save a bit of time by using the reciprocal in the normalisation */
+    /* Try to save a bit of time by using the reciprocal in the normalisation */
 
-	fTemp0 = pTri->fAdjoint[0][0] * fInvNorm[0];
-	fTemp1 = pTri->fAdjoint[0][1] * fInvNorm[1];	
-	fTemp2 = pTri->fAdjoint[0][2] * fInvNorm[2];	
-		
-	gpTransTris[guTransTriCounter].fAdjoint[0][0] = fTemp0;
-	gpTransTris[guTransTriCounter].fAdjoint[0][1] = fTemp1;
-	gpTransTris[guTransTriCounter].fAdjoint[0][2] = fTemp2;
+    fTemp0 = pTri->fAdjoint[0][0] * fInvNorm[0];
+    fTemp1 = pTri->fAdjoint[0][1] * fInvNorm[1];
+    fTemp2 = pTri->fAdjoint[0][2] * fInvNorm[2];
 
-	fTemp0 = pTri->fAdjoint[1][0] * fInvNorm[0];
-	fTemp1 = pTri->fAdjoint[1][1] * fInvNorm[1];	
-	fTemp2 = pTri->fAdjoint[1][2] * fInvNorm[2];	
+    gpTransTris[guTransTriCounter].fAdjoint[0][0] = fTemp0;
+    gpTransTris[guTransTriCounter].fAdjoint[0][1] = fTemp1;
+    gpTransTris[guTransTriCounter].fAdjoint[0][2] = fTemp2;
 
-	gpTransTris[guTransTriCounter].fAdjoint[1][0] = fTemp0;
-	gpTransTris[guTransTriCounter].fAdjoint[1][1] = fTemp1;
-	gpTransTris[guTransTriCounter].fAdjoint[1][2] = fTemp2;
+    fTemp0 = pTri->fAdjoint[1][0] * fInvNorm[0];
+    fTemp1 = pTri->fAdjoint[1][1] * fInvNorm[1];
+    fTemp2 = pTri->fAdjoint[1][2] * fInvNorm[2];
 
-	fTemp0 = pTri->fAdjoint[2][0] * fInvNorm[0];
-	fTemp1 = pTri->fAdjoint[2][1] * fInvNorm[1];	
-	fTemp2 = pTri->fAdjoint[2][2] * fInvNorm[2];	
+    gpTransTris[guTransTriCounter].fAdjoint[1][0] = fTemp0;
+    gpTransTris[guTransTriCounter].fAdjoint[1][1] = fTemp1;
+    gpTransTris[guTransTriCounter].fAdjoint[1][2] = fTemp2;
 
-	gpTransTris[guTransTriCounter].fAdjoint[2][0] = fTemp0;
-	gpTransTris[guTransTriCounter].fAdjoint[2][1] = fTemp1;
-	gpTransTris[guTransTriCounter].fAdjoint[2][2] = fTemp2;
+    fTemp0 = pTri->fAdjoint[2][0] * fInvNorm[0];
+    fTemp1 = pTri->fAdjoint[2][1] * fInvNorm[1];
+    fTemp2 = pTri->fAdjoint[2][2] * fInvNorm[2];
 
-	/* Calculate the centroid Z, as only fVerts[0][2] is used */
-	fTemp0 = (pTri->fZ[0] + pTri->fZ[1] + pTri->fZ[2]) * (1.0f/3.0f);
+    gpTransTris[guTransTriCounter].fAdjoint[2][0] = fTemp0;
+    gpTransTris[guTransTriCounter].fAdjoint[2][1] = fTemp1;
+    gpTransTris[guTransTriCounter].fAdjoint[2][2] = fTemp2;
 
-	gpTransTris[guTransTriCounter].fVerts[0][0] = pTriPlus->fX[0];
-	gpTransTris[guTransTriCounter].fVerts[0][1] = pTriPlus->fY[0];
+    /* Calculate the centroid Z, as only fVerts[0][2] is used */
+    fTemp0 = (pTri->fZ[0] + pTri->fZ[1] + pTri->fZ[2]) * (1.0f / 3.0f);
 
-	gpTransTris[guTransTriCounter].fVerts[1][0] = pTriPlus->fX[1];
-	gpTransTris[guTransTriCounter].fVerts[1][1] = pTriPlus->fY[1];
-	
-	gpTransTris[guTransTriCounter].fVerts[2][0] = pTriPlus->fX[2];
-	gpTransTris[guTransTriCounter].fVerts[2][1] = pTriPlus->fY[2];													  
+    gpTransTris[guTransTriCounter].fVerts[0][0] = pTriPlus->fX[0];
+    gpTransTris[guTransTriCounter].fVerts[0][1] = pTriPlus->fY[0];
 
-	gpTransTris[guTransTriCounter].fA = pTriPlus->fA;
-	gpTransTris[guTransTriCounter].fB = pTriPlus->fB;			
-	gpTransTris[guTransTriCounter].fC = pTriPlus->fC;			
+    gpTransTris[guTransTriCounter].fVerts[1][0] = pTriPlus->fX[1];
+    gpTransTris[guTransTriCounter].fVerts[1][1] = pTriPlus->fY[1];
 
-	gpTransTris[guTransTriCounter].fMeanZ = fTemp0;
+    gpTransTris[guTransTriCounter].fVerts[2][0] = pTriPlus->fX[2];
+    gpTransTris[guTransTriCounter].fVerts[2][1] = pTriPlus->fY[2];
 
-	gpTransTris[guTransTriCounter].uObjPtr = ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT);
+    gpTransTris[guTransTriCounter].fA = pTriPlus->fA;
+    gpTransTris[guTransTriCounter].fB = pTriPlus->fB;
+    gpTransTris[guTransTriCounter].fC = pTriPlus->fC;
+
+    gpTransTris[guTransTriCounter].fMeanZ = fTemp0;
+
+    gpTransTris[guTransTriCounter].uObjPtr = ISPAddr + (Planes << OBJ_PCOUNT_SHIFT);
 
 #if 0
-	DPF((DBG_FATAL,"G %i: V0 {%7.03f,%7.03f,%7.03f)",guTransTriCounter,gpTransTris[guTransTriCounter].fVerts[0][0],gpTransTris[guTransTriCounter].fVerts[0][1],gpTransTris[guTransTriCounter].fMeanZ));
+                                                                                                                            DPF((DBG_FATAL,"G %i: V0 {%7.03f,%7.03f,%7.03f)",guTransTriCounter,gpTransTris[guTransTriCounter].fVerts[0][0],gpTransTris[guTransTriCounter].fVerts[0][1],gpTransTris[guTransTriCounter].fMeanZ));
 	DPF((DBG_FATAL,"G %i: V1 {%7.03f,%7.03f)",guTransTriCounter,gpTransTris[guTransTriCounter].fVerts[1][0],gpTransTris[guTransTriCounter].fVerts[1][1]));
-	DPF((DBG_FATAL,"G %i: V2 {%7.03f,%7.03f)",guTransTriCounter,gpTransTris[guTransTriCounter].fVerts[2][0],gpTransTris[guTransTriCounter].fVerts[2][1]));	
+	DPF((DBG_FATAL,"G %i: V2 {%7.03f,%7.03f)",guTransTriCounter,gpTransTris[guTransTriCounter].fVerts[2][0],gpTransTris[guTransTriCounter].fVerts[2][1]));
 
 	DPF((DBG_FATAL,"G %i: A {%7.04f,%7.04f,%7.04f)",guTransTriCounter,gpTransTris[guTransTriCounter].fAdjoint[0][0],gpTransTris[guTransTriCounter].fAdjoint[0][1],gpTransTris[guTransTriCounter].fAdjoint[0][2]));
 	DPF((DBG_FATAL,"G %i: A {%7.04f,%7.04f,%7.04f)",guTransTriCounter,gpTransTris[guTransTriCounter].fAdjoint[1][0],gpTransTris[guTransTriCounter].fAdjoint[1][1],gpTransTris[guTransTriCounter].fAdjoint[1][2]));
-	DPF((DBG_FATAL,"G %i: A {%7.04f,%7.04f,%7.04f)",guTransTriCounter,gpTransTris[guTransTriCounter].fAdjoint[2][0],gpTransTris[guTransTriCounter].fAdjoint[2][1],gpTransTris[guTransTriCounter].fAdjoint[2][2]));	
+	DPF((DBG_FATAL,"G %i: A {%7.04f,%7.04f,%7.04f)",guTransTriCounter,gpTransTris[guTransTriCounter].fAdjoint[2][0],gpTransTris[guTransTriCounter].fAdjoint[2][1],gpTransTris[guTransTriCounter].fAdjoint[2][2]));
 #endif
-	
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
-		float Depth;
 
-		/* Advance RY0 to first line of next strip, then Calculate 
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
+        float Depth;
+
+        /* Advance RY0 to first line of next strip, then Calculate
 		   starting depth of object on this strip (mid Y used) */
 
 #if PCX1
-		RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
+        RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
 #else
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
 #endif
 
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
 		if ( RY0 <= RY1 )
 		{
@@ -2133,47 +2020,44 @@ static void AddRegionSeeThruD3D( PITRI *rpTri, sgl_uint32 XYData,
 		}
 #endif
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-		do
-		{
-			TRANSFACE_LIST *pList;
+        do {
+            TRANSFACE_LIST *pList;
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			/* Record object catagory within each region */
 			pRegion->HeightStats[HSlot] += Planes;
 #endif
 
-			if (pRegion->usTransTriCounter != MAX_NUM_REGION_TRIS)
-			{
-				sgl_uint32 uBlockCount = (sgl_uint32) pRegion->usTransTriCounter % NUM_INDICES_IN_BLOCK;
-				if (uBlockCount == 0)
-				{				
-					PTRANSTRIINDEX_STRUCT	psTriIndex;				
-					psTriIndex = AllocNewTransTriIndices();
+            if (pRegion->usTransTriCounter != MAX_NUM_REGION_TRIS) {
+                sgl_uint32 uBlockCount = (sgl_uint32) pRegion->usTransTriCounter % NUM_INDICES_IN_BLOCK;
+                if (uBlockCount == 0) {
+                    PTRANSTRIINDEX_STRUCT psTriIndex;
+                    psTriIndex = AllocNewTransTriIndices();
 
-					psTriIndex->pNext = pRegion->uTransTriList;
-					
-					pRegion->uTransTriList = psTriIndex;
-				}
-				pRegion->usTransTriCounter++;
-			 	pRegion->uTransTriList->usIndex[uBlockCount] = guTransTriCounter;
-			}
+                    psTriIndex->pNext = pRegion->uTransTriList;
 
-		}
-		while ( ++pRegion != pLastReg );
-	}
+                    pRegion->uTransTriList = psTriIndex;
+                }
+                pRegion->usTransTriCounter++;
+                pRegion->uTransTriList->usIndex[uBlockCount] = guTransTriCounter;
+            }
+
+        } while (++pRegion != pLastReg);
+    }
 #if PCX1
-	while ( HSlot == SAD );
+        while ( HSlot == SAD );
 #else
-	while ( RY0 <= RY1 );
+    while (RY0 <= RY1);
 #endif
-	
-	guTransTriCounter++;
+
+    guTransTriCounter++;
 }
+
 #endif /* DAG_TRANS_SORTING */
 
 /**************************************************************************
@@ -2184,51 +2068,49 @@ static void AddRegionSeeThruD3D( PITRI *rpTri, sgl_uint32 XYData,
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : Adds a combined TransOpaque object to the scene for SGLlite
- *                  This uses long lists as they are more memory efficient. 
+ *                  This uses long lists as they are more memory efficient.
 **************************************************************************/
-static void AddRegionTransOpaque( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr )
-{
-	sgl_uint32 NextISPAddr;
-	int RY0, RY1, RX0, RX1;
+static void AddRegionTransOpaque(sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr) {
+    sgl_uint32 NextISPAddr;
+    int RY0, RY1, RX0, RX1;
 #if PCX1
-	int HSlot;
+    int HSlot;
 #endif
-	int Type = (XYData>>29); /* TransOpaque - hopefully */
+    int Type = (XYData >> 29); /* TransOpaque - hopefully */
 
-	ASSERT((ISPAddr<(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
+    ASSERT((ISPAddr < (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
 
-	/* Need to predict NextISPAddr for future use */	
-#if PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
-	ASSERT(WORDS_PER_PLANE == 3);
+    /* Need to predict NextISPAddr for future use */
+#if PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+                                                                                                                            ASSERT(WORDS_PER_PLANE == 3);
 	NextISPAddr = ISPAddr + Planes + Planes + Planes;
 #else
-	ASSERT(WORDS_PER_PLANE == 4);
-	NextISPAddr = ISPAddr + (Planes << 2) ;
+    ASSERT(WORDS_PER_PLANE == 4);
+    NextISPAddr = ISPAddr + (Planes << 2);
 #endif
 
-	TransOpaqueId++;
+    TransOpaqueId++;
 
-	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
-		
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-		/* Advance RY0 to first line of next strip */
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
+
+        /* Advance RY0 to first line of next strip */
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
  		RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
-		
+
 		if ( RY0 <= RY1 )
 		{
 			/* If object extends to next strip it is SAD */
@@ -2246,60 +2128,52 @@ static void AddRegionTransOpaque( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint
 			HSlot = BUSY;
 		}
 #else
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
 #endif
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-		do
-		{
-			sgl_uint32 DeltaId;
-			
+        do {
+            sgl_uint32 DeltaId;
+
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			/* Record object catagory within each region */
 			pRegion->HeightStats[HSlot] += Planes;
 #endif
-			pRegion->TransOpaquePlanes += Planes;
+            pRegion->TransOpaquePlanes += Planes;
 
-			/* Setup for recognition of next object */
-			DeltaId = TransOpaqueId - pRegion->PrevTransOpaqueId;
-			pRegion->PrevTransOpaqueId = NextISPAddr;
-	
-			if ( DeltaId == 1 )
-			{
-				/* Previous TRANSOPAQUE can merge with this object */
-				DeltaId = *(pRegion->pLastSlots[Type]);
-						
-				/* Accumulate plane count */
-				DeltaId += ( Planes << OBJ_PCOUNT_SHIFT );
+            /* Setup for recognition of next object */
+            DeltaId = TransOpaqueId - pRegion->PrevTransOpaqueId;
+            pRegion->PrevTransOpaqueId = NextISPAddr;
 
-				*(pRegion->pLastSlots[Type]) = DeltaId;
-			}
-			else
-			if ( !PTR_SET_FULL( pRegion->pLastSlots[Type],
-													OBJECTS_PER_BLOCK ) )
-			{
-				/* Add the data */
-				PTR_SET_ADD( pRegion->pLastSlots[Type],
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-			else
-			{
-				/* New block to hold this entry please */
-				AllocObjectBlock( pRegion->pLastSlots+Type,
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-		}
-		while ( ++pRegion != pLastReg );
-	}
+            if (DeltaId == 1) {
+                /* Previous TRANSOPAQUE can merge with this object */
+                DeltaId = *(pRegion->pLastSlots[Type]);
+
+                /* Accumulate plane count */
+                DeltaId += (Planes << OBJ_PCOUNT_SHIFT);
+
+                *(pRegion->pLastSlots[Type]) = DeltaId;
+            } else if (!PTR_SET_FULL(pRegion->pLastSlots[Type],
+                                     OBJECTS_PER_BLOCK)) {
+                /* Add the data */
+                PTR_SET_ADD(pRegion->pLastSlots[Type],
+                            ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            } else {
+                /* New block to hold this entry please */
+                AllocObjectBlock(pRegion->pLastSlots + Type,
+                                 ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            }
+        } while (++pRegion != pLastReg);
+    }
 #if PCX1
-	while ( HSlot == SAD );
+        while ( HSlot == SAD );
 #else
-	while ( RY0 <= RY1 );
+    while (RY0 <= RY1);
 #endif
 }
 
@@ -2315,72 +2189,67 @@ static void AddRegionTransOpaque( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : The routine by which all objects are introduced into
  *                  this module for rendering.
  *
- *                  Please 
- *				   
+ *                  Please
+ *
 **************************************************************************/
-void AddRegionObjects( sgl_uint32 *pXYData, int nXYDataInc,
-                       sgl_uint32 PlanesPerPoly, int nPolys, sgl_uint32 ISPAddr,
-					   const TRANS_REGION_DEPTHS_STRUCT *pZData, int nZDataInc)
-{
-	sgl_uint32 Mask = SigXYMask;
-	sgl_uint32 Type = (*pXYData)>>29;
-		
-	if ( Type == OPAQUE )
-	{
-		/* Opaque objects need to go as fast as possible (all same type) */
-		SGL_TIME_START(ADD_REGION_OPAQUE_TIME);
+void AddRegionObjects(sgl_uint32 *pXYData, int nXYDataInc,
+                      sgl_uint32 PlanesPerPoly, int nPolys, sgl_uint32 ISPAddr,
+                      const TRANS_REGION_DEPTHS_STRUCT *pZData, int nZDataInc) {
+    sgl_uint32 Mask = SigXYMask;
+    sgl_uint32 Type = (*pXYData) >> 29;
 
-		/* Merging code in this case has no guard cases for ptr overflow */
-		ASSERT( ( ( PlanesPerPoly * nPolys ) < OBJ_PCOUNT_MASK ) );
-	
-	   	/* Start new block of OpaqueIds for this group */
-		OpaqueId++;
+    if (Type == OPAQUE) {
+        /* Opaque objects need to go as fast as possible (all same type) */
+        SGL_TIME_START(ADD_REGION_OPAQUE_TIME);
 
-		do
-		{	/* Process each object */
-			sgl_uint32 XYData = Mask & *pXYData;
-			sgl_int32 Planes = PlanesPerPoly;
-			int RY0, RY1, RX0, RX1;
+        /* Merging code in this case has no guard cases for ptr overflow */
+        ASSERT(((PlanesPerPoly * nPolys) < OBJ_PCOUNT_MASK));
+
+        /* Start new block of OpaqueIds for this group */
+        OpaqueId++;
+
+        do {    /* Process each object */
+            sgl_uint32 XYData = Mask & *pXYData;
+            sgl_int32 Planes = PlanesPerPoly;
+            int RY0, RY1, RX0, RX1;
 #if PCX1
-			int HSlot;
-#endif		
-			*((sgl_uint8 **) &pXYData) += nXYDataInc;
-	
-			while ( ( nPolys != 1 )                   &&
-					( XYData == ( Mask & *pXYData ) )    )
-			{
-				/* Next object requires identical processing */
-				Planes += PlanesPerPoly;
-				nPolys--;
-				*((sgl_uint8 **) &pXYData) += nXYDataInc;
-			}
+            int HSlot;
+#endif
+            *((sgl_uint8 **) &pXYData) += nXYDataInc;
 
-			/* Allocate one OpaqueId to each insertion */
-			OpaqueId++;
-						
-			/* Start at the first Y line effected */
-			RX1 =  XYData      & 0x1f;
-			RX0 = (XYData>> 5) & 0x1f;
-			RY1 = (XYData>>10) & 0x1ff;
-			RY0 = (XYData>>19) & 0x1ff;
-		
-			do
-			{
-				/* Get pointer to the strip containing this ROW */
-				REGION_STRIP *pStrip = pRegionStrips[RY0];
-				REGION_HEADER *pRegion, *pLastReg;
+            while ((nPolys != 1) &&
+                   (XYData == (Mask & *pXYData))) {
+                /* Next object requires identical processing */
+                Planes += PlanesPerPoly;
+                nPolys--;
+                *((sgl_uint8 **) &pXYData) += nXYDataInc;
+            }
 
-				/* Advance RY0 to first line of next strip */
+            /* Allocate one OpaqueId to each insertion */
+            OpaqueId++;
 
-		#if PCX1
-		/* Disable dynamic tile sizing for PCX2.
+            /* Start at the first Y line effected */
+            RX1 = XYData & 0x1f;
+            RX0 = (XYData >> 5) & 0x1f;
+            RY1 = (XYData >> 10) & 0x1ff;
+            RY0 = (XYData >> 19) & 0x1ff;
+
+            do {
+                /* Get pointer to the strip containing this ROW */
+                REGION_STRIP *pStrip = pRegionStrips[RY0];
+                REGION_HEADER *pRegion, *pLastReg;
+
+                /* Advance RY0 to first line of next strip */
+
+#if PCX1
+                                                                                                                                        /* Disable dynamic tile sizing for PCX2.
 		 */
  				RY0 = BaseOfStrips[HSlot = RY0] + pStrip->Height;
-				
+
 				if ( RY0 <= RY1 )
 				{
 					/* If object extends to next strip it is SAD */
@@ -2397,145 +2266,126 @@ void AddRegionObjects( sgl_uint32 *pXYData, int nXYDataInc,
 					/* It is BUSY if the strip should be divided */
 					HSlot = BUSY;
 				}
-		#else
-				RY0 = BaseOfStrips[RY0] + pStrip->Height;
-		#endif
+#else
+                RY0 = BaseOfStrips[RY0] + pStrip->Height;
+#endif
 
-				/* Get pointers to the region of interest */
-				pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-				pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+                /* Get pointers to the region of interest */
+                pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+                pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-				do
-				{
-					sgl_int32 DeltaId;
-			
+                do {
+                    sgl_int32 DeltaId;
+
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                            /* Disable dynamic tile sizing for PCX2.
  */
 					/* Record object catagory within each region */
 					pRegion->HeightStats[HSlot] += Planes;
 #endif
 
-					if ( ( pRegion->OpaquePlanes += Planes ) >
-								(REGION_PLANE_LIM-(SAFETY_MARGIN_OPAQ*2)) )
-					{
-						/* Too many opaque objects make you sad */
-						 pRegion->OpaquePlanes -=Planes;
-						continue;
-					}
+                    if ((pRegion->OpaquePlanes += Planes) >
+                        (REGION_PLANE_LIM - (SAFETY_MARGIN_OPAQ * 2))) {
+                        /* Too many opaque objects make you sad */
+                        pRegion->OpaquePlanes -= Planes;
+                        continue;
+                    }
 
-					/* Setup for recognition of next object */
-					DeltaId = OpaqueId - pRegion->PrevOpaqueId;
-					pRegion->PrevOpaqueId = OpaqueId;
-	
-					if ( DeltaId == 1 )
-					{
-						/* Previous OPAQUE merges object */
-						DeltaId = *(pRegion->pLastSlots[Type]);
-						
-						/* Accumulate plane count */
-						DeltaId += ( Planes << OBJ_PCOUNT_SHIFT );
+                    /* Setup for recognition of next object */
+                    DeltaId = OpaqueId - pRegion->PrevOpaqueId;
+                    pRegion->PrevOpaqueId = OpaqueId;
 
-						/* Update object pointer and we are done */
-						*(pRegion->pLastSlots[Type]) = DeltaId;
-					}
-					else
-					if ( !PTR_SET_FULL( pRegion->pLastSlots[Type],
-													OBJECTS_PER_BLOCK ) )
-					{
-						/* Add the data */
-						PTR_SET_ADD( pRegion->pLastSlots[Type],
-									ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-					}
-					else
-					{
-						/* New block to hold this entry please */
-						AllocObjectBlock( pRegion->pLastSlots+Type,
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-					}
-				}
-				while ( ++pRegion != pLastReg );
-			}
+                    if (DeltaId == 1) {
+                        /* Previous OPAQUE merges object */
+                        DeltaId = *(pRegion->pLastSlots[Type]);
+
+                        /* Accumulate plane count */
+                        DeltaId += (Planes << OBJ_PCOUNT_SHIFT);
+
+                        /* Update object pointer and we are done */
+                        *(pRegion->pLastSlots[Type]) = DeltaId;
+                    } else if (!PTR_SET_FULL(pRegion->pLastSlots[Type],
+                                             OBJECTS_PER_BLOCK)) {
+                        /* Add the data */
+                        PTR_SET_ADD(pRegion->pLastSlots[Type],
+                                    ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+                    } else {
+                        /* New block to hold this entry please */
+                        AllocObjectBlock(pRegion->pLastSlots + Type,
+                                         ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+                    }
+                } while (++pRegion != pLastReg);
+            }
 #if PCX1
-			while ( HSlot == SAD );
+                while ( HSlot == SAD );
 #else
-			while ( RY0 <= RY1 );
+            while (RY0 <= RY1);
 #endif
-	
-			/* Advance ISPAddr */
-#if PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
-			ASSERT(WORDS_PER_PLANE == 3);
+
+            /* Advance ISPAddr */
+#if PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+                                                                                                                                    ASSERT(WORDS_PER_PLANE == 3);
 			ISPAddr += Planes + Planes + Planes;
 #else
-			ASSERT(WORDS_PER_PLANE == 4);
-			ISPAddr += (Planes << 2) ;
+            ASSERT(WORDS_PER_PLANE == 4);
+            ISPAddr += (Planes << 2);
 #endif
-		} while ( --nPolys != 0 );
+        } while (--nPolys != 0);
 
-		SGL_TIME_STOP(ADD_REGION_OPAQUE_TIME);
-	}
-	else /* Not OPAQUE */
-	{
-		do
-		{	/* Process each object */
-			sgl_uint32 XYData;
+        SGL_TIME_STOP(ADD_REGION_OPAQUE_TIME);
+    } else /* Not OPAQUE */
+    {
+        do {    /* Process each object */
+            sgl_uint32 XYData;
 
-			XYData = Mask & *pXYData;
-			*((sgl_uint8 **) &pXYData) += nXYDataInc;
+            XYData = Mask & *pXYData;
+            *((sgl_uint8 **) &pXYData) += nXYDataInc;
 
-			/* Decode the type of each complex object */
-			Type = (XYData)>>29;
-	
-	
-			if ( Type == PACKED_TYPE_SHADOW || Type == PACKED_TYPE_LIGHTVOL )
-			{
-				/* Adds SHADOW and LIGHTVOL objects */
-				AddRegionShadorLV( XYData, PlanesPerPoly, ISPAddr );
-			}
-			else if( Type == PACKED_TYPE_OPAQUETRANS )
-			{
-				AddRegionTransOpaque(XYData, PlanesPerPoly, ISPAddr );
-			}
-			else
-			{
-				sgl_int32	TransSetId;
+            /* Decode the type of each complex object */
+            Type = (XYData) >> 29;
 
-				if 	( ( Type & PACKED_TRANSTYPE_SETMARK ) == 0 )
-				{
-					/* Object is part of current FRONT/BACK object set */
-				#if DOING_SGL_STYLE_SORTING
-					TransSetId = CurrentTransSetId[Type & 1];
-				#else
-					TransSetId = CurrentTransSetId;
-				#endif
-				}
-				else
-				{
-					/* Object is part of next FRONT/BACK object set */
-				#if DOING_SGL_STYLE_SORTING
-					TransSetId = ( CurrentTransSetId[Type & 1] += 2 );
-				#else
-					TransSetId = ( CurrentTransSetId += 2 );
-				#endif
-				}
 
-				/* Add translucent object to scene */
-				AddRegionSeeThru( XYData, TransSetId, PlanesPerPoly,
-														ISPAddr, pZData );
+            if (Type == PACKED_TYPE_SHADOW || Type == PACKED_TYPE_LIGHTVOL) {
+                /* Adds SHADOW and LIGHTVOL objects */
+                AddRegionShadorLV(XYData, PlanesPerPoly, ISPAddr);
+            } else if (Type == PACKED_TYPE_OPAQUETRANS) {
+                AddRegionTransOpaque(XYData, PlanesPerPoly, ISPAddr);
+            } else {
+                sgl_int32 TransSetId;
 
-				*((sgl_uint8 **) &pZData) += nZDataInc;
-			}
-		
-			/* Calculate ISPAddr of next object */
-#if PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
-			ASSERT(WORDS_PER_PLANE == 3);
+                if ((Type & PACKED_TRANSTYPE_SETMARK) == 0) {
+                    /* Object is part of current FRONT/BACK object set */
+#if DOING_SGL_STYLE_SORTING
+                    TransSetId = CurrentTransSetId[Type & 1];
+#else
+                    TransSetId = CurrentTransSetId;
+#endif
+                } else {
+                    /* Object is part of next FRONT/BACK object set */
+#if DOING_SGL_STYLE_SORTING
+                    TransSetId = (CurrentTransSetId[Type & 1] += 2);
+#else
+                    TransSetId = ( CurrentTransSetId += 2 );
+#endif
+                }
+
+                /* Add translucent object to scene */
+                AddRegionSeeThru(XYData, TransSetId, PlanesPerPoly,
+                                 ISPAddr, pZData);
+
+                *((sgl_uint8 **) &pZData) += nZDataInc;
+            }
+
+            /* Calculate ISPAddr of next object */
+#if PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+                                                                                                                                    ASSERT(WORDS_PER_PLANE == 3);
 			ISPAddr = ISPAddr + PlanesPerPoly + PlanesPerPoly + PlanesPerPoly;
 #else
-			ASSERT(WORDS_PER_PLANE == 4);
-			ISPAddr = ISPAddr + (PlanesPerPoly << 2) ;
+            ASSERT(WORDS_PER_PLANE == 4);
+            ISPAddr = ISPAddr + (PlanesPerPoly << 2);
 #endif
-		} while ( --nPolys != 0 );
-	}
+        } while (--nPolys != 0);
+    }
 }
 
 #if PCX2 || PCX2_003
@@ -2545,61 +2395,53 @@ void AddRegionObjects( sgl_uint32 *pXYData, int nXYDataInc,
  * Inputs         : XYData  - 2D Extent and type encoded into a DWORD
  *                : Planes  - Planes in object
  *                : ISPAddr - ISP address of 1st object description
- *				  : type -    the type of GOURAUDHIGHLIGHT of VERTEXFOG	
+ *				  : type -    the type of GOURAUDHIGHLIGHT of VERTEXFOG
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : Adds a combined VertexFog or GOURAUDHhighlight object to the scene
- *                  for SGLlite. This uses long lists as they are more memory efficient. 
+ *                  for SGLlite. This uses long lists as they are more memory efficient.
 **************************************************************************/
-static void AddRegionHighlightFog( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr,
- 									int Type)
-{
-	int RY0, RY1, RX0, RX1;
-	
-	ASSERT((ISPAddr<(PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
+static void AddRegionHighlightFog(sgl_uint32 XYData, sgl_uint32 Planes, sgl_uint32 ISPAddr,
+                                  int Type) {
+    int RY0, RY1, RX0, RX1;
 
-	/* Start at the first Y line effected */
-	RX1 =  XYData      & 0x1f;
-	RX0 = (XYData>> 5) & 0x1f;
-	RY1 = (XYData>>10) & 0x1ff;
-	RY0 = (XYData>>19) & 0x1ff;
-		
-	do
-	{
-		/* Get pointer to the strip containing this ROW */
-		REGION_STRIP *pStrip = pRegionStrips[RY0];
-		REGION_HEADER *pRegion, *pLastReg;
+    ASSERT((ISPAddr < (PVRParamBuffs[PVR_PARAM_TYPE_ISP].uBufferLimit - Planes)));
 
-		/* Advance RY0 to first line of next strip */
-		RY0 = BaseOfStrips[RY0] + pStrip->Height;
+    /* Start at the first Y line effected */
+    RX1 = XYData & 0x1f;
+    RX0 = (XYData >> 5) & 0x1f;
+    RY1 = (XYData >> 10) & 0x1ff;
+    RY0 = (XYData >> 19) & 0x1ff;
 
-		/* Get pointers to the region of interest */
-		pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-		pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+    do {
+        /* Get pointer to the strip containing this ROW */
+        REGION_STRIP *pStrip = pRegionStrips[RY0];
+        REGION_HEADER *pRegion, *pLastReg;
 
-		do
-		{
-			pRegion->ExtraPlanes[Type] += Planes;
+        /* Advance RY0 to first line of next strip */
+        RY0 = BaseOfStrips[RY0] + pStrip->Height;
 
-			if ( !PTR_SET_FULL( pRegion->pExtraSlots[Type],
-													OBJECTS_PER_BLOCK ) )
-			{
-				/* Add the data */
-				PTR_SET_ADD( pRegion->pExtraSlots[Type],
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-			else
-			{
-				/* New block to hold this entry please */
-				AllocObjectBlock( pRegion->pExtraSlots+Type,
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-			}
-		}
-		while ( ++pRegion != pLastReg );
-	}
-	while ( RY0 <= RY1 );
+        /* Get pointers to the region of interest */
+        pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+        pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
+
+        do {
+            pRegion->ExtraPlanes[Type] += Planes;
+
+            if (!PTR_SET_FULL(pRegion->pExtraSlots[Type],
+                              OBJECTS_PER_BLOCK)) {
+                /* Add the data */
+                PTR_SET_ADD(pRegion->pExtraSlots[Type],
+                            ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            } else {
+                /* New block to hold this entry please */
+                AllocObjectBlock(pRegion->pExtraSlots + Type,
+                                 ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+            }
+        } while (++pRegion != pLastReg);
+    } while (RY0 <= RY1);
 }
 
 /**************************************************************************
@@ -2615,233 +2457,203 @@ static void AddRegionHighlightFog( sgl_uint32 XYData, sgl_uint32 Planes, sgl_uin
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : The routine by which all objects are introduced into
  *                  this module for rendering.
  *
  *					This routine takes an extra parameter pFogHighlight for vertex fog
- *                  and GOURAUD highlight.       
- *				   
+ *                  and GOURAUD highlight.
+ *
 **************************************************************************/
-void AddRegionObjectsExtra( sgl_uint32 *pXYData, int nXYDataInc,
-                       sgl_uint32 PlanesPerPoly, int nPolys, sgl_uint32 ISPAddr,
-					   const TRANS_REGION_DEPTHS_STRUCT *pZData, int nZDataInc, 
-					   PFOGHIGHLIGHT pFogHighlight)
-{
-	sgl_uint32 Mask = SigXYMask;
-	sgl_uint32 Type = (*pXYData)>>29;
-		
-	if ( Type == OPAQUE )
-	{
-		/* Opaque objects need to go as fast as possible (all same type) */
-		SGL_TIME_START(ADD_REGION_OPAQUE_TIME);
+void AddRegionObjectsExtra(sgl_uint32 *pXYData, int nXYDataInc,
+                           sgl_uint32 PlanesPerPoly, int nPolys, sgl_uint32 ISPAddr,
+                           const TRANS_REGION_DEPTHS_STRUCT *pZData, int nZDataInc,
+                           PFOGHIGHLIGHT pFogHighlight) {
+    sgl_uint32 Mask = SigXYMask;
+    sgl_uint32 Type = (*pXYData) >> 29;
 
-		/* Merging code in this case has no guard cases for ptr overflow */
-		ASSERT( ( ( PlanesPerPoly * nPolys ) < OBJ_PCOUNT_MASK ) );
-	
-		/* Start new block of OpaqueIds for this group */
-		OpaqueId++;
+    if (Type == OPAQUE) {
+        /* Opaque objects need to go as fast as possible (all same type) */
+        SGL_TIME_START(ADD_REGION_OPAQUE_TIME);
 
-		do
-		{	/* Process each object */
-			sgl_uint32 XYData = Mask & *pXYData;
-			sgl_int32 Planes = PlanesPerPoly;
-			sgl_int32 VFogPlanes;
-			sgl_int32 SmoothHighPlanes;
-			int RY0, RY1, RX0, RX1;
-	
-			*((sgl_uint8 **) &pXYData) += nXYDataInc;
+        /* Merging code in this case has no guard cases for ptr overflow */
+        ASSERT(((PlanesPerPoly * nPolys) < OBJ_PCOUNT_MASK));
 
-			SmoothHighPlanes = (*pFogHighlight & GOURAUD_HIGHLIGHT)?1:0;	
-			VFogPlanes = (*pFogHighlight & VERTEX_FOG)?1:0;	
-			pFogHighlight++;
-			/* Allocate one OpaqueId to each insertion */
-			OpaqueId++;
-						
-			/* Start at the first Y line effected */
-			RX1 =  XYData      & 0x1f;
-			RX0 = (XYData>> 5) & 0x1f;
-			RY1 = (XYData>>10) & 0x1ff;
-			RY0 = (XYData>>19) & 0x1ff;
-		
-			do
-			{
-				/* Get pointer to the strip containing this ROW */
-				REGION_STRIP *pStrip = pRegionStrips[RY0];
-				REGION_HEADER *pRegion, *pLastReg;
+        /* Start new block of OpaqueIds for this group */
+        OpaqueId++;
 
-				/* Advance RY0 to first line of next strip */
-				RY0 = BaseOfStrips[RY0] + pStrip->Height;
+        do {    /* Process each object */
+            sgl_uint32 XYData = Mask & *pXYData;
+            sgl_int32 Planes = PlanesPerPoly;
+            sgl_int32 VFogPlanes;
+            sgl_int32 SmoothHighPlanes;
+            int RY0, RY1, RX0, RX1;
 
-				/* Get pointers to the region of interest */
-				pRegion	 = pStrip->Regions + (RX0>>pStrip->Width);
-				pLastReg = pStrip->Regions + (RX1>>pStrip->Width) + 1;
+            *((sgl_uint8 **) &pXYData) += nXYDataInc;
 
-				do
-				{
-					if ( ( pRegion->OpaquePlanes += Planes ) >
-								(REGION_PLANE_LIM-(SAFETY_MARGIN_OPAQ*2)) )
-					{
-						/* Too many opaque objects make you sad */
-						 pRegion->OpaquePlanes -=Planes;
-						continue;
-					}
+            SmoothHighPlanes = (*pFogHighlight & GOURAUD_HIGHLIGHT) ? 1 : 0;
+            VFogPlanes = (*pFogHighlight & VERTEX_FOG) ? 1 : 0;
+            pFogHighlight++;
+            /* Allocate one OpaqueId to each insertion */
+            OpaqueId++;
 
-					/* Setup for recognition of next object */
-					pRegion->PrevOpaqueId = OpaqueId;
-	
-					if ( !PTR_SET_FULL( pRegion->pLastSlots[Type],
-													OBJECTS_PER_BLOCK ) )
-					{
-						/* Add the data */
-						PTR_SET_ADD( pRegion->pLastSlots[Type],
-									ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-					}
-					else
-					{
-						/* New block to hold this entry please */
-						AllocObjectBlock( pRegion->pLastSlots+Type,
-								ISPAddr + (Planes<<OBJ_PCOUNT_SHIFT) );
-					}
+            /* Start at the first Y line effected */
+            RX1 = XYData & 0x1f;
+            RX0 = (XYData >> 5) & 0x1f;
+            RY1 = (XYData >> 10) & 0x1ff;
+            RY0 = (XYData >> 19) & 0x1ff;
 
-					/* Add vertex fog and GOURAUD highlight to Opaque objects */
-					if (VFogPlanes|SmoothHighPlanes)
-					{
+            do {
+                /* Get pointer to the strip containing this ROW */
+                REGION_STRIP *pStrip = pRegionStrips[RY0];
+                REGION_HEADER *pRegion, *pLastReg;
 
-						if(SmoothHighPlanes)
-						{
-							pRegion->ExtraPlanes[GOURAUDHIGHLIGHT] += Planes+1;
-							if ( !PTR_SET_FULL( pRegion->pExtraSlots[GOURAUDHIGHLIGHT],
-												OBJECTS_PER_BLOCK ) )
-							{
-								/* Add the data */
-								PTR_SET_ADD( pRegion->pExtraSlots[GOURAUDHIGHLIGHT],
-											 ISPAddr + 
-											 ((Planes+1)<<OBJ_PCOUNT_SHIFT) );
-							}
-							else
-							{
-								/* New block to hold this entry please */
-								AllocObjectBlock( pRegion->pExtraSlots+GOURAUDHIGHLIGHT,
-												  ISPAddr + 
-												  ((Planes+1)<<OBJ_PCOUNT_SHIFT) );
-							}
-						}
+                /* Advance RY0 to first line of next strip */
+                RY0 = BaseOfStrips[RY0] + pStrip->Height;
 
-						if(VFogPlanes)
-						{
-							pRegion->ExtraPlanes[VERTEXFOG] += (Planes+1+SmoothHighPlanes);
-							if ( !PTR_SET_FULL( pRegion->pExtraSlots[VERTEXFOG],
-												OBJECTS_PER_BLOCK ) )
-							{
-								/* Add the data */
-								PTR_SET_ADD( pRegion->pExtraSlots[VERTEXFOG],
-											 ISPAddr + 
-											 ((Planes+1+SmoothHighPlanes)<<OBJ_PCOUNT_SHIFT) );
-							}
-							else
-							{
-								/* New block to hold this entry please */
-								AllocObjectBlock( pRegion->pExtraSlots+VERTEXFOG,
-												  ISPAddr + 
-												  ((Planes+1+SmoothHighPlanes)<<OBJ_PCOUNT_SHIFT) );
-							}
-						}
-					}
-				}
-				while ( ++pRegion != pLastReg );
-			}
-			while ( RY0 <= RY1 );
+                /* Get pointers to the region of interest */
+                pRegion = pStrip->Regions + (RX0 >> pStrip->Width);
+                pLastReg = pStrip->Regions + (RX1 >> pStrip->Width) + 1;
 
-			/* Advance ISPAddr */
-			ISPAddr += (Planes+VFogPlanes+SmoothHighPlanes) * WORDS_PER_PLANE;
+                do {
+                    if ((pRegion->OpaquePlanes += Planes) >
+                        (REGION_PLANE_LIM - (SAFETY_MARGIN_OPAQ * 2))) {
+                        /* Too many opaque objects make you sad */
+                        pRegion->OpaquePlanes -= Planes;
+                        continue;
+                    }
 
-		} while ( --nPolys != 0 );
+                    /* Setup for recognition of next object */
+                    pRegion->PrevOpaqueId = OpaqueId;
 
-		SGL_TIME_STOP(ADD_REGION_OPAQUE_TIME);
-	}
-	else
-	{
-		do
-		{	/* Process each object */
-			sgl_uint32 XYData;
-			sgl_uint32 VFogPlanes=0;
-			sgl_uint32 SmoothHighPlanes=0;
+                    if (!PTR_SET_FULL(pRegion->pLastSlots[Type],
+                                      OBJECTS_PER_BLOCK)) {
+                        /* Add the data */
+                        PTR_SET_ADD(pRegion->pLastSlots[Type],
+                                    ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+                    } else {
+                        /* New block to hold this entry please */
+                        AllocObjectBlock(pRegion->pLastSlots + Type,
+                                         ISPAddr + (Planes << OBJ_PCOUNT_SHIFT));
+                    }
 
-			SmoothHighPlanes = (*pFogHighlight & GOURAUD_HIGHLIGHT)?1:0;	
-			VFogPlanes = (*pFogHighlight & VERTEX_FOG)?1:0;	
+                    /* Add vertex fog and GOURAUD highlight to Opaque objects */
+                    if (VFogPlanes | SmoothHighPlanes) {
 
-			pFogHighlight++;
-			XYData = Mask & *pXYData;
-			*((sgl_uint8 **) &pXYData) += nXYDataInc;
+                        if (SmoothHighPlanes) {
+                            pRegion->ExtraPlanes[GOURAUDHIGHLIGHT] += Planes + 1;
+                            if (!PTR_SET_FULL(pRegion->pExtraSlots[GOURAUDHIGHLIGHT],
+                                              OBJECTS_PER_BLOCK)) {
+                                /* Add the data */
+                                PTR_SET_ADD(pRegion->pExtraSlots[GOURAUDHIGHLIGHT],
+                                            ISPAddr +
+                                            ((Planes + 1) << OBJ_PCOUNT_SHIFT));
+                            } else {
+                                /* New block to hold this entry please */
+                                AllocObjectBlock(pRegion->pExtraSlots + GOURAUDHIGHLIGHT,
+                                                 ISPAddr +
+                                                 ((Planes + 1) << OBJ_PCOUNT_SHIFT));
+                            }
+                        }
 
-			/* Decode the type of each complex object */
-			Type = (XYData)>>29;
-	
-	
-			if ( Type == PACKED_TYPE_SHADOW || Type == PACKED_TYPE_LIGHTVOL )
-			{
-				/* Adds SHADOW and LIGHTVOL objects */
-				AddRegionShadorLV( XYData, PlanesPerPoly, ISPAddr );
-			}
-			else if( Type == PACKED_TYPE_OPAQUETRANS )
-			{
-				AddRegionTransOpaque(XYData, PlanesPerPoly, ISPAddr );
-				
-				if(SmoothHighPlanes)
-					AddRegionHighlightFog(XYData, PlanesPerPoly+1, 
-									   ISPAddr, GOURAUDHIGHLIGHT);
-				
-				if(VFogPlanes)
-					AddRegionHighlightFog(XYData, PlanesPerPoly+SmoothHighPlanes+1, 
-									   ISPAddr, VERTEXFOG );
-			}
-			else
-			{
-				sgl_int32	TransSetId;
-			
-				if 	( ( Type & PACKED_TRANSTYPE_SETMARK ) == 0 )
-				{
-					/* Object is part of current FRONT/BACK object set */
-				#if DOING_SGL_STYLE_SORTING
-					TransSetId = CurrentTransSetId[Type & 1];
-				#else
-					TransSetId = CurrentTransSetId;
-				#endif
-				}
-				else
-				{
-					/* Object is part of next FRONT/BACK object set */
-				#if DOING_SGL_STYLE_SORTING
-					TransSetId = ( CurrentTransSetId[Type & 1] += 2 );
-				#else
-					TransSetId = ( CurrentTransSetId += 2 );
-				#endif
-				}
+                        if (VFogPlanes) {
+                            pRegion->ExtraPlanes[VERTEXFOG] += (Planes + 1 + SmoothHighPlanes);
+                            if (!PTR_SET_FULL(pRegion->pExtraSlots[VERTEXFOG],
+                                              OBJECTS_PER_BLOCK)) {
+                                /* Add the data */
+                                PTR_SET_ADD(pRegion->pExtraSlots[VERTEXFOG],
+                                            ISPAddr +
+                                            ((Planes + 1 + SmoothHighPlanes) << OBJ_PCOUNT_SHIFT));
+                            } else {
+                                /* New block to hold this entry please */
+                                AllocObjectBlock(pRegion->pExtraSlots + VERTEXFOG,
+                                                 ISPAddr +
+                                                 ((Planes + 1 + SmoothHighPlanes) << OBJ_PCOUNT_SHIFT));
+                            }
+                        }
+                    }
+                } while (++pRegion != pLastReg);
+            } while (RY0 <= RY1);
 
-				/* Add translucent object to scene */
-				AddRegionSeeThru( XYData, TransSetId, PlanesPerPoly,
-														ISPAddr, pZData );
-				*((sgl_uint8 **) &pZData) += nZDataInc;
+            /* Advance ISPAddr */
+            ISPAddr += (Planes + VFogPlanes + SmoothHighPlanes) * WORDS_PER_PLANE;
 
-				if(SmoothHighPlanes)
-					AddRegionHighlightFog(XYData, PlanesPerPoly+1, 
-									   ISPAddr, TRANS_GOURAUDHIGHLIGHT);
-				
-				if(VFogPlanes)
-					AddRegionHighlightFog(XYData, PlanesPerPoly+SmoothHighPlanes+1, 
-									   ISPAddr, TRANS_VERTEXFOG );
-			}
-			
-			/* Calculate ISPAddr of next object */
-			ISPAddr = ISPAddr + (PlanesPerPoly+VFogPlanes+SmoothHighPlanes) * WORDS_PER_PLANE;
-		} while ( --nPolys != 0 );
-	}
+        } while (--nPolys != 0);
+
+        SGL_TIME_STOP(ADD_REGION_OPAQUE_TIME);
+    } else {
+        do {    /* Process each object */
+            sgl_uint32 XYData;
+            sgl_uint32 VFogPlanes = 0;
+            sgl_uint32 SmoothHighPlanes = 0;
+
+            SmoothHighPlanes = (*pFogHighlight & GOURAUD_HIGHLIGHT) ? 1 : 0;
+            VFogPlanes = (*pFogHighlight & VERTEX_FOG) ? 1 : 0;
+
+            pFogHighlight++;
+            XYData = Mask & *pXYData;
+            *((sgl_uint8 **) &pXYData) += nXYDataInc;
+
+            /* Decode the type of each complex object */
+            Type = (XYData) >> 29;
+
+
+            if (Type == PACKED_TYPE_SHADOW || Type == PACKED_TYPE_LIGHTVOL) {
+                /* Adds SHADOW and LIGHTVOL objects */
+                AddRegionShadorLV(XYData, PlanesPerPoly, ISPAddr);
+            } else if (Type == PACKED_TYPE_OPAQUETRANS) {
+                AddRegionTransOpaque(XYData, PlanesPerPoly, ISPAddr);
+
+                if (SmoothHighPlanes)
+                    AddRegionHighlightFog(XYData, PlanesPerPoly + 1,
+                                          ISPAddr, GOURAUDHIGHLIGHT);
+
+                if (VFogPlanes)
+                    AddRegionHighlightFog(XYData, PlanesPerPoly + SmoothHighPlanes + 1,
+                                          ISPAddr, VERTEXFOG);
+            } else {
+                sgl_int32 TransSetId;
+
+                if ((Type & PACKED_TRANSTYPE_SETMARK) == 0) {
+                    /* Object is part of current FRONT/BACK object set */
+#if DOING_SGL_STYLE_SORTING
+                    TransSetId = CurrentTransSetId[Type & 1];
+#else
+                    TransSetId = CurrentTransSetId;
+#endif
+                } else {
+                    /* Object is part of next FRONT/BACK object set */
+#if DOING_SGL_STYLE_SORTING
+                    TransSetId = (CurrentTransSetId[Type & 1] += 2);
+#else
+                    TransSetId = ( CurrentTransSetId += 2 );
+#endif
+                }
+
+                /* Add translucent object to scene */
+                AddRegionSeeThru(XYData, TransSetId, PlanesPerPoly,
+                                 ISPAddr, pZData);
+                *((sgl_uint8 **) &pZData) += nZDataInc;
+
+                if (SmoothHighPlanes)
+                    AddRegionHighlightFog(XYData, PlanesPerPoly + 1,
+                                          ISPAddr, TRANS_GOURAUDHIGHLIGHT);
+
+                if (VFogPlanes)
+                    AddRegionHighlightFog(XYData, PlanesPerPoly + SmoothHighPlanes + 1,
+                                          ISPAddr, TRANS_VERTEXFOG);
+            }
+
+            /* Calculate ISPAddr of next object */
+            ISPAddr = ISPAddr + (PlanesPerPoly + VFogPlanes + SmoothHighPlanes) * WORDS_PER_PLANE;
+        } while (--nPolys != 0);
+    }
 }/* end of AddRegionObjectsExtra */
 
 #endif /* PCX2 || PCX2_003 */
 
 #if DAG_TRANS_SORTING
+
 /**************************************************************************
  * Function Name  : AddRegionD3DTransTris
  * Inputs         : rpTri         - Triangles to be added
@@ -2853,53 +2665,48 @@ void AddRegionObjectsExtra( sgl_uint32 *pXYData, int nXYDataInc,
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : The routine by which all objects are introduced into
  *                  this module for rendering.
- *				   
+ *
 **************************************************************************/
-void AddRegionD3DTransTris( PITRI *rpTri, int nXYDataInc,
-						    PITRIPLUS *rpTriPlus, sgl_uint32 PlanesPerPoly,
-						    int nPolys, sgl_uint32 ISPAddr )
-{
-	sgl_uint32 Mask = SigXYMask;
-	PITRI	pTri = *rpTri;
-	PITRIPLUS	pTriPlus = *rpTriPlus;
-	sgl_uint32 *pXYData = (sgl_uint32*)&(pTri->reg);
-	
-	do
-	{	/* Process each object */
-		sgl_uint32 XYData;
+void AddRegionD3DTransTris(PITRI *rpTri, int nXYDataInc,
+                           PITRIPLUS *rpTriPlus, sgl_uint32 PlanesPerPoly,
+                           int nPolys, sgl_uint32 ISPAddr) {
+    sgl_uint32 Mask = SigXYMask;
+    PITRI pTri = *rpTri;
+    PITRIPLUS pTriPlus = *rpTriPlus;
+    sgl_uint32 *pXYData = (sgl_uint32 *) &(pTri->reg);
 
-		XYData = Mask & *pXYData;
-		*((sgl_uint8 **) &pXYData) += nXYDataInc;
+    do {    /* Process each object */
+        sgl_uint32 XYData;
 
-		if (guTransTriCounter == MAX_NUM_SCENE_TRIS)
-		{
-			DPF((DBG_ERROR,"Too many tris in the scene (%d)\n",guTransTriCounter));
-			break;
-		}
-		else
-		{
-			/* Add translucent triangle to scene */
-			AddRegionSeeThruD3D( &pTri, XYData, 
-								 &pTriPlus, PlanesPerPoly, ISPAddr );
-		}
-	
-		/* Calculate ISPAddr of next object */
-#if PCX1  || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
-		ASSERT(WORDS_PER_PLANE == 3);
+        XYData = Mask & *pXYData;
+        *((sgl_uint8 **) &pXYData) += nXYDataInc;
+
+        if (guTransTriCounter == MAX_NUM_SCENE_TRIS) {
+            DPF((DBG_ERROR, "Too many tris in the scene (%d)\n", guTransTriCounter));
+            break;
+        } else {
+            /* Add translucent triangle to scene */
+            AddRegionSeeThruD3D(&pTri, XYData,
+                                &pTriPlus, PlanesPerPoly, ISPAddr);
+        }
+
+        /* Calculate ISPAddr of next object */
+#if PCX1 || ((PCX2 || PCX2_003) && FORCE_NO_FPU)
+                                                                                                                                ASSERT(WORDS_PER_PLANE == 3);
 		ISPAddr = ISPAddr + PlanesPerPoly + PlanesPerPoly + PlanesPerPoly;
 #elif PCX2 || PCX2_003
-		ASSERT(WORDS_PER_PLANE == 4);
-		ISPAddr = ISPAddr + (PlanesPerPoly << 2) ;
+        ASSERT(WORDS_PER_PLANE == 4);
+        ISPAddr = ISPAddr + (PlanesPerPoly << 2);
 #endif
-		pTriPlus++;
-		pTri++;
-	} while ( --nPolys != 0 );
+        pTriPlus++;
+        pTri++;
+    } while (--nPolys != 0);
 }
 
-#if (PCX2 || PCX2_003) 
+#if (PCX2 || PCX2_003)
 
 /**************************************************************************
  * Function Name  : AddRegionD3DTransTrisExtra
@@ -2907,60 +2714,55 @@ void AddRegionD3DTransTris( PITRI *rpTri, int nXYDataInc,
  * Outputs        : NONE
  * Input/Output	  : NONE
  * Returns        : NONE
- * Globals Used   : 
+ * Globals Used   :
  * Description    : The routine by which all objects are introduced into
- *				   
+ *
 **************************************************************************/
-void AddRegionD3DTransTrisExtra( PITRI *rpTri, int nXYDataInc,
-						    PITRIPLUS *rpTriPlus, sgl_uint32 PlanesPerPoly,
-						    int nPolys, sgl_uint32 ISPAddr,
-						    PFOGHIGHLIGHT pFogHighlight )
-{
-	sgl_uint32 Mask = SigXYMask;
-	PITRI	pTri = *rpTri;
-	PITRIPLUS	pTriPlus = *rpTriPlus;
-	sgl_uint32 *pXYData = (sgl_uint32*)&(pTri->reg);
-		
-	do
-	{	/* Process each object */
-		sgl_uint32 XYData;
-		sgl_uint32 VFogPlanes=0;
-		sgl_uint32 SmoothHighPlanes=0;
+void AddRegionD3DTransTrisExtra(PITRI *rpTri, int nXYDataInc,
+                                PITRIPLUS *rpTriPlus, sgl_uint32 PlanesPerPoly,
+                                int nPolys, sgl_uint32 ISPAddr,
+                                PFOGHIGHLIGHT pFogHighlight) {
+    sgl_uint32 Mask = SigXYMask;
+    PITRI pTri = *rpTri;
+    PITRIPLUS pTriPlus = *rpTriPlus;
+    sgl_uint32 *pXYData = (sgl_uint32 *) &(pTri->reg);
 
-		SmoothHighPlanes = (*pFogHighlight & GOURAUD_HIGHLIGHT)?1:0;	
-		VFogPlanes = (*pFogHighlight & VERTEX_FOG)?1:0;	
+    do {    /* Process each object */
+        sgl_uint32 XYData;
+        sgl_uint32 VFogPlanes = 0;
+        sgl_uint32 SmoothHighPlanes = 0;
 
-		pFogHighlight++;
-		XYData = Mask & *pXYData;
-		*((sgl_uint8 **) &pXYData) += nXYDataInc;
+        SmoothHighPlanes = (*pFogHighlight & GOURAUD_HIGHLIGHT) ? 1 : 0;
+        VFogPlanes = (*pFogHighlight & VERTEX_FOG) ? 1 : 0;
 
-		/* Add translucent object to scene */
-		
-		if (guTransTriCounter == MAX_NUM_SCENE_TRIS)
-		{
-			DPF((DBG_ERROR,"Too many tris in the scene (%d)\n",guTransTriCounter));
-			break;
-		}
-		else
-		{
-			AddRegionSeeThruD3D( &pTri, XYData, 
-								 &pTriPlus, PlanesPerPoly, ISPAddr );
-		}
-		
-		if(SmoothHighPlanes)
-			AddRegionHighlightFog(XYData, PlanesPerPoly+1, 
-							   ISPAddr, TRANS_GOURAUDHIGHLIGHT);
-		
-		if(VFogPlanes)
-			AddRegionHighlightFog(XYData, PlanesPerPoly+SmoothHighPlanes+1, 
-							   ISPAddr, TRANS_VERTEXFOG );
-		
-		/* Calculate ISPAddr of next object */
-		ISPAddr = ISPAddr + (PlanesPerPoly+VFogPlanes+SmoothHighPlanes) * WORDS_PER_PLANE;
+        pFogHighlight++;
+        XYData = Mask & *pXYData;
+        *((sgl_uint8 **) &pXYData) += nXYDataInc;
 
-		pTriPlus++;
-		pTri++;
-	} while ( --nPolys != 0 );
+        /* Add translucent object to scene */
+
+        if (guTransTriCounter == MAX_NUM_SCENE_TRIS) {
+            DPF((DBG_ERROR, "Too many tris in the scene (%d)\n", guTransTriCounter));
+            break;
+        } else {
+            AddRegionSeeThruD3D(&pTri, XYData,
+                                &pTriPlus, PlanesPerPoly, ISPAddr);
+        }
+
+        if (SmoothHighPlanes)
+            AddRegionHighlightFog(XYData, PlanesPerPoly + 1,
+                                  ISPAddr, TRANS_GOURAUDHIGHLIGHT);
+
+        if (VFogPlanes)
+            AddRegionHighlightFog(XYData, PlanesPerPoly + SmoothHighPlanes + 1,
+                                  ISPAddr, TRANS_VERTEXFOG);
+
+        /* Calculate ISPAddr of next object */
+        ISPAddr = ISPAddr + (PlanesPerPoly + VFogPlanes + SmoothHighPlanes) * WORDS_PER_PLANE;
+
+        pTriPlus++;
+        pTri++;
+    } while (--nPolys != 0);
 
 }/* end of AddRegionD3DTransTrisExtra */
 #endif /* PCX2 || PCX2_003 */
@@ -2968,6 +2770,7 @@ void AddRegionD3DTransTrisExtra( PITRI *rpTri, int nXYDataInc,
 #endif /* DAG_TRANS_SORTING */
 
 #if DOING_SGL_STYLE_SORTING
+
 /**************************************************************************
  * Function Name  : SortTransFaceLists
  * Inputs         : None
@@ -2977,7 +2780,7 @@ void AddRegionD3DTransTrisExtra( PITRI *rpTri, int nXYDataInc,
  *                : pTail   - pRegion->pCurTSet[1]
  * Returns        : New pHead value, first TRANSFACE_LIST to process
  * Global Used    : None
- * Description    : Sorts the translucent face sets into increasing 
+ * Description    : Sorts the translucent face sets into increasing
  *                  values of inverse depth.
  *
  *                  On entry pCurTSet[0 and 1] point at seperate singly
@@ -2987,83 +2790,69 @@ void AddRegionD3DTransTrisExtra( PITRI *rpTri, int nXYDataInc,
  *                  and pCurTSet[1] points at shallowest set to process.
  *
  **************************************************************************/
-static INLINE TRANSFACE_LIST *SortTransFaceLists( REGION_HEADER *pRegion,
-							  TRANSFACE_LIST *pHead, TRANSFACE_LIST *pTail )
-{
-	TRANSFACE_LIST *pEntry, *pNext;
-	float HeadZ, TailZ, Depth;
+static INLINE TRANSFACE_LIST *SortTransFaceLists(REGION_HEADER *pRegion,
+                                                 TRANSFACE_LIST *pHead, TRANSFACE_LIST *pTail) {
+    TRANSFACE_LIST *pEntry, *pNext;
+    float HeadZ, TailZ, Depth;
 
-	if ( pHead != NULL )
-	{
-		/* Take first entry on first list as starting point */
-		pTail = pHead;
-	}
-	else
-	{
-		/* Take first entry on second list as starting point */
-		pHead = pTail;
-	}
+    if (pHead != NULL) {
+        /* Take first entry on first list as starting point */
+        pTail = pHead;
+    } else {
+        /* Take first entry on second list as starting point */
+        pHead = pTail;
+    }
 
-	/* Next entry after Head of list is first to process */
-	pNext = pHead->pPre;
+    /* Next entry after Head of list is first to process */
+    pNext = pHead->pPre;
 
-	/* Starting state please */
-	HeadZ = TailZ = pHead->MaxInvZ;
-	pHead->pPre = pHead->pPost = NULL;
+    /* Starting state please */
+    HeadZ = TailZ = pHead->MaxInvZ;
+    pHead->pPre = pHead->pPost = NULL;
 
-	do
-	{
-		while ( ( pEntry = pNext ) != NULL )
-		{
-			/* Get next entry */
-			pNext = pEntry->pPre;
-			Depth = pEntry->MaxInvZ;
+    do {
+        while ((pEntry = pNext) != NULL) {
+            /* Get next entry */
+            pNext = pEntry->pPre;
+            Depth = pEntry->MaxInvZ;
 
-			if ( Depth <= HeadZ )
-			{
-				/* New entry is further away put at head of list */
-				(pEntry->pPost = pHead)->pPre = pEntry;
-				pEntry->pPre = NULL;
-				pHead = pEntry;
-				HeadZ = Depth;
-			}
-			else
-			if ( Depth >= TailZ )
-			{
-				/* New entry is closer put at tail of list */
-				pEntry->pPost = NULL;
-				(pEntry->pPre = pTail)->pPost = pEntry;
-				pTail = pEntry;
-				TailZ = Depth;
-			}
-			else
-			{
-				TRANSFACE_LIST *p;
-				
-				/* Search for insertion point */
-				for ( p = pHead->pPost; ( Depth > p->MaxInvZ ); p = p->pPost );
+            if (Depth <= HeadZ) {
+                /* New entry is further away put at head of list */
+                (pEntry->pPost = pHead)->pPre = pEntry;
+                pEntry->pPre = NULL;
+                pHead = pEntry;
+                HeadZ = Depth;
+            } else if (Depth >= TailZ) {
+                /* New entry is closer put at tail of list */
+                pEntry->pPost = NULL;
+                (pEntry->pPre = pTail)->pPost = pEntry;
+                pTail = pEntry;
+                TailZ = Depth;
+            } else {
+                TRANSFACE_LIST *p;
 
-				/* Insert before pNext */
-				pEntry->pPost = p;
-				(pEntry->pPre = p->pPre)->pPost = pEntry;
-				p->pPre = pEntry;
-			}
-		}
+                /* Search for insertion point */
+                for (p = pHead->pPost; (Depth > p->MaxInvZ); p = p->pPost);
 
-		if ( pRegion->pCurTSet[0] != NULL )
-		{
-			/* Done first list this time so do the next */
-			pRegion->pCurTSet[0] = NULL;
-			pNext = pRegion->pCurTSet[1];
-		}
-	}
-	while ( pNext != NULL );
+                /* Insert before pNext */
+                pEntry->pPost = p;
+                (pEntry->pPre = p->pPre)->pPost = pEntry;
+                p->pPre = pEntry;
+            }
+        }
 
-	/* Setup sorted list */
-	pRegion->pCurTSet[0] = pHead;
-	pRegion->pCurTSet[1] = pTail;
+        if (pRegion->pCurTSet[0] != NULL) {
+            /* Done first list this time so do the next */
+            pRegion->pCurTSet[0] = NULL;
+            pNext = pRegion->pCurTSet[1];
+        }
+    } while (pNext != NULL);
 
-	return (pHead);
+    /* Setup sorted list */
+    pRegion->pCurTSet[0] = pHead;
+    pRegion->pCurTSet[1] = pTail;
+
+    return (pHead);
 }
 
 /**************************************************************************
@@ -3083,52 +2872,46 @@ static INLINE TRANSFACE_LIST *SortTransFaceLists( REGION_HEADER *pRegion,
  *                  On return pCurTSet[0] points at deepest set to process.
  *
  **************************************************************************/
-static INLINE TRANSFACE_LIST *NoSortTransFaceLists( REGION_HEADER *pRegion,
-							  TRANSFACE_LIST *pHead)
-{
-	TRANSFACE_LIST *pEntry, *pNext, *pThis;
-   
-   	/* Next entry after Head of list is first to process */
-	pNext = pHead->pPre;
-   
-	/* Starting state please */
-	pHead->pPre = pHead->pPost = NULL;
+static INLINE TRANSFACE_LIST *NoSortTransFaceLists(REGION_HEADER *pRegion,
+                                                   TRANSFACE_LIST *pHead) {
+    TRANSFACE_LIST *pEntry, *pNext, *pThis;
 
-	if(gNoSortTransFaces == NO_SORT)
-	{
-		/* NO_SORT */
-		while ( ( pEntry = pNext ) != NULL )
-		{
-			/* Get next entry */
-			pNext = pEntry->pPre;
+    /* Next entry after Head of list is first to process */
+    pNext = pHead->pPre;
 
-			/* New entry is further away put at head of list */
-			(pEntry->pPost = pHead)->pPre = pEntry;
-			pEntry->pPre = NULL;
-			pHead = pEntry;
-		}
-	}
-	else
-	{
-		/* REVERSED_NO_SORT */
-		pThis = pHead;
-		while ( ( pEntry = pNext ) != NULL )
-		{
-			/* Get next entry */
-			pNext = pEntry->pPre;
+    /* Starting state please */
+    pHead->pPre = pHead->pPost = NULL;
 
-			/* New entry is closer put at tail of list */
-		   	pEntry->pPost = NULL;
-			(pEntry->pPre = pThis)->pPost = pEntry;
-			pThis = pEntry;
+    if (gNoSortTransFaces == NO_SORT) {
+        /* NO_SORT */
+        while ((pEntry = pNext) != NULL) {
+            /* Get next entry */
+            pNext = pEntry->pPre;
 
-		}
-	}
+            /* New entry is further away put at head of list */
+            (pEntry->pPost = pHead)->pPre = pEntry;
+            pEntry->pPre = NULL;
+            pHead = pEntry;
+        }
+    } else {
+        /* REVERSED_NO_SORT */
+        pThis = pHead;
+        while ((pEntry = pNext) != NULL) {
+            /* Get next entry */
+            pNext = pEntry->pPre;
 
-	/* Setup sorted list */
-	pRegion->pCurTSet[0] = pHead;
-   
-	return (pHead);
+            /* New entry is closer put at tail of list */
+            pEntry->pPost = NULL;
+            (pEntry->pPre = pThis)->pPost = pEntry;
+            pThis = pEntry;
+
+        }
+    }
+
+    /* Setup sorted list */
+    pRegion->pCurTSet[0] = pHead;
+
+    return (pHead);
 }
 
 #endif
@@ -3138,7 +2921,7 @@ static INLINE TRANSFACE_LIST *NoSortTransFaceLists( REGION_HEADER *pRegion,
 /**************************************************************************
  * Function Name  : CountShortList (internal only  Assumed INLINE!)
  * Inputs         : pLast    - pointer to the last object inserted in the list
- * Input/Output   : 
+ * Input/Output   :
  * Returns        : rPlanes  - accumulated count of planes described
  * Description    : Flattens the content of the list into pAddr.
  *                : Since block size is small do a whole block at a time.
@@ -3156,87 +2939,79 @@ static INLINE TRANSFACE_LIST *NoSortTransFaceLists( REGION_HEADER *pRegion,
  *                : so each list can be output multiple times.
  **************************************************************************/
 
-static sgl_uint32 CountShortList( const sgl_uint32 *pObjData)
-{
+static sgl_uint32 CountShortList(const sgl_uint32 *pObjData) {
 #define PTR_MASK ( sizeof(sgl_uint32) * TRANSOBJS_PER_BLOCK )
-	sgl_uint32 tmp0, tmp1, Planes = 0;
-	TRANSOBJ_BLOCK *pNext = NULL, *pBlock;
-	const sgl_uint32 *pPtr = pObjData;
+    sgl_uint32 tmp0, tmp1, Planes = 0;
+    TRANSOBJ_BLOCK *pNext = NULL, *pBlock;
+    const sgl_uint32 *pPtr = pObjData;
 
-	do
-	{	
-		/* Derive pBlock from pPtr which points at last item in block */
-		pBlock = (TRANSOBJ_BLOCK *) (((sgl_uint32) pPtr) & (~PTR_MASK));
+    do {
+        /* Derive pBlock from pPtr which points at last item in block */
+        pBlock = (TRANSOBJ_BLOCK *) (((sgl_uint32) pPtr) & (~PTR_MASK));
 
-		/* Get pointer to previous block */
-		pPtr = (const sgl_uint32 *) pBlock->pPrev;
-		
-		/* Reverse pPrev list order as we go */
-		pBlock->pPrev = (sgl_uint32 *) pNext;
-		
-		/* Previous block needs to point at this block */
-		pNext = pBlock;
-	}
-	while ( pPtr != NULL );
+        /* Get pointer to previous block */
+        pPtr = (const sgl_uint32 *) pBlock->pPrev;
 
-	while ( ( pNext = (TRANSOBJ_BLOCK *) pBlock->pPrev ) != NULL )
-	{
-		/* Restore pointer to previous block */
-		pBlock->pPrev = (sgl_uint32 *) pPtr;
-		
-		/* pPrev points at last item stored in each block */
-		pPtr = ((const sgl_uint32 *) pBlock->Objects) + TRANSOBJS_PER_BLOCK - 1;
-		
-		/* Extension blocks must be full, model 2 write buffers as tmp0/1 */
-		tmp0 = pPtr[-2];
-		tmp1 = pPtr[-1];
-		Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		tmp0 = pPtr[0];		
-		Planes += (tmp1 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;				
-		
-		/* Goto next block and restore original pPrev list as we go */
-		pBlock = pNext;
-		
-		/* Goto next block and restore original pPrev list as we go */
-		pBlock = pNext;
-	}
+        /* Reverse pPrev list order as we go */
+        pBlock->pPrev = (sgl_uint32 *) pNext;
 
-	/* Restore pointer to previous block */
-	pBlock->pPrev = (sgl_uint32 *) pPtr;
-	
-	/* Start at beginning of last block */
-	pPtr = (const sgl_uint32 *) pBlock->Objects;
+        /* Previous block needs to point at this block */
+        pNext = pBlock;
+    } while (pPtr != NULL);
+
+    while ((pNext = (TRANSOBJ_BLOCK *) pBlock->pPrev) != NULL) {
+        /* Restore pointer to previous block */
+        pBlock->pPrev = (sgl_uint32 *) pPtr;
+
+        /* pPrev points at last item stored in each block */
+        pPtr = ((const sgl_uint32 *) pBlock->Objects) + TRANSOBJS_PER_BLOCK - 1;
+
+        /* Extension blocks must be full, model 2 write buffers as tmp0/1 */
+        tmp0 = pPtr[-2];
+        tmp1 = pPtr[-1];
+        Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        tmp0 = pPtr[0];
+        Planes += (tmp1 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+
+        /* Goto next block and restore original pPrev list as we go */
+        pBlock = pNext;
+
+        /* Goto next block and restore original pPrev list as we go */
+        pBlock = pNext;
+    }
+
+    /* Restore pointer to previous block */
+    pBlock->pPrev = (sgl_uint32 *) pPtr;
+
+    /* Start at beginning of last block */
+    pPtr = (const sgl_uint32 *) pBlock->Objects;
 
 
-	/* Fill up the block, rather than a loop of unknown size, more optimal
+    /* Fill up the block, rather than a loop of unknown size, more optimal
 	   code should be generated by the long switch statement.
-	 */ 
+	 */
 
-	switch ( PTR_SET_SIZE( pObjData, TRANSOBJS_PER_BLOCK ) )
-	{
-		case 3:
-		{
-			tmp0 = *pPtr++;
-			Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		}
-		/* Drop Through */
-		case 2:
-		{
-			/* Two objects in first block */
-			tmp0 = *pPtr++;
-			Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		}
-		/* Drop Through */
-		case 1:
-		{
-			/* One object in first block */
-			tmp0 = *pPtr++;
-			Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-			break;
-		}		
+    switch (PTR_SET_SIZE(pObjData, TRANSOBJS_PER_BLOCK)) {
+        case 3: {
+            tmp0 = *pPtr++;
+            Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        }
+            /* Drop Through */
+        case 2: {
+            /* Two objects in first block */
+            tmp0 = *pPtr++;
+            Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        }
+            /* Drop Through */
+        case 1: {
+            /* One object in first block */
+            tmp0 = *pPtr++;
+            Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+            break;
+        }
 #if _DEBUG
-		/* No default should be needed */
+                                                                                                                                    /* No default should be needed */
 		default:
 		{
 			DPF((DBG_ERROR,"Size of TRANSOBJS_PER_BLOCK changes to %d",TRANSOBJS_PER_BLOCK));
@@ -3244,11 +3019,12 @@ static sgl_uint32 CountShortList( const sgl_uint32 *pObjData)
 		}
 #endif
 
-	}
+    }
 
-	return (Planes);
+    return (Planes);
 #undef PTR_MASK
 }
+
 #endif
 
 
@@ -3259,51 +3035,45 @@ static sgl_uint32 CountShortList( const sgl_uint32 *pObjData)
  *                : Bytes - how many bytes to copy
  *
  * Returns        : sgl_uint32 * - address last used to store output
- * Description    : Copies object pointers to reserved memory 
+ * Description    : Copies object pointers to reserved memory
  **************************************************************************/
 
-static INLINE sgl_uint32 *mymemcpy( sgl_uint32 *pDest, const sgl_uint32 *pSrc, int Bytes )
-{
-	sgl_uint32 tmp0, tmp1;
+static INLINE sgl_uint32 *mymemcpy(sgl_uint32 *pDest, const sgl_uint32 *pSrc, int Bytes) {
+    sgl_uint32 tmp0, tmp1;
 
-	/* Pre-load first source item */
-	tmp0 = *pSrc++;
+    /* Pre-load first source item */
+    tmp0 = *pSrc++;
 
-	for(;;)
-	{
-		if ( ( Bytes -= ( sizeof(sgl_uint32) * 2 ) ) <= 0 )
-		{
-			/* Stop when we reach the last block */
-			break;
-		}
+    for (;;) {
+        if ((Bytes -= (sizeof(sgl_uint32) * 2)) <= 0) {
+            /* Stop when we reach the last block */
+            break;
+        }
 
-		/* Output a block */
-		tmp1 = pSrc[0];
-		IW( pDest, 0, tmp0);
-		IW( pDest, 1, tmp1);
-		pDest += 2;
-		
-		/* Pre-load next source item */
-		tmp0 = pSrc[1];
-		pSrc += 2;
-	}
-		
-	if ( Bytes == 0 )
-	{
-		/* Last block has 2 items */
-		tmp1 = pSrc[0];
-		IW( pDest, 0, tmp0);
-		IW( pDest, 1, tmp1);
+        /* Output a block */
+        tmp1 = pSrc[0];
+        IW(pDest, 0, tmp0);
+        IW(pDest, 1, tmp1);
+        pDest += 2;
 
-		return (pDest+2);
-	}
-	else
-	{
-		/* Last has 1 item */
-		IW( pDest, 0, tmp0);
+        /* Pre-load next source item */
+        tmp0 = pSrc[1];
+        pSrc += 2;
+    }
 
-		return (pDest+1);
-	}
+    if (Bytes == 0) {
+        /* Last block has 2 items */
+        tmp1 = pSrc[0];
+        IW(pDest, 0, tmp0);
+        IW(pDest, 1, tmp1);
+
+        return (pDest + 2);
+    } else {
+        /* Last has 1 item */
+        IW(pDest, 0, tmp0);
+
+        return (pDest + 1);
+    }
 }
 
 
@@ -3319,43 +3089,39 @@ static INLINE sgl_uint32 *mymemcpy( sgl_uint32 *pDest, const sgl_uint32 *pSrc, i
  *                : On PCX2 the blocks should already be in the parameter
  *                : space and it will only be necessary to setup the pointer.
  **************************************************************************/
-static sgl_uint32 *OutputOpaqueList(sgl_uint32 *pObjData, sgl_uint32 *pAddr )
-{
+static sgl_uint32 *OutputOpaqueList(sgl_uint32 *pObjData, sgl_uint32 *pAddr) {
 #define PTR_MASK ( sizeof(sgl_uint32) * (OBJECTS_PER_BLOCK|3) )
-	sgl_uint32 *pNext, *pPtr = pObjData;
-	OBJECT_BLOCK *pBlock;
+    sgl_uint32 *pNext, *pPtr = pObjData;
+    OBJECT_BLOCK *pBlock;
 
-	/* Terminate block list for later processing */
-	pNext = NULL;
+    /* Terminate block list for later processing */
+    pNext = NULL;
 
-	do
-	{
-		/* Derive pBlock from pPtr which points at last item in block */
-		pBlock = (OBJECT_BLOCK *) (((sgl_uint32) pPtr) & (~PTR_MASK));
-		
-		/* Set pNext of this block for processing later */
-		pBlock->pNext = (OBJECT_BLOCK *) pNext;
-		
-		/* Previous block needs to point at this block */
-		pNext = (sgl_uint32 *) pBlock;
-	}
-	while ( ( pPtr = pBlock->pPrev ) != NULL );
+    do {
+        /* Derive pBlock from pPtr which points at last item in block */
+        pBlock = (OBJECT_BLOCK *) (((sgl_uint32) pPtr) & (~PTR_MASK));
 
-	while ( pBlock->pNext != NULL )
-	{
-		/* Extension blocks must be full */
-		pAddr = mymemcpy( pAddr, (const sgl_uint32 *) pBlock->Objects, 
-						  OBJECTS_PER_BLOCK*sizeof(sgl_uint32) );
+        /* Set pNext of this block for processing later */
+        pBlock->pNext = (OBJECT_BLOCK *) pNext;
 
-		/* Move to next block */
-		pBlock = pBlock->pNext;
-	}
-	
-	/* First block may be partially full */
-	pAddr = mymemcpy( pAddr, (const sgl_uint32 *) pBlock->Objects,
-	                  ((unsigned int) pObjData) & PTR_MASK );
+        /* Previous block needs to point at this block */
+        pNext = (sgl_uint32 *) pBlock;
+    } while ((pPtr = pBlock->pPrev) != NULL);
 
-	return (pAddr);
+    while (pBlock->pNext != NULL) {
+        /* Extension blocks must be full */
+        pAddr = mymemcpy(pAddr, (const sgl_uint32 *) pBlock->Objects,
+                         OBJECTS_PER_BLOCK * sizeof(sgl_uint32));
+
+        /* Move to next block */
+        pBlock = pBlock->pNext;
+    }
+
+    /* First block may be partially full */
+    pAddr = mymemcpy(pAddr, (const sgl_uint32 *) pBlock->Objects,
+                     ((unsigned int) pObjData) & PTR_MASK);
+
+    return (pAddr);
 #undef PTR_MASK
 }
 
@@ -3382,101 +3148,93 @@ static sgl_uint32 *OutputOpaqueList(sgl_uint32 *pObjData, sgl_uint32 *pAddr )
  *                : so each list can be output multiple times.
  **************************************************************************/
 
-static sgl_uint32 *OutputShortList( const sgl_uint32 *pObjData, sgl_uint32 *pAddr,
-														sgl_uint32 *rPlanes )
-{
+static sgl_uint32 *OutputShortList(const sgl_uint32 *pObjData, sgl_uint32 *pAddr,
+                                   sgl_uint32 *rPlanes) {
 #define PTR_MASK ( sizeof(sgl_uint32) * TRANSOBJS_PER_BLOCK )
-	sgl_uint32 Planes = *rPlanes, tmp0, tmp1;
-	TRANSOBJ_BLOCK *pNext = NULL, *pBlock;
-	const sgl_uint32 *pPtr = pObjData;
+    sgl_uint32 Planes = *rPlanes, tmp0, tmp1;
+    TRANSOBJ_BLOCK *pNext = NULL, *pBlock;
+    const sgl_uint32 *pPtr = pObjData;
 
-	do
-	{	
-		/* Derive pBlock from pPtr which points at last item in block */
-		pBlock = (TRANSOBJ_BLOCK *) (((sgl_uint32) pPtr) & (~PTR_MASK));
+    do {
+        /* Derive pBlock from pPtr which points at last item in block */
+        pBlock = (TRANSOBJ_BLOCK *) (((sgl_uint32) pPtr) & (~PTR_MASK));
 
-		/* Get pointer to previous block */
-		pPtr = (const sgl_uint32 *) pBlock->pPrev;
-		
-		/* Reverse pPrev list order as we go */
-		pBlock->pPrev = (sgl_uint32 *) pNext;
-		
-		/* Previous block needs to point at this block */
-		pNext = pBlock;
-	}
-	while ( pPtr != NULL );
+        /* Get pointer to previous block */
+        pPtr = (const sgl_uint32 *) pBlock->pPrev;
 
-	while ( ( pNext = (TRANSOBJ_BLOCK *) pBlock->pPrev ) != NULL )
-	{
-		/* Restore pointer to previous block */
-		pBlock->pPrev = (sgl_uint32 *) pPtr;
-		
-		/* pPrev points at last item stored in each block */
-		pPtr = ((const sgl_uint32 *) pBlock->Objects) + TRANSOBJS_PER_BLOCK - 1;
-		
-		/* Extension blocks must be full, model 2 write buffers as tmp0/1 */
+        /* Reverse pPrev list order as we go */
+        pBlock->pPrev = (sgl_uint32 *) pNext;
 
-		tmp0 = pPtr[-2];
-		tmp1 = pPtr[-1];
-		IW( pAddr, 0, tmp0);		
-		Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		tmp0 = pPtr[0];		
-		IW( pAddr, 1, tmp1);
-		IW( pAddr, 2, tmp0);
-		Planes += (tmp1 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		pAddr += 3;
-		
-		/* Goto next block and restore original pPrev list as we go */
-		pBlock = pNext;
-	}
+        /* Previous block needs to point at this block */
+        pNext = pBlock;
+    } while (pPtr != NULL);
 
-	/* Restore pointer to previous block */
-	pBlock->pPrev = (sgl_uint32 *) pPtr;
-	
-	/* Start at beginning of last block */
-	pPtr = (const sgl_uint32 *) pBlock->Objects;
+    while ((pNext = (TRANSOBJ_BLOCK *) pBlock->pPrev) != NULL) {
+        /* Restore pointer to previous block */
+        pBlock->pPrev = (sgl_uint32 *) pPtr;
 
-	/* Fill up the block */
-  	switch ( PTR_SET_SIZE( pObjData, TRANSOBJS_PER_BLOCK ) )
-	{
-		case 3:
-		{
-			tmp0 = *pPtr++;
-			IW( pAddr++, 0, tmp0);
-			Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		}
-		/* Drop Through */
-		case 2:
-		{
-			/* Two objects in first block */
-			tmp0 = *pPtr++;
-			IW( pAddr++, 0, tmp0);
-			Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-		}
-		/* Drop Through */
-		case 1:
-		{
-			/* One object in first block */
-			tmp0 = *pPtr++;
-			IW( pAddr++, 0, tmp0);
-			Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-			break;
-		}		
+        /* pPrev points at last item stored in each block */
+        pPtr = ((const sgl_uint32 *) pBlock->Objects) + TRANSOBJS_PER_BLOCK - 1;
+
+        /* Extension blocks must be full, model 2 write buffers as tmp0/1 */
+
+        tmp0 = pPtr[-2];
+        tmp1 = pPtr[-1];
+        IW(pAddr, 0, tmp0);
+        Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        tmp0 = pPtr[0];
+        IW(pAddr, 1, tmp1);
+        IW(pAddr, 2, tmp0);
+        Planes += (tmp1 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        pAddr += 3;
+
+        /* Goto next block and restore original pPrev list as we go */
+        pBlock = pNext;
+    }
+
+    /* Restore pointer to previous block */
+    pBlock->pPrev = (sgl_uint32 *) pPtr;
+
+    /* Start at beginning of last block */
+    pPtr = (const sgl_uint32 *) pBlock->Objects;
+
+    /* Fill up the block */
+    switch (PTR_SET_SIZE(pObjData, TRANSOBJS_PER_BLOCK)) {
+        case 3: {
+            tmp0 = *pPtr++;
+            IW(pAddr++, 0, tmp0);
+            Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        }
+            /* Drop Through */
+        case 2: {
+            /* Two objects in first block */
+            tmp0 = *pPtr++;
+            IW(pAddr++, 0, tmp0);
+            Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+        }
+            /* Drop Through */
+        case 1: {
+            /* One object in first block */
+            tmp0 = *pPtr++;
+            IW(pAddr++, 0, tmp0);
+            Planes += (tmp0 >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+            break;
+        }
 #if _DEBUG
-		/* No default should be needed */
+                                                                                                                                    /* No default should be needed */
 		default:
 		{
 			DPF((DBG_ERROR,"Size of TRANSOBJS_PER_BLOCK changes to %d",TRANSOBJS_PER_BLOCK));
 			break;
 		}
 #endif
-	}
+    }
 
-	/* Update secondary result */
-	*rPlanes = Planes;
+    /* Update secondary result */
+    *rPlanes = Planes;
 
-	return (pAddr);
+    return (pAddr);
 #undef PTR_MASK
 }
 
@@ -3489,43 +3247,39 @@ static sgl_uint32 *OutputShortList( const sgl_uint32 *pObjData, sgl_uint32 *pAdd
  *				  : Type    - Opaque, TransOpaque, GOURAUDHighlight or VertexFog
  *
  * Returns        : sgl_uint32 * - address last used to store output
- * Description    : Generate Opaque, TransOpaque, GOURAUDHighlight or VertexFog Ptr's 
+ * Description    : Generate Opaque, TransOpaque, GOURAUDHighlight or VertexFog Ptr's
  **************************************************************************/
 
-static INLINE sgl_uint32 *GenerateOpaquePtr ( REGION_HEADER *pRegion, sgl_uint32 *curAddr,
-							  sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, int Type, int PlaneLimit) 
-{
-	sgl_uint32 RegionPlanes = *rPlanes;
-	sgl_uint32 nDiscardedPlanes = *dPlanes;
+static INLINE sgl_uint32 *GenerateOpaquePtr(REGION_HEADER *pRegion, sgl_uint32 *curAddr,
+                                            sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, int Type, int PlaneLimit) {
+    sgl_uint32 RegionPlanes = *rPlanes;
+    sgl_uint32 nDiscardedPlanes = *dPlanes;
 
-	curAddr = OutputOpaqueList(pRegion->pLastSlots[Type], curAddr );
+    curAddr = OutputOpaqueList(pRegion->pLastSlots[Type], curAddr);
 
-	if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-	{
-		/* Copy all the light volumes */
-		curAddr = OutputShortList(pRegion->pLastSlots[LIGHTVOL], curAddr, &RegionPlanes );
-	}
-				
-	if ( pRegion->pLastSlots[SHADOW] != NULL )
-	{
-		/* Copy all the shadows */
-		curAddr = OutputShortList(pRegion->pLastSlots[SHADOW], curAddr, &RegionPlanes );
-	}
-		
-	/* Remove objects that put number of planes over the limit.*/
-	nDiscardedPlanes += RegionPlanes;
-	
-	while (RegionPlanes > PlaneLimit)
-	{					
-		/* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
-		RegionPlanes -= ( IR( --curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-	}
-	nDiscardedPlanes -= RegionPlanes;
+    if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+        /* Copy all the light volumes */
+        curAddr = OutputShortList(pRegion->pLastSlots[LIGHTVOL], curAddr, &RegionPlanes);
+    }
 
-	*rPlanes = RegionPlanes;
-	*dPlanes = nDiscardedPlanes;
+    if (pRegion->pLastSlots[SHADOW] != NULL) {
+        /* Copy all the shadows */
+        curAddr = OutputShortList(pRegion->pLastSlots[SHADOW], curAddr, &RegionPlanes);
+    }
 
-	return (curAddr);
+    /* Remove objects that put number of planes over the limit.*/
+    nDiscardedPlanes += RegionPlanes;
+
+    while (RegionPlanes > PlaneLimit) {
+        /* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
+        RegionPlanes -= (IR(--curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+    }
+    nDiscardedPlanes -= RegionPlanes;
+
+    *rPlanes = RegionPlanes;
+    *dPlanes = nDiscardedPlanes;
+
+    return (curAddr);
 } /* end of GenerateOpaquePtr */
 
 /**************************************************************************
@@ -3534,38 +3288,37 @@ static INLINE sgl_uint32 *GenerateOpaquePtr ( REGION_HEADER *pRegion, sgl_uint32
 **				  : curAddr - current address
 **                : rPlanes - number of planes in region
 **				  : dPlanes - number of discarded planes in region
-**				  : Type    - GouraudHighlight VertexFog, 
+**				  : Type    - GouraudHighlight VertexFog,
 **                            Trans_GouraudHighlight or Trans_VertexFog
 **
 ** Returns        : sgl_uint32 * - address last used to store output
-** Description    : Generate GouraudHighlight or VertexFog Ptr's 
+** Description    : Generate GouraudHighlight or VertexFog Ptr's
 ***************************************************************************/
 
-static INLINE sgl_uint32 *GenerateExtraPtr ( REGION_HEADER *pRegion, sgl_uint32 *curAddr,
-							  sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, int Type, int PlaneLimit) 
-{
-	sgl_uint32 RegionPlanes = *rPlanes;
-	sgl_uint32 nDiscardedPlanes = *dPlanes;
+static INLINE sgl_uint32 *GenerateExtraPtr(REGION_HEADER *pRegion, sgl_uint32 *curAddr,
+                                           sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, int Type, int PlaneLimit) {
+    sgl_uint32 RegionPlanes = *rPlanes;
+    sgl_uint32 nDiscardedPlanes = *dPlanes;
 
-	curAddr = OutputOpaqueList(pRegion->pExtraSlots[Type], curAddr );
-		
-	/* Remove objects that put number of planes over the limit.*/
-	nDiscardedPlanes += RegionPlanes;
-	
-	while (RegionPlanes > PlaneLimit)
-	{					
-		/* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
-		RegionPlanes -= ( IR( --curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-	}
-	nDiscardedPlanes -= RegionPlanes;
+    curAddr = OutputOpaqueList(pRegion->pExtraSlots[Type], curAddr);
 
-	*rPlanes = RegionPlanes;
-	*dPlanes = nDiscardedPlanes;
+    /* Remove objects that put number of planes over the limit.*/
+    nDiscardedPlanes += RegionPlanes;
 
-	return (curAddr);
+    while (RegionPlanes > PlaneLimit) {
+        /* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
+        RegionPlanes -= (IR(--curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+    }
+    nDiscardedPlanes -= RegionPlanes;
+
+    *rPlanes = RegionPlanes;
+    *dPlanes = nDiscardedPlanes;
+
+    return (curAddr);
 } /* end of GenerateExtraPtr */
 
 #if DAG_TRANS_SORTING
+
 /**************************************************************************
 ** Function Name  : GenerateDAGTransPtr (internal only  Assumed INLINE!)
 ** Inputs         : pRegion - pointer to region array
@@ -3574,32 +3327,30 @@ static INLINE sgl_uint32 *GenerateExtraPtr ( REGION_HEADER *pRegion, sgl_uint32 
 **				  : dPlanes - number of discarded planes in region
 **
 ** Returns        : sgl_uint32 * - address last used to store output
-** Description    : Generate DAG translucent ptrs to hardware ISP space. 
+** Description    : Generate DAG translucent ptrs to hardware ISP space.
 ***************************************************************************/
 
-static INLINE sgl_uint32 *GenerateDAGTransPtr ( REGION_HEADER *pRegion, sgl_uint32 *curAddr,
-							  sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, int PlaneLimit) 
-{
-	sgl_uint32 RegionPlanes = *rPlanes;
-	sgl_uint32 nDiscardedPlanes = *dPlanes;
+static INLINE sgl_uint32 *GenerateDAGTransPtr(REGION_HEADER *pRegion, sgl_uint32 *curAddr,
+                                              sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, int PlaneLimit) {
+    sgl_uint32 RegionPlanes = *rPlanes;
+    sgl_uint32 nDiscardedPlanes = *dPlanes;
 
-	/* Output the graph in passes */
-  	curAddr = Traverse(pRegion->usTransTriCounter, curAddr, &RegionPlanes);
+    /* Output the graph in passes */
+    curAddr = Traverse(pRegion->usTransTriCounter, curAddr, &RegionPlanes);
 
-	/* Remove objects that put number of planes over the limit.*/
-	nDiscardedPlanes += RegionPlanes;
-	
-	while (RegionPlanes > PlaneLimit)
-	{					
-		/* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
-		RegionPlanes -= ( IR( --curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-	}
-	nDiscardedPlanes -= RegionPlanes;
+    /* Remove objects that put number of planes over the limit.*/
+    nDiscardedPlanes += RegionPlanes;
 
-	*rPlanes = RegionPlanes;
-	*dPlanes = nDiscardedPlanes;
+    while (RegionPlanes > PlaneLimit) {
+        /* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
+        RegionPlanes -= (IR(--curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+    }
+    nDiscardedPlanes -= RegionPlanes;
 
-	return (curAddr);
+    *rPlanes = RegionPlanes;
+    *dPlanes = nDiscardedPlanes;
+
+    return (curAddr);
 } /* end of GenerateDAGTransPtr */
 #endif
 
@@ -3613,48 +3364,44 @@ static INLINE sgl_uint32 *GenerateDAGTransPtr ( REGION_HEADER *pRegion, sgl_uint
  *				  : pHead   - pointer of the head of trans list
  *
  * Returns        : sgl_uint32 * - address last used to store output
- * Description    : Generate Opaque, TransOpaque, GOURAUDHighlight or VertexFog Ptr's 
+ * Description    : Generate Opaque, TransOpaque, GOURAUDHighlight or VertexFog Ptr's
  **************************************************************************/
 
-static INLINE sgl_uint32 *GenerateTransPtr ( REGION_HEADER *pRegion, sgl_uint32 *curAddr,
-							  sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, sgl_uint32 *tPlanes,
-							  TRANSFACE_LIST *pHead) 
-{
-	sgl_uint32 RegionPlanes = *rPlanes;
-	sgl_uint32 nDiscardedPlanes = *dPlanes;
-	sgl_uint32 TransPassPlanes = *tPlanes;
+static INLINE sgl_uint32 *GenerateTransPtr(REGION_HEADER *pRegion, sgl_uint32 *curAddr,
+                                           sgl_uint32 *rPlanes, sgl_uint32 *dPlanes, sgl_uint32 *tPlanes,
+                                           TRANSFACE_LIST *pHead) {
+    sgl_uint32 RegionPlanes = *rPlanes;
+    sgl_uint32 nDiscardedPlanes = *dPlanes;
+    sgl_uint32 TransPassPlanes = *tPlanes;
 
-	curAddr = OutputShortList( pHead->pLastSlot, curAddr, &TransPassPlanes);
+    curAddr = OutputShortList(pHead->pLastSlot, curAddr, &TransPassPlanes);
 
-   	if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-   	{
-   		/* Copy all the light volumes */
-   		curAddr = OutputShortList(pRegion->pLastSlots[LIGHTVOL],
-   										curAddr, &TransPassPlanes);
-   	}
+    if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+        /* Copy all the light volumes */
+        curAddr = OutputShortList(pRegion->pLastSlots[LIGHTVOL],
+                                  curAddr, &TransPassPlanes);
+    }
 
-   	if ( pRegion->pLastSlots[SHADOW] != NULL )
-   	{
-   		/* Copy all the shadows */
-   		curAddr = OutputShortList(pRegion->pLastSlots[SHADOW],
-   										curAddr, &TransPassPlanes);
-   	}					  				
+    if (pRegion->pLastSlots[SHADOW] != NULL) {
+        /* Copy all the shadows */
+        curAddr = OutputShortList(pRegion->pLastSlots[SHADOW],
+                                  curAddr, &TransPassPlanes);
+    }
 
-   	RegionPlanes += TransPassPlanes;
-   	nDiscardedPlanes += RegionPlanes;
+    RegionPlanes += TransPassPlanes;
+    nDiscardedPlanes += RegionPlanes;
 
-   	while (RegionPlanes > (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES) )
-   	{												
-   		/* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
-   		RegionPlanes -= ( IR( --curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
-   	}
+    while (RegionPlanes > (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES)) {
+        /* RegionPlanes-=( (*--curAddr) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK; */
+        RegionPlanes -= (IR(--curAddr, 0) >> OBJ_PCOUNT_SHIFT) & OBJ_PCOUNT_MASK;
+    }
 
-   	nDiscardedPlanes -= RegionPlanes;
-	*rPlanes = RegionPlanes;
-	*dPlanes = nDiscardedPlanes;
-	*tPlanes = TransPassPlanes;
+    nDiscardedPlanes -= RegionPlanes;
+    *rPlanes = RegionPlanes;
+    *dPlanes = nDiscardedPlanes;
+    *tPlanes = TransPassPlanes;
 
-	return (curAddr);
+    return (curAddr);
 } /* end of GenerateTransPtr */
 
 /**************************************************************************
@@ -3668,31 +3415,29 @@ static INLINE sgl_uint32 *GenerateTransPtr ( REGION_HEADER *pRegion, sgl_uint32 
  * Returns        : sgl_uint32 * - address last used to store output
  **************************************************************************/
 
-static INLINE sgl_uint32 *OutputFlushingPlanes ( sgl_uint32 *curAddr, sgl_uint32 *rPlanes, 
-									sgl_uint32 DataType)
-{
-	sgl_uint32 RegionPlanes = *rPlanes;
+static INLINE sgl_uint32 *OutputFlushingPlanes(sgl_uint32 *curAddr, sgl_uint32 *rPlanes,
+                                               sgl_uint32 DataType) {
+    sgl_uint32 RegionPlanes = *rPlanes;
 
-	IW(curAddr++ , 0, DataType);	
-	RegionPlanes += FLUSH_PLANE;
+    IW(curAddr++, 0, DataType);
+    RegionPlanes += FLUSH_PLANE;
 
-	/* Fix for hardware bug - if the flush plane falls
-	** on a 512/513 plane pos (i.e. forces the chip for 
+    /* Fix for hardware bug - if the flush plane falls
+	** on a 512/513 plane pos (i.e. forces the chip for
 	** double buffering the internal cache to single buffer
 	** the flush plane can get lost
 	** with the effect that this pass and the next pass
 	** concatenate therby losing a translucent plane
-	*/ 
-	if(RegionPlanes==0x200 || RegionPlanes==0x201)
-	{
-		IW( curAddr++, 0, DataType);
-		RegionPlanes+= FLUSH_PLANE;
-		IW( curAddr++, 0, DataType);
-		RegionPlanes+= FLUSH_PLANE;
-	}
+	*/
+    if (RegionPlanes == 0x200 || RegionPlanes == 0x201) {
+        IW(curAddr++, 0, DataType);
+        RegionPlanes += FLUSH_PLANE;
+        IW(curAddr++, 0, DataType);
+        RegionPlanes += FLUSH_PLANE;
+    }
 
-	*rPlanes = RegionPlanes;
-	return (curAddr);
+    *rPlanes = RegionPlanes;
+    return (curAddr);
 }/* end of OutputFlushingPlanes */
 
 #if VIGNETTE_FIX
@@ -3701,180 +3446,162 @@ static INLINE sgl_uint32 *OutputFlushingPlanes ( sgl_uint32 *curAddr, sgl_uint32
  * Function Name  : CountTotalTranslucentPlanes (internal only  Assumed INLINE!)
  * Input		  : RegionPlanes - 	 number of planes in region
  * Inputs/Output  : pRegion - pointer to region array
- *				  : tPlanes - number of translucent planes in region  
+ *				  : tPlanes - number of translucent planes in region
  *				  : pHead   - pointer of the head of trans list
  *
  * Returns        : TRANSFACE_LIST * - pointer of the head of trans list
  * Description    : It simply counts all the planes in translucent pass for vignette fix.
- *					
+ *
  **************************************************************************/
 
-static INLINE void CountTotalTranslucentPlanes ( REGION_HEADER	*pRegion,
-											sgl_uint32		RegionPlanes,
-											sgl_uint32		*tPlanes,
+static INLINE void CountTotalTranslucentPlanes(REGION_HEADER *pRegion,
+                                               sgl_uint32 RegionPlanes,
+                                               sgl_uint32 *tPlanes,
 #if DAG_TRANS_SORTING
-											sgl_uint32		uSortedPlanes,
+                                               sgl_uint32 uSortedPlanes,
 #endif
-											TRANSFACE_LIST	*pHead) 
-{
-	sgl_uint32	TransPassPlanes = 0, i;
+                                               TRANSFACE_LIST *pHead) {
+    sgl_uint32 TransPassPlanes = 0, i;
 
-	/* This needs to be a sgl_int32 since the result could be negative.
+    /* This needs to be a sgl_int32 since the result could be negative.
 	 */
-	sgl_int32	nPassCountCat;
+    sgl_int32 nPassCountCat;
 
-	/* Count the OpaqueTrans pass 
+    /* Count the OpaqueTrans pass
 	 */
-	if (pRegion->pLastSlots[OPAQUETRANS] != NULL)
-	{
-		/* Add the dummy begin translucent pass object for this pass  */
-		TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
-		/* Count planes. OpaqueTrans planes 	*/
-		TransPassPlanes += pRegion->TransOpaquePlanes;
+    if (pRegion->pLastSlots[OPAQUETRANS] != NULL) {
+        /* Add the dummy begin translucent pass object for this pass  */
+        TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
+        /* Count planes. OpaqueTrans planes 	*/
+        TransPassPlanes += pRegion->TransOpaquePlanes;
 
-		if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-		{
-			/* Count planes. light volumes.	*/
-			TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
-		}
-				
-		if ( pRegion->pLastSlots[SHADOW] != NULL )
-		{
-			/* Count all the shadows. */
-			TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
-		}
-		/* Add the flushing plane for this pass !!!!!!!	*/
-		TransPassPlanes+= FLUSH_PLANE;
+        if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+            /* Count planes. light volumes.	*/
+            TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
+        }
 
-		/* we'll add some flushing planes if this pass goes over
+        if (pRegion->pLastSlots[SHADOW] != NULL) {
+            /* Count all the shadows. */
+            TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
+        }
+        /* Add the flushing plane for this pass !!!!!!!	*/
+        TransPassPlanes += FLUSH_PLANE;
+
+        /* we'll add some flushing planes if this pass goes over
 		** the internal cache halfway point
-		*/ 
-		if((RegionPlanes+TransPassPlanes)==0x200 || 
-		   (RegionPlanes+TransPassPlanes)==0x201)
-		{
-			TransPassPlanes+= FLUSH_PLANE;
-			TransPassPlanes+= FLUSH_PLANE;
-		}
-	}
+		*/
+        if ((RegionPlanes + TransPassPlanes) == 0x200 ||
+            (RegionPlanes + TransPassPlanes) == 0x201) {
+            TransPassPlanes += FLUSH_PLANE;
+            TransPassPlanes += FLUSH_PLANE;
+        }
+    }
 
-	/* Count the Extra passes  */
-	for(i=GOURAUDHIGHLIGHT; i<=TRANS_VERTEXFOG; i++)
-	{
-		if (pRegion->pExtraSlots[i] != NULL)
-		{
-			/* Add the dummy begin translucent pass object for this pass  */
-			TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
-			/* Count extra planes */
-			TransPassPlanes += pRegion->ExtraPlanes[i];
-			/* Add the flushing plane for this pass !!!!!!!	*/
-			TransPassPlanes+= FLUSH_PLANE;
-			
-			/* we'll add some flushing planes if this pass goes over
+    /* Count the Extra passes  */
+    for (i = GOURAUDHIGHLIGHT; i <= TRANS_VERTEXFOG; i++) {
+        if (pRegion->pExtraSlots[i] != NULL) {
+            /* Add the dummy begin translucent pass object for this pass  */
+            TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
+            /* Count extra planes */
+            TransPassPlanes += pRegion->ExtraPlanes[i];
+            /* Add the flushing plane for this pass !!!!!!!	*/
+            TransPassPlanes += FLUSH_PLANE;
+
+            /* we'll add some flushing planes if this pass goes over
 			** the internal cache halfway point
-			*/ 
-			if((RegionPlanes+TransPassPlanes)==0x200 || 
-			   (RegionPlanes+TransPassPlanes)==0x201)
-			{
-				TransPassPlanes+= FLUSH_PLANE;
-				TransPassPlanes+= FLUSH_PLANE;
-			}
-		}
-	}
+			*/
+            if ((RegionPlanes + TransPassPlanes) == 0x200 ||
+                (RegionPlanes + TransPassPlanes) == 0x201) {
+                TransPassPlanes += FLUSH_PLANE;
+                TransPassPlanes += FLUSH_PLANE;
+            }
+        }
+    }
 
-	/* Count the original translucent pass planes and sort them. 
+    /* Count the original translucent pass planes and sort them.
 	 */
-	if (pHead)
-	{
-		TRANSFACE_LIST *pLocalHead = pHead;
+    if (pHead) {
+        TRANSFACE_LIST *pLocalHead = pHead;
 
-		/* Calculate the number of translucent passes to concatenate.  */
-		nPassCountCat = pRegion->nPassCount - nMaxPassCount + 1;
-						
-		/* Stuff in the (m - n + 1) passes together.  */
-		if (nPassCountCat > 0)
-		{
-			/* Count begin translucent pass plane.	*/
-			TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
+        /* Calculate the number of translucent passes to concatenate.  */
+        nPassCountCat = pRegion->nPassCount - nMaxPassCount + 1;
 
-			while (	( nPassCountCat > 0 ) && ( pLocalHead != NULL ))
-			{
-				/* Decrement the count.	*/
-				nPassCountCat--;
-						
-				/* Count planes. Translucent planes first.	*/
-				TransPassPlanes += CountShortList( pLocalHead->pLastSlot);
+        /* Stuff in the (m - n + 1) passes together.  */
+        if (nPassCountCat > 0) {
+            /* Count begin translucent pass plane.	*/
+            TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
 
-				if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-				{
-					/* Count all the light volume planes  */
-					TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
-				}
+            while ((nPassCountCat > 0) && (pLocalHead != NULL)) {
+                /* Decrement the count.	*/
+                nPassCountCat--;
 
-				if ( pRegion->pLastSlots[SHADOW] != NULL )
-				{
-					/* Count all the shadows planes	*/
-					TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
-				}
+                /* Count planes. Translucent planes first.	*/
+                TransPassPlanes += CountShortList(pLocalHead->pLastSlot);
 
-				pLocalHead = pLocalHead->pPost;
-			}
+                if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+                    /* Count all the light volume planes  */
+                    TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
+                }
 
-			/* Count flushing plane.  */
-			TransPassPlanes += FLUSH_PLANE;
-			if((RegionPlanes+TransPassPlanes)==0x200 || 
-			   (RegionPlanes+TransPassPlanes)==0x201)
-			{
-				TransPassPlanes+= FLUSH_PLANE;
-				TransPassPlanes+= FLUSH_PLANE;
-			}
-		}
+                if (pRegion->pLastSlots[SHADOW] != NULL) {
+                    /* Count all the shadows planes	*/
+                    TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
+                }
 
-		/* Check every pass. */
-		while ( pLocalHead != NULL )
-		{
-			/* Count begin translucent pass plane. */
-			TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
+                pLocalHead = pLocalHead->pPost;
+            }
 
-			/* Count planes. Translucent planes first. */
-			TransPassPlanes += CountShortList( pLocalHead->pLastSlot);
+            /* Count flushing plane.  */
+            TransPassPlanes += FLUSH_PLANE;
+            if ((RegionPlanes + TransPassPlanes) == 0x200 ||
+                (RegionPlanes + TransPassPlanes) == 0x201) {
+                TransPassPlanes += FLUSH_PLANE;
+                TransPassPlanes += FLUSH_PLANE;
+            }
+        }
 
-			if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-			{
-				/* Count all the light volume planes  */
-				TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
-			}
-			if ( pRegion->pLastSlots[SHADOW] != NULL )
-			{
-				/* Count all the shadows planes	 */
-				TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
-			}
+        /* Check every pass. */
+        while (pLocalHead != NULL) {
+            /* Count begin translucent pass plane. */
+            TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
 
-			/* Count flushing plane. */
-			TransPassPlanes += FLUSH_PLANE;
-			if((RegionPlanes+TransPassPlanes)==0x200 || 
-			   (RegionPlanes+TransPassPlanes)==0x201)
-			{
-				TransPassPlanes+= FLUSH_PLANE;
-				TransPassPlanes+= FLUSH_PLANE;
-			}
-			pLocalHead = pLocalHead->pPost;
-		}
-				
+            /* Count planes. Translucent planes first. */
+            TransPassPlanes += CountShortList(pLocalHead->pLastSlot);
+
+            if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+                /* Count all the light volume planes  */
+                TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
+            }
+            if (pRegion->pLastSlots[SHADOW] != NULL) {
+                /* Count all the shadows planes	 */
+                TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
+            }
+
+            /* Count flushing plane. */
+            TransPassPlanes += FLUSH_PLANE;
+            if ((RegionPlanes + TransPassPlanes) == 0x200 ||
+                (RegionPlanes + TransPassPlanes) == 0x201) {
+                TransPassPlanes += FLUSH_PLANE;
+                TransPassPlanes += FLUSH_PLANE;
+            }
+            pLocalHead = pLocalHead->pPost;
+        }
+
 #if PCX1
-		/* Extra translucent pass for PCX1. */
+                                                                                                                                /* Extra translucent pass for PCX1. */
 		TransPassPlanes += NUM_TRANS_PASS_START_PLANES +  FLUSH_PLANE +
 						   NUM_DUMMY_OBJECT_PLANES;
 #endif
 
-	}
+    }
 
 #if DAG_TRANS_SORTING
-	/* Add the number of planes belonged to the sorted triangles..
+    /* Add the number of planes belonged to the sorted triangles..
 	 */
-	TransPassPlanes += uSortedPlanes;
+    TransPassPlanes += uSortedPlanes;
 #endif /*DAG_TRANS_SORTING*/
 
-	*tPlanes = TransPassPlanes;
+    *tPlanes = TransPassPlanes;
 
 }/* end of CountTotalTranslucentPlanes */
 #endif
@@ -3894,400 +3621,376 @@ int number = 0;
  *					 rendered, irrespective of whether they are empty.
  * Returns        : Number of regions rendered (nNumRegionsRendered).
  * Global Used    : RegionData, and ISP parameter buffer in rnglobals
- * Description    : 
+ * Description    :
  *                  Generates object reference part of sabre parameter data
  *					using the pRegionStrips object list structure.
  *
  *				    This is the version for SGL Lite, which does not render
  *					empty regions (for speeding up Direct3D benchmarks).
  *****************************************************************************/
-int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
-						   sgl_bool  bRenderAllRegions)
-{
-	REGION_STRIP *pStrip, *pLastStrip;
+int GenerateObjectPtrLite(const REGIONS_RECT_STRUCT *const pRegionsRect,
+                          sgl_bool bRenderAllRegions) {
+    REGION_STRIP *pStrip, *pLastStrip;
 #if !DUMP_PARAMS
-	/*
+    /*
 	// If we are dumping parameter files then this becomes a global variable to
 	// be read by DumpSabreAndTexas in rnrender.c
 	*/
-	sgl_uint32 *curAddr;
+    sgl_uint32 *curAddr;
 #endif
-		/* Convert LastYRegion to actual lines on the screen */
-		int YRegLines = RegionInfo.YSize >> Y_SHIFT;
-		int LastYLine = (pRegionsRect->LastYRegion+1) * YRegLines;
-		
-	int nNumRegionsRendered = 0;
+    /* Convert LastYRegion to actual lines on the screen */
+    int YRegLines = RegionInfo.YSize >> Y_SHIFT;
+    int LastYLine = (pRegionsRect->LastYRegion + 1) * YRegLines;
+
+    int nNumRegionsRendered = 0;
 #if _DEBUG
-	int FoundOverload = DumpedOne;
+    int FoundOverload = DumpedOne;
 #endif
 
-	int FrameTotalPlanes=0, FrameTransPasses=0, FrameTransPlanes=0, FrameViFixes=0;
-	static FILE *dump = NULL;
+    int FrameTotalPlanes = 0, FrameTransPasses = 0, FrameTransPlanes = 0, FrameViFixes = 0;
+    static FILE *dump = NULL;
 
 #if REGION_STATS
-	if(dump==NULL)
+                                                                                                                            if(dump==NULL)
 	{
 		dump = fopen("region.out","w");
 	}
 #endif
-	/* Get pointer to where we are building this info */
-	curAddr = PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer + 
-		PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos;
-	
-	/* Check the region range */
-	ASSERT(pRegionsRect->LastXRegion < MAX_X_REGIONS);
-	ASSERT(pRegionsRect->LastYRegion < MAX_Y_REGIONS);
-	ASSERT(pRegionsRect->FirstXRegion >= 0);
-	ASSERT(pRegionsRect->FirstYRegion >= 0);
-	ASSERT(pRegionsRect->LastXRegion >= pRegionsRect->FirstXRegion);
-	ASSERT(pRegionsRect->LastYRegion >= pRegionsRect->FirstYRegion);
+    /* Get pointer to where we are building this info */
+    curAddr = PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer +
+              PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos;
 
-	{
-		if ( LastYLine > OutputHeight )
-		{
-			/* Limit to precise screen size */
-			LastYLine = OutputHeight;
-		}
+    /* Check the region range */
+    ASSERT(pRegionsRect->LastXRegion < MAX_X_REGIONS);
+    ASSERT(pRegionsRect->LastYRegion < MAX_Y_REGIONS);
+    ASSERT(pRegionsRect->FirstXRegion >= 0);
+    ASSERT(pRegionsRect->FirstYRegion >= 0);
+    ASSERT(pRegionsRect->LastXRegion >= pRegionsRect->FirstXRegion);
+    ASSERT(pRegionsRect->LastYRegion >= pRegionsRect->FirstYRegion);
 
-		/* Start on the first strip, externally nominal region height applies */
-		pStrip     = pRegionStrips[pRegionsRect->FirstYRegion * YRegLines];
-		pLastStrip = pRegionStrips[LastYLine-1];
-	}
-	
-	
-	/* Reset render counter */
-	nNumRegionsRendered = 0;
+    {
+        if (LastYLine > OutputHeight) {
+            /* Limit to precise screen size */
+            LastYLine = OutputHeight;
+        }
+
+        /* Start on the first strip, externally nominal region height applies */
+        pStrip = pRegionStrips[pRegionsRect->FirstYRegion * YRegLines];
+        pLastStrip = pRegionStrips[LastYLine - 1];
+    }
+
+
+    /* Reset render counter */
+    nNumRegionsRendered = 0;
 
 
 #if REGION_STATS
-	if(dump!=NULL)
+                                                                                                                            if(dump!=NULL)
 	{
 		fprintf(dump,"VF   AllPlanes   TransPlanes   TransPasses\n");
 	}
 #endif
 
-	for ( ;; pStrip = pStrip->pNext )
-	{
-		REGION_HEADER *pRegion;
-		sgl_uint32 RegionWord;
-		sgl_uint32 uBusiestTile = 0;
-		sgl_uint32 uSadness = 0;
-		int Width = pStrip->Width, Regions;
-		sgl_int32	nPassCountCat;
+    for (;; pStrip = pStrip->pNext) {
+        REGION_HEADER *pRegion;
+        sgl_uint32 RegionWord;
+        sgl_uint32 uBusiestTile = 0;
+        sgl_uint32 uSadness = 0;
+        int Width = pStrip->Width, Regions;
+        sgl_int32 nPassCountCat;
 
-		/* Start one after the last region of size XSize<<Width */
-		Regions = (pRegionsRect->LastXRegion >> Width) + 1;
+        /* Start one after the last region of size XSize<<Width */
+        Regions = (pRegionsRect->LastXRegion >> Width) + 1;
 
-		/* Calculate starting address in region array */
-		pRegion = pStrip->Regions +	Regions;
+        /* Calculate starting address in region array */
+        pRegion = pStrip->Regions + Regions;
 
-		/* Calculate region word corresponding to our starting point */
-		RegionWord = pStrip->RegionWordY + AddRegionWordXData(Regions, Width);
+        /* Calculate region word corresponding to our starting point */
+        RegionWord = pStrip->RegionWordY + AddRegionWordXData(Regions, Width);
 
-		/* Number of regions to be processed */
-		Regions = Regions - (pRegionsRect->FirstXRegion >> Width);
+        /* Number of regions to be processed */
+        Regions = Regions - (pRegionsRect->FirstXRegion >> Width);
 
-		do
-		{
-			TRANSFACE_LIST *pHead;
-			#if DOING_SGL_STYLE_SORTING
-				TRANSFACE_LIST *pTail;
-			#endif
-			sgl_uint32 RegionPlanes;
-			sgl_uint32 nDiscardedPlanes = 0;
-			sgl_uint32 TransPassPlanes = 0;
-			int RegionTotalPlanes=0, RegionTransPasses=0, RegionTransPlanes=0, ViFix=0;
-#if DAG_TRANS_SORTING
-			sgl_uint32 uSortedPlanes = 0;
-#endif
-			/* Previous region please, get Opaque counter */
-			RegionPlanes = (--pRegion)->OpaquePlanes;
-						
-			/* Pre-adjust running values for every tile scanned */
-			RegionWord -= DeltaRegionWordX( Width );
-
-			/* Ignore the background OPAQUE object which is always there */
-			if ( ( RegionPlanes < 2 )             &&
-		#if DAG_TRANS_SORTING
-				 ( pRegion->uTransTriList == NULL ) &&
-		#endif /*DAG_TRANS_SORTING*/
-				 (!bRenderAllRegions)             &&
-				 ( pRegion->pLastSlots[OPAQUETRANS] == NULL ) &&
+        do {
+            TRANSFACE_LIST *pHead;
 #if DOING_SGL_STYLE_SORTING
-				 ( pRegion->pCurTSet[0] == NULL ) &&
-				 ( pRegion->pCurTSet[1] == NULL )    )
-#else
-				 ( pRegion->pCurTSet == NULL ) )
+            TRANSFACE_LIST *pTail;
 #endif
-			{
-				/* Next region please, increase size of strip if possible */
-				continue;
-			}
-						
-			/* Need to render this region */
-			nNumRegionsRendered++;
+            sgl_uint32 RegionPlanes;
+            sgl_uint32 nDiscardedPlanes = 0;
+            sgl_uint32 TransPassPlanes = 0;
+            int RegionTotalPlanes = 0, RegionTransPasses = 0, RegionTransPlanes = 0, ViFix = 0;
+#if DAG_TRANS_SORTING
+            sgl_uint32 uSortedPlanes = 0;
+#endif
+            /* Previous region please, get Opaque counter */
+            RegionPlanes = (--pRegion)->OpaquePlanes;
 
-				/* Start first pass */
-			IW( curAddr++, 0, RegionWord);
+            /* Pre-adjust running values for every tile scanned */
+            RegionWord -= DeltaRegionWordX(Width);
 
-			if ( pRegion->pLastSlots[OPAQUE] != NULL )
-			{
-				/* Add opaque objects */
-				curAddr = GenerateOpaquePtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-											  OPAQUE, (REGION_PLANE_LIM - SAFETY_MARGIN_OPAQ));
-			}
+            /* Ignore the background OPAQUE object which is always there */
+            if ((RegionPlanes < 2) &&
+                #if DAG_TRANS_SORTING
+                (pRegion->uTransTriList == NULL) &&
+                #endif /*DAG_TRANS_SORTING*/
+                (!bRenderAllRegions) &&
+                (pRegion->pLastSlots[OPAQUETRANS] == NULL) &&
+                #if DOING_SGL_STYLE_SORTING
+                (pRegion->pCurTSet[0] == NULL) &&
+                (pRegion->pCurTSet[1] == NULL))
+#else
+                ( pRegion->pCurTSet == NULL ) )
+#endif
+            {
+                /* Next region please, increase size of strip if possible */
+                continue;
+            }
 
-			/* Each pass must have at least REGION_PLANE_MIN planes for 
+            /* Need to render this region */
+            nNumRegionsRendered++;
+
+            /* Start first pass */
+            IW(curAddr++, 0, RegionWord);
+
+            if (pRegion->pLastSlots[OPAQUE] != NULL) {
+                /* Add opaque objects */
+                curAddr = GenerateOpaquePtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                            OPAQUE, (REGION_PLANE_LIM - SAFETY_MARGIN_OPAQ));
+            }
+
+            /* Each pass must have at least REGION_PLANE_MIN planes for
 			   the sabre chip to work so pad the region  up to meet this
 			   condition.												*/
 
-			while(RegionPlanes < REGION_PLANE_MIN)
-			{				
-				/* Add dummy objects until we meet our min criterion */
-  				IW(curAddr++, 0, DummyObjData);
-  				RegionPlanes += NUM_DUMMY_OBJECT_PLANES;
-				/*	DPF((DBG_VERBOSE, "---- Padding Region with extra planes to make > 33 ----"));*/
-			}
+            while (RegionPlanes < REGION_PLANE_MIN) {
+                /* Add dummy objects until we meet our min criterion */
+                IW(curAddr++, 0, DummyObjData);
+                RegionPlanes += NUM_DUMMY_OBJECT_PLANES;
+                /*	DPF((DBG_VERBOSE, "---- Padding Region with extra planes to make > 33 ----"));*/
+            }
 
 
-		  	/* Add the flushing plane for the opaque pass !!!!!!! */
-			curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyFlushData);
+            /* Add the flushing plane for the opaque pass !!!!!!! */
+            curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyFlushData);
 
 
-			/* Translucent object handling	*/
+            /* Translucent object handling	*/
 #if DOING_SGL_STYLE_SORTING
-			pHead = pRegion->pCurTSet[0];
-			pTail = pRegion->pCurTSet[1];
+            pHead = pRegion->pCurTSet[0];
+            pTail = pRegion->pCurTSet[1];
 #else
-			pHead = pRegion->pCurTSet;
+            pHead = pRegion->pCurTSet;
 #endif
 
 #if DAG_TRANS_SORTING
-			/* We need to fiddle with the new sorting algorithm.
+            /* We need to fiddle with the new sorting algorithm.
 			 */
-			if ( pRegion->uTransTriList != NULL )
-			{	/* Create the graph
+            if (pRegion->uTransTriList != NULL) {    /* Create the graph
 				 */
-				DoTheStuff( (sgl_uint32) pRegion->usTransTriCounter, 
-							&pRegion->uTransTriList );
+                DoTheStuff((sgl_uint32) pRegion->usTransTriCounter,
+                           &pRegion->uTransTriList);
 
-				/* Calculate the number of planes need for the new sorting algorothm.
+                /* Calculate the number of planes need for the new sorting algorothm.
 				 * This is required regardless if vignetting fix is being used or
 				 * not. Needed to cycle through the graph.
 				 */
-				uSortedPlanes = FixForVignetting(pRegion->usTransTriCounter);
-			}
+                uSortedPlanes = FixForVignetting(pRegion->usTransTriCounter);
+            }
 
-#endif /*DAG_TRANS_SORTING*/		 
-			
+#endif /*DAG_TRANS_SORTING*/
+
 #if DOING_SGL_STYLE_SORTING
-			if (( pHead != pTail ) && (RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Need to sort them. 
+            if ((pHead != pTail) && (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Need to sort them.
 				 */
-				if(gNoSortTransFaces == NO_SORT || gNoSortTransFaces == REVERSED_NO_SORT)
-				{			 
-				 	pHead = NoSortTransFaceLists( pRegion, pHead);
-				}
-				else
-				{
-					pHead = SortTransFaceLists( pRegion, pHead, pTail );
-				}
-			}
-			else
-			{
-				/* Set it to NULL if we aren't happy. ie no translucent triangles.
+                if (gNoSortTransFaces == NO_SORT || gNoSortTransFaces == REVERSED_NO_SORT) {
+                    pHead = NoSortTransFaceLists(pRegion, pHead);
+                } else {
+                    pHead = SortTransFaceLists(pRegion, pHead, pTail);
+                }
+            } else {
+                /* Set it to NULL if we aren't happy. ie no translucent triangles.
 				 */
-				pHead = NULL;
-			}
+                pHead = NULL;
+            }
 #endif
 
 #if VIGNETTE_FIX
-			/* Only do vignetting fix if plane count is less than cache boundary.
+            /* Only do vignetting fix if plane count is less than cache boundary.
 			 */
-			if (RegionPlanes < IN_PLANE_CACHE_BOUNDARY)
-			{
-				/* This is the vignetting fix. It simply counts all the planes in every pass.
+            if (RegionPlanes < IN_PLANE_CACHE_BOUNDARY) {
+                /* This is the vignetting fix. It simply counts all the planes in every pass.
 				 * If the total pass count puts the plane count for a tile over 1024 then
 				 * the first pass is started out of cache.
 				 */
-				CountTotalTranslucentPlanes (pRegion, RegionPlanes, &TransPassPlanes,
-	#if DAG_TRANS_SORTING
-											 uSortedPlanes,
-	#endif
-											 pHead);
-				
-				/* Pad out the opaque pass over the cache boundary if the sum of
+                CountTotalTranslucentPlanes(pRegion, RegionPlanes, &TransPassPlanes,
+#if DAG_TRANS_SORTING
+                                            uSortedPlanes,
+#endif
+                                            pHead);
+
+                /* Pad out the opaque pass over the cache boundary if the sum of
 				 * the translucent planes plus the current tile plane count exceeds
 				 * the cache boundary.
 				 *
 				 * This fix prevents vignetting since this is due to the translucent
 				 * pass crossing the cache boundary.
 				 */
-				if ((RegionPlanes + TransPassPlanes) > IN_PLANE_CACHE_BOUNDARY)
-				{
-					/* Overwrite old flushing plane
+                if ((RegionPlanes + TransPassPlanes) > IN_PLANE_CACHE_BOUNDARY) {
+                    /* Overwrite old flushing plane
 					 */
-					curAddr--;
-							
-					while(RegionPlanes < IN_PLANE_CACHE_BOUNDARY)
-					{				
-						/* Add dummy objects until we meet our min criterion
-						 */
-						IW( curAddr++, 0, DummyObjDataLarge);
-						RegionPlanes += NUM_DUMMY_OBJECT_PLANES_LARGE;
-					}
-							
-					/* Replace flushing plane
-					 */
-					IW( curAddr++, 0, DummyFlushData);
-					ViFix = 1;
-				}
-			}
-#endif		/* #if VIGNETTE_FIX	*/
+                    curAddr--;
 
-			/* Jim's new D3D translucent solution. Only inserted if plane count below
+                    while (RegionPlanes < IN_PLANE_CACHE_BOUNDARY) {
+                        /* Add dummy objects until we meet our min criterion
+						 */
+                        IW(curAddr++, 0, DummyObjDataLarge);
+                        RegionPlanes += NUM_DUMMY_OBJECT_PLANES_LARGE;
+                    }
+
+                    /* Replace flushing plane
+					 */
+                    IW(curAddr++, 0, DummyFlushData);
+                    ViFix = 1;
+                }
+            }
+#endif        /* #if VIGNETTE_FIX	*/
+
+            /* Jim's new D3D translucent solution. Only inserted if plane count below
 			 * the safety margin.
 			 */
-			if ((pRegion->pLastSlots[OPAQUETRANS] != NULL ) &&
-				(RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Add the dummy begin translucent pass object for this pass.
+            if ((pRegion->pLastSlots[OPAQUETRANS] != NULL) &&
+                (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Add the dummy begin translucent pass object for this pass.
 				 */
-				IW(curAddr++ , 0, DummyTransData);
-				RegionPlanes += 
-					NUM_TRANS_PASS_START_PLANES + pRegion->TransOpaquePlanes;
+                IW(curAddr++, 0, DummyTransData);
+                RegionPlanes +=
+                        NUM_TRANS_PASS_START_PLANES + pRegion->TransOpaquePlanes;
 
-				/* Add OpaqueTrans objects */
-				curAddr = GenerateOpaquePtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-										 OPAQUETRANS, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
-			   
-				/* Add the flushing plane for this pass !!!!!!!	*/
-				curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 
-			}
+                /* Add OpaqueTrans objects */
+                curAddr = GenerateOpaquePtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                            OPAQUETRANS, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
 
-			/* GOURAUD Highlight objects pass */
-			if ((pRegion->pExtraSlots[GOURAUDHIGHLIGHT] != NULL ) &&
-				(RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Add the dummy begin translucent pass object for this pass.*/
-				IW(curAddr++ , 0, DummyTransData);
-				RegionPlanes += 
-					NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[GOURAUDHIGHLIGHT];
+                /* Add the flushing plane for this pass !!!!!!!	*/
+                curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+            }
 
-				/* Add GOURAUD Highlight objects */
-				curAddr = GenerateExtraPtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-										 GOURAUDHIGHLIGHT, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
-			   
-				/* Add the flushing plane for this pass !!!!!!!	*/
-				curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 
-			}
-		   
-		    /* Vertex Fog objects pass */
-			if ((pRegion->pExtraSlots[VERTEXFOG] != NULL ) &&
-				(RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Add the dummy begin translucent pass object for this pass. */
-				IW(curAddr++ , 0, DummyTransData);
-				RegionPlanes += 
-					NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[VERTEXFOG];
+            /* GOURAUD Highlight objects pass */
+            if ((pRegion->pExtraSlots[GOURAUDHIGHLIGHT] != NULL) &&
+                (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Add the dummy begin translucent pass object for this pass.*/
+                IW(curAddr++, 0, DummyTransData);
+                RegionPlanes +=
+                        NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[GOURAUDHIGHLIGHT];
 
-				/* Add GOURAUD Highlight objects */
-				curAddr = GenerateExtraPtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-										 VERTEXFOG, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
-			   
-				/* Add the flushing plane for this pass !!!!!!!	*/
-				curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 
-			}
+                /* Add GOURAUD Highlight objects */
+                curAddr = GenerateExtraPtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                           GOURAUDHIGHLIGHT, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
 
-			/* Initialise count. */
-			TransPassPlanes = 0;
+                /* Add the flushing plane for this pass !!!!!!!	*/
+                curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+            }
+
+            /* Vertex Fog objects pass */
+            if ((pRegion->pExtraSlots[VERTEXFOG] != NULL) &&
+                (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Add the dummy begin translucent pass object for this pass. */
+                IW(curAddr++, 0, DummyTransData);
+                RegionPlanes +=
+                        NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[VERTEXFOG];
+
+                /* Add GOURAUD Highlight objects */
+                curAddr = GenerateExtraPtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                           VERTEXFOG, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
+
+                /* Add the flushing plane for this pass !!!!!!!	*/
+                curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+            }
+
+            /* Initialise count. */
+            TransPassPlanes = 0;
 
 
 #if DAG_TRANS_SORTING
-			if ( pRegion->uTransTriList != NULL )
-			{
-				/* Output the graph in passes */
-				curAddr = GenerateDAGTransPtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-										 (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
-			   
-			}
+            if (pRegion->uTransTriList != NULL) {
+                /* Output the graph in passes */
+                curAddr = GenerateDAGTransPtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                              (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
+
+            }
 
 #endif /*DAG_TRANS_SORTING*/
 
 #if VIGNETTE_FIX
-			/* Normal translucent pass handling. The are translucent passes if pHead != NULL.
+            /* Normal translucent pass handling. The are translucent passes if pHead != NULL.
 			 * The translucent passes have already been sorted if vignetting fix used. */
 
-			if ( pHead && (RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* No need to sort them as already sorted.*/
+            if (pHead && (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* No need to sort them as already sorted.*/
 #else
-			/* Count the original translucent pass planes and sort them.
+                                                                                                                                        /* Count the original translucent pass planes and sort them.
 			 */
 			if ( pHead && (RegionPlanes < SAFETY_MARGIN_TRANS))
 			{
 #endif
-				RegionTransPlanes = RegionPlanes;
+                RegionTransPlanes = RegionPlanes;
 
-				/* Calculate the number of translucent passes to concatenate.*/
-				nPassCountCat = pRegion->nPassCount - nMaxPassCount + 1;
-						
-				/* Stuff in the (m - n + 1) passes together. */
-				if (nPassCountCat > 0)
-				{
-					RegionTransPasses++;
+                /* Calculate the number of translucent passes to concatenate.*/
+                nPassCountCat = pRegion->nPassCount - nMaxPassCount + 1;
 
-					/* Add the dummy begin translucent pass object for this pass  */
-					IW( curAddr++, 0, DummyTransData);
-					RegionPlanes += NUM_TRANS_PASS_START_PLANES;
+                /* Stuff in the (m - n + 1) passes together. */
+                if (nPassCountCat > 0) {
+                    RegionTransPasses++;
 
-					while ( (nPassCountCat > 0) &&
-							(RegionPlanes < SAFETY_MARGIN_TRANS) && 
-							( pHead != NULL ) )
-					{
-						/* Decrement the count.	*/
-						nPassCountCat--;
+                    /* Add the dummy begin translucent pass object for this pass  */
+                    IW(curAddr++, 0, DummyTransData);
+                    RegionPlanes += NUM_TRANS_PASS_START_PLANES;
 
-						/* Zero the plane count for upcoming pass */
-						TransPassPlanes = 0;
-						
-						/* Add all the translucent objects */
-						curAddr = GenerateTransPtr ( pRegion, curAddr, &RegionPlanes,
-									   &nDiscardedPlanes, &TransPassPlanes, pHead); 
-	 	
-						pHead = pHead->pPost;
+                    while ((nPassCountCat > 0) &&
+                           (RegionPlanes < SAFETY_MARGIN_TRANS) &&
+                           (pHead != NULL)) {
+                        /* Decrement the count.	*/
+                        nPassCountCat--;
 
-					}
+                        /* Zero the plane count for upcoming pass */
+                        TransPassPlanes = 0;
 
-					/* Add the flushing plane for this pass !!!!!!!	 */
-					curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 	 				
-				}
+                        /* Add all the translucent objects */
+                        curAddr = GenerateTransPtr(pRegion, curAddr, &RegionPlanes,
+                                                   &nDiscardedPlanes, &TransPassPlanes, pHead);
 
-				/* Stuff in the rest of the passes.	  */
-				while ( ( pHead != NULL ) && (RegionPlanes < SAFETY_MARGIN_TRANS))
-				{
-					RegionTransPasses++;
+                        pHead = pHead->pPost;
 
-					/* Add the dummy begin translucent pass object for this pass */
-					IW( curAddr++, 0, DummyTransData);
-					RegionPlanes += NUM_TRANS_PASS_START_PLANES;
+                    }
 
-					/* Zero the plane count for upcoming pass */
-					TransPassPlanes = 0;
-					
-					/* Add all the translucent objects */
-					curAddr = GenerateTransPtr ( pRegion, curAddr, &RegionPlanes,
-									   &nDiscardedPlanes, &TransPassPlanes, pHead); 
+                    /* Add the flushing plane for this pass !!!!!!!	 */
+                    curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+                }
 
-				   	/* Add the flushing plane for this pass !!!!!!!	*/
-					curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 
-					
-					pHead = pHead->pPost;
-				}
+                /* Stuff in the rest of the passes.	  */
+                while ((pHead != NULL) && (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                    RegionTransPasses++;
 
-				#if PCX1
-					/* Size of the above loop is always known, unroll it? */
+                    /* Add the dummy begin translucent pass object for this pass */
+                    IW(curAddr++, 0, DummyTransData);
+                    RegionPlanes += NUM_TRANS_PASS_START_PLANES;
+
+                    /* Zero the plane count for upcoming pass */
+                    TransPassPlanes = 0;
+
+                    /* Add all the translucent objects */
+                    curAddr = GenerateTransPtr(pRegion, curAddr, &RegionPlanes,
+                                               &nDiscardedPlanes, &TransPassPlanes, pHead);
+
+                    /* Add the flushing plane for this pass !!!!!!!	*/
+                    curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+
+                    pHead = pHead->pPost;
+                }
+
+#if PCX1
+                                                                                                                                        /* Size of the above loop is always known, unroll it? */
 					IW( curAddr, 0, (DummyTransData + (1 << OBJ_PCOUNT_SHIFT)));
 					IW( curAddr, 1, DummyTransObjData);
 					IW( curAddr, 2, DummyTransFlushData);
@@ -4296,71 +3999,69 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
 					RegionPlanes+= NUM_TRANS_PASS_START_PLANES +
 								   FLUSH_PLANE +
 								   NUM_DUMMY_OBJECT_PLANES;
-				#endif
-				RegionTransPlanes = RegionPlanes - RegionTransPlanes;
-			}
+#endif
+                RegionTransPlanes = RegionPlanes - RegionTransPlanes;
+            }
 
-			/* Gouraud Highlight for Translucent objects pass */
-			if ((pRegion->pExtraSlots[TRANS_GOURAUDHIGHLIGHT] != NULL ) &&
-				(RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Add the dummy begin translucent pass object for this pass.*/
-				IW(curAddr++ , 0, DummyTransData);
-				RegionPlanes += 
-					NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[TRANS_GOURAUDHIGHLIGHT];
+            /* Gouraud Highlight for Translucent objects pass */
+            if ((pRegion->pExtraSlots[TRANS_GOURAUDHIGHLIGHT] != NULL) &&
+                (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Add the dummy begin translucent pass object for this pass.*/
+                IW(curAddr++, 0, DummyTransData);
+                RegionPlanes +=
+                        NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[TRANS_GOURAUDHIGHLIGHT];
 
-				/* Add GOURAUD Highlight objects */
-				curAddr = GenerateExtraPtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-										 TRANS_GOURAUDHIGHLIGHT, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
-			   
-				/* Add the flushing plane for this pass !!!!!!!	*/
-				curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 
-			}
-		   
-		    /* Vertex Fog  for Translucent objects pass */
-			if ((pRegion->pExtraSlots[TRANS_VERTEXFOG] != NULL ) &&
-				(RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Add the dummy begin translucent pass object for this pass. */
-				IW(curAddr++ , 0, DummyTransData);
-				RegionPlanes += 
-					NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[TRANS_VERTEXFOG];
+                /* Add GOURAUD Highlight objects */
+                curAddr = GenerateExtraPtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                           TRANS_GOURAUDHIGHLIGHT, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
 
-				/* Add GOURAUD Highlight objects */
-				curAddr = GenerateExtraPtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-										 TRANS_VERTEXFOG, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
-			   
-				/* Add the flushing plane for this pass !!!!!!!	*/
-				curAddr = OutputFlushingPlanes ( curAddr, &RegionPlanes, DummyTransFlushData); 
-			}
+                /* Add the flushing plane for this pass !!!!!!!	*/
+                curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+            }
 
-			FrameTotalPlanes+=RegionPlanes;
-			FrameTransPlanes+=RegionTransPlanes;
-			FrameTransPasses+=RegionTransPasses;
-			FrameViFixes+=ViFix;
-			/* Update the plane information this strip */
+            /* Vertex Fog  for Translucent objects pass */
+            if ((pRegion->pExtraSlots[TRANS_VERTEXFOG] != NULL) &&
+                (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Add the dummy begin translucent pass object for this pass. */
+                IW(curAddr++, 0, DummyTransData);
+                RegionPlanes +=
+                        NUM_TRANS_PASS_START_PLANES + pRegion->ExtraPlanes[TRANS_VERTEXFOG];
+
+                /* Add GOURAUD Highlight objects */
+                curAddr = GenerateExtraPtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                           TRANS_VERTEXFOG, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
+
+                /* Add the flushing plane for this pass !!!!!!!	*/
+                curAddr = OutputFlushingPlanes(curAddr, &RegionPlanes, DummyTransFlushData);
+            }
+
+            FrameTotalPlanes += RegionPlanes;
+            FrameTransPlanes += RegionTransPlanes;
+            FrameTransPasses += RegionTransPasses;
+            FrameViFixes += ViFix;
+            /* Update the plane information this strip */
 #if REGION_STATS
-	if(dump!=NULL)
+                                                                                                                                    if(dump!=NULL)
 	{
-		fprintf(dump,"%-5.1d%-12.d%-14.1d%-d\n", ViFix, RegionPlanes, RegionTransPlanes, RegionTransPasses);	
+		fprintf(dump,"%-5.1d%-12.d%-14.1d%-d\n", ViFix, RegionPlanes, RegionTransPlanes, RegionTransPasses);
 	}
 #endif
-								
-	RegionPlanes += nDiscardedPlanes;			
+
+            RegionPlanes += nDiscardedPlanes;
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			if ( RegionPlanes > ((REGION_PLANE_LIM * 3)/4) ) /* 75% of maximum as threshold */
 			{
 				/* DECIDE WHAT TO DO */
 				if ( (pRegion->HeightStats[BUSY] > ((pRegion->HeightStats[SAD])<<1)) && (RegionPlanes > uBusiestTile) )
-				{					
+				{
 					/* For splitting the tile - note the busiest tile*/
 						uBusiestTile = RegionPlanes;
 				}
 			}
-			else if ((SAFETY_MARGIN_OPAQ << 1) > RegionPlanes) 				
+			else if ((SAFETY_MARGIN_OPAQ << 1) > RegionPlanes)
 			{
 				if ( (pRegion->HeightStats[SAD] > ((pRegion->HeightStats[HAPPY])<<1)) && (RegionPlanes > uSadness) )
 				{
@@ -4370,35 +4071,36 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
 			}
 #endif
 
-		} while ( --Regions != 0 );
+        } while (--Regions != 0);
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
 		/* Record info on whether to split or merge */
 		pStrip->PlaneTally = uBusiestTile - uSadness;
 #endif
 
-		/* Last strip done */
-		if ( pStrip == pLastStrip ) break;
-	}
+        /* Last strip done */
+        if (pStrip == pLastStrip) break;
+    }
 
-	/* With PCX1 and PCX2 the very last pointer must be marked with an end bit. */
-	IORW( curAddr, -1, OBJ_VERY_LAST_PTR);
+    /* With PCX1 and PCX2 the very last pointer must be marked with an end bit. */
+    IORW(curAddr, -1, OBJ_VERY_LAST_PTR);
 
-	/* Update the Sabre index so that we know how much data has been written */
+    /* Update the Sabre index so that we know how much data has been written */
 #if _DEBUG
-	if ( FoundOverload )
+                                                                                                                            if ( FoundOverload )
 	{
 #endif
 
-		/*
+    /*
 		// Update the Sabre index so that we know how much data has been written
 		*/
 
-		PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos += ((sgl_uint32)(curAddr - &PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos]));
+    PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos += ((sgl_uint32) (curAddr -
+                                                                      &PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos]));
 #if _DEBUG
-	}
+                                                                                                                            }
 	else
 	if ( nNumRegionsRendered != 0 )
 	{
@@ -4420,7 +4122,7 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
 		while (Words-- != 0)
 		{
 			sgl_uint32 Word = PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos++;
-			
+
 			switch((Word >> 30) & 0xf)
 			{
 				case 0:
@@ -4446,7 +4148,7 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
 					DPF((DBG_VERBOSE," :   LAST OBJ Ptr - %d Plane(s) at %X", ((Word >> 19) & 0x3ff), (Word & 0x7ffff) * 4));
 					DPF((DBG_VERBOSE,"         %3d            0\n", ++tileObjCtr));
 					tileObjCtr =0;
-				break;	
+				break;
 				default:
 				    DPF((DBG_VERBOSE," : Unexpected word %X", Word));
 			}
@@ -4457,19 +4159,19 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
 #endif
 
 #if FRAME_STATS
-	if(dump!=NULL)
+                                                                                                                            if(dump!=NULL)
 	{
 		fprintf(dump,"FRAME : Rendered %d Regions\n",nNumRegionsRendered);
 		fprintf(dump,"FRAME : VF   AllPlanes   TransPlanes   TransPasses\n");
-		fprintf(dump,"FRAME : %-5.1d%-12.1d%-14.1d%-d\n", FrameViFixes, FrameTotalPlanes, FrameTransPlanes, FrameTransPasses);	
+		fprintf(dump,"FRAME : %-5.1d%-12.1d%-14.1d%-d\n", FrameViFixes, FrameTotalPlanes, FrameTransPlanes, FrameTransPasses);
 	}
 #elif DEBUG
-	DPF((DBG_VERBOSE, "FRAME : Rendered %d Regions",nNumRegionsRendered));
+                                                                                                                            DPF((DBG_VERBOSE, "FRAME : Rendered %d Regions",nNumRegionsRendered));
 	DPF((DBG_VERBOSE, "FRAME : VF   AllPlanes   TransPlanes   TransPasses"));
 	DPF((DBG_VERBOSE, "FRAME : %-5.1d%-12.1d%-14.1d%-d", FrameViFixes, FrameTotalPlanes, FrameTransPlanes, FrameTransPasses));
 #endif
 
-	return ( nNumRegionsRendered );
+    return (nNumRegionsRendered);
 }
 
 
@@ -4479,7 +4181,7 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
  *					 rendered, irrespective of whether they are empty.
  * Returns        : void
  * Global Used    : RegionData, and ISP parameter buffer in rnglobals
- * Description    : 
+ * Description    :
  *                  Generates object reference part of sabre parameter data
  *					using the pRegionStrips object list structure.
  *
@@ -4488,335 +4190,315 @@ int GenerateObjectPtrLite( const REGIONS_RECT_STRUCT *const pRegionsRect,
  *
  *					Used for 2d/3d compositing/strip rendering
  *****************************************************************************/
-void GenerateObjectPtrLiteStrip( const REGIONS_RECT_STRUCT *const pRegionsRect,
-								 sgl_bool bRenderAllRegions)
-{
-	REGION_STRIP 		*pStrip, *pLastStrip;
+void GenerateObjectPtrLiteStrip(const REGIONS_RECT_STRUCT *const pRegionsRect,
+                                sgl_bool bRenderAllRegions) {
+    REGION_STRIP *pStrip, *pLastStrip;
 #if !DUMP_PARAMS
-	/*
+    /*
 	// If we are dumping parameter files then this becomes a global variable to
 	// be read by DumpSabreAndTexas in rnrender.c
 	*/
-	sgl_uint32 				*curAddr;
+    sgl_uint32 *curAddr;
 #endif
-	REGION_STRIP_EXTRA 	*pRegionStripExtra = RegionStripExtra;
-	sgl_uint32				RegionDataStart;
-	
-	/* Get pointer to where we are building this info */
-	curAddr = PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer + 
-		PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos;
+    REGION_STRIP_EXTRA *pRegionStripExtra = RegionStripExtra;
+    sgl_uint32 RegionDataStart;
 
-	RegionDataStart = (sgl_uint32) curAddr;
+    /* Get pointer to where we are building this info */
+    curAddr = PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer +
+              PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos;
 
-	/* Check the region range */
-	ASSERT(pRegionsRect->LastXRegion < MAX_X_REGIONS);
-	ASSERT(pRegionsRect->LastYRegion < MAX_Y_REGIONS);
-	ASSERT(pRegionsRect->FirstXRegion >= 0);
-	ASSERT(pRegionsRect->FirstYRegion >= 0);
-	ASSERT(pRegionsRect->LastXRegion >= pRegionsRect->FirstXRegion);
-	ASSERT(pRegionsRect->LastYRegion >= pRegionsRect->FirstYRegion);
-	{
-		/* Convert LastYRegion to actual lines on the screen */
-		int YRegLines = RegionInfo.YSize >> Y_SHIFT;
-		int LastYLine = (pRegionsRect->LastYRegion+1) * YRegLines;
-		
-		if ( LastYLine > OutputHeight )
-		{
-			/* Limit to precise screen size */
-			LastYLine = OutputHeight;
-		}
+    RegionDataStart = (sgl_uint32) curAddr;
 
-		/* Start on the first strip, externally nominal region height applies */
-		pStrip     = pRegionStrips[pRegionsRect->FirstYRegion * YRegLines];
-		pLastStrip = pRegionStrips[LastYLine-1];
-	}
+    /* Check the region range */
+    ASSERT(pRegionsRect->LastXRegion < MAX_X_REGIONS);
+    ASSERT(pRegionsRect->LastYRegion < MAX_Y_REGIONS);
+    ASSERT(pRegionsRect->FirstXRegion >= 0);
+    ASSERT(pRegionsRect->FirstYRegion >= 0);
+    ASSERT(pRegionsRect->LastXRegion >= pRegionsRect->FirstXRegion);
+    ASSERT(pRegionsRect->LastYRegion >= pRegionsRect->FirstYRegion);
+    {
+        /* Convert LastYRegion to actual lines on the screen */
+        int YRegLines = RegionInfo.YSize >> Y_SHIFT;
+        int LastYLine = (pRegionsRect->LastYRegion + 1) * YRegLines;
 
-	for ( ;; pStrip = pStrip->pNext, pRegionStripExtra++ )
-	{
-		REGION_HEADER *pRegion;
-		sgl_uint32 uBusiestTile = 0;
-		sgl_uint32 uSadness = 0;
-		sgl_uint32 RegionWord;
-		int Width = pStrip->Width, Regions;
-		int nLeftX;
+        if (LastYLine > OutputHeight) {
+            /* Limit to precise screen size */
+            LastYLine = OutputHeight;
+        }
 
-		/* Start one after the last region of size XSize<<Width */
-		Regions = (pRegionsRect->LastXRegion >> Width) + 1;
-		nLeftX = Regions;
+        /* Start on the first strip, externally nominal region height applies */
+        pStrip = pRegionStrips[pRegionsRect->FirstYRegion * YRegLines];
+        pLastStrip = pRegionStrips[LastYLine - 1];
+    }
 
-		/* Calculate starting address in region array */
-		pRegion = pStrip->Regions +	Regions;
-				
-		/* Calculate region word corresponding to our starting point */
-		RegionWord = pStrip->RegionWordY + AddRegionWordXData(Regions, Width);
+    for (;; pStrip = pStrip->pNext, pRegionStripExtra++) {
+        REGION_HEADER *pRegion;
+        sgl_uint32 uBusiestTile = 0;
+        sgl_uint32 uSadness = 0;
+        sgl_uint32 RegionWord;
+        int Width = pStrip->Width, Regions;
+        int nLeftX;
 
-		/* Number of regions to be processed */
-		Regions = Regions - (pRegionsRect->FirstXRegion >> Width);
-	
-		/* save pointer to extra data */
-		pStrip->pExtra = pRegionStripExtra;
+        /* Start one after the last region of size XSize<<Width */
+        Regions = (pRegionsRect->LastXRegion >> Width) + 1;
+        nLeftX = Regions;
 
-		/* set strip data to 'no regions in this strip' values */
-		pRegionStripExtra->StartOfFirstRegion = (sgl_uint32*)(((sgl_uint32) curAddr) - RegionDataStart);	/* JWF added cast to pointer */
-		pRegionStripExtra->EndOfLastRegion = curAddr;
-		pRegionStripExtra->nRegionsInStrip = 0;
-		pRegionStripExtra->nRightX = nLeftX;
-		pRegionStripExtra->nLeftX = nLeftX - Regions;
-		
-		do
-		{
-			TRANSFACE_LIST *pHead;
-			#if DOING_SGL_STYLE_SORTING
-				TRANSFACE_LIST *pTail;
-			#endif
-			sgl_uint32 RegionPlanes;
-			sgl_uint32 nDiscardedPlanes = 0;
-			sgl_uint32 TransPassPlanes = 0;
-			sgl_uint32 RegionIsEmpty = FALSE;
+        /* Calculate starting address in region array */
+        pRegion = pStrip->Regions + Regions;
 
-			/* Previous region please, get Opaque counter */
-			RegionPlanes = (--pRegion)->OpaquePlanes;
-						
-			/* Pre-adjust running values for every tile scanned */
-			RegionWord -= DeltaRegionWordX( Width );
-			
-			/* Ignore the background OPAQUE object which is always there */
-			if ( (!bRenderAllRegions)             &&
-				 ( RegionPlanes < 2 )             &&
-				 ( pRegion->pLastSlots[OPAQUETRANS] == NULL ) &&
+        /* Calculate region word corresponding to our starting point */
+        RegionWord = pStrip->RegionWordY + AddRegionWordXData(Regions, Width);
+
+        /* Number of regions to be processed */
+        Regions = Regions - (pRegionsRect->FirstXRegion >> Width);
+
+        /* save pointer to extra data */
+        pStrip->pExtra = pRegionStripExtra;
+
+        /* set strip data to 'no regions in this strip' values */
+        pRegionStripExtra->StartOfFirstRegion = (sgl_uint32 *) (((sgl_uint32) curAddr) -
+                                                                RegionDataStart);    /* JWF added cast to pointer */
+        pRegionStripExtra->EndOfLastRegion = curAddr;
+        pRegionStripExtra->nRegionsInStrip = 0;
+        pRegionStripExtra->nRightX = nLeftX;
+        pRegionStripExtra->nLeftX = nLeftX - Regions;
+
+        do {
+            TRANSFACE_LIST *pHead;
 #if DOING_SGL_STYLE_SORTING
-				 ( pRegion->pCurTSet[0] == NULL ) &&
-				 ( pRegion->pCurTSet[1] == NULL ) )
+            TRANSFACE_LIST *pTail;
+#endif
+            sgl_uint32 RegionPlanes;
+            sgl_uint32 nDiscardedPlanes = 0;
+            sgl_uint32 TransPassPlanes = 0;
+            sgl_uint32 RegionIsEmpty = FALSE;
+
+            /* Previous region please, get Opaque counter */
+            RegionPlanes = (--pRegion)->OpaquePlanes;
+
+            /* Pre-adjust running values for every tile scanned */
+            RegionWord -= DeltaRegionWordX(Width);
+
+            /* Ignore the background OPAQUE object which is always there */
+            if ((!bRenderAllRegions) &&
+                (RegionPlanes < 2) &&
+                (pRegion->pLastSlots[OPAQUETRANS] == NULL) &&
+                #if DOING_SGL_STYLE_SORTING
+                (pRegion->pCurTSet[0] == NULL) &&
+                (pRegion->pCurTSet[1] == NULL))
 #else
-				 ( pRegion->pCurTSet == NULL ))
-#endif	
-			{
-				/* finished boring region case, so go straight to next one */
-				RegionIsEmpty = TRUE;
-			}
-			else 
-			{	
-				if (!pRegionStripExtra->nRegionsInStrip)
-				{
-					/* first non-empty region in this strip */
-					pRegionStripExtra->nRightX = nLeftX;
-					pRegionStripExtra->StartOfFirstRegion = (sgl_uint32*)(((sgl_uint32) curAddr) - RegionDataStart);	/* JWF added cast to pointer */
-				}
-				
-				/* Need to render this region */
-				pRegionStripExtra->nRegionsInStrip ++;
-			}
+                ( pRegion->pCurTSet == NULL ))
+#endif
+            {
+                /* finished boring region case, so go straight to next one */
+                RegionIsEmpty = TRUE;
+            } else {
+                if (!pRegionStripExtra->nRegionsInStrip) {
+                    /* first non-empty region in this strip */
+                    pRegionStripExtra->nRightX = nLeftX;
+                    pRegionStripExtra->StartOfFirstRegion = (sgl_uint32 *) (((sgl_uint32) curAddr) -
+                                                                            RegionDataStart);    /* JWF added cast to pointer */
+                }
 
-			/* Start first pass */
-			IW( curAddr++, 0, RegionWord);
+                /* Need to render this region */
+                pRegionStripExtra->nRegionsInStrip++;
+            }
 
-			if ( pRegion->pLastSlots[OPAQUE] != NULL )
-			{
-				/* Add opaque objects */
-				curAddr = GenerateOpaquePtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-											  OPAQUE, (REGION_PLANE_LIM - SAFETY_MARGIN_OPAQ));	
-				
-			}
+            /* Start first pass */
+            IW(curAddr++, 0, RegionWord);
 
-			/* Each pass must have at least REGION_PLANE_MIN planes for 
+            if (pRegion->pLastSlots[OPAQUE] != NULL) {
+                /* Add opaque objects */
+                curAddr = GenerateOpaquePtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                            OPAQUE, (REGION_PLANE_LIM - SAFETY_MARGIN_OPAQ));
+
+            }
+
+            /* Each pass must have at least REGION_PLANE_MIN planes for
 			** the sabre chip to work so pad the region  up to meet this
 			** condition.
 			*/
-			while(RegionPlanes < REGION_PLANE_MIN)
-			{				
-				/* Add dummy objects until we meet our min criterion */
-				IW( curAddr++, 0, DummyObjData);
-				RegionPlanes += NUM_DUMMY_OBJECT_PLANES;
-			}
+            while (RegionPlanes < REGION_PLANE_MIN) {
+                /* Add dummy objects until we meet our min criterion */
+                IW(curAddr++, 0, DummyObjData);
+                RegionPlanes += NUM_DUMMY_OBJECT_PLANES;
+            }
 
-		  	/* Add the flushing plane for the opaque pass !!!!!!! */
-			IW( curAddr++, 0, DummyFlushData);
-			RegionPlanes += FLUSH_PLANE;
+            /* Add the flushing plane for the opaque pass !!!!!!! */
+            IW(curAddr++, 0, DummyFlushData);
+            RegionPlanes += FLUSH_PLANE;
 
-			/* Translucent object handling
+            /* Translucent object handling
 			 */
 #if DOING_SGL_STYLE_SORTING
-			pHead = pRegion->pCurTSet[0];
-			pTail = pRegion->pCurTSet[1];
+            pHead = pRegion->pCurTSet[0];
+            pTail = pRegion->pCurTSet[1];
 #else
-			pHead = pRegion->pCurTSet;
+            pHead = pRegion->pCurTSet;
 #endif
 
 #if VIGNETTE_FIX
-			/* This is the vignetting fix. It simply counts all the planes in every pass.
+            /* This is the vignetting fix. It simply counts all the planes in every pass.
 			 * If the total pass count puts the plane count for a tile over 1024 then
 			 * the first pass is started out of cache.
 			 */
 
-			/* Initialise count.
+            /* Initialise count.
 			 */
-			TransPassPlanes = 0;
-			/* Count the new translucent pass format.
+            TransPassPlanes = 0;
+            /* Count the new translucent pass format.
 			 */
-			if ((pRegion->pLastSlots[OPAQUETRANS] != NULL) &&
-				(RegionPlanes < IN_PLANE_CACHE_BOUNDARY))
-			{
-				/* Add the dummy begin translucent pass object for this pass
+            if ((pRegion->pLastSlots[OPAQUETRANS] != NULL) &&
+                (RegionPlanes < IN_PLANE_CACHE_BOUNDARY)) {
+                /* Add the dummy begin translucent pass object for this pass
 				 */
-				TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
+                TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
 
-				/* Count planes. Translucent planes first.
+                /* Count planes. Translucent planes first.
 				 */
-				TransPassPlanes += pRegion->TransOpaquePlanes;
+                TransPassPlanes += pRegion->TransOpaquePlanes;
 
-				if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-				{
-					/* Count planes. light volumes.
+                if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+                    /* Count planes. light volumes.
 					 */
-					TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
-				}
-				
-				if ( pRegion->pLastSlots[SHADOW] != NULL )
-				{
-					/* Count all the shadows.
+                    TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
+                }
+
+                if (pRegion->pLastSlots[SHADOW] != NULL) {
+                    /* Count all the shadows.
 					 */
-					TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
-				}
-		
-				/* Add the flushing plane for this pass !!!!!!!
+                    TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
+                }
+
+                /* Add the flushing plane for this pass !!!!!!!
 				 */
-				TransPassPlanes+= FLUSH_PLANE;
-			}
-			/* Count the original translucent pass planes and sort them.
+                TransPassPlanes += FLUSH_PLANE;
+            }
+            /* Count the original translucent pass planes and sort them.
 			 */
-		
+
 #if DOING_SGL_STYLE_SORTING
-			if (( pHead != pTail ) && (RegionPlanes < SAFETY_MARGIN_TRANS))
+            if ((pHead != pTail) && (RegionPlanes < SAFETY_MARGIN_TRANS))
 #else
-			if (pHead && (RegionPlanes < SAFETY_MARGIN_TRANS))
+                if (pHead && (RegionPlanes < SAFETY_MARGIN_TRANS))
 #endif
-			{
+            {
 
 #if DOING_SGL_STYLE_SORTING
-				/* Sort the two lists */
-				pHead = SortTransFaceLists( pRegion, pHead, pTail );
+                /* Sort the two lists */
+                pHead = SortTransFaceLists(pRegion, pHead, pTail);
 #endif
-			
-				if (RegionPlanes < IN_PLANE_CACHE_BOUNDARY)
-				{
-					TRANSFACE_LIST *pLocalHead = pHead;
 
-					/* Check every pass.
+                if (RegionPlanes < IN_PLANE_CACHE_BOUNDARY) {
+                    TRANSFACE_LIST *pLocalHead = pHead;
+
+                    /* Check every pass.
 					 */
-					do
-					{
-						/* Count begin translucent pass plane.
-						 */	
-						TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
-
-						/* Count planes. Translucent planes first.
+                    do {
+                        /* Count begin translucent pass plane.
 						 */
-						TransPassPlanes += CountShortList( pLocalHead->pLastSlot);
+                        TransPassPlanes += NUM_TRANS_PASS_START_PLANES;
 
-						if ( pRegion->pLastSlots[LIGHTVOL] != NULL )
-						{
-							/* Count all the light volume planes
-							 */
-							TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
-						}
-
-						if ( pRegion->pLastSlots[SHADOW] != NULL )
-						{
-							/* Count all the shadows planes
-							 */
-							TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
-						}
-
-						/* Count flushing plane.
+                        /* Count planes. Translucent planes first.
 						 */
-						TransPassPlanes += FLUSH_PLANE;
+                        TransPassPlanes += CountShortList(pLocalHead->pLastSlot);
 
-						pLocalHead = pLocalHead->pPost;
-					} while ( pLocalHead != NULL );
-					
+                        if (pRegion->pLastSlots[LIGHTVOL] != NULL) {
+                            /* Count all the light volume planes
+							 */
+                            TransPassPlanes += CountShortList(pRegion->pLastSlots[LIGHTVOL]);
+                        }
+
+                        if (pRegion->pLastSlots[SHADOW] != NULL) {
+                            /* Count all the shadows planes
+							 */
+                            TransPassPlanes += CountShortList(pRegion->pLastSlots[SHADOW]);
+                        }
+
+                        /* Count flushing plane.
+						 */
+                        TransPassPlanes += FLUSH_PLANE;
+
+                        pLocalHead = pLocalHead->pPost;
+                    } while (pLocalHead != NULL);
+
 #if PCX1
-					/* Extra translucent pass for PCX1.
+                                                                                                                                            /* Extra translucent pass for PCX1.
 					 */
 					TransPassPlanes += NUM_TRANS_PASS_START_PLANES +
 									   FLUSH_PLANE +
 									   NUM_DUMMY_OBJECT_PLANES;
 #endif
 
-				}
-			}
-			else
-			{
-				/* No tranlucent passes. Setting pHead to NULL prevents us
+                }
+            } else {
+                /* No tranlucent passes. Setting pHead to NULL prevents us
 				 * from checking everthing again if the vignetting fix is being
 				 * used.
 				 */
-				pHead = NULL;
-			}
-			
-			/* Pad out the opaque pass over the cache boundary if the sum of
+                pHead = NULL;
+            }
+
+            /* Pad out the opaque pass over the cache boundary if the sum of
 			 * the translucent planes plus the current tile plane count exceeds
 			 * the cache boundary.
 			 *
 			 * This fix prevents vignetting since this is due to the translucent
 			 * pass crossing the cache boundary.
 			 */
-			if ((RegionPlanes < IN_PLANE_CACHE_BOUNDARY) &&
-				((RegionPlanes + TransPassPlanes) > IN_PLANE_CACHE_BOUNDARY))
-			{
-				/* Overwrite old flushing plane
+            if ((RegionPlanes < IN_PLANE_CACHE_BOUNDARY) &&
+                ((RegionPlanes + TransPassPlanes) > IN_PLANE_CACHE_BOUNDARY)) {
+                /* Overwrite old flushing plane
 				 */
-				curAddr--;
-						
-				while(RegionPlanes < IN_PLANE_CACHE_BOUNDARY)
-				{				
-					/* Add dummy objects until we meet our min criterion
+                curAddr--;
+
+                while (RegionPlanes < IN_PLANE_CACHE_BOUNDARY) {
+                    /* Add dummy objects until we meet our min criterion
 					 */
-					IW( curAddr++, 0, DummyObjDataLarge);
-					RegionPlanes += NUM_DUMMY_OBJECT_PLANES_LARGE;
-				}
-						
-				/* Replace flushing plane
+                    IW(curAddr++, 0, DummyObjDataLarge);
+                    RegionPlanes += NUM_DUMMY_OBJECT_PLANES_LARGE;
+                }
+
+                /* Replace flushing plane
 				 */
-				IW( curAddr++, 0, DummyFlushData);
-			}
-#endif		/* #if VIGNETTE_FIX	*/
-			
-			/* Jim's new D3D translucent solution. Only inserted if plane count below
+                IW(curAddr++, 0, DummyFlushData);
+            }
+#endif        /* #if VIGNETTE_FIX	*/
+
+            /* Jim's new D3D translucent solution. Only inserted if plane count below
 			 * the safety margin.
 			 */
-			if ((pRegion->pLastSlots[OPAQUETRANS] != NULL ) &&
-				(RegionPlanes < SAFETY_MARGIN_TRANS))
-			{
-				/* Add the dummy begin translucent pass object for this pass.
+            if ((pRegion->pLastSlots[OPAQUETRANS] != NULL) &&
+                (RegionPlanes < SAFETY_MARGIN_TRANS)) {
+                /* Add the dummy begin translucent pass object for this pass.
 				 */
-				IW(curAddr++ , 0, DummyTransData);
-				RegionPlanes += 
-					NUM_TRANS_PASS_START_PLANES + pRegion->TransOpaquePlanes;
+                IW(curAddr++, 0, DummyTransData);
+                RegionPlanes +=
+                        NUM_TRANS_PASS_START_PLANES + pRegion->TransOpaquePlanes;
 
-				/* Add OpaqueTrans objects */
-				curAddr = GenerateOpaquePtr ( pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
-											 OPAQUETRANS, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
+                /* Add OpaqueTrans objects */
+                curAddr = GenerateOpaquePtr(pRegion, curAddr, &RegionPlanes, &nDiscardedPlanes,
+                                            OPAQUETRANS, (SAFETY_MARGIN_TRANS - MIN_TRANS_PLANES));
 
-				/* Add the flushing plane for this pass !!!!!!!
+                /* Add the flushing plane for this pass !!!!!!!
 				 */
-				IW( curAddr++, 0, DummyTransFlushData);
-				RegionPlanes+= FLUSH_PLANE;
-			}
+                IW(curAddr++, 0, DummyTransFlushData);
+                RegionPlanes += FLUSH_PLANE;
+            }
 
-			/* Initialise count.
+            /* Initialise count.
 			 */
-			TransPassPlanes = 0;
+            TransPassPlanes = 0;
 
 #if VIGNETTE_FIX
-			/* Normal translucent pass handling. The are translucent passes if pHead != NULL.
+            /* Normal translucent pass handling. The are translucent passes if pHead != NULL.
 			 * The translucent passes have already been sorted if vignetting fix used.
 			 */
-			if ( pHead )
-			{
-				/* No need to sort them as already sorted.
+            if (pHead) {
+                /* No need to sort them as already sorted.
 				 */
 #else
-			/* Count the original translucent pass planes and sort them.
+                                                                                                                                        /* Count the original translucent pass planes and sort them.
 			 */
 	#if DOING_SGL_STYLE_SORTING
 			if (( pHead != pTail ) && (RegionPlanes < SAFETY_MARGIN_TRANS))
@@ -4829,31 +4511,29 @@ void GenerateObjectPtrLiteStrip( const REGIONS_RECT_STRUCT *const pRegionsRect,
 	#endif
 
 #endif
-				do
-				{
-					/* Add the dummy begin translucent pass object for this pass */
-					IW( curAddr++, 0, DummyTransData);
-					RegionPlanes += NUM_TRANS_PASS_START_PLANES;
+                do {
+                    /* Add the dummy begin translucent pass object for this pass */
+                    IW(curAddr++, 0, DummyTransData);
+                    RegionPlanes += NUM_TRANS_PASS_START_PLANES;
 
-					/* Zero the plane count for upcoming pass */
-					TransPassPlanes = 0;
-					
-					/* Add all the translucent objects */
-					curAddr = GenerateTransPtr ( pRegion, curAddr, &RegionPlanes,
-									   &nDiscardedPlanes, &TransPassPlanes, pHead); 
+                    /* Zero the plane count for upcoming pass */
+                    TransPassPlanes = 0;
 
-					/* Add the flushing plane for this pass !!!!!!!	 */
-					IW( curAddr++, 0, DummyTransFlushData);
-					RegionPlanes+= FLUSH_PLANE;
+                    /* Add all the translucent objects */
+                    curAddr = GenerateTransPtr(pRegion, curAddr, &RegionPlanes,
+                                               &nDiscardedPlanes, &TransPassPlanes, pHead);
 
-					pHead = pHead->pPost;
-				}
-				while ( ( pHead != NULL ) && (RegionPlanes < SAFETY_MARGIN_TRANS) );
+                    /* Add the flushing plane for this pass !!!!!!!	 */
+                    IW(curAddr++, 0, DummyTransFlushData);
+                    RegionPlanes += FLUSH_PLANE;
+
+                    pHead = pHead->pPost;
+                } while ((pHead != NULL) && (RegionPlanes < SAFETY_MARGIN_TRANS));
 
 
-				#if PCX1 
-				
-					IW( curAddr, 0, (DummyTransData + (1 << OBJ_PCOUNT_SHIFT)));
+#if PCX1
+
+                                                                                                                                        IW( curAddr, 0, (DummyTransData + (1 << OBJ_PCOUNT_SHIFT)));
 					IW( curAddr, 1, DummyTransObjData);
 					IW( curAddr, 2, DummyTransFlushData);
 					curAddr += 3;
@@ -4861,26 +4541,26 @@ void GenerateObjectPtrLiteStrip( const REGIONS_RECT_STRUCT *const pRegionsRect,
 					RegionPlanes+= NUM_TRANS_PASS_START_PLANES +
 								   FLUSH_PLANE +
 								   NUM_DUMMY_OBJECT_PLANES;
-				#endif
-			}
+#endif
+            }
 
-			/* Update the plane information this strip */
-								
-			RegionPlanes += nDiscardedPlanes;			
+            /* Update the plane information this strip */
+
+            RegionPlanes += nDiscardedPlanes;
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                    /* Disable dynamic tile sizing for PCX2.
  */
 			if ( RegionPlanes > ((REGION_PLANE_LIM * 3)/4) ) /* 75% of maximum as threshold */
 			{
 				/* DECIDE WHAT TO DO */
 				if ( (pRegion->HeightStats[BUSY] > ((pRegion->HeightStats[SAD])<<1)) && (RegionPlanes > uBusiestTile) )
-				{					
+				{
 					/* For splitting the tile - note the busiest tile*/
 					uBusiestTile = RegionPlanes;
 				}
 			}
-			else if ((SAFETY_MARGIN_OPAQ << 1) > RegionPlanes) 				
+			else if ((SAFETY_MARGIN_OPAQ << 1) > RegionPlanes)
 			{
 				if ( (pRegion->HeightStats[SAD] > ((pRegion->HeightStats[HAPPY])<<1)) && (RegionPlanes > uSadness) )
 				{
@@ -4889,309 +4569,288 @@ void GenerateObjectPtrLiteStrip( const REGIONS_RECT_STRUCT *const pRegionsRect,
 				}
 			}
 #endif
-		
-			--nLeftX;
-			
-			if (!RegionIsEmpty)
-			{
-				/* So we know where to truncate the strip */
-				pRegionStripExtra->nLeftX = nLeftX;
-				pRegionStripExtra->EndOfLastRegion = curAddr;
-			}
 
-		} while ( --Regions != 0 );
+            --nLeftX;
+
+            if (!RegionIsEmpty) {
+                /* So we know where to truncate the strip */
+                pRegionStripExtra->nLeftX = nLeftX;
+                pRegionStripExtra->EndOfLastRegion = curAddr;
+            }
+
+        } while (--Regions != 0);
 
 #if PCX1
-/* Disable dynamic tile sizing for PCX2.
+                                                                                                                                /* Disable dynamic tile sizing for PCX2.
  */
 		/* Record the emotive details for this strip */
 		pStrip->PlaneTally = uBusiestTile - uSadness;
 #endif
 
-		/* Last strip done */
-		if ( pStrip == pLastStrip ) break;
-	}
+        /* Last strip done */
+        if (pStrip == pLastStrip) break;
+    }
 
-	/* With PCX1 and PCX2 the very last pointer must be marked with an end bit. */
-	IORW( curAddr, -1, OBJ_VERY_LAST_PTR);
+    /* With PCX1 and PCX2 the very last pointer must be marked with an end bit. */
+    IORW(curAddr, -1, OBJ_VERY_LAST_PTR);
 
-	/*
+    /*
 	// Update the Sabre index so that we know how much data has been written
 	*/
 
-	PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos += ((sgl_uint32)(curAddr - &PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos]));
+    PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos += ((sgl_uint32) (curAddr -
+                                                                      &PVRParamBuffs[PVR_PARAM_TYPE_REGION].pBuffer[PVRParamBuffs[PVR_PARAM_TYPE_REGION].uBufferPos]));
 }
 
 /*****************************************************************************
  * Function Name  : SetupStripLite
- * Inputs         : Number of regions in strip 
- * Input/Output	  : 
- * Returns        : 
- * Global Used    : 
+ * Inputs         : Number of regions in strip
+ * Input/Output	  :
+ * Returns        :
+ * Global Used    :
  *
- * Description    : 
+ * Description    :
  *****************************************************************************/
-int SetupStripLite (int nStrip,
-					const REGIONS_RECT_STRUCT *const pRegionsRect,
-					PREGION_STRIP_DATA pRegionStripData)
-{
-	REGION_STRIP *pStrip;
-	/* Convert LastYRegion to actual lines on the screen */
-	int YRegLines = RegionInfo.YSize >> Y_SHIFT;
-	int HeightSoFar = 0;
-	int RegionsSoFar = 0;
+int SetupStripLite(int nStrip,
+                   const REGIONS_RECT_STRUCT *const pRegionsRect,
+                   PREGION_STRIP_DATA pRegionStripData) {
+    REGION_STRIP *pStrip;
+    /* Convert LastYRegion to actual lines on the screen */
+    int YRegLines = RegionInfo.YSize >> Y_SHIFT;
+    int HeightSoFar = 0;
+    int RegionsSoFar = 0;
 
-	nStrip <<= (5 - Y_SHIFT);
+    nStrip <<= (5 - Y_SHIFT);
 
-	pRegionStripData->fObjectsPresent = FALSE;
+    pRegionStripData->fObjectsPresent = FALSE;
 
-	if ((nStrip >= (pRegionsRect->FirstYRegion * YRegLines)) && 
-		(nStrip <= (pRegionsRect->LastYRegion * YRegLines)))
-	{
-		/* get pointer to strip */
-		pStrip = pRegionStrips[nStrip];
-		
-		/* X extents (pixels) */
-		pRegionStripData->nXExtents[0] = 0x7FFF;
-		pRegionStripData->nXExtents[1] = 0;
-				
-		/* collect up all strips up to 32 pixels in height */
-		while (pStrip && (HeightSoFar < 32))
-		{
-			HeightSoFar += (pStrip->Height << Y_SHIFT);
+    if ((nStrip >= (pRegionsRect->FirstYRegion * YRegLines)) &&
+        (nStrip <= (pRegionsRect->LastYRegion * YRegLines))) {
+        /* get pointer to strip */
+        pStrip = pRegionStrips[nStrip];
 
-			if (!RegionsSoFar)
-			{
-				pRegionStripData->FirstObjectOffset = (sgl_uint32) pStrip->pExtra->StartOfFirstRegion;
-			}
+        /* X extents (pixels) */
+        pRegionStripData->nXExtents[0] = 0x7FFF;
+        pRegionStripData->nXExtents[1] = 0;
 
-			if (pStrip->pExtra->nRegionsInStrip)
-			{
-				/* This region has some data */
-				int nLeftX, nRightX;
-			   	int nWidthShift = 6;
+        /* collect up all strips up to 32 pixels in height */
+        while (pStrip && (HeightSoFar < 32)) {
+            HeightSoFar += (pStrip->Height << Y_SHIFT);
 
-				if ( (RegionInfo.XSize == 32) && (pStrip->Width == 0) )
-				{					
-					nWidthShift = 5;
-				}
+            if (!RegionsSoFar) {
+                pRegionStripData->FirstObjectOffset = (sgl_uint32) pStrip->pExtra->StartOfFirstRegion;
+            }
 
-				nLeftX = pStrip->pExtra->nLeftX << nWidthShift;
-				nRightX = pStrip->pExtra->nRightX << nWidthShift;
+            if (pStrip->pExtra->nRegionsInStrip) {
+                /* This region has some data */
+                int nLeftX, nRightX;
+                int nWidthShift = 6;
 
-		 	 	pRegionStripData->pLastObject = pStrip->pExtra->EndOfLastRegion - 1;
-				pRegionStripData->fObjectsPresent = TRUE;
+                if ((RegionInfo.XSize == 32) && (pStrip->Width == 0)) {
+                    nWidthShift = 5;
+                }
 
-		 		if (nLeftX < pRegionStripData->nXExtents[0])
-				{
-					pRegionStripData->nXExtents[0] = nLeftX;
-				}
-				
-				if (nRightX > pRegionStripData->nXExtents[1])
-				{
-					pRegionStripData->nXExtents[1] = nRightX ;
-				}	 
-			}
+                nLeftX = pStrip->pExtra->nLeftX << nWidthShift;
+                nRightX = pStrip->pExtra->nRightX << nWidthShift;
 
-			RegionsSoFar += pStrip->pExtra->nRegionsInStrip;
+                pRegionStripData->pLastObject = pStrip->pExtra->EndOfLastRegion - 1;
+                pRegionStripData->fObjectsPresent = TRUE;
 
-			pStrip = pStrip->pNext;
-		}
-		
-		if (pRegionStripData->fObjectsPresent)
-		{
-			/* 
+                if (nLeftX < pRegionStripData->nXExtents[0]) {
+                    pRegionStripData->nXExtents[0] = nLeftX;
+                }
+
+                if (nRightX > pRegionStripData->nXExtents[1]) {
+                    pRegionStripData->nXExtents[1] = nRightX;
+                }
+            }
+
+            RegionsSoFar += pStrip->pExtra->nRegionsInStrip;
+
+            pStrip = pStrip->pNext;
+        }
+
+        if (pRegionStripData->fObjectsPresent) {
+            /*
 			// With PCX1 and PCX2 the very last pointer must be marked with an end bit.
 			*/
 
-			*(pRegionStripData->pLastObject) |= OBJ_VERY_LAST_PTR;
-		}
-		else
-		{
-			RegionsSoFar = 0;
-		}
-	}
+            *(pRegionStripData->pLastObject) |= OBJ_VERY_LAST_PTR;
+        } else {
+            RegionsSoFar = 0;
+        }
+    }
 
-	return (RegionsSoFar);
+    return (RegionsSoFar);
 }
 
-void	AddFlushingPlaneL(const sgl_uint32  ObjectAddr)
-{
-	/* Calc address of the dummy object to be placed at the end of passes */
- 	ASSERT((ObjectAddr & (~ OBJ_ADDRESS_MASK)) == 0);
-	DummyFlushData = (1 << OBJ_PCOUNT_SHIFT) | ObjectAddr;
+void AddFlushingPlaneL(const sgl_uint32 ObjectAddr) {
+    /* Calc address of the dummy object to be placed at the end of passes */
+    ASSERT((ObjectAddr & (~OBJ_ADDRESS_MASK)) == 0);
+    DummyFlushData = (1 << OBJ_PCOUNT_SHIFT) | ObjectAddr;
 }
 
-void AddTransFlushingPlaneL(const sgl_uint32  ObjectAddr)
-{
-	/* Calc address of the dummy translucent object to be placed
+void AddTransFlushingPlaneL(const sgl_uint32 ObjectAddr) {
+    /* Calc address of the dummy translucent object to be placed
 	   at the end of all translucent passes                      */
- 	ASSERT((ObjectAddr & (~ OBJ_ADDRESS_MASK)) == 0);
-	DummyTransFlushData = (1 << OBJ_PCOUNT_SHIFT) | ObjectAddr;
+    ASSERT((ObjectAddr & (~OBJ_ADDRESS_MASK)) == 0);
+    DummyTransFlushData = (1 << OBJ_PCOUNT_SHIFT) | ObjectAddr;
 }
 
-void AddRegionBeginTransDummyL(const sgl_uint32  ObjectAddr)
-{
-	/* Calc address of the dummy translucent object to be placed
+void AddRegionBeginTransDummyL(const sgl_uint32 ObjectAddr) {
+    /* Calc address of the dummy translucent object to be placed
 	   at the start of all translucent passes                    */
-	ASSERT((ObjectAddr & (~ OBJ_ADDRESS_MASK)) == 0);
-	DummyTransData = (NUM_TRANS_PASS_START_PLANES << OBJ_PCOUNT_SHIFT) | ObjectAddr;
+    ASSERT((ObjectAddr & (~OBJ_ADDRESS_MASK)) == 0);
+    DummyTransData = (NUM_TRANS_PASS_START_PLANES << OBJ_PCOUNT_SHIFT) | ObjectAddr;
 }
 
-void	AddRegionOpaqueDummyL(const sgl_uint32  ObjectAddr)
-{
-	/* Calc pointer and Num planes of the Dummy opaque object */
-	ASSERT((ObjectAddr & (~ OBJ_ADDRESS_MASK)) == 0);
-	DummyObjData = (NUM_DUMMY_OBJECT_PLANES << OBJ_PCOUNT_SHIFT) | ObjectAddr;
-}											
+void AddRegionOpaqueDummyL(const sgl_uint32 ObjectAddr) {
+    /* Calc pointer and Num planes of the Dummy opaque object */
+    ASSERT((ObjectAddr & (~OBJ_ADDRESS_MASK)) == 0);
+    DummyObjData = (NUM_DUMMY_OBJECT_PLANES << OBJ_PCOUNT_SHIFT) | ObjectAddr;
+}
 
 #if VIGNETTE_FIX
+
 /* Required to give large dummy object to fill up to the 1024 cache boundary
  * if vignetting fix required.
  */
-void	AddRegionOpaqueDummyLargeL(const sgl_uint32  ObjectAddr)
-{
-	/* Calc pointer and Num planes of the Dummy opaque object */
-	ASSERT((ObjectAddr & (~ OBJ_ADDRESS_MASK)) == 0);
-	DummyObjDataLarge = (NUM_DUMMY_OBJECT_PLANES_LARGE << OBJ_PCOUNT_SHIFT) | ObjectAddr;
+void AddRegionOpaqueDummyLargeL(const sgl_uint32 ObjectAddr) {
+    /* Calc pointer and Num planes of the Dummy opaque object */
+    ASSERT((ObjectAddr & (~OBJ_ADDRESS_MASK)) == 0);
+    DummyObjDataLarge = (NUM_DUMMY_OBJECT_PLANES_LARGE << OBJ_PCOUNT_SHIFT) | ObjectAddr;
 }
+
 #endif
 
-void	AddRegionTransDummyL(const sgl_uint32  ObjectAddr)
-{
+void AddRegionTransDummyL(const sgl_uint32 ObjectAddr) {
 #if PCX1
-	/* Calc pointer and Num planes of the Dummy opaque object */
+                                                                                                                            /* Calc pointer and Num planes of the Dummy opaque object */
 	ASSERT((ObjectAddr & (~ OBJ_ADDRESS_MASK)) == 0);
 	DummyTransObjData = (NUM_DUMMY_OBJECT_PLANES << OBJ_PCOUNT_SHIFT) | ObjectAddr;
 #endif
-}											
+}
 
-void	AddCompleteShadowDummyL(const sgl_uint32  ObjectAddr)
-{
-	/* Set address of Complete Shadow Object */
+void AddCompleteShadowDummyL(const sgl_uint32 ObjectAddr) {
+    /* Set address of Complete Shadow Object */
 
-	CompleteShadowAddress = ObjectAddr;
+    CompleteShadowAddress = ObjectAddr;
 }
 
 /**************************************************************************
  * Function Name  : AddRegionOpaqueL
  * Inputs         : pRegionsRect - Rectangle of regions
-					ObjectAddr - Address of object first plane in sabre 
+					ObjectAddr - Address of object first plane in sabre
 								 parameter memory
-					NumPlanes - total number of planes for object  
- * Outputs        : 
- * Input/Output	  : 
+					NumPlanes - total number of planes for object
+ * Outputs        :
+ * Input/Output	  :
  * Returns        :
  * Global Used    : RegionData
  * Description    : Adds an object reference for an opaque object to
-					to region object structure 
- *				   
+					to region object structure
+ *
 **************************************************************************/
 
 void AddRegionOpaqueL(const REGIONS_RECT_STRUCT *const pRegionsRect,
-					const sgl_uint32  ObjectAddr, const int NumPlanes)
-{
-	sgl_uint32 XYData;
+                      const sgl_uint32 ObjectAddr, const int NumPlanes) {
+    sgl_uint32 XYData;
 
-	/* Pack description, round up LastYRegion to required step size */
-	XYData = ENCODE_OBJXYDATA( OPAQUE,
-	                           pRegionsRect->FirstXRegion,
-	                   pRegionsRect->FirstYRegion*RegionInfo.YSize,
-	                           pRegionsRect->LastXRegion,
-	         ((pRegionsRect->LastYRegion+1) *RegionInfo.YSize)-1  );
+    /* Pack description, round up LastYRegion to required step size */
+    XYData = ENCODE_OBJXYDATA(OPAQUE,
+                              pRegionsRect->FirstXRegion,
+                              pRegionsRect->FirstYRegion * RegionInfo.YSize,
+                              pRegionsRect->LastXRegion,
+                              ((pRegionsRect->LastYRegion + 1) * RegionInfo.YSize) - 1);
 
-	/* Use the new solid API */
-	AddRegionSolid( XYData, NumPlanes, ObjectAddr );
+    /* Use the new solid API */
+    AddRegionSolid(XYData, NumPlanes, ObjectAddr);
 }
 
 /**************************************************************************
  * Function Name  : AddRegionLightVolL
  * Inputs         : pRegionsRect - Rectangle of regions
-					ObjectAddr - Address of object first plane in sabre 
+					ObjectAddr - Address of object first plane in sabre
 								 parameter memory
-					NumPlanes - total number of planes for object  
- * Outputs        : 
- * Input/Output	  : 
+					NumPlanes - total number of planes for object
+ * Outputs        :
+ * Input/Output	  :
  * Returns        :
  * Global Used    : RegionData
  * Description    : Adds an object reference for a light volume object to
-					the region object structure 
- *				   
+					the region object structure
+ *
 **************************************************************************/
-void	AddRegionLightVolL(const REGIONS_RECT_STRUCT *const pRegionsRect,
-						   const sgl_uint32  ObjectAddr, const int NumPlanes)
-{
-	sgl_uint32 XYData;
+void AddRegionLightVolL(const REGIONS_RECT_STRUCT *const pRegionsRect,
+                        const sgl_uint32 ObjectAddr, const int NumPlanes) {
+    sgl_uint32 XYData;
 
-	/* Pack description, round up LastYRegion to required step size */
-	XYData = ENCODE_OBJXYDATA( LIGHTVOL,
-	                           pRegionsRect->FirstXRegion,
-	                   pRegionsRect->FirstYRegion*RegionInfo.YSize,
-	                           pRegionsRect->LastXRegion,
-	         ((pRegionsRect->LastYRegion+1) *RegionInfo.YSize)-1  );
+    /* Pack description, round up LastYRegion to required step size */
+    XYData = ENCODE_OBJXYDATA(LIGHTVOL,
+                              pRegionsRect->FirstXRegion,
+                              pRegionsRect->FirstYRegion * RegionInfo.YSize,
+                              pRegionsRect->LastXRegion,
+                              ((pRegionsRect->LastYRegion + 1) * RegionInfo.YSize) - 1);
 
-	/* Use the new Atmos API */
-	AddRegionShadorLV( XYData, NumPlanes, ObjectAddr );
+    /* Use the new Atmos API */
+    AddRegionShadorLV(XYData, NumPlanes, ObjectAddr);
 }
 
 /**************************************************************************
  * Function Name  : AddRegionShadowL
  * Inputs         : pRegionsRect - Rectangle of regions
-					ObjectAddr - Address of object first plane in sabre 
+					ObjectAddr - Address of object first plane in sabre
 								 parameter memory
-					NumPlanes - total number of planes for object  
- * Outputs        : 
- * Input/Output	  : 
+					NumPlanes - total number of planes for object
+ * Outputs        :
+ * Input/Output	  :
  * Returns        :
  * Global Used    : RegionData
  * Description    : Adds an object reference for a shadow object to
-					to region object structure 
- *				   
+					to region object structure
+ *
 **************************************************************************/
-void	AddRegionShadowL(const REGIONS_RECT_STRUCT *const pRegionsRect,
-						 const sgl_uint32  ObjectAddr, const int NumPlanes)
-{
-	sgl_uint32 XYData;
+void AddRegionShadowL(const REGIONS_RECT_STRUCT *const pRegionsRect,
+                      const sgl_uint32 ObjectAddr, const int NumPlanes) {
+    sgl_uint32 XYData;
 
-	/* Pack description, round up LastYRegion to required step size */
-	XYData = ENCODE_OBJXYDATA( SHADOW,
-	                           pRegionsRect->FirstXRegion,
-	                   		   pRegionsRect->FirstYRegion*RegionInfo.YSize,
-	                           pRegionsRect->LastXRegion,
-	         ((pRegionsRect->LastYRegion+1) *RegionInfo.YSize)-1  );
+    /* Pack description, round up LastYRegion to required step size */
+    XYData = ENCODE_OBJXYDATA(SHADOW,
+                              pRegionsRect->FirstXRegion,
+                              pRegionsRect->FirstYRegion * RegionInfo.YSize,
+                              pRegionsRect->LastXRegion,
+                              ((pRegionsRect->LastYRegion + 1) * RegionInfo.YSize) - 1);
 
-	/* Use the new Atmos API */
-	AddRegionShadorLV( XYData, NumPlanes, ObjectAddr );
+    /* Use the new Atmos API */
+    AddRegionShadorLV(XYData, NumPlanes, ObjectAddr);
 }
 
 /**************************************************************************
- * Function Name  : AllowLightVolAdditionL and AllowLightVolAdditionSGL 
+ * Function Name  : AllowLightVolAdditionL and AllowLightVolAdditionSGL
  * Inputs         : pRegionsRect - Rectangle of regions
-					ObjectAddr - Address of object first plane in sabre 
+					ObjectAddr - Address of object first plane in sabre
 								 parameter memory
-					NumPlanes - total number of planes for object 
-					NearZ - Z value of closest z of primitives bounding box	 
- * Outputs        : 
- * Input/Output	  : 
+					NumPlanes - total number of planes for object
+					NearZ - Z value of closest z of primitives bounding box
+ * Outputs        :
+ * Input/Output	  :
  * Returns        :
  * Global Used    : RegionData
  * Description    : Adds an object reference for a translucent object to
-					the region object structure 
- *				   
+					the region object structure
+ *
 **************************************************************************/
 
-void AllowLightVolAdditionL(const REGIONS_RECT_STRUCT *const pRegionsRect)
-
-{
-	/*
+void AllowLightVolAdditionL(const REGIONS_RECT_STRUCT *const pRegionsRect) {
+    /*
 	// We'll be up the creek if the number of planes isn't 2
 	*/
-	const int numPlanes = 2;
-	/*
+    const int numPlanes = 2;
+    /*
 	// Simply call Add Light Volume with the complete shadow obejct
 	*/
 
-	AddRegionLightVolL(pRegionsRect, CompleteShadowAddress, numPlanes);
+    AddRegionLightVolL(pRegionsRect, CompleteShadowAddress, numPlanes);
 }
 
 /*------------------------------ End of File --------------------------------*/

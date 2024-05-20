@@ -123,7 +123,7 @@
 // To produce a very efficient "hash" function, use a power of 2, and
 // simply use the lower bits of the name to access the table of entries.
 */
-#define SHIFT_UP	15 /*how many bits are used for indexing in the table*/
+#define SHIFT_UP    15 /*how many bits are used for indexing in the table*/
 #define MAX_NAM_TAB (1 << (SHIFT_UP-1))
 #define HASH_MASK   (MAX_NAM_TAB - 1)
 
@@ -138,69 +138,67 @@
 // Define the structure type for each entry in the table
 // ////////////////////////////////////////////
 */
-typedef struct
-{
-	/* 
-	// Name stored at this location, or -1 if the "slot" is
-	// free OR is one which is to be deleted BUT the reference
-	// count was not ZERO
-	*/
-	sgl_int16	n16name;
+typedef struct {
+    /*
+    // Name stored at this location, or -1 if the "slot" is
+    // free OR is one which is to be deleted BUT the reference
+    // count was not ZERO
+    */
+    sgl_int16 n16name;
 
-	/* Reference count (eg for instances)*/
-	sgl_int16	n16count;	
-	
-	/*
-	// The following field is used to speed up allocation of new
-	// names once the name table starts to get fragmented.
-	*/
-	sgl_int16	n16nextfree;	
+    /* Reference count (eg for instances)*/
+    sgl_int16 n16count;
 
-	/*
-	// WHEN a valid name is stored, this is "type" of named entity.
-	// IF the name has been deleted, this stores the original name UNTIL
-	// the reference count drops to 0. In the free case, it should be
-	// set to -1.
-	*/
-	sgl_int16	n16entity_type; 
+    /*
+    // The following field is used to speed up allocation of new
+    // names once the name table starts to get fragmented.
+    */
+    sgl_int16 n16nextfree;
 
-	/* Pointer to the data */
-	void	* p_entity;	
-	
+    /*
+    // WHEN a valid name is stored, this is "type" of named entity.
+    // IF the name has been deleted, this stores the original name UNTIL
+    // the reference count drops to 0. In the free case, it should be
+    // set to -1.
+    */
+    sgl_int16 n16entity_type;
+
+    /* Pointer to the data */
+    void *p_entity;
+
 } TAB_ENT_STRUCT;
 
 
 /*
 // Define the entire name table structure
 */
-typedef struct
-{
-	/* 
-	// The basis for the next name to use. This is incremented, with
-	// each allocation, and then the lower bits are masked off and
-	// combined with the index to produce a name.
-	//
-	// When it gets too big, it is reset to zero.
-	*/
-	int name_base;
+typedef struct {
+    /*
+    // The basis for the next name to use. This is incremented, with
+    // each allocation, and then the lower bits are masked off and
+    // combined with the index to produce a name.
+    //
+    // When it gets too big, it is reset to zero.
+    */
+    int name_base;
 
-	/*
-	// Keep track of which entries are free in the table via a simple
-	// linked list. To make life REALLY simple for us, we consider there
-	// to be no available names when the first and last free indices are
-	// equal. That is, there actually is one free element left, however
-	// ignoring it just reduces the number of cases to handle a bit.....
-	*/
-	int first_free;	/* The free entry in a "linked List" to use*/
-	int last_free;	/* The last entry in that list */
-	
-	TAB_ENT_STRUCT entries[MAX_NAM_TAB];
+    /*
+    // Keep track of which entries are free in the table via a simple
+    // linked list. To make life REALLY simple for us, we consider there
+    // to be no available names when the first and last free indices are
+    // equal. That is, there actually is one free element left, however
+    // ignoring it just reduces the number of cases to handle a bit.....
+    */
+    int first_free;    /* The free entry in a "linked List" to use*/
+    int last_free;    /* The last entry in that list */
 
-}NAMTAB_STRUCT;
+    TAB_ENT_STRUCT entries[MAX_NAM_TAB];
+
+} NAMTAB_STRUCT;
 
 
-extern HLDEVICE 	gHLogicalDev;
-extern PTEXAPI_IF 	gpTextureIF;
+extern HLDEVICE gHLogicalDev;
+extern PTEXAPI_IF gpTextureIF;
 
 
 /**************************************************************************
@@ -213,58 +211,55 @@ extern PTEXAPI_IF 	gpTextureIF;
  * Description    : Reinitialises the entries of a name table.
  *					INTERNAL ONLY
  **************************************************************************/
-static void clear_entries(NAMTAB_STRUCT * p_namtab)
-{
-	/*
-	// Pointer to an individual entry
-	*/
-	TAB_ENT_STRUCT * p_ent;
+static void clear_entries(NAMTAB_STRUCT *p_namtab) {
+    /*
+    // Pointer to an individual entry
+    */
+    TAB_ENT_STRUCT *p_ent;
 
-	/*
-	// generic loop counter
-	*/
-	int i;
+    /*
+    // generic loop counter
+    */
+    int i;
 
 
-	/*
-	// Pointer to step through the table entries
-	*/
-	p_ent = & p_namtab->entries[0];
+    /*
+    // Pointer to step through the table entries
+    */
+    p_ent = &p_namtab->entries[0];
 
-	/*
-	// step through the struct initialising the names to
-	// be unallocated (i.e. -1) and setting up the next free
-	// spot (i.e. the next one - except for the very last
-	*/
-	for(i=0; i < MAX_NAM_TAB; i ++, p_ent++)
-	{
-		/*
-		// fill in its details
-		*/
-		p_ent->n16name = -1;	/*indicates free (ish)*/
-		p_ent->n16count=  0;
-		p_ent->n16nextfree = i+1;
-		p_ent->n16entity_type = -1; /* indicates free*/
-		p_ent->p_entity = NULL;
+    /*
+    // step through the struct initialising the names to
+    // be unallocated (i.e. -1) and setting up the next free
+    // spot (i.e. the next one - except for the very last
+    */
+    for (i = 0; i < MAX_NAM_TAB; i++, p_ent++) {
+        /*
+        // fill in its details
+        */
+        p_ent->n16name = -1;    /*indicates free (ish)*/
+        p_ent->n16count = 0;
+        p_ent->n16nextfree = i + 1;
+        p_ent->n16entity_type = -1; /* indicates free*/
+        p_ent->p_entity = NULL;
 
-	}/*end for*/
+    }/*end for*/
 
-	/*
-	// tidy up the last one as there is no next index...
-	*/
-	p_namtab->entries[MAX_NAM_TAB -1 ].n16nextfree = -1;
+    /*
+    // tidy up the last one as there is no next index...
+    */
+    p_namtab->entries[MAX_NAM_TAB - 1].n16nextfree = -1;
 
-	/*
-	// Set up where to go looking for a free spot,
-	// and the base to produce names.
-	*/
-	p_namtab->name_base = 0;
+    /*
+    // Set up where to go looking for a free spot,
+    // and the base to produce names.
+    */
+    p_namtab->name_base = 0;
 
-	p_namtab->first_free = 0;
-	p_namtab->last_free  = (MAX_NAM_TAB - 1);
+    p_namtab->first_free = 0;
+    p_namtab->last_free = (MAX_NAM_TAB - 1);
 
 }
-
 
 
 /**************************************************************************
@@ -280,50 +275,47 @@ static void clear_entries(NAMTAB_STRUCT * p_namtab)
  *					(i.e. out of memory)
  **************************************************************************/
 
-int InitNamtab(P_NAMTAB_STRUCT * namtab_param)
-{
-	/*
-	// initialise result to assume success
-	*/
-	int result = 0;
+int InitNamtab(P_NAMTAB_STRUCT *namtab_param) {
+    /*
+    // initialise result to assume success
+    */
+    int result = 0;
 
-	/*
-	// Pointer to the real data
-	*/
-	NAMTAB_STRUCT * p_namtab;
+    /*
+    // Pointer to the real data
+    */
+    NAMTAB_STRUCT *p_namtab;
 
-	/*
-	// Allocate the name table structure
-	*/
-	p_namtab = NEW(NAMTAB_STRUCT);
+    /*
+    // Allocate the name table structure
+    */
+    p_namtab = NEW(NAMTAB_STRUCT);
 
-	/*
-	// If the allocation failed, then report an error (non zero)
-	*/
-	if(p_namtab == NULL)
-	{
-		result = -1;
-		*namtab_param = NULL;
-	}
-	/*
-	// Else save the pointer to it in the parameter, and intialise
-	// the internals
-	*/
-	else	
-	{
-		/*
-		// Save the pointer to the struct
-		*/
-		*namtab_param = (P_NAMTAB_STRUCT)p_namtab;
+    /*
+    // If the allocation failed, then report an error (non zero)
+    */
+    if (p_namtab == NULL) {
+        result = -1;
+        *namtab_param = NULL;
+    }
+        /*
+        // Else save the pointer to it in the parameter, and intialise
+        // the internals
+        */
+    else {
+        /*
+        // Save the pointer to the struct
+        */
+        *namtab_param = (P_NAMTAB_STRUCT) p_namtab;
 
-		/*
-		// Initialise all the entries
-		*/
-		clear_entries(p_namtab);
+        /*
+        // Initialise all the entries
+        */
+        clear_entries(p_namtab);
 
-	}/* end else */
+    }/* end else */
 
-	return(result);
+    return (result);
 }
 
 
@@ -337,24 +329,23 @@ int InitNamtab(P_NAMTAB_STRUCT * namtab_param)
  * Description    : Clears out all the contents of the name table.
  **************************************************************************/
 
-void ClearNamtab(P_NAMTAB_STRUCT namtab)
-{
-	/*///////
-	// Variable defs
-	/////// */
+void ClearNamtab(P_NAMTAB_STRUCT namtab) {
+    /*///////
+    // Variable defs
+    /////// */
 
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	ASSERT(namtab != NULL)
+    ASSERT(namtab != NULL)
 
-	/*
-	// Recast the pointer for convenience
-	// (with a bit of luck, the compiler will optimise this out)
-	*/
-	p_namtab = (NAMTAB_STRUCT *) namtab;
+    /*
+    // Recast the pointer for convenience
+    // (with a bit of luck, the compiler will optimise this out)
+    */
+    p_namtab = (NAMTAB_STRUCT *) namtab;
 
-	clear_entries(p_namtab);
+    clear_entries(p_namtab);
 }
 
 
@@ -370,94 +361,90 @@ void ClearNamtab(P_NAMTAB_STRUCT namtab)
  *					it returns sgl_err_no_name.
  **************************************************************************/
 
-int AddNamedItem( P_NAMTAB_STRUCT namtab,
-					void *	   item,
-						int	   entity_type)
-{
-	int name;
-	int free_slot;
+int AddNamedItem(P_NAMTAB_STRUCT namtab,
+                 void *item,
+                 int entity_type) {
+    int name;
+    int free_slot;
 
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
-	
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(namtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) namtab;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
 
-
-	/*
-	// Get the next free spot in the table
-	*/
-	free_slot = p_namtab->first_free;
-	
-	/*
-	// if the table is "full"...
-	*/
-	if(free_slot == p_namtab->last_free)
-	{
-		name =  sgl_err_no_name;
-	}
-	/*
-	// else fill in the details
-	*/
-	else
-	{
-		/*
-		// get easy access to this entry
-		*/
-		p_ent =& p_namtab->entries[free_slot];
-
-		/*
-		// Update the next free entry in the main name table
-		//
-		// (And, when debugging, in the entry as well)
-		*/
-		p_namtab->first_free = p_ent->n16nextfree;
-
-		#ifdef DEBUG
-		p_ent->n16nextfree = -2;
-		#endif
-
-		/*
-		// Compute a name for this thing, by masking off the index
-		// bits in the name base, and then putting in the entry index.
-		*/
-		name = (p_namtab->name_base & ~HASH_MASK) | free_slot;
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(namtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) namtab;
 
 
-		/*
-		// Store the data in the entry
-		*/
-		p_ent->n16name = (sgl_int16) name;
-		p_ent->n16count=  0;
-		p_ent->n16entity_type = (sgl_int16) entity_type;
-		p_ent->p_entity = item;
+
+    /*
+    // Get the next free spot in the table
+    */
+    free_slot = p_namtab->first_free;
+
+    /*
+    // if the table is "full"...
+    */
+    if (free_slot == p_namtab->last_free) {
+        name = sgl_err_no_name;
+    }
+        /*
+        // else fill in the details
+        */
+    else {
+        /*
+        // get easy access to this entry
+        */
+        p_ent = &p_namtab->entries[free_slot];
+
+        /*
+        // Update the next free entry in the main name table
+        //
+        // (And, when debugging, in the entry as well)
+        */
+        p_namtab->first_free = p_ent->n16nextfree;
+
+#ifdef DEBUG
+        p_ent->n16nextfree = -2;
+#endif
+
+        /*
+        // Compute a name for this thing, by masking off the index
+        // bits in the name base, and then putting in the entry index.
+        */
+        name = (p_namtab->name_base & ~HASH_MASK) | free_slot;
 
 
-		/*
-		// move the name base on to the next potential entry,
-		// reseting it back to zero if it grows too large.
-		//
-		// NOTE Dont let it get bigger than our 16Bit names! Say
-		// allow it to 3/4s of the max value.
-		*/
-		p_namtab->name_base += MAX_NAM_TAB;
-		if(p_namtab->name_base > ((3*SHRT_MAX)/4) )
-		{
-			p_namtab->name_base = 0;
-		} /*end if*/
-		
-	} /*end else*/
-	
+        /*
+        // Store the data in the entry
+        */
+        p_ent->n16name = (sgl_int16) name;
+        p_ent->n16count = 0;
+        p_ent->n16entity_type = (sgl_int16) entity_type;
+        p_ent->p_entity = item;
 
-	return (name);
+
+        /*
+        // move the name base on to the next potential entry,
+        // reseting it back to zero if it grows too large.
+        //
+        // NOTE Dont let it get bigger than our 16Bit names! Say
+        // allow it to 3/4s of the max value.
+        */
+        p_namtab->name_base += MAX_NAM_TAB;
+        if (p_namtab->name_base > ((3 * SHRT_MAX) / 4)) {
+            p_namtab->name_base = 0;
+        } /*end if*/
+
+    } /*end else*/
+
+
+    return (name);
 }
 
 /**************************************************************************
@@ -469,57 +456,51 @@ int AddNamedItem( P_NAMTAB_STRUCT namtab,
  * Description    : Finds the named entity in the table, and returns a pointer
  *					to it, or NULL if its not in the table.
  **************************************************************************/
-void * GetNamedItem(P_NAMTAB_STRUCT namtab,
-					int		 name)
-{
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
-	
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+void *GetNamedItem(P_NAMTAB_STRUCT namtab,
+                   int name) {
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	void * result;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(namtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) namtab;
+    void *result;
+
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(namtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) namtab;
 
 
-	/*
-	// Check that the name is at least positive.
-	*/
-	if(name < 0)
-	{
-		result = NULL;
-	}
-	else
-	{
-		/*
-		// Map the name to the unique index, and get a pointer
-		// to that entry
-		*/
-		p_ent =& p_namtab->entries[name & HASH_MASK];
+    /*
+    // Check that the name is at least positive.
+    */
+    if (name < 0) {
+        result = NULL;
+    } else {
+        /*
+        // Map the name to the unique index, and get a pointer
+        // to that entry
+        */
+        p_ent = &p_namtab->entries[name & HASH_MASK];
 
-		/*
-		// Do the names match? If so get the pointer to the data
-		*/
-		if(p_ent->n16name == name)
-		{
-			result = p_ent->p_entity;
-		}
-		/*
-		// Else this name is unknown
-		*/
-		else
-		{
-			result = NULL;
-		}
-		
-	}/*end else*/
+        /*
+        // Do the names match? If so get the pointer to the data
+        */
+        if (p_ent->n16name == name) {
+            result = p_ent->p_entity;
+        }
+            /*
+            // Else this name is unknown
+            */
+        else {
+            result = NULL;
+        }
 
-	return (result);
+    }/*end else*/
+
+    return (result);
 }
 
 /**************************************************************************
@@ -531,56 +512,50 @@ void * GetNamedItem(P_NAMTAB_STRUCT namtab,
  * Description    : Finds the named entity in the table, and returns its type
  *					or -1 if its not in the table etc
  **************************************************************************/
-int  GetNamedItemType(P_NAMTAB_STRUCT namtab,
-							int		 name)
-{
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
-	
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+int GetNamedItemType(P_NAMTAB_STRUCT namtab,
+                     int name) {
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	int result;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(namtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) namtab;
+    int result;
 
-	/*
-	// Check that the name is at least positive.
-	*/
-	if(name < 0)
-	{
-		result = -1;
-	}
-	else
-	{
-		/*
-		// Map the name to the unique index, and get a pointer
-		// that entry
-		*/
-		p_ent =& p_namtab->entries[name & HASH_MASK];
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(namtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) namtab;
 
-		/*
-		// Do the names match? If so get the entity type
-		*/
-		if(p_ent->n16name == name)
-		{
-			result = p_ent->n16entity_type;
-		}
-		/*
-		// Else this name is unknown
-		*/
-		else
-		{
-			result = -1;
-		}
-		
-	}/*end else*/
+    /*
+    // Check that the name is at least positive.
+    */
+    if (name < 0) {
+        result = -1;
+    } else {
+        /*
+        // Map the name to the unique index, and get a pointer
+        // that entry
+        */
+        p_ent = &p_namtab->entries[name & HASH_MASK];
 
-	return (result);
+        /*
+        // Do the names match? If so get the entity type
+        */
+        if (p_ent->n16name == name) {
+            result = p_ent->n16entity_type;
+        }
+            /*
+            // Else this name is unknown
+            */
+        else {
+            result = -1;
+        }
+
+    }/*end else*/
+
+    return (result);
 }
 
 /**************************************************************************
@@ -592,64 +567,58 @@ int  GetNamedItemType(P_NAMTAB_STRUCT namtab,
  * Description    : Finds the named entity in the table, and returns its type
  *					or -1 if its not in the table etc
  **************************************************************************/
-void * GetNamedItemAndType(P_NAMTAB_STRUCT pExternNamtab,
-						int	 name,
-						int  *  nType)
-{
-	/*
-	// Pointer to the item
-	*/
-	void * pItem;
+void *GetNamedItemAndType(P_NAMTAB_STRUCT pExternNamtab,
+                          int name,
+                          int *nType) {
+    /*
+    // Pointer to the item
+    */
+    void *pItem;
 
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
-	
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(pExternNamtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) pExternNamtab;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
+
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(pExternNamtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) pExternNamtab;
 
 
-	/*
-	// Check that the name is at least positive.
-	*/
-	if(name < 0)
-	{
-		pItem = NULL;
-		*nType = -1;
-	}
-	else
-	{
-		/*
-		// Map the name to the unique index, and get a pointer
-		// to that entry
-		*/
-		p_ent =& p_namtab->entries[name & HASH_MASK];
+    /*
+    // Check that the name is at least positive.
+    */
+    if (name < 0) {
+        pItem = NULL;
+        *nType = -1;
+    } else {
+        /*
+        // Map the name to the unique index, and get a pointer
+        // to that entry
+        */
+        p_ent = &p_namtab->entries[name & HASH_MASK];
 
-		/*
-		// Do the names match? If so get the pointer to the data
-		*/
-		if(p_ent->n16name == name)
-		{
-			pItem = p_ent->p_entity;
-			*nType = p_ent->n16entity_type;
-		}
-		/*
-		// Else this name is unknown
-		*/
-		else
-		{
-			pItem = NULL;
-			*nType = -1;
-		}
-		
-	}/*end else*/
+        /*
+        // Do the names match? If so get the pointer to the data
+        */
+        if (p_ent->n16name == name) {
+            pItem = p_ent->p_entity;
+            *nType = p_ent->n16entity_type;
+        }
+            /*
+            // Else this name is unknown
+            */
+        else {
+            pItem = NULL;
+            *nType = -1;
+        }
 
-	return pItem;
+    }/*end else*/
+
+    return pItem;
 }
 
 
@@ -664,19 +633,16 @@ void * GetNamedItemAndType(P_NAMTAB_STRUCT pExternNamtab,
  *
  **************************************************************************/
 
-void * GetTextureHandle (int nTextureName)
-{
-	void 			*hTexture= NULL;
-	P_NAMTAB_STRUCT pNamtab;
-	
-	if (pNamtab = (P_NAMTAB_STRUCT) GetNameTable ())
-	{
-		if (GetNamedItemType (pNamtab, nTextureName) == nt_texture)
-		{
-			hTexture = GetNamedItem (pNamtab, nTextureName);
-		}
-	}
-	return(hTexture);
+void *GetTextureHandle(int nTextureName) {
+    void *hTexture = NULL;
+    P_NAMTAB_STRUCT pNamtab;
+
+    if (pNamtab = (P_NAMTAB_STRUCT) GetNameTable()) {
+        if (GetNamedItemType(pNamtab, nTextureName) == nt_texture) {
+            hTexture = GetNamedItem(pNamtab, nTextureName);
+        }
+    }
+    return (hTexture);
 }
 
 /**************************************************************************
@@ -690,29 +656,25 @@ void * GetTextureHandle (int nTextureName)
  * 					textures and removes them. 
  **************************************************************************/
 
-void CALL_CONV sgl_delete_all_textures ( void )
-{
-	void 			*hTexture= NULL;
-	P_NAMTAB_STRUCT pNamtab;
-	TAB_ENT_STRUCT * pEnt;			/*  Pointer to an individual entry */
-	int i;
+void CALL_CONV sgl_delete_all_textures(void) {
+    void *hTexture = NULL;
+    P_NAMTAB_STRUCT pNamtab;
+    TAB_ENT_STRUCT *pEnt;            /*  Pointer to an individual entry */
+    int i;
 
-	if (pNamtab = (P_NAMTAB_STRUCT) GetNameTable ())
-	{
-		/* Step through the name table */
-		NAMTAB_STRUCT * p_namtab = (NAMTAB_STRUCT *) pNamtab;		
+    if (pNamtab = (P_NAMTAB_STRUCT) GetNameTable()) {
+        /* Step through the name table */
+        NAMTAB_STRUCT *p_namtab = (NAMTAB_STRUCT *) pNamtab;
 
-		ASSERT(p_namtab != NULL);
-	
-		pEnt = & p_namtab->entries[0];
-		for(i= MAX_NAM_TAB; i != 0 ; i --, pEnt++)
-		{
-			if (pEnt->n16entity_type == nt_texture)
-			{
-				gpTextureIF->pfnTextureFree (gHLogicalDev->TexHeap, pEnt->p_entity);
-			}	
-		}	 
-	}	
+        ASSERT(p_namtab != NULL);
+
+        pEnt = &p_namtab->entries[0];
+        for (i = MAX_NAM_TAB; i != 0; i--, pEnt++) {
+            if (pEnt->n16entity_type == nt_texture) {
+                gpTextureIF->pfnTextureFree(gHLogicalDev->TexHeap, pEnt->p_entity);
+            }
+        }
+    }
 }
 
 
@@ -727,35 +689,34 @@ void CALL_CONV sgl_delete_all_textures ( void )
  *				   end to reduce the chance of the same name be reproduced...
  **************************************************************************/
 static void add_to_free_list(NAMTAB_STRUCT *p_namtab,
-						int  index)
-{
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+                             int index) {
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
-	/*
-	// Get access to the current last entry and set its next
-	// index to be the entry which is being added on...
-	*/
-	p_ent = & p_namtab->entries[p_namtab->last_free];
-	p_ent->n16nextfree = index;
+    /*
+    // Get access to the current last entry and set its next
+    // index to be the entry which is being added on...
+    */
+    p_ent = &p_namtab->entries[p_namtab->last_free];
+    p_ent->n16nextfree = index;
 
-	/*
-	// get access to the entry being plocked on the end
-	*/
-	p_ent = & p_namtab->entries[index];
+    /*
+    // get access to the entry being plocked on the end
+    */
+    p_ent = &p_namtab->entries[index];
 
-	/*
-	// clear out the two relevent fields that mark it as free,
-	// (and for neatness, set the next free to be -1)
-	*/
-	p_ent->n16name = -1;
-	p_ent->n16entity_type = -1;
-	p_ent->n16nextfree = -1;
+    /*
+    // clear out the two relevent fields that mark it as free,
+    // (and for neatness, set the next free to be -1)
+    */
+    p_ent->n16name = -1;
+    p_ent->n16entity_type = -1;
+    p_ent->n16nextfree = -1;
 
-	/*
-	// finally, set the last_free to index this entry
-	*/
-	p_namtab->last_free = index;
+    /*
+    // finally, set the last_free to index this entry
+    */
+    p_namtab->last_free = index;
 
 }
 
@@ -783,115 +744,101 @@ static void add_to_free_list(NAMTAB_STRUCT *p_namtab,
  *				In the debug version it asserts, and in the non debug, just
  *				prevents the counts from going out of control...
  **************************************************************************/
-static void change_named_item_usage(NAMTAB_STRUCT * p_namtab,
-				  					sgl_int16		 name,
-									int			 increment)
-{
+static void change_named_item_usage(NAMTAB_STRUCT *p_namtab,
+                                    sgl_int16 name,
+                                    int increment) {
 
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
-	/*
-	// Check that the name is at least positive.
-	*/
-	if(name >= 0)
-	{
-		/*
-		// Map the name to the unique index, and get a pointer
-		// that entry
-		*/
-		p_ent =& p_namtab->entries[name & HASH_MASK];
+    /*
+    // Check that the name is at least positive.
+    */
+    if (name >= 0) {
+        /*
+        // Map the name to the unique index, and get a pointer
+        // that entry
+        */
+        p_ent = &p_namtab->entries[name & HASH_MASK];
 
-		/* /////////////
-		// Has this entry been deleted?
-		///////////// */
-		if(p_ent->n16name == -1)
-		{
-			/* 
-			// Then check if this is the one we want, and we are just waiting
-			// for the usage count to hit zero.
-			*/
-			if(p_ent->n16entity_type == name)
-			{
-				ASSERT(p_ent->n16count > 0)
+        /* /////////////
+        // Has this entry been deleted?
+        ///////////// */
+        if (p_ent->n16name == -1) {
+            /*
+            // Then check if this is the one we want, and we are just waiting
+            // for the usage count to hit zero.
+            */
+            if (p_ent->n16entity_type == name) {
+                ASSERT(p_ent->n16count > 0)
 
-				if(increment)
-				{
-					/*
-					// This shouldn't be happening!!!
-					*/
-					ASSERT(FALSE);
-				}
-				/*
-				// Decrement, and free up the entry if the count
-				// hits zero
-				*/
-				else
-				{
-					p_ent->n16count --;
+                if (increment) {
+                    /*
+                    // This shouldn't be happening!!!
+                    */
+                    ASSERT(FALSE);
+                }
+                    /*
+                    // Decrement, and free up the entry if the count
+                    // hits zero
+                    */
+                else {
+                    p_ent->n16count--;
 
-					/*
-					// Do we really delete it this time?
-					// If so, add it to the free list
-					*/
-					if(p_ent->n16count == 0)
-					{
-						add_to_free_list(p_namtab, name & HASH_MASK);
-					}
-				}/* Else decrementing */
+                    /*
+                    // Do we really delete it this time?
+                    // If so, add it to the free list
+                    */
+                    if (p_ent->n16count == 0) {
+                        add_to_free_list(p_namtab, name & HASH_MASK);
+                    }
+                }/* Else decrementing */
 
-			} /*end if name matches */
-		}
+            } /*end if name matches */
+        }
 
-		/* /////////////
-		// Else, is this name unrecognised?
-		///////////// */
-		else if(p_ent->n16name != name)
-		{
-			/* Do nothing*/
-		}
+            /* /////////////
+            // Else, is this name unrecognised?
+            ///////////// */
+        else if (p_ent->n16name != name) {
+            /* Do nothing*/
+        }
 
-		/* /////////////
-		// Else, do we increment?
-		///////////// */
-		else if(increment)
-		{
-			p_ent->n16count ++;
+            /* /////////////
+            // Else, do we increment?
+            ///////////// */
+        else if (increment) {
+            p_ent->n16count++;
 
-			/*
-			// Prevent Overflow - also in DEBUG assert if too large as this
-			// probably indicates an error somewhere...
-			*/
-			ASSERT(p_ent->n16count < 1000);
-			if(p_ent->n16count > MAX_REF_COUNT)
-			{
-				p_ent->n16count = MAX_REF_COUNT;
-			}
-		}
-		/* /////////////
-		// Else decrement the usage count
-		///////////// */
-		else
-		{
-			p_ent->n16count --;
+            /*
+            // Prevent Overflow - also in DEBUG assert if too large as this
+            // probably indicates an error somewhere...
+            */
+            ASSERT(p_ent->n16count < 1000);
+            if (p_ent->n16count > MAX_REF_COUNT) {
+                p_ent->n16count = MAX_REF_COUNT;
+            }
+        }
+            /* /////////////
+            // Else decrement the usage count
+            ///////////// */
+        else {
+            p_ent->n16count--;
 
-			/*
-			// Dont allow it to go negative. In fact it should NEVER
-			// do this...
-			*/
-			ASSERT(p_ent->n16count >= 0)
-			if(p_ent->n16count < 0)
-			{
-				p_ent->n16count = 0;
-			}
-		}/*end else decrement*/
-		
-	}/*end IF - name is positive*/
+            /*
+            // Dont allow it to go negative. In fact it should NEVER
+            // do this...
+            */
+            ASSERT(p_ent->n16count >= 0)
+            if (p_ent->n16count < 0) {
+                p_ent->n16count = 0;
+            }
+        }/*end else decrement*/
+
+    }/*end IF - name is positive*/
 }
-									
 
 
-			
 /**************************************************************************
  * Function Name  : IncNamedItemUsage
  * Inputs Only    : name, namtab
@@ -904,18 +851,17 @@ static void change_named_item_usage(NAMTAB_STRUCT * p_namtab,
  *					by accident.
  **************************************************************************/
 void IncNamedItemUsage(P_NAMTAB_STRUCT namtab,
-							int		 name)
-{
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
+                       int name) {
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(namtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) namtab;
-	
-	change_named_item_usage( p_namtab, (sgl_int16)name, 1);
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(namtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) namtab;
+
+    change_named_item_usage(p_namtab, (sgl_int16) name, 1);
 
 }
 
@@ -932,20 +878,18 @@ void IncNamedItemUsage(P_NAMTAB_STRUCT namtab,
  *					by accident.
  **************************************************************************/
 void DecNamedItemUsage(P_NAMTAB_STRUCT namtab,
-							int		 name)
-{
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
+                       int name) {
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(namtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) namtab;
-	
-	change_named_item_usage( p_namtab, (sgl_int16)name, 0);
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(namtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) namtab;
+
+    change_named_item_usage(p_namtab, (sgl_int16) name, 0);
 }
-
 
 
 /**************************************************************************
@@ -958,56 +902,51 @@ void DecNamedItemUsage(P_NAMTAB_STRUCT namtab,
  * Description    : Finds the named entity in the table,and deletes the name.
  **************************************************************************/
 extern void DeleteNamedItem(P_NAMTAB_STRUCT namtab,
-						int	 name)
-{
+                            int name) {
 
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab;
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab;
 
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
-
-
-	/*
-	// retype the namtab to the internal format
-	*/
-	ASSERT(namtab != NULL)
-	p_namtab = (NAMTAB_STRUCT *) namtab;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
 
-	if(name >= 0)
-	{
-		/*
-		// Map the name to the unique index, and get a pointer
-		// that entry
-		*/
-		p_ent = & p_namtab->entries[name & HASH_MASK];
-		
-		/* /////////////
-		// Does the name match?
-		///////////// */
-		if(p_ent->n16name == name)
-		{
-			/*
-			// If the usage count is Zero, then really delete it
-			*/
-			if(p_ent->n16count == 0)
-			{
-				add_to_free_list(p_namtab, name & HASH_MASK);
-			}
-			/*
-			// Else, copy the name into the entity_type (i.e. its other
-			// role in life), and mark the entry as deleted
-			*/
-			else
-			{
-				p_ent->n16entity_type = name;
-				p_ent->n16name = -1;
-			}
+    /*
+    // retype the namtab to the internal format
+    */
+    ASSERT(namtab != NULL)
+    p_namtab = (NAMTAB_STRUCT *) namtab;
 
-		}/*end if name matches*/
 
-	} /* end if */
+    if (name >= 0) {
+        /*
+        // Map the name to the unique index, and get a pointer
+        // that entry
+        */
+        p_ent = &p_namtab->entries[name & HASH_MASK];
+
+        /* /////////////
+        // Does the name match?
+        ///////////// */
+        if (p_ent->n16name == name) {
+            /*
+            // If the usage count is Zero, then really delete it
+            */
+            if (p_ent->n16count == 0) {
+                add_to_free_list(p_namtab, name & HASH_MASK);
+            }
+                /*
+                // Else, copy the name into the entity_type (i.e. its other
+                // role in life), and mark the entry as deleted
+                */
+            else {
+                p_ent->n16entity_type = name;
+                p_ent->n16name = -1;
+            }
+
+        }/*end if name matches*/
+
+    } /* end if */
 
 }
 
@@ -1024,86 +963,76 @@ extern void DeleteNamedItem(P_NAMTAB_STRUCT namtab,
  *					This routine is part of debug (for the user)
  **************************************************************************/
 
-void GetNameStats(P_NAMTAB_STRUCT pnamtab,	NAME_STATS_STRUCT *pNameStats)
-{
-	/*  Pointer to the real data */
-	NAMTAB_STRUCT * p_namtab = (NAMTAB_STRUCT *) pnamtab;
+void GetNameStats(P_NAMTAB_STRUCT pnamtab, NAME_STATS_STRUCT *pNameStats) {
+    /*  Pointer to the real data */
+    NAMTAB_STRUCT *p_namtab = (NAMTAB_STRUCT *) pnamtab;
 
-	/*  Pointer to an individual entry */
-	TAB_ENT_STRUCT * p_ent;
+    /*  Pointer to an individual entry */
+    TAB_ENT_STRUCT *p_ent;
 
-	int i;
+    int i;
 
-	ASSERT(p_namtab != NULL);
+    ASSERT(p_namtab != NULL);
 
-	/*
-	// Initialise the counts of each item type
-	*/
-	pNameStats->numNamedLists 	  =	0;
-	pNameStats->numNamedMaterials =	0;
-	pNameStats->numNamedMeshes	  = 0;
-	pNameStats->numNamedConvex	  = 0;
-	pNameStats->numNamedTextures  =	0;
-	pNameStats->numNamedCachedTextures = 0;
-	
-
-	/*
-	// Step through the name table and count the number of each type
-	*/
-	p_ent = & p_namtab->entries[0];
-	for(i= MAX_NAM_TAB; i != 0 ; i --, p_ent++)
-	{
-		switch(p_ent->n16entity_type)
-		{
-			case nt_list_node: 
-			{
-				pNameStats->numNamedLists ++;
-				break;
-			}
-
-			case nt_material: 
-			{
-				pNameStats->numNamedMaterials++;
-				break;
-			}
-
-			case nt_convex: 
-			{
-				pNameStats->numNamedConvex++;
-				break;
-			}
-
-			case nt_mesh: 
-			{
-				pNameStats->numNamedMeshes++;
-				break;
-			}
-
-			case nt_texture: 
-			{
-				pNameStats->numNamedTextures++;
-				break;
-			}
-
-			case nt_cached_texture: 
-			{
-				pNameStats->numNamedCachedTextures ++;
-				break;
-			}
+    /*
+    // Initialise the counts of each item type
+    */
+    pNameStats->numNamedLists = 0;
+    pNameStats->numNamedMaterials = 0;
+    pNameStats->numNamedMeshes = 0;
+    pNameStats->numNamedConvex = 0;
+    pNameStats->numNamedTextures = 0;
+    pNameStats->numNamedCachedTextures = 0;
 
 
-			/*
-			// Default - either the entry is empty, or we aren't interested
-			// in this type of named item.
-			*/
-			default:
-			{
-				break;
-			}
-		}
+    /*
+    // Step through the name table and count the number of each type
+    */
+    p_ent = &p_namtab->entries[0];
+    for (i = MAX_NAM_TAB; i != 0; i--, p_ent++) {
+        switch (p_ent->n16entity_type) {
+            case nt_list_node: {
+                pNameStats->numNamedLists++;
+                break;
+            }
 
-	}/*end for*/
-	
+            case nt_material: {
+                pNameStats->numNamedMaterials++;
+                break;
+            }
+
+            case nt_convex: {
+                pNameStats->numNamedConvex++;
+                break;
+            }
+
+            case nt_mesh: {
+                pNameStats->numNamedMeshes++;
+                break;
+            }
+
+            case nt_texture: {
+                pNameStats->numNamedTextures++;
+                break;
+            }
+
+            case nt_cached_texture: {
+                pNameStats->numNamedCachedTextures++;
+                break;
+            }
+
+
+                /*
+                // Default - either the entry is empty, or we aren't interested
+                // in this type of named item.
+                */
+            default: {
+                break;
+            }
+        }
+
+    }/*end for*/
+
 
 }
 
