@@ -85,6 +85,8 @@
 
 /* Select between using Z and 1/w.
  */
+#include "dregion.h"
+
 #define USERHW	0
 
 /* Used to switch Z buffer closer simulation ON/OFF.

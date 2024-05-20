@@ -167,7 +167,6 @@
 #include <pvrlims.h>
 #include <syscon.h>
 #include <dregion.h>
-#include <stdlib.h>        /* JWF added for missing prototypes */
 #include <stdio.h>        /* JWF added for missing prototypes */
 #include <string.h>        /* JWF added for missing prototypes */
 #include <pvrosapi.h>

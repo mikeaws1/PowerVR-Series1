@@ -35,19 +35,14 @@
 
 #include <sgl_defs.h>
 #include <pvrosapi.h>
-#include <sgl_init.h>
 #include <hwinterf.h>
 #include <parmbuff.h>
-#include <sgl_math.h>
 #include <pvrlims.h>
 
-#include <nm_intf.h>
-#include <getnamtb.h>
-#include <dlntypes.h>
+
 
 #include <pmsabre.h>
 #include <dregion.h>
-#include <texapi.h>
 #include <pvrosio.h>
 
 #include <hwtexas.h>
@@ -120,11 +115,11 @@ void RestoreFPU(void);
 
 #define EDGE_0_A  1.0f
 #define EDGE_1_A  0.0f
-#define EDGE_2_A  -1.0f
+#define EDGE_2_A  (-1.0f)
 #define EDGE_3_A  0.0f
 
 #define EDGE_0_B  0.0f
-#define EDGE_1_B  -1.0f
+#define EDGE_1_B  (-1.0f)
 #define EDGE_2_B  0.0f
 #define EDGE_3_B  1.0f
 
@@ -543,37 +538,37 @@ static int PackISPPoints(PIPOINT pPoint, PIMATERIAL pMat,
 /**********************************************************************/
 
 #define PACKFLAT(a, b, c) \
-a[0] = b->TSPControlWord | ((c >> 16) & 0x000000FF); \
-a[1] = c << 16;
+(a)[0] = (b)->TSPControlWord | (((c) >> 16) & 0x000000FF); \
+(a)[1] = (c) << 16;
 
 #define PACKFLATTEX(a, b, c, d) \
-a[0] = b->TSPControlWord |((c >> 16) & 0x000000FF)|(d->Tex.exp << SHIFT_EXPONENT); \
-a[1] = c << 16;
+(a)[0] = (b)->TSPControlWord |(((c) >> 16) & 0x000000FF)|((d)->Tex.exp << SHIFT_EXPONENT); \
+(a)[1] = (c) << 16;
 
 #define PACKHIGH(a, b) \
-a[2] = b->Highlight; \
-a[3] = 0x0L;
+(a)[2] = (b)->Highlight; \
+(a)[3] = 0x0L;
 
 #define PACKHIGHTEX(a, b) \
-a[8] = b->Highlight; \
-a[9] = 0x0L;
+(a)[8] = (b)->Highlight; \
+(a)[9] = 0x0L;
 
 #define PACKTEX(w, x, y, z) \
-w[2] = ((x->Tex.MipMant) << SHIFT_PMIP_M) | \
-       ((x->Tex.MipExp)  << SHIFT_PMIP_E) |((x->Tex.r) & 0xffffUL); \
-w[3] = 0x0L; \
-w[4] = (z) | (( x->Tex.c) & 0xffffUL); \
-w[5] = (( x->Tex.a) & 0xffffUL); \
-w[6] = (y) | (( x->Tex.f) & 0xffffUL); \
-w[7] = (x->Tex.e << 16);
+(w)[2] = (((x)->Tex.MipMant) << SHIFT_PMIP_M) | \
+         (((x)->Tex.MipExp)  << SHIFT_PMIP_E) |(((x)->Tex.r) & 0xffffUL); \
+(w)[3] = 0x0L; \
+(w)[4] = (z) | (( (x)->Tex.c) & 0xffffUL); \
+(w)[5] = (( (x)->Tex.a) & 0xffffUL); \
+(w)[6] = (y) | (( (x)->Tex.f) & 0xffffUL); \
+(w)[7] = ((x)->Tex.e << 16);
 
 #define PACKFLATSHADLV(a, b, c, d) \
-a[0] = (b->TSPControlWord | ((c >> 16) & 0x000000FF)); \
-a[1] = (c << 16) | d;
+(a)[0] = ((b)->TSPControlWord | (((c) >> 16) & 0x000000FF)); \
+(a)[1] = ((c) << 16) | (d);
 
 #define PACKFLATSHADLVTEX(a, b, c, d, e) \
-a[0] = (b->TSPControlWord | ((c >> 16) & 0x000000FF))|(e->Tex.exp << SHIFT_EXPONENT); \
-a[1] = (c << 16) | d;
+(a)[0] = ((b)->TSPControlWord | (((c) >> 16) & 0x000000FF))|((e)->Tex.exp << SHIFT_EXPONENT); \
+(a)[1] = ((c) << 16) | (d);
 
 /**********************************************************************/
 
@@ -983,7 +978,6 @@ static void ProcessD3DPointTexMipMap(PIPOINT pPoint) {
     PIMATERIAL pMat = gpMatCurrent;
     float adj_a_e, adj_c, adj_f, adj_r, compression;
     float largestT, largestB;
-    float width = gpPointDC->fWidth;
     float width2 = gpPointDC->fWidth2;
     float fWidthInvTex = gpPointDC->fWidthInvTex;
     float fInvTexSize = gpPointDC->invTexSize;
@@ -1566,7 +1560,6 @@ static void ProcessPoints(PPIR pPerPointfn, PBPR pPerBuffn, sgl_uint32 TSPWords)
     sgl_uint32 TSPAddr;
     sgl_uint32 TSPSpaceAvailable;
     sgl_uint32 *pTSP;
-    sgl_uint32 NewObject = TRUE;
 
     while (gpPointDC->nInputPoints != 0) {
         int nBurst;

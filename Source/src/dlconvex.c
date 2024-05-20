@@ -228,7 +228,6 @@
 
 #include <math.h>  /* fabs() */
 #include <sgl_defs.h>
-#include <sgl_init.h>
 #include <dlnodes.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
@@ -236,7 +235,6 @@
 #include <adjacenc.h>
 #include <sgl_math.h>
 
-#include <pvrosapi.h>
 #include <sglmem.h>
 #include <dlshade.h>    /* SmoothPlaneDataPrecalc() */
 

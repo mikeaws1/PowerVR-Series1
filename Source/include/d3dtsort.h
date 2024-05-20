@@ -58,6 +58,9 @@
 
 
 /* Defines */
+#include "dtri.h"
+#include "dregion.h"
+
 #define NUM_INDICES_IN_BLOCK 32
 #define MAX_NUM_SCENE_TRIS 16000 /* Max number in Islands = 12689 */
 #define MAX_NUM_REGION_TRIS 2048/*2048*/
@@ -130,5 +133,4 @@ extern int PackISPD3DTriTransExtra (PITRI rpTri, PITRIPLUS rpTriPlus,
 
 
 
-#endif	/* __D3DTSORT_H__ */
-/* end of $RCSfile: d3dtsort.h,v $ */
+#endif

@@ -235,11 +235,8 @@ RCS info:
 #endif
 
 #include <sgl.h>
-#include <sgl_defs.h>
-#include <pvrosapi.h>
 #include <debug.h>
 #include <modauto.h>    /* auto-generated Module data definition */
-#include <profile.h>
 
 static sgl_int32 snModuleDebugLevels[NUM_ITEMS_IN_MODULES_ARRAY];
 static char *pszLevelStrings[] = {"Fatal: ", "Error: ", "Warning: ", "Message: ", ""};
@@ -655,9 +652,8 @@ void DebugInit(sgl_uint32 DebugLevel) {
 
 }
 
-#endif /*DEBUG*/
+#endif
 
-/* end of $RCSfile: debug.c,v $ */
 
 
 

@@ -124,7 +124,7 @@ static TRANS_REGION_DEPTHS_STRUCT gDepthInfo[IBUFFERSIZE];
 extern float gfBogusInvZ;
 
 /*
-  // We need to "retype" the floating point value as an Integer
+  // We need to "retype" the floating point value as an Integer,
   // so we can muck around with the bits. The fastest method seems
   // to depend on the compiler/CPU.
   */
@@ -344,12 +344,12 @@ typedef struct tagIFUNCBLOCK {
 #define FLAGS_0            0
 #define FLAGS_1            MASK_SMOOTH_SHADE
 #define FLAGS_2            MASK_FLAT_HIGHLIGHT
-#define FLAGS_3            MASK_FLAT_HIGHLIGHT | MASK_TEXTURE
+#define FLAGS_3            (MASK_FLAT_HIGHLIGHT | MASK_TEXTURE)
 
 #define FLAGS_4            0
 #define FLAGS_5            MASK_TEXTURE
 #define FLAGS_6            MASK_FLAT_HIGHLIGHT
-#define FLAGS_7            MASK_FLAT_HIGHLIGHT | MASK_TEXTURE
+#define FLAGS_7            (MASK_FLAT_HIGHLIGHT | MASK_TEXTURE)
 
 
 /*
@@ -372,7 +372,7 @@ static IFUNCBLOCK NoVolFuncs[16] =
                 // Global Translucency
                 */
 #undef BASE_FLAGS
-#define BASE_FLAGS  MASK_TRANS | MASK_TEXTURE
+#define BASE_FLAGS  (MASK_TRANS | MASK_TEXTURE)
                 {NULL, PackFlatTrans, 8, FLAGS(0, 0)},
                 {ProcessSmooth, PackSmoothTrans, 10, FLAGS(1, 0)},
                 {ProcessHigh, PackHighTrans, 10, FLAGS(2, 0)},
@@ -415,7 +415,7 @@ static IFUNCBLOCK ShadowFuncs[16] =
                 // Global Translucency
                 */
 #undef BASE_FLAGS
-#define BASE_FLAGS  MASK_SHADOW_FLAG | MASK_TRANS | MASK_TEXTURE
+#define BASE_FLAGS  (MASK_SHADOW_FLAG | MASK_TRANS | MASK_TEXTURE)
                 {ProcessFlatShadOrLiVol, PackFlatTransShad, 8, FLAGS(0, 0)},
                 {ProcessFlatShadOrLiVol, PackFlatTransShad, 8, FLAGS(0, 0)},
                 {ProcessHighShadOrLiVol, PackHighTransShad, 10, FLAGS(2, 0)},
@@ -458,7 +458,7 @@ static IFUNCBLOCK LightVolFuncs[16] =
                 // Global Translucency
                 */
 #undef BASE_FLAGS
-#define BASE_FLAGS  MASK_SHADOW_FLAG | MASK_TRANS | MASK_TEXTURE
+#define BASE_FLAGS  (MASK_SHADOW_FLAG | MASK_TRANS | MASK_TEXTURE)
                 {ProcessFlatShadOrLiVol, PackFlatTransLiVol, 8, FLAGS(0, 0)},
                 {ProcessFlatShadOrLiVol, PackFlatTransLiVol, 8, FLAGS(0, 0)},
                 {ProcessHighShadOrLiVol, PackHighTransLiVol, 10, FLAGS(2, 0)},
@@ -512,7 +512,7 @@ static INLINE void ConvertD3DColtoFractions(sgl_uint32 Colour,
 /**********************************************************************/
 
 void PackISPLinesCore(sgl_uint32 *pPlaneMem, sgl_uint32 nLinesInChunk,
-                      sgl_uint32 *rTSPAddr, PILINE *rpLines,
+                      const sgl_uint32 *rTSPAddr, PILINE *rpLines,
                       int nIncrement, sgl_uint32 TSPIncrement) {
     PILINE pLine = *rpLines;
     sgl_uint32 TSPAddr = *rTSPAddr;
@@ -681,94 +681,94 @@ static int PackISPLines(PILINE pLine, PIMATERIAL pMat,
 /**********************************************************************/
 
 #define PACKFLAT(a, b, c) \
-a[0] = b->TSPControlWord | ((c >> 16) & 0x000000FF); \
-a[1] = c << 16;
+(a)[0] = (b)->TSPControlWord | (((c) >> 16) & 0x000000FF); \
+(a)[1] = (c) << 16;
 
 #define PACKSMOOTH(a, b, c) \
-a[0] = b->TSPControlWord ; \
-a[1] = c->Shading.u.Smooth.nX << 16 | (c->Shading.u.Smooth.nY & 0x0000ffff); \
-a[2] = c->Shading.u.Smooth.Col3 << 16 | (c->Shading.u.Smooth.Col1 & 0x0000ffff); \
-a[3] = c->Shading.u.Smooth.Col2;
+(a)[0] = (b)->TSPControlWord ; \
+(a)[1] = (c)->Shading.u.Smooth.nX << 16 | ((c)->Shading.u.Smooth.nY & 0x0000ffff); \
+(a)[2] = (c)->Shading.u.Smooth.Col3 << 16 | ((c)->Shading.u.Smooth.Col1 & 0x0000ffff); \
+(a)[3] = (c)->Shading.u.Smooth.Col2;
 
 #define PACKFLATTEX(a, b, c, d) \
-a[0] = b->TSPControlWord |((c >> 16) & 0x000000FF)|(d->Tex.exp << SHIFT_EXPONENT); \
-a[1] = c << 16;
+(a)[0] = (b)->TSPControlWord |(((c) >> 16) & 0x000000FF)|((d)->Tex.exp << SHIFT_EXPONENT); \
+(a)[1] = (c) << 16;
 
 #define PACKHIGH(a, b) \
-a[2] = b->Shading.u.Highlight; \
-a[3] = 0x0L;
+(a)[2] = (b)->Shading.u.Highlight; \
+(a)[3] = 0x0L;
 
 #define PACKHIGHTEX(a, b) \
-a[8] = b->Shading.u.Highlight; \
-a[9] = 0x0L;
+(a)[8] = (b)->Shading.u.Highlight; \
+(a)[9] = 0x0L;
 
 #define PACKTEX(w, x, y, z) \
-w[2] = (x->Tex.r) & 0xffffUL; \
-w[3] = 0x0L; \
-w[4] = (z) | (( x->Tex.c) & 0xffffUL); \
-w[5] = 0x0L; \
-w[6] = (y) | (( x->Tex.f) & 0xffffUL); \
-w[7] = 0x0L;
+(w)[2] = ((x)->Tex.r) & 0xffffUL; \
+(w)[3] = 0x0L; \
+(w)[4] = (z) | (( (x)->Tex.c) & 0xffffUL); \
+(w)[5] = 0x0L; \
+(w)[6] = (y) | (( (x)->Tex.f) & 0xffffUL); \
+(w)[7] = 0x0L;
 
 #define PACKFLATTRANS(w, x, y) \
-w[0] = x->TSPControlWord | ((y >> 16) & 0x000000FF); \
-w[1] = y << 16; \
-w[2] = 0x1L; \
-w[3] = 0x0L; \
-w[4] = TranslucentControlWord << 16; \
-w[5] = 0x0L; \
-w[6] = TranslucentControlWord & 0xFFFF0000; \
-w[7] = 0x0L;
+(w)[0] = (x)->TSPControlWord | (((y) >> 16) & 0x000000FF); \
+(w)[1] = (y) << 16; \
+(w)[2] = 0x1L; \
+(w)[3] = 0x0L; \
+(w)[4] = TranslucentControlWord << 16; \
+(w)[5] = 0x0L; \
+(w)[6] = TranslucentControlWord & 0xFFFF0000; \
+(w)[7] = 0x0L;
 
 #define PACKHIGHTRANS(w, x, y, z) \
-w[0] = x->TSPControlWord | ((y >> 16) & 0x000000FF); \
-w[1] = y << 16; \
-w[2] = 0x1L; \
-w[3] = 0x0L; \
-w[4] = TranslucentControlWord << 16; \
-w[5] = 0x0L; \
-w[6] = TranslucentControlWord & 0xFFFF0000; \
-w[7] = 0x0L; \
-w[8] = z->Shading.u.Highlight; \
-w[9] = 0x0L;
+(w)[0] = (x)->TSPControlWord | (((y) >> 16) & 0x000000FF); \
+(w)[1] = (y) << 16; \
+(w)[2] = 0x1L; \
+(w)[3] = 0x0L; \
+(w)[4] = TranslucentControlWord << 16; \
+(w)[5] = 0x0L; \
+(w)[6] = TranslucentControlWord & 0xFFFF0000; \
+(w)[7] = 0x0L; \
+(w)[8] = (z)->Shading.u.Highlight; \
+(w)[9] = 0x0L;
 
 #define PACKSMOOTHTRANS(w, x, z) \
-w[0] = x->TSPControlWord; \
-w[1] = z->Shading.u.Smooth.nX << 16 | (z->Shading.u.Smooth.nY & 0x0000ffff); \
-w[2] = 0x1L; \
-w[3] = 0x0L; \
-w[4] = TranslucentControlWord << 16; \
-w[5] = 0x0L; \
-w[6] = TranslucentControlWord & 0xFFFF0000; \
-w[7] = 0x0L; \
-w[8] = z->Shading.u.Smooth.Col3 << 16 | (z->Shading.u.Smooth.Col1 & 0x0000ffff); \
-w[9] = z->Shading.u.Smooth.Col2;
+(w)[0] = (x)->TSPControlWord; \
+(w)[1] = (z)->Shading.u.Smooth.nX << 16 | ((z)->Shading.u.Smooth.nY & 0x0000ffff); \
+(w)[2] = 0x1L; \
+(w)[3] = 0x0L; \
+(w)[4] = TranslucentControlWord << 16; \
+(w)[5] = 0x0L; \
+(w)[6] = TranslucentControlWord & 0xFFFF0000; \
+(w)[7] = 0x0L; \
+(w)[8] = (z)->Shading.u.Smooth.Col3 << 16 | ((z)->Shading.u.Smooth.Col1 & 0x0000ffff); \
+(w)[9] = (z)->Shading.u.Smooth.Col2;
 
 #define PACKFLATSHADLV(a, b, c, d) \
-a[0] = (b->TSPControlWord | (c >> 16) & 0x000000FF); \
-a[1] = (c << 16) | d;
+(a)[0] = ((b)->TSPControlWord | ((c) >> 16) & 0x000000FF); \
+(a)[1] = ((c) << 16) | (d);
 
 #define PACKSMOOTHSHADLV(a, b, c, d, e) \
-a[0] = b->TSPControlWord; \
-a[1] = e->Shading.u.Smooth.nX << 16 | (e->Shading.u.Smooth.nY & 0x0000ffff); \
-a[2] = e->Shading.u.Smooth.Col3 << 16 | (e->Shading.u.Smooth.Col1 & 0x0000ffff); \
-a[3] = e->Shading.u.Smooth.Col2; \
-a[4] = (d << 16) | (e->Shading.u.Smooth.Col1 & 0x0000ffff); \
-a[5] = e->Shading.u.Smooth.Col2;
+(a)[0] = (b)->TSPControlWord; \
+(a)[1] = (e)->Shading.u.Smooth.nX << 16 | ((e)->Shading.u.Smooth.nY & 0x0000ffff); \
+(a)[2] = (e)->Shading.u.Smooth.Col3 << 16 | ((e)->Shading.u.Smooth.Col1 & 0x0000ffff); \
+(a)[3] = (e)->Shading.u.Smooth.Col2; \
+(a)[4] = ((d) << 16) | ((e)->Shading.u.Smooth.Col1 & 0x0000ffff); \
+(a)[5] = (e)->Shading.u.Smooth.Col2;
 
 #define PACKFLATTRANSSHADLV(a, b, c, d) \
-a[0] = (b->TSPControlWord | (c >> 16) & 0x000000FF); \
-a[1] = (c << 16) | d; \
-a[2] = 0x1L; \
-a[3] = 0x0L; \
-a[4] = TranslucentControlWord << 16; \
-a[5] = 0x0L; \
-a[6] = TranslucentControlWord & 0xFFFF0000; \
-a[7] = 0x0L;
+(a)[0] = ((b)->TSPControlWord | ((c) >> 16) & 0x000000FF); \
+(a)[1] = ((c) << 16) | (d); \
+(a)[2] = 0x1L; \
+(a)[3] = 0x0L; \
+(a)[4] = TranslucentControlWord << 16; \
+(a)[5] = 0x0L; \
+(a)[6] = TranslucentControlWord & 0xFFFF0000; \
+(a)[7] = 0x0L;
 
 #define PACKFLATSHADLVTEX(a, b, c, d, e) \
-a[0] = (b->TSPControlWord | (c >> 16) & 0x000000FF)|(e->Tex.exp << SHIFT_EXPONENT); \
-a[1] = (c << 16) | d;
+(a)[0] = ((b)->TSPControlWord | ((c) >> 16) & 0x000000FF)|((e)->Tex.exp << SHIFT_EXPONENT); \
+(a)[1] = ((c) << 16) | (d);
 
 /**********************************************************************/
 
@@ -1019,7 +1019,7 @@ static void PackHighTransShad(PILINE pLine, PIMATERIAL pMat,
 
     sgl_uint32 uFlat0Col24, uFlat1Col16;
     /*
-    // Go through the planes. Move on to the next shading results and
+    // Go through the planes. Move on to the next shading results
     // and next plane pointer (NOTE Planes is array of pointers)
     */
     while (numLines--) {
@@ -1051,7 +1051,7 @@ static void PackSmoothShad(PILINE pLine, PIMATERIAL pMat,
 
     sgl_uint32 uFlat0Col24, uFlat1Col16;
     /*
-    // Go through the planes. Move on to the next shading results and
+    // Go through the planes. Move on to the next shading results
     // and next plane pointer (NOTE Planes is array of pointers)
     */
     while (numLines--) {
@@ -1141,7 +1141,7 @@ static void PackHighLiVol(PILINE pLine, PIMATERIAL pMat,
                   ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
     /*
-    // Go through the planes. Move on to the next shading results and
+    // Go through the planes. Move on to the next shading results
     // and next plane pointer (NOTE Planes is array of pointers)
     */
     while (numLines--) {
@@ -1173,7 +1173,7 @@ static void PackHighTransLiVol(PILINE pLine, PIMATERIAL pMat,
                   ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
     /*
-    // Go through the planes. Move on to the next shading results and
+    // Go through the planes. Move on to the next shading results
     // and next plane pointer (NOTE Planes is array of pointers)
     */
     while (numLines--) {
@@ -1206,7 +1206,7 @@ static void PackSmoothLiVol(PILINE pLine, PIMATERIAL pMat,
                   ((pMat->v.LightVolCol & 0x000000F8) << 7);
 
     /*
-    // Go through the planes. Move on to the next shading results and
+    // Go through the planes. Move on to the next shading results
     // and next plane pointer (NOTE Planes is array of pointers)
     */
     while (numLines--) {

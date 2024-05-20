@@ -74,9 +74,7 @@
 #include <dlnodes.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
-#include <sgl_init.h>
 #include <dldelete.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
 
 

@@ -51,7 +51,6 @@
 #if DAG_TRANS_SORTING
 
 #include <dtri.h>
-#include <disp.h>
 #include <d3dtsort.h> /* for ITRIPLUS */
 
 SGL_EXTERN_TIME_REF /* if we are timing code */

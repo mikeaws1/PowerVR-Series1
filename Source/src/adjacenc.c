@@ -103,10 +103,7 @@
 
 #include <sgl_defs.h>
 #include <sgl_math.h>
-/* Required by dlconvex.h: */
-#include <dlntypes.h>
 #include <dlmater.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
 #include <dlconvex.h>
 #include <rnconvst.h>

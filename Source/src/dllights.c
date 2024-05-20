@@ -111,9 +111,7 @@
 #include <dlnodes.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
-#include <sgl_init.h>
 #include <sgl_math.h>
 
 

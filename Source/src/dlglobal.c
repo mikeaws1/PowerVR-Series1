@@ -43,14 +43,11 @@
  **************************************************************************/
 
 #include <sgl_defs.h>
-#include <sgl.h>
 #include <dlnodes.h>
 
 #include <nm_intf.h>
 #include <dlglobal.h>
-#include <getnamtb.h>
 
-#include <pvrosapi.h>
 #include <sglmem.h>
 
 /*

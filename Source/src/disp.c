@@ -463,8 +463,8 @@ void PackISPCoreClipTestedExtra(sgl_uint32 *pPlaneMem,
         // vertex positions:
         //
         // NOTE: I have changed the calculation to use a different basis system
-        // which means that the new "adjoint" which actually re-uses values from
-        // the adjoint we pass in except for the last row which is 0,0, Det.
+        // which means that the new "adjoin" which actually re-uses values from
+        // the adjoin we pass in except for the last row which is 0,0, Det.
         //									    Simon.
         */
         fA = fZ0 * pTri->fAdjoint[0][0] + fZ1 * pTri->fAdjoint[0][1];

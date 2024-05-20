@@ -99,7 +99,6 @@
 #include <sgl_math.h>
 #include <sglmem.h>
 #include <pvrlims.h>
-#include <dtri.h>
 #include <dregion.h>
 #include <d3dtsort.h>
 
@@ -406,7 +405,7 @@ static INLINE sgl_uint32 LineSplitsVerts(float *fLine, float fVert1[2], float fV
         return 0; /* Next test will fail, so don't do it */
     }
 
-    if (a != b && a != 0 && b != 0) {
+    if (a != b && a != 0) {
         return 1;
     }
 
@@ -956,7 +955,6 @@ static void NewAllIntersects(PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumItris) 
     unsigned uLocalRefInd;
     float fPoint[2];
     sgl_uint16 uResult;
-    sgl_uint32 uKey;
 
     /*
         First create the local nodes
@@ -1097,7 +1095,7 @@ ChooseSplitLine(PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumTris, float fLine[3]
     float maxx, maxy, minx, miny;
     float fTempX, fTempY;
     float mx, my;
-    sgl_uint32 i, j, uNumPoints, uInc;
+    sgl_uint32 i, uNumPoints, uInc;
 
     maxx = -fMaxMinVal;
     minx = fMaxMinVal;
@@ -1122,7 +1120,7 @@ ChooseSplitLine(PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumTris, float fLine[3]
          * bit better too. */
 
 #if 0
-        for(j = 0; j < 3; j++)
+        for(int j = 0; j < 3; j++)
         {
             mx += psItri->fVerts[j][0];
             my += psItri->fVerts[j][1];
@@ -1388,7 +1386,6 @@ static void SortTriNodes(PTRANSTRI_STRUCT *arr, sgl_uint32 uNumItris) {
 void CreatePasses(PTRANSTRI_STRUCT *ppsTriNodes, unsigned uNumItris) {
     unsigned i, j, k, t;
     unsigned uSetSize, uEnd;
-    float fPoint[2];
 
 
     if (uNumItris == 0) {
