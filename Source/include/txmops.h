@@ -132,10 +132,6 @@ unsigned long Twid(int x,int y);
  *				  InitTextureMemory has been called.
  *				  Size IS DIVISIBLE BY 4
  *****************************************************************************/
-void SetupOverflowArea(sgl_uint32 Size);
 
 
-#endif /* _TXMOPS_H_ */
-/*
-// End of file
-*/
+#endif

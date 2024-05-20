@@ -348,10 +348,8 @@
 
 #define MODULE_ID MODID_TXMOPS
 
-#include <math.h>
 #include <sgl.h>
 #include <sgl_defs.h>
-#include <sgl_init.h>
 #include <dlnodes.h>
 #include <nm_intf.h>
 #include <dlglobal.h>

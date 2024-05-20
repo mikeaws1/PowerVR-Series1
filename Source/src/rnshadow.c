@@ -205,7 +205,9 @@ void RnGenerateShadowVolume(CONVEX_NODE_STRUCT *pConvex,
             // Determine if the plane is forward WRT the light
             */
 
-            if (*pbForward = (*pfDotProd < 0.0f)) {
+            *pbForward = (*pfDotProd < 0.0f);
+
+            if (*pbForward) {
                 *pbLightInside = FALSE; /*Light isn't inside object*/
                 ShadowPlanes[*pnNumShadowPlanes] = *pPlane;
                 (*pnNumShadowPlanes)++;
@@ -225,7 +227,8 @@ void RnGenerateShadowVolume(CONVEX_NODE_STRUCT *pConvex,
             // Determine if the plane is forward WRT the light
             */
 
-            if (*pbForward = (*pfDotProd > pPlane->d)) {
+            *pbForward = (*pfDotProd > pPlane->d);
+            if (*pbForward) {
                 *pbLightInside = FALSE; /*Light isn't inside object*/
                 ShadowPlanes[*pnNumShadowPlanes] = *pPlane;
                 (*pnNumShadowPlanes)++;

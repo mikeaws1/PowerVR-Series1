@@ -96,9 +96,7 @@
 
 #define MODULE_ID MODID_TMALLOC
 
-#include <stdio.h>
 #include <sgl_defs.h>
-#include <sgl_init.h>
 
 #define USE_HEAPMAN
 
@@ -564,7 +562,7 @@ void TFree(MNODE_BLOCK *FreeNode, HTEXHEAP hTexHeap) {
  *****************************************************************************/
 sgl_int32 CALL_CONV PVROSSetTSPHighWaterMark(PVRHANDLE TexHeap, sgl_int32 nRequested, sgl_bool bForceIt) {
     MNODE *MemWalk;
-    sgl_int32 nCurrentPos;
+    sgl_int32 nCurrentPos = -1;
     HTEXHEAP hTexHeap = TexHeap;
 
     MemWalk = hTexHeap->pMemoryRoot;

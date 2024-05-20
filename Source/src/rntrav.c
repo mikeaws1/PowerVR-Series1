@@ -295,7 +295,6 @@
 
 #include <txmops.h>
 
-#include <list.h>
 #include <metrics.h>
 
 SGL_EXTERN_TIME_REF /* if we are timing code !!! */
@@ -994,11 +993,11 @@ static void RnGetTransformToNode(const DL_NODE_STRUCT *pNode,
                 // NOTE we must ignore lists that aren't to be processed.
                 */
             else if (pNode->n16_node_type == nt_list_node) {
-                LIST_NODE_STRUCT *pList = (LIST_NODE_STRUCT *) pNode;
+                LIST_NODE_STRUCT *pListLocal = (LIST_NODE_STRUCT *) pNode;
 
-                if (!(pList->flags & lf_preserve_state) &&
-                    (pList->flags & lf_process_list)) {
-                    RnConcatNPListTransforms(pList, &LocalTransform);
+                if (!(pListLocal->flags & lf_preserve_state) &&
+                    (pListLocal->flags & lf_process_list)) {
+                    RnConcatNPListTransforms(pListLocal, &LocalTransform);
 
                     /*
                     // Assume there was a transform in this list... it

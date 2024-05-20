@@ -46,8 +46,6 @@
 
 #include <rnglobal.h>
 #include <rntransf.h>
-#include <rnstate.h>
-#include <rntrav.h>
 #include <sgl_math.h>
 
 

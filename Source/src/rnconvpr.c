@@ -467,15 +467,12 @@
 #include <sgl.h>
 #include <sgl_math.h>
 
-#include <nm_intf.h>
 #include <dlnodes.h>
 
 #include <rnglobal.h>
 #include <rnstate.h>
 
 #include <rnconvst.h>
-#include <rnconvex.h>
-#include <dvdevice.h>
 #include <rncamera.h>
 
 #include <rnconvpr.h>
@@ -492,7 +489,6 @@
 #include <pkisp.h>
 
 #include <pmsabre.h>
-#include <profile.h>
 #include <metrics.h>
 #include <parmbuff.h>
 
@@ -2343,7 +2339,7 @@ sgl_bool RnProcessVisibleConvex(const CONVEX_NODE_STRUCT *pConvex,
         */
         TempMaterialState = *(pState->pMaterialState);
 
-#endif FIX_OPAQUE_TRANSLUCENCY_BUG
+#endif
 
 
     }/*end if else*/

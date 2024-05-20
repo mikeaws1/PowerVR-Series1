@@ -128,8 +128,4 @@ sgl_uint32 CALL_CONV get_texture_memory_size( void );
 sgl_uint32 CALL_CONV DetermineTextureMemorySize(void);
 int CALL_CONV SetPCIPixelFormat(sgl_uint16 wBitsPerPixel);
 
-#endif /*__HWREGS_H__*/
-/*
-// End of file
-*/
-
+#endif

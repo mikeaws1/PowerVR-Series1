@@ -239,7 +239,6 @@
 #include <rnglobal.h>
 #include <sgl_math.h>
 
-#include "metrics.h"
 
 SGL_EXTERN_TIME_REF  /* if we are timing code !!! */
 

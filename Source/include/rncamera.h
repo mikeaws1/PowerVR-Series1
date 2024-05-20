@@ -39,18 +39,17 @@
 #ifndef __rncamera_h__
 #define __rncamera_h__
 
-
+#include "dlothers.h"
+#include "dvdevice.h"
 
 void RnSetupProjectionMatrix(const CAMERA_NODE_STRUCT *pCamera, 
 							 const VIEWPORT_NODE_STRUCT *pViewport);
 
-void RnSetupDefaultCamera();
+void RnSetupDefaultCamera(CAMERA_NODE_STRUCT *pCamera);
 
 void RnUpdateLocalProjectionMatrix(const TRANSFORM_STRUCT *pTransform);
 
 void RnRescaleLocalProjectionTexture(const int TextureSize,
 						const TRANSFORM_STRUCT *pTransform);
 
-#endif /* __rncamera_h__ */
-
-/*--------------------------- End of File --------------------------------*/
+#endif

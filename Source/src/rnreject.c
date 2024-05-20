@@ -169,7 +169,6 @@
 
 #include <sgl_defs.h>
 #include <dlnodes.h>
-#include <rnstate.h>
 #include <rnglobal.h>
 #include <rnconvst.h>
 #include <pmsabre.h>

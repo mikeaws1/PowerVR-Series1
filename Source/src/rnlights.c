@@ -146,11 +146,9 @@
 #include <sgl.h>
 #include <sgl_math.h>
 
-#include <nm_intf.h>
 #include <dlnodes.h>
 
 #include <rnstate.h>
-#include <rntrav.h>
 #include <rnglobal.h>
 #include <rnlights.h>
 
@@ -196,7 +194,7 @@ static LIGHT_ENTRY_STRUCT *SetParLightData(const LIGHT_NODE_STRUCT *plightNode,
         last = first + plightState->numOffLights;
 
         /*
-        // Move the the first to the new last spot
+        // Move the first to the new last spot
         */
         plightState->light_entries[last] = plightState->light_entries[first];
     }

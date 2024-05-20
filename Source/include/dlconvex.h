@@ -102,7 +102,6 @@
 #ifndef __DLCONVEX_H
 #define __DLCONVEX_H
 
-
 /*////////////////////////////////////////////////////////////////////
 // Define the edge list structure. This is a "variable" size structure -
 // which has a variable length array of "edges" as the final field. Each

@@ -98,7 +98,6 @@
 #include <dlnodes.h>
 
 #include <rnstate.h>
-#include <rntrav.h>
 #include <rnglobal.h>
 
 #include <rnmater.h>

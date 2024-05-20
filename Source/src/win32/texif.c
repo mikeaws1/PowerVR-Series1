@@ -112,7 +112,6 @@
 #include <texapi.h>
 #include <tmalloc.h>
 #include <texapip.h>
-#include <error.h>
 #include <hwtexas.h> /* For TEX_PARAM_SIZE */
 #include <texheap.h>
 
@@ -122,6 +121,8 @@
 
 
 static TexHeapStruct TexHeaps[NO_OF_TEX_HEAPS] = {0};
+
+void SetupOverflowArea(TexHeapStruct*);
 
 #pragma data_seg()
 

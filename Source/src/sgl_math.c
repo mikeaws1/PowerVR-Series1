@@ -123,11 +123,7 @@
 #include <math.h>
 #include <sgl_defs.h>
 #include <dlnodes.h>
-#include <nm_intf.h>
-#include <dlglobal.h>
-#include <sgl_init.h>
 #include <sgl_math.h>
-#include <pvrosapi.h>
 #include <sglmem.h>
 
 /*
@@ -884,7 +880,6 @@ extern void CALL_CONV sgl_srand(unsigned long Seed) {
 /*	                       Source: graphics gems 5                            */
 /******************************************************************************/
 
-#include <stdlib.h>
 
 unsigned char *iSqrt = NULL;
 

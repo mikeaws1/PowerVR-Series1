@@ -758,7 +758,6 @@
 // define Debug Module IDs
 */
 #include <math.h>
-#include <stdio.h>
 
 #define MODULE_ID    MODID_RNMESH
 
@@ -778,16 +777,13 @@
 #include <rntex.h>
 #include <pktsp.h>
 #include <pkisp.h>
-#include <dvdevice.h>
 #include <rncamera.h>
 #include <rnmesh.h>
 #include <rnshade.h>
 #include <rnreject.h>
-#include <profile.h>
 #include <pvrosapi.h>
 #include <sglmem.h>
 #include <txmops.h>
-#include <rnmater.h>
 #include <metrics.h>
 #include <parmbuff.h>
 
@@ -1103,7 +1099,7 @@ static int OutputRegionTranPlanes (TRANSFORMED_PLANE_STRUCT *Planes, XMESHEXTRA 
 	return (nTotalPlanes);
 }
 
-#endif USE_INTERNAL_REGION_HANDLING
+#endif
 
 
 int PutPlanesInRegions(TRANSFORMED_PLANE_STRUCT *Planes,
@@ -6032,7 +6028,7 @@ void RnCTPreProcessMeshNode(const MESH_NODE_STRUCT *pMesh,
     /*
 	// If the quality flags say there is no texture - get out as well
 	*/
-    if (!pState->pQualityState->flags & qf_textures) {
+    if (!(pState->pQualityState->flags & qf_textures)) {
         return;
     }
 
@@ -6103,12 +6099,6 @@ void RnCTPreProcessMeshNode(const MESH_NODE_STRUCT *pMesh,
             MarkCachedTextureUsed(pCachedTexture, size);
         }
 
-    }/*end for*/
+    }
 
 }
-
-
-/*
-// END OF FILE
-*/
-

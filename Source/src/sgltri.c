@@ -401,23 +401,17 @@
 
 #define MODULE_ID MODID_SGLTRI
 
-#include <stdio.h>
 
-#include <nm_intf.h>
 
 #include <sgl_init.h>
 #include <sgl_defs.h>
 #include <sgl.h>
 #include <sgl_math.h>
-
-#include <dlntypes.h>
+#include <dlpoint.h>
 #include <dlmater.h>
 #include <dlconvex.h>
 #include <dlmesh.h>
-#include <dllists.h>
-#include <dlpoint.h>
-#include <dlothers.h>
-#include <dlglobal.h>
+#include <dlconvex.h>
 
 #include <rnglobal.h>
 #include <pkisp.h>

@@ -753,17 +753,12 @@
 #include <rnglobal.h>
 #include <parmbuff.h>
 #include <dvdevice.h>
-#include <sgl_init.h>
 #include <nm_intf.h>
 #include <dlglobal.h>
 #include <rncamera.h>
 #include <pmsabre.h>
 #include <rntrav.h>
 
-#include <rnconvst.h> /* ARRHGGGRRRRRRRRRR */
-#include <rnstate.h>
-#include <rnfshade.h>
-#include <rnmesh.h>
 #include <pktsp.h>
 #include <pkisp.h>
 
@@ -774,7 +769,6 @@
 #include <metrics.h>
 
 #include <pvrosapi.h>
-#include <parmbuff.h>
 
 #if defined(MIDAS_ARCADE)
 #include <time.h>

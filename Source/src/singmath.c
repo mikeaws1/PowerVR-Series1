@@ -40,10 +40,8 @@
 *
 **************************************************************************/
 
-#include <stdio.h>
 #include <math.h>
 
-#include <sgl_defs.h>
 
 #include <singmath.h>
 

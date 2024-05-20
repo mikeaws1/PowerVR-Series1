@@ -195,8 +195,6 @@
 #define MODULE_ID MODID_TEXAPI
 
 #include <sgl_defs.h>
-#include <sgl_init.h>
-#include <txmops.h>
 
 #include <pvrosapi.h>
 #include <tmalloc.h>
@@ -228,7 +226,7 @@ typedef struct texheapstruct {
 } TexHeapStruct;
 
 TexHeapStruct *FindTexHeap(HDEVICE hDeviceID);
-
+void SetupOverflowArea(TexHeapStruct*);
 /*
 // Define the Offsets for for the various levels in a MIP map. Note that
 // there are currently two different sets: One for Texas 1, and the other
@@ -537,7 +535,8 @@ sgl_uint32 CALL_CONV TextureFree(HTEXHEAP hTexHeap, HTEXTURE hTex) {
         InitTextureMemory(4 * 1024 * 1024, hTexHeap);
 
         /* set up the texture memory for cache overflow and TSP params */
-        SetupOverflowArea(FindTexHeap(hTexHeap->hDeviceID));
+        TexHeapStruct* pTexheapstruct = FindTexHeap(hTexHeap->hDeviceID);
+        SetupOverflowArea(pTexheapstruct);
     }
 
     return (sgl_no_err);
@@ -1964,7 +1963,7 @@ PVROSERR CALL_CONV TextureLoad(HTEXHEAP hTexHeap,
     map_size += 6;
 
     /*  Weed out 8 bit textures	*/
-    if (hTex->TSPTextureControlWord & MASK_8_16_MAPS == 0) {
+    if ((hTex->TSPTextureControlWord & MASK_8_16_MAPS) == 0) {
         PVROSPrintf("TAPI: Bad parameter in TextureLoad, 8 bit texture.\n");
         return (PVROS_DODGY);
     }
@@ -2374,7 +2373,7 @@ PVROSERR CALL_CONV TextureCopy(HTEXHEAP hTexHeap,
     map_size += 6;
 
     /*  Weed out 8 bit textures	*/
-    if (hTex->TSPTextureControlWord & MASK_8_16_MAPS == 0) {
+    if ((hTex->TSPTextureControlWord & MASK_8_16_MAPS) == 0) {
         PVROSPrintf("TAPI: Bad parameter in TextureLoad, 8 bit texture.\n");
         return (PVROS_DODGY);
     }
