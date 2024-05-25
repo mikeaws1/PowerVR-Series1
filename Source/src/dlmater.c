@@ -163,6 +163,8 @@
 #include <sgl_defs.h>
 #include <sgl.h>
 #include <sglmem.h>
+#include <dlntypes.h>
+#include <pvrosapi.h>
 #include <texapi.h>
 #include <dlnodes.h>    /* material structure definition */
 #include <nm_intf.h>

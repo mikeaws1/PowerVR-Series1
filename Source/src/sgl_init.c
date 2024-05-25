@@ -313,6 +313,7 @@
 #include <pvrosapi.h>
 
 #include <dlnodes.h>
+#include <nm_intf.h>
 #include <dlglobal.h>
 #include <sgl_init.h>
 #include <rnglobal.h>

@@ -41,6 +41,9 @@
 
 #include <sgl_defs.h>
 #include <sgl_math.h>
+#include <dlpoint.h>
+#include <dlmater.h>
+#include <dlconvex.h>
 #include <rnglobal.h>
 
 

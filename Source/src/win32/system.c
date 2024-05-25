@@ -1459,32 +1459,22 @@ void GetLibraryModule(HLDEVICE hLDevice, PVR_Interface Spec) {
 
     switch (hLDevice->DeviceType) {
         case MIDAS3: {
-            if (hLDevice->hLib == NULL) {
-                hLDevice->hLib = LoadLibrary(pszLibName[0]);
-            }
+            hLDevice->hLib = LoadLibrary(pszLibName[0]);
             break;
         }
         case MIDAS4: {
-            if (hLDevice->hLib == NULL) {
-                hLDevice->hLib = LoadLibrary(pszLibName[1]);
-            }
+            hLDevice->hLib = LoadLibrary(pszLibName[1]);
             break;
         }
         case MIDAS5: {
-            if (hLDevice->hLib == NULL) {
-                hLDevice->hLib = LoadLibrary(pszLibName[2]);
-            }
+            hLDevice->hLib = LoadLibrary(pszLibName[2]);
             break;
         }
         case MIDAS5_003: {
-            if (hLDevice->hLib == NULL) {
-                hLDevice->hLib = LoadLibrary(pszLibName[3]);
-            }
+            hLDevice->hLib = LoadLibrary(pszLibName[3]);
             break;
         }
     }
-
-    return;
 }
 
 /**********************************************************************/

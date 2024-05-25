@@ -776,7 +776,7 @@ static sgl_uint32	uBilinearReg		= 0x0;
 
 void CALL_CONV HWSetupBunchOfISPRegs()
 {
-	sgl_uint32	uFastFogReg = 0x0;
+	sgl_uint32	uFastFogReg;
 	sgl_uint32  uBilinearCtl;
 	sgl_uint32  uBilinearState;
 

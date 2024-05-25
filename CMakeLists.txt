@@ -70,33 +70,47 @@ set(SGL_LITE
 )
 
 set(SGL
-
-        Source/src/d3dlines.c
-        Source/src/d3dpoint.c
-        Source/src/dtex.c
-        Source/src/dtexnp.c
-        Source/src/disp.c
-        Source/src/d3dtsort.c
-        Source/src/d3disp.c
-        Source/src/dtsp.c
-        Source/src/d3dreg.c
-        Source/src/d3dtri.c
-        Source/src/metrics.c
-        Source/src/parmbuff.c
-        Source/src/dshade.c
-        Source/src/pvrd.c
-        Source/src/pkisp.c
-        Source/src/pktsp.c
-        Source/src/debug.c
-        Source/src/sgl_math.c
-        Source/src/sgltri.c
-        Source/src/singmath.c
+        Source/src/dlconvex.c
+        Source/src/dldelete.c
+        Source/src/dlcamera.c
+        Source/src/dllists.c
+        Source/src/dlglobal.c
+        Source/src/dllod.c
+        Source/src/dlmater.c
+        Source/src/dlmesh.c
+        Source/src/dlpoint.c
+        Source/src/dltransf.c
+        Source/src/rnlights.c
+        Source/src/rnmater.c
+        Source/src/rnrender.c
+        Source/src/rnstate.c
+        Source/src/rntransf.c
+        Source/src/rntrav.c
+        Source/src/rnlod.c
+        Source/src/rnpoint.c
+        Source/src/rnqualit.c
+        Source/src/adjacenc.c
+        Source/src/rnconvex.c
+        Source/src/dlobject.c
+        Source/src/rncamera.c
+        Source/src/rnconvpr.c
+        Source/src/rnfshade.c
+        Source/src/array.c
+        Source/src/rnreject.c
+        Source/src/rnmesh.c
+        Source/src/dllights.c
+        Source/src/rnshadow.c
+        Source/src/rnshadrj.c
+        Source/src/dlnewtrn.c
+        Source/src/dlqualit.c
+        Source/src/rntex.c
+        Source/src/rnshade.c
+        Source/src/sgl_init.c
 )
 
 
-
 add_library(${PROJECT_NAME}_sgl SHARED
-      ${SGL} )
+        ${SGL})
 
 
 set(PVROS_SRC

@@ -1253,6 +1253,3 @@ void CALL_CONV sgl_pseudo_multishadows(sgl_bool enable,
     */
     SglError(sgl_no_err);
 }
-
-/*---------------------------- End of File -------------------------------*/
-
