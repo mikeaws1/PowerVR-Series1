@@ -46,4 +46,4 @@ void RnCTPreprocessMaterialNode(const MATERIAL_NODE_STRUCT  * matNode,
 							void **	pCachedTexture);
 
 
-#endif __RNMATER_H__
+#endif

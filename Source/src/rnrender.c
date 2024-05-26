@@ -1428,7 +1428,7 @@ extern void CALL_CONV sgl_render(const int viewport_or_device,
 
     DPF((DBG_WARNING, "Pretending to Call Render......"));
 
-#endif MARK
+#endif
 
 #if DUMP_PARAMS
     /*
